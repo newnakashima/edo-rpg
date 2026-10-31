@@ -1,5 +1,5 @@
 // イベントスクリプトの実行。画面に依存せず、手順を 1 つずつ進めて、画面に頼むこと（台詞・選択肢・戦闘・移動）を返す。
-import { characterName } from '../data/characters';
+import { CHARACTERS, characterName, isGuest } from '../data/characters';
 import type { EventStep } from '../data/eventTypes';
 import { addItem, isKnownItem, itemCount, MAX_ITEM_COUNT } from '../data/items';
 import type { GameState } from './gameState';
@@ -23,11 +23,23 @@ interface Frame {
   index: number;
 }
 
-/** 仲間に加える。加入済み・満員なら何もしない。レベルはその時点のパーティーの平均（切り捨て、最低 1）。 */
+/**
+ * 仲間に加える。加入済み・満員なら何もしない。レベルはその時点のパーティーの平均（切り捨て、最低 1）。ゲストは guestLevel。
+ * 一時離脱中（away にいる）の仲間も何もしない（新しく作ると二重になるため。away から戻す手順は第 6 章で足す）。
+ */
 export function joinParty(state: GameState, member: GameState['party'][number]['id']): GameState {
-  if (state.party.some((m) => m.id === member) || state.party.length >= MAX_PARTY) return state;
+  if (state.party.some((m) => m.id === member) || state.away.some((m) => m.id === member) || state.party.length >= MAX_PARTY) return state;
   const avg = Math.max(1, Math.floor(state.party.reduce((s, m) => s + memberLevel(m), 0) / Math.max(1, state.party.length)));
-  return { ...state, party: [...state.party, createMember(member, avg)] };
+  return { ...state, party: [...state.party, createMember(member, CHARACTERS[member].guestLevel ?? avg)] };
+}
+
+/** 仲間を一時的に抜く。ゲストでなければ away に預ける。主人公と、いない仲間には何もしない。 */
+export function leaveParty(state: GameState, member: GameState['party'][number]['id']): GameState {
+  const m = state.party.find((x) => x.id === member);
+  if (!m || member === 'hero') return state;
+  const party = state.party.filter((x) => x.id !== member);
+  const away = isGuest(member) ? state.away : [...state.away.filter((x) => x.id !== member), m];
+  return { ...state, party, away };
 }
 
 /** 台詞の {hero} を主人公の名前に置き換え、女主人公なら linesF を使う。 */
@@ -107,6 +119,9 @@ export class EventRunner {
           break;
         case 'join':
           s = joinParty(s, step.member);
+          break;
+        case 'leave':
+          s = leaveParty(s, step.member);
           break;
         case 'heal':
           s = { ...s, party: restoreAll(s.party) };

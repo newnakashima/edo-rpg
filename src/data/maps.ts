@@ -1,4 +1,4 @@
-// フィールドのマップ。序章〜第 4 章の町・ダンジョンと、ワールドマップを用意する。
+// フィールドのマップ。序章〜第 5 章の町・ダンジョンと、ワールドマップを用意する。
 // タイルの文字の意味は TILES を参照。
 import type { Facing } from '../systems/gameState';
 import type { CharacterSpriteId } from './sprites';
@@ -369,7 +369,7 @@ MAPS.world = {
     { x: 32, y: 10, name: '名古屋', to: { mapId: 'nagoya', x: 28, y: 8 } },
     { x: 27, y: 11, name: '伊賀', to: { mapId: 'iga', x: 28, y: 6 }, openFlag: 'orinJoined', lines: ['伊賀上野。（清水湊の一家のことが気にかかる。まずは清水湊へ）'] },
     { x: 24, y: 10, name: '京', to: { mapId: 'kyo', x: 28, y: 6 }, openFlag: 'chapter2Cleared', lines: ['京。（尾張名古屋の一件を片づけてから訪れる）'] },
-    { x: 21, y: 11, name: '大坂', lines: NOT_YET('大坂', '第 5 章') },
+    { x: 21, y: 11, name: '大坂', to: { mapId: 'osaka', x: 28, y: 6 }, openFlag: 'chapter4Cleared', lines: ['大坂。（伊賀の仇討ちを済ませてから訪れる）'] },
     { x: 14, y: 11, name: '広島', lines: NOT_YET('広島', '第 6 章') },
     { x: 3, y: 16, name: '長崎', lines: NOT_YET('長崎・出島', '第 6 章') },
     // 金沢へは街道でつながず、第 7 章で長崎から北前船（イベント）で渡る
@@ -382,18 +382,21 @@ MAPS.world = {
     { x: 36, y: 10, flag: 'oigawaOpen', lines: ['大井川の渡し場だ。川越し人足「水かさが増えて、今は渡せねえよ」'], event: 'oigawa' },
     { x: 45, y: 10, flag: 'hakoneTegata', lines: ['箱根の関所だ。役人「通行手形なき者は、通すわけにはいかぬ」'] },
   ],
-  // 出現範囲は今は駿河、大井川の西の東海道、京のまわり、伊賀のまわり。ほかの地域の範囲は、その地域の敵を作るとき（フェーズ 4 の各章）に足す
+  // 出現範囲は今は駿河、大井川の西の東海道、京のまわり、伊賀のまわり、大坂のまわり。ほかの地域の範囲は、その地域の敵を作るとき（フェーズ 4 の各章）に足す
   // 先に書いた範囲が優先。駿府のまわり（大井川の渡し場から駿府まで）は、序章を終えたら駿府の敵（それまでは序章の敵）
   // 大井川の西（名古屋のまわり）は東海道の敵。伊賀のまわり（x 26〜28、伊賀の印の北の東海道）は、お凛が加わったら伊賀の敵（それまでは東海道の敵）
   // 大井川の西（東海道）で全滅したら名古屋に戻る（ほかは最初の町の清水湊）。伊賀のまわりは、お凛が加わったあとは伊賀上野に戻る
-  // 京のまわり（大坂寄りの街道を含む）で全滅したら京に戻る
+  // 京のまわり（大坂寄りの街道を含む）で全滅したら京に戻る。大坂のまわり（x 17〜21）は、第 4 章を終えたら大坂に戻る
   respawnZones: [
+    { x: 17, y: 9, w: 5, h: 4, mapId: 'osaka', flag: 'chapter4Cleared' },
     { x: 21, y: 9, w: 4, h: 4, mapId: 'kyo' },
     { x: 26, y: 9, w: 3, h: 4, mapId: 'iga', flag: 'orinJoined' },
     { x: 25, y: 9, w: 11, h: 4, mapId: 'nagoya' },
   ],
   // 京のまわり（x 21〜24）は、第 2 章を終えたら京の敵（それまでは敵が出ない）
+  // 大坂のまわり（x 17〜21、大坂の印とその西の街道）は、第 4 章を終えたら大坂の敵（京の範囲より優先）
   encounterZones: [
+    { x: 17, y: 9, w: 5, h: 4, encounter: 'osaka', flag: 'chapter4Cleared' },
     { x: 21, y: 9, w: 4, h: 4, encounter: 'kyoto', flag: 'chapter2Cleared' },
     { x: 26, y: 9, w: 3, h: 4, encounter: 'iga', flag: 'orinJoined' },
     { x: 25, y: 9, w: 11, h: 4, encounter: 'tokaido' },
@@ -1517,6 +1520,210 @@ MAPS.kagiya = {
   respawnMap: 'iga',
   // 辻の真ん中で、権六が待ち構える
   triggers: [3, 4, 5, 6].map((y) => ({ x: 8, y, event: 'gonroku', unless: 'gonrokuDefeated' })),
+};
+
+/** 第 5 章の大坂と、米蔵の地下（からくり工場）。 */
+MAPS.osaka = {
+  id: 'osaka',
+  name: '大坂',
+  areaLevel: 16,
+  rows: [
+    'TTTTTTTTTTTTTT==TTTTTTTTTTTTTT',
+    'T,,,,,,,,,,,,,==,,,,,,,,,,,,,T',
+    'T,RRRRR,RRRRR,==,RRRRR,RRRRR,T',
+    'T,WWDWW,WWDWW,==,WWDWW,WWDWW,T',
+    'T,.....,.....,==,.....,.....,T',
+    'T,,,,,,,,,,,,,==,,,,,,,,,,,,,T',
+    '==============================',
+    'T,,,,,,,,,,,,,==,,,,,,,,,,,,,T',
+    'T,RRRRRRR,RRR,==,RRRRRRRRRR,,T',
+    'T,WWWDWWW,WDW,==,WWWWWDWWWW,,T',
+    'T,.......,...,==,..........,,T',
+    'T,,,,,,,,,,,,,,,,,,,,,,,,,,,,T',
+    'T~~~~~~~~~~~~~~~~~~~~~~~~~~~~T',
+    'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
+  ],
+  npcs: [
+    {
+      id: 'osakaTeahouse',
+      name: '茶屋の娘',
+      x: 4,
+      y: 4,
+      color: 0xc76b8f,
+      lines: [
+        '茶屋の娘「おいでやす。……すんまへん、お団子、米の粉が高うて小さなってしもて」',
+        '茶屋の娘「米問屋の大黒屋はんが、蔵に米を山ほど溜めこんではるのに、ちっとも売らはらへんのです」',
+        '茶屋の娘「お団子、いかがどす？」',
+      ],
+      after: { flag: 'heardOsakaRumor', lines: ['茶屋の娘「おいでやす。小さいお団子でよかったら、どうぞ」'] },
+      setsFlag: 'heardOsakaRumor',
+      action: 'teahouse',
+    },
+    {
+      id: 'osakaYorozu',
+      name: 'よろず屋',
+      x: 10,
+      y: 4,
+      color: 0x6b8c5a,
+      lines: ['よろず屋「まいど！ 天下の台所や、品物だけはなんでもありまっせ。米のほかはな」'],
+      action: 'shop',
+      shop: 'osakaYorozu',
+    },
+    {
+      id: 'osakaTennoji',
+      name: '天王寺の僧',
+      x: 19,
+      y: 4,
+      color: 0xb08a3e,
+      lines: ['僧「天王寺さんのお慈悲を。倒れた者があれば、お祓いをして進ぜよう」'],
+      action: 'temple',
+    },
+    {
+      id: 'osakaInn',
+      name: '旅籠の主人',
+      x: 25,
+      y: 4,
+      color: 0x5a6b8c,
+      lines: ['旅籠の主人「お泊まりでっか。……飯は麦がちでかんにんしとくなはれ」'],
+      action: 'inn',
+    },
+    {
+      id: 'hyogoJuku',
+      name: '浪人',
+      x: 5,
+      y: 10,
+      color: 0x3a4a6a,
+      event: 'hyogoMeet',
+      hideFlag: 'hyogoJoined',
+    },
+    {
+      id: 'osakaKaji',
+      name: '刀鍛冶',
+      x: 11,
+      y: 10,
+      color: 0x5a5a6b,
+      lines: ['刀鍛冶「大坂の刀は、刃文が波みたいに揺れとるやろ。濤乱刃いうんや」'],
+      action: 'shop',
+      shop: 'osakaKaji',
+    },
+    {
+      id: 'daikokuya',
+      name: '米問屋の番頭',
+      x: 22,
+      y: 10,
+      color: 0x8a6a3a,
+      lines: ['番頭「米を売れ？ 相場が上がりきるまで待つのが商いや。文句があるなら、江戸のお偉い方に言うてみなはれ」'],
+      after: { flag: 'hyakuhyoDefeated', lines: ['番頭「く、蔵の地下のことは、わてらは何も知りまへん……！」'] },
+    },
+    {
+      id: 'osakaHikyaku',
+      name: '飛脚',
+      x: 26,
+      y: 10,
+      color: 0x3e7cb0,
+      lines: ['飛脚「へい、まいど！ 大坂の飛脚問屋でございやす」'],
+      action: 'hikyaku',
+    },
+    {
+      id: 'uekoMother',
+      name: '長屋の母親',
+      x: 18,
+      y: 11,
+      color: 0x9c8a5a,
+      lines: ['母親「この子に食べさせる米が、もう三日もあらへんのです……。お奉行所は、なんもしてくれへん」'],
+      after: { flag: 'chapter5Cleared', lines: ['母親「蔵の米が、町に配られたんです。……あのお侍さまのおかげやて、みんな言うてます」'] },
+    },
+    {
+      id: 'kuraGuardW',
+      name: '用心棒',
+      x: 14,
+      y: 0,
+      color: 0x5a4a3a,
+      lines: ['用心棒「ここから先は大黒屋の蔵や。よそ者は通さへん」'],
+      hideFlag: 'hyogoJoined',
+    },
+    {
+      id: 'kuraGuardE',
+      name: '用心棒',
+      x: 15,
+      y: 0,
+      color: 0x5a4a3a,
+      lines: ['用心棒「米が欲しけりゃ、相場の倍の銭を持ってきな」'],
+      hideFlag: 'hyogoJoined',
+    },
+  ],
+  exits: [
+    // 東西の通りからワールドマップへ（大坂の印の北と西の街道）
+    { x: 29, y: 6, to: 'world', toX: 21, toY: 10 },
+    { x: 0, y: 6, to: 'world', toX: 20, toY: 11 },
+    // 北の米蔵へ（兵庫が加わるまでは用心棒がふさぐ）
+    { x: 14, y: 0, to: 'komeKura', toX: 10, toY: 14 },
+    { x: 15, y: 0, to: 'komeKura', toX: 11, toY: 14 },
+  ],
+  respawn: { x: 25, y: 5 },
+  onEnter: { event: 'osakaEnter', unless: 'chapter5Cleared' },
+};
+
+MAPS.komeKura = {
+  id: 'komeKura',
+  name: '米蔵の地下',
+  areaLevel: 16,
+  rows: [
+    'WWWWWWWWWWWWWWWWWWWWWW',
+    'WWWWWW__________WWWWWW',
+    'WWWWWW__________WWWWWW',
+    'WWWWWWWWWW__WWWWWWWWWW',
+    'W__________W_________W',
+    'W_WWWWWWWW_W_WWWWWWW_W',
+    'W_W______W___W_____W_W',
+    'W_W_WWWW_WWWWW_WWW_W_W',
+    'W___W__W_______W___W_W',
+    'WWWWW__WWWWWWW_W_WWW_W',
+    'W______W_______W_____W',
+    'W_WWWWWW_WWWWWWWWWWW_W',
+    'W____________________W',
+    'WWWWWWWWW__WWWWWWWWWWW',
+    'W____________________W',
+    'WWWWWWWWWW__WWWWWWWWWW',
+  ],
+  npcs: [
+    {
+      id: 'komeKuraChest1',
+      name: '葛籠',
+      x: 3,
+      y: 6,
+      color: 0x8a6a3a,
+      event: 'komeKuraChest1',
+    },
+    {
+      id: 'komeKuraChest2',
+      name: '葛籠',
+      x: 5,
+      y: 8,
+      color: 0x8a6a3a,
+      event: 'komeKuraChest2',
+    },
+    {
+      id: 'komeKuraKikai',
+      name: 'からくりの機械',
+      x: 8,
+      y: 1,
+      color: 0x8a7a5a,
+      lines: ['米俵をゼンマイの歯車で砕き、黒い粉に変える機械だ。粉は、からくり兵の油に混ぜるものらしい。'],
+      after: { flag: 'hyakuhyoDefeated', lines: ['止まったからくりの機械だ。米俵が、手つかずのまま積まれている。'] },
+    },
+  ],
+  exits: [
+    { x: 10, y: 15, to: 'osaka', toX: 14, toY: 1 },
+    { x: 11, y: 15, to: 'osaka', toX: 15, toY: 1 },
+  ],
+  encounter: 'osaka',
+  respawnMap: 'osaka',
+  // 工場の奥へ上がる細い段で、百俵からくりが待ち構える
+  triggers: [
+    { x: 10, y: 3, event: 'hyakuhyo', unless: 'hyakuhyoDefeated' },
+    { x: 11, y: 3, event: 'hyakuhyo', unless: 'hyakuhyoDefeated' },
+  ],
 };
 
 export type TownAction =

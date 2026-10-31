@@ -1,5 +1,5 @@
 // セーブ/ロード。localStorage にスロットごとにバージョン付きの JSON で保存する。
-import { CHARACTERS } from '../data/characters';
+import { CHARACTERS, isGuest, type CharacterId } from '../data/characters';
 import { EQUIP_SLOTS, EQUIPMENT, STARTING_EQUIPMENT, type EquipSlot } from '../data/equipment';
 import { isKnownItem, MAX_ITEM_COUNT } from '../data/items';
 import { STARTING_ITEMS, type GameState } from './gameState';
@@ -11,8 +11,9 @@ import { memberStats } from './party';
  * - 2: 道具（items）を追加
  * - 3: 仲間の装備（party[].equip）を追加
  * - 4: 飛脚の預かり（storage）を追加
+ * - 5: 一時離脱の仲間（away）を追加
  */
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;
 export const SLOT_COUNT = 3;
 const KEY_PREFIX = 'edo-rpg/save/';
 
@@ -74,12 +75,18 @@ function isInventory(v: unknown): boolean {
 export function isGameState(v: unknown): v is GameState {
   if (!isObject(v)) return false;
   if (v.gender !== 'm' && v.gender !== 'f') return false;
-  if (!Array.isArray(v.party) || v.party.length === 0) return false;
-  for (const m of v.party) {
+  if (!Array.isArray(v.party) || v.party.length === 0 || !Array.isArray(v.away)) return false;
+  const ids = new Set<string>();
+  for (const m of [...v.party, ...v.away]) {
     if (!isObject(m) || typeof m.id !== 'string' || !Object.hasOwn(CHARACTERS, m.id)) return false;
+    // 同じ人物が、パーティーと一時離脱の両方（またはどちらかに 2 人）にいることはない
+    if (ids.has(m.id)) return false;
+    ids.add(m.id);
     if (!isNonNegativeInteger(m.exp) || !isNonNegativeInteger(m.hp) || !isNonNegativeInteger(m.mp)) return false;
     if (!isValidEquip(m.id, m.equip)) return false;
   }
+  // 一時離脱に預けるのは主人公でもゲストでもない仲間だけ（leaveParty が作る形）
+  if (v.away.some((m: { id: CharacterId }) => m.id === 'hero' || isGuest(m.id))) return false;
   if (!isNonNegativeInteger(v.money) || typeof v.mapId !== 'string') return false;
   if (!Number.isInteger(v.x) || !Number.isInteger(v.y)) return false;
   if (typeof v.facing !== 'string' || !FACINGS.has(v.facing)) return false;
@@ -111,6 +118,9 @@ function migrate(version: unknown, state: unknown): unknown {
     } else if (v === 3) {
       // 版 3 には預かりがない。空で始める
       s = { ...s, storage: {} };
+    } else if (v === 4) {
+      // 版 4 には一時離脱の仲間がない（第 5 章より前なので、抜けている仲間はいない）
+      s = { ...s, away: [] };
     }
     v++;
   }
@@ -128,12 +138,12 @@ export function deserialize(text: string): SaveData | null {
   if (!isObject(data) || typeof data.savedAt !== 'string') return null;
   const migrated = migrate(data.version, data.state);
   if (!isGameState(migrated)) return null;
-  // HP・MP が最大値を超えていたら最大値に収める
-  const party = migrated.party.map((m) => {
+  // HP・MP が最大値を超えていたら最大値に収める（一時離脱の仲間も）
+  const clamp = (m: GameState['party'][number]) => {
     const s = memberStats(m);
     return { ...m, hp: Math.min(m.hp, s.maxHp), mp: Math.min(m.mp, s.maxMp) };
-  });
-  return { version: SAVE_VERSION, savedAt: data.savedAt, state: { ...migrated, party } };
+  };
+  return { version: SAVE_VERSION, savedAt: data.savedAt, state: { ...migrated, party: migrated.party.map(clamp), away: migrated.away.map(clamp) } };
 }
 
 /** 書き込む。保存領域が一杯などで失敗したら false。 */

@@ -36,6 +36,10 @@ describe('敵の画像', () => {
     for (const id of ['iganin', 'dokugumo', 'karakuriTaka', 'oboro', 'gonroku']) expect(ENEMIES[id]?.image, id).toBe(true);
   });
 
+  it('第 5 章（大坂）の敵と百俵からくりにも画像がある', () => {
+    for (const id of ['yojinbo', 'teppoAshigaru', 'karakuriTawara', 'bakeNezumi', 'hyakuhyo']) expect(ENEMIES[id]?.image, id).toBe(true);
+  });
+
   it('テクスチャのキー', () => {
     expect(enemyImageKey('onibi')).toBe('enemy-onibi');
   });
@@ -88,5 +92,15 @@ describe('伊賀の敵の組', () => {
     const sizes = Array.from({ length: 300 }, () => pickGroup(table, { size: 4, maxLevel: 13 }, rng)?.length ?? 0);
     expect(Math.max(...sizes)).toBe(4);
     expect(Math.min(...sizes)).toBe(2);
+  });
+});
+
+describe('大坂の敵の組', () => {
+  it('兵庫を入れた 4 人で来るので、4 体の組がある', () => {
+    const table = ENCOUNTERS.osaka!;
+    expect(table.level).toBe(16);
+    const rng = seededRng(5);
+    const sizes = Array.from({ length: 300 }, () => pickGroup(table, { size: 4, maxLevel: 18 }, rng)?.length ?? 0);
+    expect(Math.max(...sizes)).toBe(4);
   });
 });

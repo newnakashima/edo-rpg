@@ -122,6 +122,10 @@ export const SKILLS: Record<string, SkillDef> = {
   raikandan: { id: 'raikandan', name: '雷管弾', mp: 5, target: 'enemy', effect: { kind: 'physical', multiplier: 1.2 }, elements: ['thunder'], description: 'からくりに効く雷の弾' },
   hayago: { id: 'hayago', name: '早合', mp: 6, target: 'enemy', effect: { kind: 'physical', multiplier: 1.0, hits: 2 }, description: '2 回撃つ' },
   katami: { id: 'katami', name: '父の形見', mp: 12, target: 'enemy', effect: { kind: 'physical', multiplier: 2.5, ignoreDefense: true }, description: '防御を無視する一撃' },
+  // 榊兵庫（侍、第 5 章のゲスト）
+  hyogoKesagiri: { id: 'hyogoKesagiri', name: '袈裟斬り', mp: 3, target: 'enemy', effect: { kind: 'physical', multiplier: 1.5 }, description: '肩から斬り下ろす' },
+  tsubamegaeshi: { id: 'tsubamegaeshi', name: '燕返し', mp: 6, target: 'enemy', effect: { kind: 'physical', multiplier: 1.0, hits: 2 }, description: '2 回斬る' },
+  munenmuso: { id: 'munenmuso', name: '無念無想', mp: 5, target: 'self', effect: { kind: 'status', status: 'critUp', turns: 3 }, description: '3 ターン会心率を上げる' },
   // 敵の技
   kitsunebi: { id: 'kitsunebi', name: '狐火', mp: 0, target: 'enemy', effect: { kind: 'magic', power: 3 }, elements: ['fire'], description: '' },
   dokueki: { id: 'dokueki', name: '毒液', mp: 0, target: 'enemy', effect: { kind: 'status', status: 'poison', turns: 99, chance: 0.6 }, description: '' },
@@ -155,6 +159,11 @@ export const SKILLS: Record<string, SkillDef> = {
   nirengeki: { id: 'nirengeki', name: '二連撃', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 0.75, hits: 2 }, description: '' },
   shikomibari: { id: 'shikomibari', name: '毒の仕込み針', mp: 0, target: 'enemy', effect: { kind: 'status', status: 'poison', turns: 99, chance: 0.6 }, description: '' },
   gishu: { id: 'gishu', name: 'からくり義手', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.0, ignoreDefense: true }, description: '' },
+  // 大坂（第 5 章）
+  teppo: { id: 'teppo', name: '鉄砲', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.4, sureHit: true }, description: '' },
+  tawaraGoroshi: { id: 'tawaraGoroshi', name: '体当たり', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.3 }, description: '' },
+  tawaraOtoshi: { id: 'tawaraOtoshi', name: '俵落とし', mp: 0, target: 'allEnemies', effect: { kind: 'physical', multiplier: 0.8 }, description: '' },
+  komenuka: { id: 'komenuka', name: '米ぬかの煙', mp: 0, target: 'allEnemies', effect: { kind: 'status', status: 'accDown', turns: 3, chance: 0.6 }, description: '' },
   kinUroko: { id: 'kinUroko', name: '金の鱗', mp: 0, target: 'self', effect: { kind: 'status', status: 'defUp', turns: 3 }, description: '' },
 };
 
@@ -191,6 +200,12 @@ export const LEARNSETS: Record<CharacterId, LearnableSkill[]> = {
     { skill: 'raikandan', level: 17 },
     { skill: 'hayago', level: 21 },
     { skill: 'katami', level: 26 },
+  ],
+  // ゲストは Lv18 で加入し成長しないので、すべて加入時に覚えている
+  hyogo: [
+    { skill: 'hyogoKesagiri', level: 1 },
+    { skill: 'tsubamegaeshi', level: 1 },
+    { skill: 'munenmuso', level: 1 },
   ],
 };
 

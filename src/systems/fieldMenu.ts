@@ -1,4 +1,5 @@
 // メニュー画面（戦闘の外）での道具・技・装備。画面に依存しない純粋なロジック。
+import { isGuest } from '../data/characters';
 import { canEquip, EQUIPMENT, type EquipSlot } from '../data/equipment';
 import { addItem, ITEMS, itemCount, MAX_ITEM_COUNT, removeItem } from '../data/items';
 import { SKILLS, skillsAtLevel } from '../data/skills';
@@ -9,7 +10,7 @@ import { expRemainingToNext, growthFactor } from './stats';
 
 export type FieldResult =
   | { ok: true; state: GameState; changes: { index: number; hp: number; mp: number }[] }
-  | { ok: false; reason: 'noItem' | 'notField' | 'noEffect' | 'noMp' | 'casterDown' | 'cannotEquip' | 'full' };
+  | { ok: false; reason: 'noItem' | 'notField' | 'noEffect' | 'noMp' | 'casterDown' | 'cannotEquip' | 'full' | 'guest' };
 
 function setMember(state: GameState, index: number, member: PartyMember): GameState {
   return { ...state, party: state.party.map((m, i) => (i === index ? member : m)) };
@@ -79,6 +80,8 @@ export function useSkillInField(state: GameState, caster: number, skillId: strin
 export function changeEquipment(state: GameState, index: number, slot: EquipSlot, equipId: string | null): FieldResult {
   const m = state.party[index];
   if (!m) return { ok: false, reason: 'cannotEquip' };
+  // ゲストの装備は変えられない（外した装備が所持品に残らないように）
+  if (isGuest(m.id)) return { ok: false, reason: 'guest' };
   let items = state.items;
   if (equipId !== null) {
     const def = EQUIPMENT[equipId];
@@ -130,6 +133,7 @@ export function itemUsableOn(itemId: string, member: PartyMember): boolean {
 
 /** メニューの強さの窓に出す経験値の行（累計と、次のレベルまでの残り）。 */
 export function expLine(member: PartyMember, sep = '  '): string {
-  const rest = expRemainingToNext(member.exp);
+  // ゲストは成長しないので、次のレベルまでの経験値は出さない
+  const rest = isGuest(member.id) ? null : expRemainingToNext(member.exp);
   return `経験 ${member.exp}${sep}次 ${rest === null ? '――' : rest}`;
 }

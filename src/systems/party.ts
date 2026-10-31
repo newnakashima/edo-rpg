@@ -1,4 +1,4 @@
-import { CHARACTERS, type CharacterId } from '../data/characters';
+import { CHARACTERS, isGuest, type CharacterId } from '../data/characters';
 import { equipmentBonus, STARTING_EQUIPMENT, type Equipped } from '../data/equipment';
 import { skillsLearnedBetween } from '../data/skills';
 import { levelForExp, statsAtLevel, totalExpForLevel, type Stats } from './stats';
@@ -56,14 +56,14 @@ export interface LevelUp {
 }
 
 /**
- * 仲間ごとに経験値を加える（amounts[i] が party[i] の分）。戦闘不能（HP 0）の仲間は経験値を得ない。
+ * 仲間ごとに経験値を加える（amounts[i] が party[i] の分）。戦闘不能（HP 0）の仲間と、一時加入のゲストは経験値を得ない。
  * レベルが上がった分だけ最大 HP・MP の増分を現在値にも加える。
  */
 export function gainExp(party: PartyMember[], amounts: number[]): { party: PartyMember[]; levelUps: LevelUp[] } {
   const levelUps: LevelUp[] = [];
   const next = party.map((m, i) => {
     const amount = amounts[i] ?? 0;
-    if (m.hp <= 0 || amount <= 0) return m;
+    if (m.hp <= 0 || amount <= 0 || isGuest(m.id)) return m;
     const before = memberStats(m);
     const from = memberLevel(m);
     const updated = { ...m, exp: m.exp + amount };

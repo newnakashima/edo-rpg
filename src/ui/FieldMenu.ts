@@ -1,6 +1,6 @@
 // フィールドのメニュー画面（取消ボタンで開く）。道具・技・装備と、仲間の強さの表示。
 import Phaser from 'phaser';
-import { characterName } from '../data/characters';
+import { characterName, isGuest } from '../data/characters';
 import { EQUIP_SLOTS, EQUIPMENT, SLOT_NAMES, canEquip, type EquipSlot } from '../data/equipment';
 import { ITEMS, itemCount, itemName, ownedEquipment, ownedItems } from '../data/items';
 import { SKILLS } from '../data/skills';
@@ -29,6 +29,7 @@ const FAIL_MESSAGES: Record<Exclude<FieldResult, { ok: true }>['reason'], string
   casterDown: '倒れていて使えない。',
   cannotEquip: '付けられない。',
   full: '外した装備を持ちきれない。',
+  guest: 'この人の装備は変えられない。',
 };
 
 export class FieldMenu {
@@ -212,6 +213,11 @@ export class FieldMenu {
     const state = getState();
     const member = state.party[index];
     if (!member) return;
+    // ゲストは装備の枠を開かずに断る。画面にはテストがないが、開いても changeEquipment が 'guest' で断る（fieldMenu.test.ts で確かめる）
+    if (isGuest(member.id)) {
+      this.setInfo(FAIL_MESSAGES.guest);
+      return;
+    }
     this.push(
       EQUIP_SLOTS.map((slot) => {
         const id = member.equip[slot];

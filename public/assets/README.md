@@ -61,6 +61,11 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 | karakuriTaka | e14b10aa-d692-4ed7-b066-1b0edf180374 | south-west | Japanese karakuri clockwork mechanical hawk, a big round brass cogwheel with teeth on its chest and small brass cogwheels at both wing joints, riveted dark iron plate feathers, wings spread wide, metal talons, glowing red eyes, JRPG enemy battle sprite, three-quarter front view（1 回目の 8fb6544c-ff65-4f37-99eb-938fdb18da9d の胸と翼の付け根に歯車を Pillow で描き足したものを init_image に、init_image_strength 300） |
 | oboro | 0cee1983-2fc0-4796-a6eb-5409c3d8425b | south-west | elderly Iga ninja grandmaster, tight-fitting grey shinobi shozoku ninja suit with fitted sleeves and leg wraps, black tabi boots, metal hand guards, grey ninja hood pulled back off his head showing long white hair tied in a topknot and long white beard, stern narrowed eyes, straight ninja sword held forward in one hand and a steel shuriken throwing star in the other, low ninja stance, full body, JRPG boss battle sprite, three-quarter front view（96 × 96、text_guidance_scale 10） |
 | gonroku | 999d9d9e-329e-4aa2-8c30-3f82befe9502 | south-west | Edo period Japanese assassin with a big mechanical prosthetic left arm made of dark iron and brass with exposed gears and a metal claw hand, a long dark red scar slashed across his right cheek, cruel smirk, black hair, dark navy kimono, short katana in his right hand, full body standing, JRPG boss battle sprite, three-quarter front view（96 × 96。1 回目の 08ed533b-a87c-4610-81c1-9376a3c4556c を 88% に縮めて足元を y = 90 に置き、頬に傷を描き足したものを init_image に、init_image_strength 250。生成後、消えた頬の傷を Pillow で描き直した） |
+| yojinbo | cef63430-cd40-44b6-98d9-37b070cb5a76 | south-west | burly Edo period ronin bodyguard (yojinbo) of a rice merchant, muscular man in a dark brown kimono with a white sash, unshaven scowling angry face, holding a drawn katana, menacing stance, full body standing, JRPG enemy battle sprite, three-quarter front view（1 回目の 3f38ec6a-214d-45d3-9ae8-edeab685613c を 58 × 58 に縮めて足元を y = 58 に置いたものを init_image に、init_image_strength 300） |
+| teppoAshigaru | f9f557d3-27e1-446b-93d2-4fb4bec4f50b | south-west | Edo period Japanese foot soldier musketeer (teppo ashigaru), wearing a flat black conical jingasa hat and simple dark lacquered armor over blue clothes, holding a long matchlock tanegashima gun at the ready, full body standing, JRPG enemy battle sprite, three-quarter front view |
+| karakuriTawara | 913eab51-f699-4982-a1bb-3ba96b029da4 | south-west | karakuri clockwork rice bale monster, a round straw Japanese rice bale (tawara) body tied with thick ropes, big brass gears sticking out of its sides, four short riveted iron mechanical legs, glowing red eyes peeking from the straw, small and centered with empty space around it, full body, JRPG enemy battle sprite, three-quarter front view |
+| bakeNezumi | bbf3a582-4663-4f3a-8e99-cdb3c2a59453 | south-west | giant Japanese yokai rat (bake-nezumi), big grey-brown furry rat standing on hind legs, long pink tail, glowing red eyes, bared sharp yellow fangs, menacing claws raised, small and centered with empty space around it, full body, JRPG enemy battle sprite, three-quarter front view |
+| hyakuhyo | f364c017-c6c6-46b6-b8d0-15739974b60f | south-west | huge monster built from stacked yellow straw rice bales (tawara) with rough straw texture and brown rope ties, dark bronze cogwheels with teeth at its shoulders and knees, one glowing red eye, menacing, full body, JRPG boss battle sprite, three-quarter front view（96 × 96。2 回目の f96f56af-c2d4-4593-a35c-99fca4b14abe を 90% に縮めて足元を y = 90 に置き、肩と膝に暗い青銅の歯車を Pillow で描き足したものを init_image に、init_image_strength 300） |
 
 第 1 章の 4 体の作り直しの記録:
 
@@ -93,3 +98,10 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 - 上忍 朧: 1 回目は頭巾付きの長い衣で、忍びより隠者に見えた。2 回目は「tight-fitting shinobi shozoku」「tabi」「leg wraps」で忍び装束になったので採用（計 2 回）。
 - 蛇骨の権六: 1 回目は頬の傷がなく（目の上の赤い印だけ）、頭が上端に付き足元が y = 95 だった。2 回目は 1 回目を 88% に縮め、頬に傷を描き足して init_image（strength 250）にし、余白は直ったが傷が消えた。3 回目（2 回目に傷を描き足して strength 350）も傷が消えて額の赤い印になった。4 回目は 2 回目の頬に傷を Pillow で描き直して採用（計 4 回。pixflux は細い傷を消してしまう）。
 - 足元をそろえるため、毒蜘蛛は 5px、朧は 1px 下へずらした（伊賀者・権六はそのまま。からくり鷹は飛んでいるのでそのまま）。
+
+第 5 章の 5 体の作り直しの記録:
+
+- 鉄砲足軽・からくり俵・化け鼠: 1 回目で採用（各 1 回）。
+- 米問屋の用心棒: 1 回目は上の余白が 2 行しかなく、足元が y = 61 で、足元をそろえると髷が切れた。2 回目は 1 回目を縮めて余白を作ったものを init_image（strength 300）にして採用（計 2 回）。
+- 百俵からくり: 1 回目は金色のロボットのようになり、俵にも歯車にも見えなかった。2 回目は「straw texture」「rope ties」で俵の山になったが、歯車がなく、上の余白もなかった。3 回目は 2 回目を 90% に縮め、肩と膝に暗い青銅の歯車を描き足して init_image（strength 300）にして採用（計 3 回。明るい真鍮色の歯車は藁に埋もれて見えなかったので、暗い色にした）。
+- 足元をそろえるため、鉄砲足軽は 1px 上、化け鼠は 2px 下へずらした（ほかの 3 体はそのまま）。

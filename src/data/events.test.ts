@@ -41,6 +41,7 @@ describe('イベントのデータ', () => {
             for (const id of step.enemies) expect(ENEMIES[id], id).toBeDefined();
             break;
           case 'join':
+          case 'leave':
             expect(CHARACTERS[step.member], step.member).toBeDefined();
             break;
           case 'warp': {
@@ -390,5 +391,54 @@ describe('第 4 章の流れ', () => {
     expect(pages).not.toContain('凛だ');
     expect(pages).toContain('権六「');
     expect(run('gonroku', lost).flags.chapter4Cleared).toBe(true);
+  });
+});
+
+describe('第 5 章の流れ', () => {
+  const base = newGame('m', { mapId: 'osaka', x: 28, y: 6 });
+  const party = [base.party[0]!, createMember('kasumi', 17), createMember('gendo', 17), createMember('orin', 17)];
+  const ch4 = { ...base, party, flags: { intro: true, chapter3Cleared: true, orinJoined: true, chapter4Cleared: true } };
+
+  it('大坂に初めて入ると霞が一時抜け（kasumiAway、away に預ける）、2 回目からは何もしない', () => {
+    const arrived = run('osakaEnter', ch4);
+    expect(arrived.flags.osakaArrived).toBe(true);
+    expect(arrived.flags.kasumiAway).toBe(true);
+    expect(arrived.party.map((m) => m.id)).toEqual(['hero', 'gendo', 'orin']);
+    expect(arrived.away.map((m) => m.id)).toEqual(['kasumi']);
+    expect(arrived.away[0]?.exp).toBe(party[1]!.exp);
+    expect(new EventRunner(EVENTS.osakaEnter!.steps).next(arrived).request.kind).toBe('done');
+  });
+
+  const arrived = run('osakaEnter', ch4);
+
+  it('私塾で榊兵庫が Lv18 のゲストとして加わる（hyogoJoined）。もう一度起きても増えない', () => {
+    const joined = run('hyogoMeet', arrived);
+    expect(joined.flags.hyogoJoined).toBe(true);
+    expect(joined.party.map((m) => m.id)).toEqual(['hero', 'gendo', 'orin', 'hyogo']);
+    expect(run('hyogoMeet', joined).party).toHaveLength(4);
+  });
+
+  const joined = run('hyogoMeet', arrived);
+
+  it('米蔵の地下で百俵からくり（Lv19）に勝つと hyakuhyoDefeated。負けて出直すと口上を短くする', () => {
+    const runner = new EventRunner(EVENTS.hyakuhyo!.steps);
+    const r = skipSay(runner, runner.next(joined));
+    expect(r.request).toMatchObject({ kind: 'battle', enemies: ['hyakuhyo'], level: 19, canEscape: false, loseOk: false });
+    expect(run('hyakuhyo', joined).flags.hyakuhyoDefeated).toBe(true);
+    const lost = run('hyakuhyo', joined, 'defeat');
+    expect(lost.flags.hyakuhyoDefeated).toBeFalsy();
+    const retry = new EventRunner(EVENTS.hyakuhyo!.steps).next(lost);
+    expect(retry.request.kind).toBe('say');
+    const pages = retry.request.kind === 'say' ? retry.request.pages.join('') : '';
+    expect(pages).not.toContain('お凛「');
+    expect(pages).toContain('兵庫「');
+    expect(run('hyakuhyo', lost).flags.hyakuhyoDefeated).toBe(true);
+  });
+
+  it('百俵からくりを倒して大坂に入ると第 5 章が終わり（chapter5Cleared）、兵庫が抜ける。霞は預けたまま', () => {
+    const cleared = run('osakaEnter', run('hyakuhyo', joined));
+    expect(cleared.flags.chapter5Cleared).toBe(true);
+    expect(cleared.party.map((m) => m.id)).toEqual(['hero', 'gendo', 'orin']);
+    expect(cleared.away.map((m) => m.id)).toEqual(['kasumi']);
   });
 });
