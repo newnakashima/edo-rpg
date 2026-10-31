@@ -160,12 +160,15 @@ describe('報酬', () => {
   });
 
   it('倍率は敵ごとに掛かり、半分にする決まりは倍率を掛けたあとの値に使う', () => {
-    const b = createBattle([createMember('hero', 3), createMember('kasumi', 8)], 'm', ['yako', 'onibi'], 4);
+    // 敵 Lv7 の経験値は奇数なので、倍率と半分にする順で値が変わる
+    expect(Math.floor((enemyExp(7) * 3) / 2)).not.toBe(Math.floor(enemyExp(7) / 2) * 3);
+    const b = createBattle([createMember('hero', 7), createMember('kasumi', 11)], 'm', ['yako', 'onibi'], 7);
     expect(computeRewards(b)).toEqual({
-      // Lv8 の霞は敵（Lv4）より 4 高いので半分
-      exp: { p0: enemyExp(4) * 3 + enemyExp(4), p1: Math.floor((enemyExp(4) * 3) / 2) + Math.floor(enemyExp(4) / 2) },
-      money: enemyMoney(4) * 3 + enemyMoney(4),
+      // Lv11 の霞は敵（Lv7）より 4 高いので半分
+      exp: { p0: enemyExp(7) * 3 + enemyExp(7), p1: Math.floor((enemyExp(7) * 3) / 2) + Math.floor(enemyExp(7) / 2) },
+      money: enemyMoney(7) * 3 + enemyMoney(7),
     });
+  });
   });
 
   it('戦闘後の HP を仲間に書き戻す', () => {

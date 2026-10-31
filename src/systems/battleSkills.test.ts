@@ -433,7 +433,7 @@ describe('野狐（序章のボス）の技', () => {
     throw new Error(`${skill} was not used`);
   }
 
-  it('狐火の渦は味方全員に火の術で当たる', () => {
+  it('狐火の渦は味方全員に当たる', () => {
     const after = untilSkill('kitsunebiUzu');
     const hit = after.filter((e) => e.type === 'damage').map((e) => (e.type === 'damage' ? e.target : ''));
     expect(hit.sort()).toEqual(['p0', 'p1']);
