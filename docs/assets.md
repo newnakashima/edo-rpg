@@ -1,6 +1,7 @@
 # 画像アセットの一覧
 
 PixelLab MCP で生成する画像の一覧です。クレジットを使うため、ここで一覧を固めてからまとめて生成します（フェーズ 3）。
+生成するときは [`pixellab-generation` スキル](../.claude/skills/pixellab-generation/SKILL.md) の手順（要件をチェック項目に分けてから生成し、1 つでも満たさなければ最大 5 回まで作り直す）に従います。
 生成したら、プロンプトとアセット ID を [`public/assets/README.md`](../public/assets/README.md) に記録し、再生成できるようにします。
 
 ## 共通の方針
