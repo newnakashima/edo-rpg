@@ -126,6 +126,19 @@ describe('resolveTurn', () => {
   });
 });
 
+describe('装備', () => {
+  it('戦闘の能力値は装備を含む', () => {
+    const bare = createBattle([createMember('hero', 1, {})], 'm', ['onibi'], 1);
+    const armed = createBattle([createMember('hero', 1, { weapon: 'dotanuki' })], 'm', ['onibi'], 1);
+    expect(armed.combatants[0]!.stats.atk).toBe(bare.combatants[0]!.stats.atk + 7);
+    const hit = (b: BattleState) => {
+      const e = resolveTurn(b, { p0: { kind: 'attack', target: 'e0' } }, seqRng(0.99, 0.1, 0.99, 0.5)).events[0];
+      return e?.type === 'attack' ? e.damage : 0;
+    };
+    expect(hit(armed)).toBeGreaterThan(hit(bare));
+  });
+});
+
 describe('報酬', () => {
   it('生き残った味方はそれぞれ全額、倒れた味方は 0', () => {
     const b = createBattle([createMember('hero', 1), createMember('kasumi', 1)], 'm', ['onibi', 'yamainu'], 1);

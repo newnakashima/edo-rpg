@@ -1,6 +1,6 @@
 // メニュー画面（戦闘の外）での道具・技・装備。画面に依存しない純粋なロジック。
 import { canEquip, EQUIPMENT, type EquipSlot } from '../data/equipment';
-import { addItem, ITEMS, itemCount, removeItem } from '../data/items';
+import { addItem, ITEMS, itemCount, MAX_ITEM_COUNT, removeItem } from '../data/items';
 import { SKILLS, skillsAtLevel } from '../data/skills';
 import { healAmount } from './combat';
 import type { GameState } from './gameState';
@@ -9,7 +9,7 @@ import { growthFactor } from './stats';
 
 export type FieldResult =
   | { ok: true; state: GameState; changes: { index: number; hp: number; mp: number }[] }
-  | { ok: false; reason: 'noItem' | 'notField' | 'noEffect' | 'noMp' | 'casterDown' | 'cannotEquip' };
+  | { ok: false; reason: 'noItem' | 'notField' | 'noEffect' | 'noMp' | 'casterDown' | 'cannotEquip' | 'full' };
 
 function setMember(state: GameState, index: number, member: PartyMember): GameState {
   return { ...state, party: state.party.map((m, i) => (i === index ? member : m)) };
@@ -23,24 +23,14 @@ export function useItemInField(state: GameState, itemId: string, target: number)
   const rest = removeItem(state.items, itemId);
   if (!rest) return { ok: false, reason: 'noItem' };
   const m = state.party[target];
-  if (!m) return { ok: false, reason: 'noEffect' };
+  if (!m || !itemUsableOn(itemId, m)) return { ok: false, reason: 'noEffect' };
   const s = memberStats(m);
   const e = item.effect;
   let next: PartyMember;
-  if (e.kind === 'revive') {
-    if (m.hp > 0) return { ok: false, reason: 'noEffect' };
-    next = { ...m, hp: Math.max(1, Math.floor(s.maxHp * e.rate)) };
-  } else if (m.hp <= 0) {
-    return { ok: false, reason: 'noEffect' };
-  } else if (e.kind === 'healHp') {
-    if (m.hp >= s.maxHp) return { ok: false, reason: 'noEffect' };
-    next = { ...m, hp: Math.min(s.maxHp, m.hp + e.amount) };
-  } else if (e.kind === 'healMp') {
-    if (m.mp >= s.maxMp) return { ok: false, reason: 'noEffect' };
-    next = { ...m, mp: Math.min(s.maxMp, m.mp + e.amount) };
-  } else {
-    return { ok: false, reason: 'noEffect' };
-  }
+  if (e.kind === 'revive') next = { ...m, hp: Math.max(1, Math.floor(s.maxHp * e.rate)) };
+  else if (e.kind === 'healHp') next = { ...m, hp: Math.min(s.maxHp, m.hp + e.amount) };
+  else if (e.kind === 'healMp') next = { ...m, mp: Math.min(s.maxMp, m.mp + e.amount) };
+  else return { ok: false, reason: 'noEffect' };
   return {
     ok: true,
     state: { ...setMember(state, target, next), items: rest },
@@ -97,20 +87,43 @@ export function changeEquipment(state: GameState, index: number, slot: EquipSlot
     items = removeItem(items, equipId) ?? items;
   }
   const current = m.equip[slot];
-  if (current) items = addItem(items, current);
-  const equip = { ...m.equip };
-  if (equipId === null) delete equip[slot];
-  else equip[slot] = equipId;
-  const changed = { ...m, equip };
+  if (current) {
+    // 外した装備を戻す場所がなければ、付け替えない（黙って消さない）
+    if (itemCount(items, current) >= MAX_ITEM_COUNT) return { ok: false, reason: 'full' };
+    items = addItem(items, current);
+  }
+  const changed = withEquipment(m, slot, equipId);
   const s = memberStats(changed);
   const next = { ...changed, hp: Math.min(changed.hp, s.maxHp), mp: Math.min(changed.mp, s.maxMp) };
   return { ok: true, state: { ...setMember(state, index, next), items }, changes: [] };
 }
 
-/** 装備を付け替えたら能力値がどう変わるか（メニューでの比較用）。 */
-export function statsWithEquipment(member: PartyMember, slot: EquipSlot, equipId: string | null) {
+/** 枠の装備を付け替えた（null なら外した）仲間。所持品は変えない。 */
+function withEquipment(member: PartyMember, slot: EquipSlot, equipId: string | null): PartyMember {
   const equip = { ...member.equip };
   if (equipId === null) delete equip[slot];
   else equip[slot] = equipId;
-  return memberStats({ ...member, equip });
+  return { ...member, equip };
+}
+
+/** 装備を付け替えたら能力値がどう変わるか（メニューでの比較用）。 */
+export function statsWithEquipment(member: PartyMember, slot: EquipSlot, equipId: string | null) {
+  return memberStats(withEquipment(member, slot, equipId));
+}
+
+/** 道具がその仲間に効くか（メニューで対象を選ぶときに、効かない仲間を選べなくする）。 */
+export function itemUsableOn(itemId: string, member: PartyMember): boolean {
+  const effect = ITEMS[itemId]?.effect;
+  if (!effect) return false;
+  const s = memberStats(member);
+  switch (effect.kind) {
+    case 'revive':
+      return member.hp <= 0;
+    case 'healHp':
+      return member.hp > 0 && member.hp < s.maxHp;
+    case 'healMp':
+      return member.hp > 0 && member.mp < s.maxMp;
+    case 'cure':
+      return false;
+  }
 }

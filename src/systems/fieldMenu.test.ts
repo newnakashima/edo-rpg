@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { changeEquipment, fieldSkills, statsWithEquipment, useItemInField, useSkillInField } from './fieldMenu';
+import { changeEquipment, fieldSkills, itemUsableOn, statsWithEquipment, useItemInField, useSkillInField } from './fieldMenu';
 import { newGame, type GameState } from './gameState';
 import { createMember, memberStats } from './party';
 
@@ -28,6 +28,26 @@ describe('道具をメニューで使う', () => {
     const s = game({ party: [createMember('hero', 1), { ...createMember('kasumi', 1), hp: 0 }], items: { kitsukegusuri: 1 } });
     const r = useItemInField(s, 'kitsukegusuri', 1);
     expect(r.ok && r.state.party[1]?.hp).toBe(Math.floor(memberStats(s.party[1]!).maxHp * 0.25));
+  });
+});
+
+describe('道具をメニューで使う（続き）', () => {
+  it('万金丹で気力を回復し、満タンなら使わない', () => {
+    const s = game({ party: [{ ...createMember('hero', 1), mp: 1 }], items: { mankintan: 1 } });
+    const r = useItemInField(s, 'mankintan', 0);
+    expect(r.ok && r.state.party[0]?.mp).toBe(memberStats(s.party[0]!).maxMp);
+    const full = game({ party: [createMember('hero', 1)], items: { mankintan: 1 } });
+    expect(useItemInField(full, 'mankintan', 0)).toEqual({ ok: false, reason: 'noEffect' });
+  });
+
+  it('効く仲間だけを選べる', () => {
+    const fallen = { ...createMember('kasumi', 1), hp: 0 };
+    const hurt = { ...createMember('hero', 1), hp: 1 };
+    expect(itemUsableOn('kizugusuri', hurt)).toBe(true);
+    expect(itemUsableOn('kizugusuri', fallen)).toBe(false);
+    expect(itemUsableOn('kitsukegusuri', fallen)).toBe(true);
+    expect(itemUsableOn('kitsukegusuri', hurt)).toBe(false);
+    expect(itemUsableOn('dokukeshi', hurt)).toBe(false);
   });
 });
 
@@ -82,6 +102,12 @@ describe('装備', () => {
     expect(changeEquipment(game(), 0, 'weapon', 'dotanuki')).toEqual({ ok: false, reason: 'noItem' });
     expect(changeEquipment(game({ items: { kunai: 1 } }), 0, 'weapon', 'kunai')).toEqual({ ok: false, reason: 'cannotEquip' });
     expect(changeEquipment(game({ items: { omamori: 1 } }), 0, 'weapon', 'omamori')).toEqual({ ok: false, reason: 'cannotEquip' });
+  });
+
+  it('外した装備を持ちきれないときは付け替えない', () => {
+    const s = game({ items: { nagawakizashi: 99, dotanuki: 1 } });
+    expect(changeEquipment(s, 0, 'weapon', 'dotanuki')).toEqual({ ok: false, reason: 'full' });
+    expect(changeEquipment(s, 0, 'weapon', null)).toEqual({ ok: false, reason: 'full' });
   });
 
   it('最大 HP が減ったら、HP を最大値に収める', () => {

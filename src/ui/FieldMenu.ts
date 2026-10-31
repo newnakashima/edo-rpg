@@ -2,9 +2,9 @@
 import Phaser from 'phaser';
 import { characterName } from '../data/characters';
 import { EQUIP_SLOTS, EQUIPMENT, SLOT_NAMES, canEquip, type EquipSlot } from '../data/equipment';
-import { ITEMS, itemCount, ownedEquipment, ownedItems } from '../data/items';
+import { ITEMS, itemCount, itemName, ownedEquipment, ownedItems } from '../data/items';
 import { SKILLS } from '../data/skills';
-import { changeEquipment, fieldSkills, statsWithEquipment, useItemInField, useSkillInField, type FieldResult } from '../systems/fieldMenu';
+import { changeEquipment, fieldSkills, itemUsableOn, statsWithEquipment, useItemInField, useSkillInField, type FieldResult } from '../systems/fieldMenu';
 import { memberLevel, memberStats } from '../systems/party';
 import type { Stats } from '../systems/stats';
 import { getState, setState } from '../state';
@@ -28,6 +28,7 @@ const FAIL_MESSAGES: Record<Exclude<FieldResult, { ok: true }>['reason'], string
   noMp: '気力が足りない。',
   casterDown: '倒れていて使えない。',
   cannotEquip: '付けられない。',
+  full: '外した装備を持ちきれない。',
 };
 
 export class FieldMenu {
@@ -56,25 +57,32 @@ export class FieldMenu {
   private push(items: MenuItem[], x: number, y: number, width: number, onSelect: (i: number) => void, onMove?: (i: number) => void, onCancel?: () => void): Menu {
     this.controls.flush();
     const top = Math.min(y, INFO_Y - 2 - menuHeight(items.length));
+    // 下に重なるメニューは、クリックも含めて操作できないようにする
+    this.menus[this.menus.length - 1]?.setActive(false);
     const menu = new Menu(this.scene, x, Math.max(4, top), width, items, onSelect, onCancel ?? (() => this.pop()), onMove);
     this.menus.push(menu);
     return menu;
   }
 
   private pop(): void {
-    this.menus.pop()?.destroy();
+    this.popTo(this.menus.length - 1);
+    if (this.menus.length === 0) this.close();
+  }
+
+  /** メニューが depth 枚になるまで閉じ、一番上のメニューを操作できるようにして説明を出し直す。 */
+  private popTo(depth: number): void {
+    while (this.menus.length > Math.max(0, depth)) this.menus.pop()?.destroy();
     this.controls.flush();
-    if (this.menus.length === 0) {
-      this.close();
-      return;
-    }
-    if (this.menus.length === 1) this.setInfo('');
+    const top = this.menus[this.menus.length - 1];
+    if (!top) return;
+    top.setActive(true);
+    this.setInfo('');
+    top.refresh();
   }
 
   /** 一番下（メインのメニュー）まで戻す。 */
   private popToMain(): void {
-    while (this.menus.length > 1) this.menus.pop()?.destroy();
-    this.controls.flush();
+    this.popTo(1);
   }
 
   private close(): void {
@@ -135,14 +143,21 @@ export class FieldMenu {
       (i) => {
         const id = ids[i];
         if (!id) return;
-        this.chooseMember(`${ITEMS[id]?.name ?? ''}を誰に使う？`, (target) => {
+        this.chooseMember(
+          `${ITEMS[id]?.name ?? ''}を誰に使う？`,
+          (target) => {
           const result = useItemInField(getState(), id, target);
           // 個数が変わるので、道具の一覧から開き直す（結果の表示は、開き直したときの説明より後に出す）
           const message = this.apply(result, `${ITEMS[id]?.name ?? ''}を使った。`);
           this.popToMain();
           this.openItems();
           this.setInfo(message);
-        });
+          },
+          (target) => {
+            const m = getState().party[target];
+            return m !== undefined && itemUsableOn(id, m);
+          },
+        );
       },
       (i) => {
         const item = ids[i] ? ITEMS[ids[i]] : undefined;
@@ -175,7 +190,12 @@ export class FieldMenu {
           this.setInfo(message);
         };
         if (skill.target === 'allAllies') done(useSkillInField(getState(), caster, skill.id));
-        else this.chooseMember(`${skill.name}を誰に使う？`, (target) => done(useSkillInField(getState(), caster, skill.id, target)));
+        else
+          this.chooseMember(
+            `${skill.name}を誰に使う？`,
+            (target) => done(useSkillInField(getState(), caster, skill.id, target)),
+            (target) => (getState().party[target]?.hp ?? 0) > 0,
+          );
       },
       (i) => {
         const skill = ids[i] ? SKILLS[ids[i]] : undefined;
@@ -191,7 +211,7 @@ export class FieldMenu {
     this.push(
       EQUIP_SLOTS.map((slot) => {
         const id = member.equip[slot];
-        return { label: SLOT_NAMES[slot], note: id ? (EQUIPMENT[id]?.name ?? id) : '――' };
+        return { label: SLOT_NAMES[slot], note: id ? itemName(id) : '――' };
       }),
       SUB_X,
       8,
@@ -213,8 +233,9 @@ export class FieldMenu {
       null,
     ];
     const before = memberStats(member);
+    const depth = this.menus.length;
     this.push(
-      choices.map((id) => (id === null ? { label: 'はずす', enabled: member.equip[slot] !== undefined } : { label: EQUIPMENT[id]?.name ?? id, note: `×${itemCount(state.items, id)}` })),
+      choices.map((id) => (id === null ? { label: 'はずす', enabled: member.equip[slot] !== undefined } : { label: itemName(id), note: `×${itemCount(state.items, id)}` })),
       SUB_X + 20,
       20,
       SUB_W,
@@ -228,9 +249,8 @@ export class FieldMenu {
         }
         setState(r.state);
         this.refreshStatus();
-        // 装備の枠の一覧を新しい内容で開き直す
-        this.menus.pop()?.destroy();
-        this.menus.pop()?.destroy();
+        // 装備の枠の一覧を新しい内容で開き直す（枠の一覧の下まで閉じる）
+        this.popTo(depth - 1);
         this.openEquipSlots(index);
       },
       (i) => {
@@ -242,8 +262,8 @@ export class FieldMenu {
     );
   }
 
-  private statsLine(s: Stats): string {
-    return `攻 ${s.atk}  防 ${s.def}  術 ${s.mag}  速 ${s.spd}  運 ${s.luck}  体 ${s.maxHp}`;
+  private statsLine(s: Stats, withHp = true): string {
+    return `攻 ${s.atk}  防 ${s.def}  術 ${s.mag}  速 ${s.spd}  運 ${s.luck}${withHp ? `  体 ${s.maxHp}` : ''}`;
   }
 
   private compareLine(before: Stats, after: Stats): string {
@@ -295,8 +315,11 @@ export class FieldMenu {
       const top = y + 20 + i * lineH * 3;
       const name = characterName(m.id, state.gender);
       objs.push(this.scene.add.text(x + 8, top, `${name}  Lv${memberLevel(m)}  体力 ${m.hp}/${s.maxHp}  気力 ${m.mp}/${s.maxMp}`, textStyle(10)));
-      objs.push(this.scene.add.text(x + 8, top + lineH, this.statsLine(s).replace(/ {2}体 \d+$/, ''), textStyle(9, COLORS.dim)));
-      const equips = EQUIP_SLOTS.map((slot) => EQUIPMENT[m.equip[slot] ?? '']?.name ?? '――').join(' / ');
+      objs.push(this.scene.add.text(x + 8, top + lineH, this.statsLine(s, false), textStyle(9, COLORS.dim)));
+      const equips = EQUIP_SLOTS.map((slot) => {
+        const id = m.equip[slot];
+        return id ? itemName(id) : '――';
+      }).join(' / ');
       objs.push(this.scene.add.text(x + 8, top + lineH * 2, equips, textStyle(9, COLORS.dim)));
     });
     this.status = this.scene.add.container(0, 0, objs).setScrollFactor(0).setDepth(105);

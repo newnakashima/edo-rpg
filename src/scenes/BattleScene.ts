@@ -283,12 +283,15 @@ export class BattleScene extends Phaser.Scene {
     // 下の窓からはみ出すときは上にずらす
     const y = Math.min(PANEL_Y + 2 + (this.menus.length > 1 ? 6 : 0), GAME_HEIGHT - 2 - menuHeight(items.length));
     this.log.setWordWrapWidth(LOG_WIDTH_WITH_MENU, true);
+    // 下に重なるメニューは、クリックも含めて操作できないようにする
+    this.menus[this.menus.length - 1]?.setActive(false);
     const menu = new Menu(this, x, y, width, items, onSelect, onCancel, onMove);
     this.menus.push(menu);
   }
 
   private closeTopMenu(after?: () => void): void {
     this.menus.pop()?.destroy();
+    this.menus[this.menus.length - 1]?.setActive(true);
     this.controls.flush();
     after?.();
   }
