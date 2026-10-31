@@ -1,4 +1,4 @@
-// docs/balance.md の「敵とボスの一覧」。フェーズ 1 では序章の分だけ定義する。
+// docs/balance.md の「敵とボスの一覧」。章を実装するごとに、その地域の敵を足す（今は序章と第 1 章）。
 import type { EnemyFactors } from '../systems/stats';
 import type { Element } from './skills';
 
@@ -68,6 +68,39 @@ export const ENEMIES: Record<string, EnemyDef> = {
       { skill: 'dokueki', weight: 1 },
     ],
   },
+  // 駿府（第 1 章）
+  karakuriNingyo: {
+    id: 'karakuriNingyo',
+    name: 'からくり人形',
+    color: 0xb08a5a,
+    image: true,
+    factors: { hp: 1.0, atk: 1.0, def: 1.3, spd: 0.8 },
+    weak: ['mech', 'thunder'],
+  },
+  gorotsuki: {
+    id: 'gorotsuki',
+    name: 'ごろつき',
+    color: 0x7a6a5a,
+    image: true,
+    factors: { hp: 1.0, atk: 1.1, def: 0.9, spd: 1.0 },
+    actions: [
+      { skill: 'attack', weight: 4 },
+      { skill: 'aikuchi', weight: 1 },
+      { skill: 'odoshi', weight: 1 },
+    ],
+  },
+  bakeChochin: {
+    id: 'bakeChochin',
+    name: '化け提灯',
+    color: 0xe0b040,
+    image: true,
+    factors: { hp: 0.8, atk: 1.0, def: 0.7, spd: 1.1 },
+    weak: ['holy', 'fire'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'aobi', weight: 1 },
+    ],
+  },
   // ボス（rewardScale あり）。イベントの battle で出し、出現表には入れない
   /** 序章のボス。妖狐だが、実はからくりで操られていた。序章は一人旅なので化かし（混乱）は控えめにする。 */
   yako: {
@@ -83,6 +116,22 @@ export const ENEMIES: Record<string, EnemyDef> = {
       { skill: 'bakashi', weight: 1 },
     ],
     rewardScale: 3,
+  },
+  /** 第 1 章のボス。からくり兵の指揮機。からくり人形（Lv4）を 2 体まで呼ぶ。 */
+  tetsubin: {
+    id: 'tetsubin',
+    name: 'からくり大将 鉄瓶',
+    color: 0x5a6070,
+    image: true,
+    factors: { hp: 5, atk: 0.7, def: 1.2, spd: 0.8 },
+    weak: ['mech', 'thunder'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'tekken', weight: 2 },
+      { skill: 'joki', weight: 2 },
+      { skill: 'karakuriYobi', weight: 1 },
+    ],
+    rewardScale: 5,
   },
 };
 
@@ -112,9 +161,24 @@ const PROLOGUE: EncounterTable = {
   ],
 };
 
+/** 駿府の敵の組（3 体の組は主人公と霞の 2 人から。霞の加入前の一人旅では pickGroup が 2 体までに絞る）。 */
+const SUNPU: EncounterTable = {
+  level: 4,
+  groups: [
+    { members: ['karakuriNingyo'], weight: 2 },
+    { members: ['gorotsuki', 'gorotsuki'], weight: 2 },
+    { members: ['bakeChochin', 'bakeChochin'], weight: 2 },
+    { members: ['karakuriNingyo', 'gorotsuki'], weight: 2 },
+    { members: ['karakuriNingyo', 'bakeChochin', 'bakeChochin'], weight: 1 },
+    { members: ['gorotsuki', 'gorotsuki', 'bakeChochin'], weight: 1 },
+  ],
+};
+
 export const ENCOUNTERS: Record<string, EncounterTable> = {
   /** 清水湊の裏山。 */
   urayama: PROLOGUE,
   /** 駿河の街道（ワールドマップの清水湊のまわり）。裏山と同じ。 */
   suruga: PROLOGUE,
+  /** 駿府のまわりの街道と、からくり屋敷。 */
+  sunpu: SUNPU,
 };

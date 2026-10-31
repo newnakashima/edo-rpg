@@ -18,6 +18,10 @@ describe('敵の画像', () => {
     expect(ENEMIES.yako?.image).toBe(true);
   });
 
+  it('第 1 章（駿府）の敵とボス鉄瓶にも画像がある', () => {
+    for (const id of ['karakuriNingyo', 'gorotsuki', 'bakeChochin', 'tetsubin']) expect(ENEMIES[id]?.image, id).toBe(true);
+  });
+
   it('テクスチャのキー', () => {
     expect(enemyImageKey('onibi')).toBe('enemy-onibi');
   });
@@ -38,6 +42,15 @@ describe('敵の行動', () => {
         expect(a.skill === 'attack' || SKILLS[a.skill] !== undefined, `${e.id}: ${a.skill}`).toBe(true);
         expect(a.weight, `${e.id}: ${a.skill}`).toBeGreaterThan(0);
       }
+    }
+  });
+
+  it('呼ぶ技の敵は定義されていて、呼ばれる敵はボスではない', () => {
+    for (const skill of Object.values(SKILLS)) {
+      if (skill.effect.kind !== 'summon') continue;
+      const called = ENEMIES[skill.effect.enemy];
+      expect(called, skill.id).toBeDefined();
+      expect(called?.rewardScale, skill.id).toBeUndefined();
     }
   });
 });

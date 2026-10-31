@@ -179,3 +179,43 @@ describe('報酬', () => {
     expect(aliveOf(b, 'party')).toHaveLength(1);
   });
 });
+
+describe('敵が仲間を呼ぶ（鉄瓶のからくり兵を呼ぶ）', () => {
+  // 鉄瓶の行動の重みは 通常攻撃 3・鉄拳 2・蒸気 2・からくり兵を呼ぶ 1（合計 8）。乱数 0.9 なら 7.2 で呼ぶを選ぶ
+  const party = () => [createMember('hero', 6), createMember('kasumi', 6)];
+  const guard = { p0: { kind: 'guard' as const }, p1: { kind: 'guard' as const } };
+
+  it('からくり人形を Lv4 で呼び、呼ばれた敵はそのターンには動かない', () => {
+    const b = createBattle(party(), 'm', ['tetsubin'], 7, { canEscape: false });
+    const { state, events } = resolveTurn(b, guard, seqRng(0.9));
+    const added = state.combatants.find((c) => c.key === 'e1');
+    expect(added).toMatchObject({ side: 'enemy', enemyId: 'karakuriNingyo', level: 4, name: 'からくり人形 甲', summoned: true });
+    expect(events).toContainEqual({ type: 'summon', actor: 'e0', target: 'e1' });
+    expect(events.some((e) => 'actor' in e && e.actor === 'e1')).toBe(false);
+    // 引数の状態は変わらない
+    expect(b.combatants).toHaveLength(3);
+  });
+
+  it('呼んだ敵が 2 体生きていれば、呼ぶ代わりに通常攻撃をする。倒れていればまた呼ぶ', () => {
+    let b = createBattle(party(), 'm', ['tetsubin'], 7, { canEscape: false });
+    b = resolveTurn(b, guard, seqRng(0.9)).state;
+    b = resolveTurn(b, guard, seqRng(0.9)).state;
+    expect(b.combatants.filter((c) => c.summoned).map((c) => c.name)).toEqual(['からくり人形 甲', 'からくり人形 乙']);
+    // 呼ばれたからくり人形は通常攻撃だけ。鉄瓶は呼べないので通常攻撃
+    const full = resolveTurn(b, guard, seqRng(0.9));
+    expect(full.events.filter((e) => e.type === 'summon')).toHaveLength(0);
+    expect(full.events.filter((e) => e.type === 'attack' && e.actor === 'e0')).toHaveLength(1);
+    // 1 体倒れていれば、また呼ぶ（名前は 3 体目の「丙」）
+    const fallen = { ...full.state, combatants: full.state.combatants.map((c) => (c.key === 'e1' ? { ...c, hp: 0 } : c)) };
+    const again = resolveTurn(fallen, guard, seqRng(0.9));
+    expect(again.events).toContainEqual({ type: 'summon', actor: 'e0', target: 'e3' });
+    expect(again.state.combatants.find((c) => c.key === 'e3')?.name).toBe('からくり人形 丙');
+  });
+
+  it('呼ばれた敵は倒しても経験値・お金にならない', () => {
+    let b = createBattle(party(), 'm', ['tetsubin'], 7, { canEscape: false });
+    b = resolveTurn(b, guard, seqRng(0.9)).state;
+    expect(b.combatants.some((c) => c.summoned)).toBe(true);
+    expect(computeRewards(b)).toEqual({ exp: { p0: enemyExp(7) * 5, p1: enemyExp(7) * 5 }, money: enemyMoney(7) * 5 });
+  });
+});

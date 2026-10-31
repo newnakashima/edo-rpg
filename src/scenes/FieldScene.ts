@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { ENCOUNTERS } from '../data/enemies';
-import { closedGateAt, encounterAt, MAPS, START_POSITION, tileAt, townAction, type EventTrigger, type MapDef, type NpcDef } from '../data/maps';
+import { closedGateAt, encounterAt, MAPS, npcVisible, respawnPoint, START_POSITION, tileAt, townAction, type EventTrigger, type MapDef, type NpcDef } from '../data/maps';
 import { pickGroup, step } from '../systems/encounter';
 import { dangoPrice, eatDango, innPrice, stayAtInn } from '../systems/facilities';
 import { prayAtTemple, templePrice } from '../systems/shop';
@@ -46,6 +46,8 @@ export class FieldScene extends Phaser.Scene {
    * 振り向いたあとはそのまま（マップに入り直したり戦闘から戻ったりすると、最初の向きに戻る）。
    */
   private npcSprites = new Map<string, Phaser.GameObjects.Sprite>();
+  /** NPC の表示（画像のない NPC の仮の人も含む）。hideFlag が立ったら隠す。 */
+  private npcObjects = new Map<string, Phaser.GameObjects.Image | Phaser.GameObjects.Sprite>();
   private moving = false;
   /** 行っている途中のイベント。 */
   private runner: EventRunner | null = null;
@@ -81,7 +83,7 @@ export class FieldScene extends Phaser.Scene {
     this.map = map;
     // 読み込んだ位置が通れない場所なら（マップの変更などで）、全滅時の戻り先か最初の場所に移す
     if (tileAt(map, state.x, state.y)?.blocked !== false) {
-      const fallback = map.respawn ? { mapId: map.id, ...map.respawn } : START_POSITION;
+      const fallback = respawnPoint(map.id);
       setState({ ...state, ...fallback });
       this.scene.restart({});
       return;
@@ -102,6 +104,7 @@ export class FieldScene extends Phaser.Scene {
         .setDepth(5);
     }
     this.npcSprites = new Map();
+    this.npcObjects = new Map();
     for (const npc of map.npcs) {
       if (npc.sprite) {
         const sprite = this.add
@@ -109,10 +112,12 @@ export class FieldScene extends Phaser.Scene {
           .setDisplayOrigin(CHAR_DISPLAY_ORIGIN.x, CHAR_DISPLAY_ORIGIN.y)
           .setDepth(personDepth(npc.y));
         this.npcSprites.set(npc.id, sprite);
+        this.npcObjects.set(npc.id, sprite);
       } else {
-        this.add.image(npc.x * TILE, npc.y * TILE, 'person').setOrigin(0).setTint(npc.color);
+        this.npcObjects.set(npc.id, this.add.image(npc.x * TILE, npc.y * TILE, 'person').setOrigin(0).setTint(npc.color));
       }
     }
+    this.refreshNpcs();
     this.playerSprite = heroSprite(state.gender);
     this.player = this.add
       .sprite(state.x * TILE, state.y * TILE, spriteKey(this.playerSprite), idleFrame(state.facing))
@@ -205,6 +210,8 @@ export class FieldScene extends Phaser.Scene {
       case 'done':
         this.runner = null;
         this.controls.flush();
+        // イベントで立ったフラグで、姿を消す NPC（仲間になった人、どいた見張りなど）を隠す
+        this.refreshNpcs();
         this.runEnterEvent();
         return;
     }
@@ -288,7 +295,14 @@ export class FieldScene extends Phaser.Scene {
   }
 
   private npcAt(x: number, y: number): NpcDef | undefined {
-    return this.map.npcs.find((n) => n.x === x && n.y === y);
+    const flags = getState().flags;
+    return this.map.npcs.find((n) => n.x === x && n.y === y && npcVisible(n, flags));
+  }
+
+  /** hideFlag の立った NPC を隠す。 */
+  private refreshNpcs(): void {
+    const flags = getState().flags;
+    for (const npc of this.map.npcs) this.npcObjects.get(npc.id)?.setVisible(npcVisible(npc, flags));
   }
 
   private tryMove(dir: Facing): void {
@@ -334,11 +348,11 @@ export class FieldScene extends Phaser.Scene {
       return;
     }
     // 町の印に乗ったら名前を出す（入るのは決定ボタン）
-    const onTown = townAction(this.map, state.x, state.y, 'step');
+    const onTown = townAction(this.map, state.x, state.y, 'step', state.flags);
     if (onTown?.kind === 'label') this.showAreaName(onTown.text);
     const trigger = this.map.triggers?.find((t) => t.x === state.x && t.y === state.y);
     if (trigger && this.startTrigger(trigger)) return;
-    const encounter = encounterAt(this.map, state.x, state.y);
+    const encounter = encounterAt(this.map, state.x, state.y, state.flags);
     if (!encounter) return;
     const table = ENCOUNTERS[encounter];
     if (!table) return;
@@ -369,7 +383,7 @@ export class FieldScene extends Phaser.Scene {
   private interact(): void {
     // ワールドマップの町の印の上なら、その町へ入る（まだ訪れられない町は案内を出す）
     const state = getState();
-    const town = townAction(this.map, state.x, state.y, 'ok');
+    const town = townAction(this.map, state.x, state.y, 'ok', state.flags);
     if (town?.kind === 'enter') {
       this.moveTo(town.to.mapId, town.to.x, town.to.y);
       return;
