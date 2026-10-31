@@ -352,7 +352,7 @@ export class FieldScene extends Phaser.Scene {
     if (onTown?.kind === 'label') this.showAreaName(onTown.text);
     const trigger = this.map.triggers?.find((t) => t.x === state.x && t.y === state.y);
     if (trigger && this.startTrigger(trigger)) return;
-    const encounter = encounterAt(this.map, state.x, state.y);
+    const encounter = encounterAt(this.map, state.x, state.y, state.flags);
     if (!encounter) return;
     const table = ENCOUNTERS[encounter];
     if (!table) return;

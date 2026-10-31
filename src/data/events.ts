@@ -193,7 +193,7 @@ export const EVENTS: Record<string, EventDef> = {
   },
   /**
    * 一座の工房で霞と鉢合わせる。霞が加わってから、見張りのからくり人形と戦う。
-   * 負けても先へ進める（霞の煙玉で逃げる）。霞は戦う前に加わるので、kasumiJoined も戦う前に立てる。
+   * 負けても先へ進める（霞の煙玉で逃げる）ので、kasumiJoined（工房の霞を消し、与力の屋敷の門番をどかす）は戦ったあとに立てる。
    */
   kasumiMeet: {
     id: 'kasumiMeet',
@@ -212,7 +212,6 @@ export const EVENTS: Record<string, EventDef> = {
         ],
       },
       { type: 'join', member: 'kasumi' },
-      { type: 'setFlag', flag: 'kasumiJoined' },
       {
         type: 'battle',
         enemies: ['karakuriNingyo', 'karakuriNingyo'],
@@ -227,6 +226,7 @@ export const EVENTS: Record<string, EventDef> = {
           '霞「さっき文机の文を見た。黒田って与力が、一座の荷を屋敷の蔵で預かってる。表の門番は、あたしが眠らせておくよ」',
         ],
       },
+      { type: 'setFlag', flag: 'kasumiJoined' },
     ],
   },
   /** 与力・黒田の屋敷の蔵。雇われのごろつきを倒すと、さらわれた人の名簿が見つかる。 */
@@ -268,6 +268,8 @@ export const EVENTS: Record<string, EventDef> = {
           'ズシン……ズシン……。蒸気を噴き上げ、鉄の大男が行く手に立ちはだかった！',
         ],
       },
+      // 夜叉丸はここで姿を消す（戦闘から戻ったときに、奥の間の夜叉丸を消す）
+      { type: 'setFlag', flag: 'yashamaruFled' },
       { type: 'battle', enemies: ['tetsubin'], level: 7 },
       {
         type: 'say',

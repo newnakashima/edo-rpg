@@ -106,3 +106,62 @@ describe('序章の流れ', () => {
     expect(reported.flags.prologueCleared).toBe(true);
   });
 });
+
+describe('第 1 章の流れ', () => {
+  const start = { ...newGame('m', { mapId: 'sunpu', x: 28, y: 8 }), flags: { prologueCleared: true } };
+
+  it('駿府に初めて入ると町の紹介をし、2 回目からは何もしない', () => {
+    const arrived = run('sunpuEnter', start);
+    expect(arrived.flags.sunpuArrived).toBe(true);
+    expect(arrived.flags.chapter1Cleared).toBeFalsy();
+    const runner = new EventRunner(EVENTS.sunpuEnter!.steps);
+    expect(runner.next(arrived).request.kind).toBe('done');
+  });
+
+  it('工房で霞が戦う前に仲間になり、戦ったあとで kasumiJoined が立つ。負けても先へ進める', () => {
+    const runner = new EventRunner(EVENTS.kasumiMeet!.steps);
+    let r = runner.next(start);
+    while (r.request.kind === 'say') r = runner.next(r.state);
+    expect(r.request).toMatchObject({ kind: 'battle', enemies: ['karakuriNingyo', 'karakuriNingyo'], level: 4, canEscape: false, loseOk: true });
+    expect(r.state.party.map((m) => m.id)).toEqual(['hero', 'kasumi']);
+    expect(r.state.flags.kasumiJoined).toBeFalsy();
+    for (const outcome of ['victory', 'defeat'] as const) {
+      const after = run('kasumiMeet', start, outcome);
+      expect(after.flags.kasumiJoined, outcome).toBe(true);
+      expect(after.party.map((m) => m.id)).toEqual(['hero', 'kasumi']);
+    }
+    // もう一度起きても霞は増えない
+    expect(run('kasumiMeet', run('kasumiMeet', start)).party).toHaveLength(2);
+  });
+
+  it('与力の蔵で勝つと名簿が見つかる（meiboFound）。負けたら立たない', () => {
+    expect(run('yorikiKura', start).flags.meiboFound).toBe(true);
+    expect(run('yorikiKura', start, 'defeat').flags.meiboFound).toBeFalsy();
+  });
+
+  it('鉄瓶の前に夜叉丸が消え（yashamaruFled）、勝つと tetsubinDefeated、負けたら立たない', () => {
+    const runner = new EventRunner(EVENTS.tetsubin!.steps);
+    let r = runner.next(start);
+    while (r.request.kind === 'say') r = runner.next(r.state);
+    expect(r.request).toMatchObject({ kind: 'battle', enemies: ['tetsubin'], level: 7, canEscape: false, loseOk: false });
+    expect(r.state.flags.yashamaruFled).toBe(true);
+    expect(run('tetsubin', start).flags.tetsubinDefeated).toBe(true);
+    expect(run('tetsubin', start, 'defeat').flags.tetsubinDefeated).toBeFalsy();
+  });
+
+  it('鉄瓶を倒して駿府に入ると第 1 章が終わる', () => {
+    const cleared = run('sunpuEnter', run('tetsubin', run('sunpuEnter', start)));
+    expect(cleared.flags.chapter1Cleared).toBe(true);
+  });
+
+  it('葛籠は一度だけ道具が手に入り、持ちきれないときはフラグを立てずにまた受け取れる', () => {
+    const got = run('yashikiChest1', start);
+    expect(got.items.kintsuba).toBe(1);
+    expect(got.flags.yashikiChest1).toBe(true);
+    expect(run('yashikiChest1', got).items.kintsuba).toBe(1);
+    const full = { ...start, items: { ...start.items, kintsuba: 99 } };
+    const refused = run('yashikiChest1', full);
+    expect(refused.items.kintsuba).toBe(99);
+    expect(refused.flags.yashikiChest1).toBeFalsy();
+  });
+});

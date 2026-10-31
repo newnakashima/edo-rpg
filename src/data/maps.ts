@@ -108,8 +108,8 @@ export interface MapDef {
   towns?: TownDef[];
   /** 関所。flag が立つまで通れず、lines を出す。 */
   gates?: GateDef[];
-  /** 範囲ごとの出現表（encounter より優先する）。 */
-  encounterZones?: { x: number; y: number; w: number; h: number; encounter: string }[];
+  /** 範囲ごとの出現表（encounter より優先する）。flag があれば、そのフラグが立っているときだけ使う。 */
+  encounterZones?: { x: number; y: number; w: number; h: number; encounter: string; flag?: string }[];
   /** マップに入ったときに行うイベント。 */
   onEnter?: EventTrigger;
   /** その場所に乗ったときに行うイベント。 */
@@ -372,9 +372,9 @@ MAPS.world = {
     { x: 45, y: 10, flag: 'hakoneTegata', lines: ['箱根の関所だ。役人「通行手形なき者は、通すわけにはいかぬ」'] },
   ],
   // 出現範囲は今は駿河だけ。ほかの地域の範囲は、その地域の敵を作るとき（フェーズ 4 の各章）に足す
-  // 先に書いた範囲が優先。駿府のまわり（大井川の渡し場から駿府まで）は駿府の敵、清水湊のまわりは序章の敵
+  // 先に書いた範囲が優先。駿府のまわり（大井川の渡し場から駿府まで）は、序章を終えたら駿府の敵（それまでは序章の敵）
   encounterZones: [
-    { x: 36, y: 9, w: 4, h: 4, encounter: 'sunpu' },
+    { x: 36, y: 9, w: 4, h: 4, encounter: 'sunpu', flag: 'prologueCleared' },
     { x: 36, y: 9, w: 10, h: 4, encounter: 'suruga' },
   ],
 };
@@ -685,17 +685,16 @@ MAPS.karakuriYashiki = {
       y: 2,
       color: 0x6a2a6a,
       lines: ['……'],
-      hideFlag: 'tetsubinDefeated',
+      hideFlag: 'yashamaruFled',
     },
     {
       id: 'zenmaiDevice',
-      name: '壊れた装置',
+      name: '装置',
       x: 13,
       y: 1,
       color: 0x8a8a8a,
-      lines: [
-        '人をゼンマイに封じる装置の残骸だ。もう動かない。',
-      ],
+      lines: ['歯車と管が絡み合った、異様な装置だ。'],
+      after: { flag: 'yashamaruFled', lines: ['人をゼンマイに封じる装置の残骸だ。夜叉丸に壊され、もう動かない。'] },
     },
   ],
   exits: [
@@ -741,9 +740,11 @@ export function respawnPoint(mapId: string): { mapId: string; x: number; y: numb
   return town?.respawn ? { mapId: town.id, ...town.respawn } : START_POSITION;
 }
 
-/** その場所の出現表の ID（範囲の指定が優先。なければマップ全体の encounter）。 */
-export function encounterAt(map: MapDef, x: number, y: number): string | undefined {
-  const zone = map.encounterZones?.find((z) => x >= z.x && x < z.x + z.w && y >= z.y && y < z.y + z.h);
+/** その場所の出現表の ID（範囲の指定が優先。flag の立っていない範囲は飛ばす。なければマップ全体の encounter）。 */
+export function encounterAt(map: MapDef, x: number, y: number, flags: Record<string, boolean>): string | undefined {
+  const zone = map.encounterZones?.find(
+    (z) => x >= z.x && x < z.x + z.w && y >= z.y && y < z.y + z.h && (!z.flag || flags[z.flag]),
+  );
   return zone?.encounter ?? map.encounter;
 }
 

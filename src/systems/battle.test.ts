@@ -181,7 +181,7 @@ describe('報酬', () => {
 });
 
 describe('敵が仲間を呼ぶ（鉄瓶のからくり兵を呼ぶ）', () => {
-  // 鉄瓶の行動の重みは 通常攻撃 3・鉄拳 2・蒸気 2・からくり兵を呼ぶ 2。乱数 0.9 なら呼ぶを選ぶ
+  // 鉄瓶の行動の重みは 通常攻撃 3・鉄拳 2・蒸気 2・からくり兵を呼ぶ 1（合計 8）。乱数 0.9 なら 7.2 で呼ぶを選ぶ
   const party = () => [createMember('hero', 6), createMember('kasumi', 6)];
   const guard = { p0: { kind: 'guard' as const }, p1: { kind: 'guard' as const } };
 

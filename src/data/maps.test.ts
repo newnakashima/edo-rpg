@@ -118,8 +118,9 @@ describe('マップのデータ', () => {
   });
 });
 
-/** 関所を通らずに歩いて行ける場所。 */
-function reachable(map: MapDef, from: { x: number; y: number }, flags: Record<string, boolean>): Set<string> {
+/** 関所を通らずに歩いて行ける場所。withNpcs なら、いる NPC（hideFlag で消えていない人）も通れないものとする。 */
+function reachable(map: MapDef, from: { x: number; y: number }, flags: Record<string, boolean>, withNpcs = false): Set<string> {
+  const npcs = new Set(withNpcs ? map.npcs.filter((n) => npcVisible(n, flags)).map((n) => `${n.x},${n.y}`) : []);
   const seen = new Set<string>([`${from.x},${from.y}`]);
   const queue = [from];
   while (queue.length > 0) {
@@ -128,13 +129,17 @@ function reachable(map: MapDef, from: { x: number; y: number }, flags: Record<st
       const x = p.x + dx;
       const y = p.y + dy;
       const key = `${x},${y}`;
-      if (seen.has(key) || tileAt(map, x, y)?.blocked !== false || closedGateAt(map, x, y, flags)) continue;
+      if (seen.has(key) || tileAt(map, x, y)?.blocked !== false || closedGateAt(map, x, y, flags) || npcs.has(key)) continue;
       seen.add(key);
       queue.push({ x, y });
     }
   }
   return seen;
 }
+
+/** その場所の上下左右のどれかに行けるか（話しかけられるか）。 */
+const near = (area: Set<string>, x: number, y: number) =>
+  [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => area.has(`${x + dx!},${y + dy!}`));
 
 describe('ワールドマップ', () => {
   const world = MAPS.world!;
@@ -157,8 +162,8 @@ describe('ワールドマップ', () => {
   });
 
   it('清水湊のまわりの街道では敵が出る', () => {
-    expect(encounterAt(world, 42, 10)).toBe('suruga');
-    expect(encounterAt(world, 24, 10)).toBeUndefined();
+    expect(encounterAt(world, 42, 10, {})).toBe('suruga');
+    expect(encounterAt(world, 24, 10, {})).toBeUndefined();
   });
 
   it('清水湊から東の街道へ出ると、ワールドマップの清水湊の印の隣に出る', () => {
@@ -183,10 +188,13 @@ describe('ワールドマップ', () => {
     expect(townAction(world, sunpu.x, sunpu.y, 'ok', flags)).toEqual({ kind: 'enter', to: { mapId: 'sunpu', x: 28, y: 8 } });
   });
 
-  it('駿府のまわりの街道では駿府の敵、清水湊のまわりでは序章の敵が出る', () => {
-    expect(encounterAt(world, 38, 10)).toBe('sunpu');
-    expect(encounterAt(world, 39, 11)).toBe('sunpu');
-    expect(encounterAt(world, 41, 10)).toBe('suruga');
+  it('駿府のまわりの街道では、序章を終えたら駿府の敵、それまでは序章の敵が出る。清水湊のまわりはいつも序章の敵', () => {
+    const cleared = { prologueCleared: true };
+    expect(encounterAt(world, 38, 10, cleared)).toBe('sunpu');
+    expect(encounterAt(world, 39, 11, cleared)).toBe('sunpu');
+    expect(encounterAt(world, 38, 10, {})).toBe('suruga');
+    expect(encounterAt(world, 39, 11, {})).toBe('suruga');
+    expect(encounterAt(world, 41, 10, cleared)).toBe('suruga');
   });
 
   it('駿府から街道へ出ると、駿府の印の隣に出る', () => {
@@ -238,49 +246,28 @@ describe('NPC の出入りと全滅時の戻り先', () => {
   });
 });
 
-/** NPC（いるものだけ）も通れないものとして、歩いて行ける場所。 */
-function reachableWithNpcs(map: MapDef, from: { x: number; y: number }, flags: Record<string, boolean>): Set<string> {
-  const npcs = new Set(map.npcs.filter((n) => npcVisible(n, flags)).map((n) => `${n.x},${n.y}`));
-  const seen = new Set<string>([`${from.x},${from.y}`]);
-  const queue = [from];
-  while (queue.length > 0) {
-    const p = queue.shift()!;
-    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
-      const x = p.x + dx;
-      const y = p.y + dy;
-      const key = `${x},${y}`;
-      if (seen.has(key) || tileAt(map, x, y)?.blocked !== false || npcs.has(key)) continue;
-      seen.add(key);
-      queue.push({ x, y });
-    }
-  }
-  return seen;
-}
-
 describe('第 1 章の駿府', () => {
   const sunpu = MAPS.sunpu!;
   const world = MAPS.world!;
   const town = world.towns!.find((t) => t.name === '駿府')!;
   const start = town.to!;
   const exitTo = (mapId: string) => sunpu.exits.filter((e) => e.to === mapId).map((e) => `${e.x},${e.y}`);
-  const near = (area: Set<string>, x: number, y: number) =>
-    [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => area.has(`${x + dx!},${y + dy!}`));
 
   it('工房には最初から入れ、与力の屋敷は霞が加わるまで、からくり屋敷は名簿が見つかるまで見張りがふさぐ', () => {
-    const before = reachableWithNpcs(sunpu, start, {});
+    const before = reachable(sunpu, start, {}, true);
     expect(exitTo('kobo').some((k) => before.has(k))).toBe(true);
     expect(exitTo('yoriki').some((k) => before.has(k))).toBe(false);
     expect(exitTo('karakuriYashiki').some((k) => before.has(k))).toBe(false);
-    const withKasumi = reachableWithNpcs(sunpu, start, { kasumiJoined: true });
+    const withKasumi = reachable(sunpu, start, { kasumiJoined: true }, true);
     expect(exitTo('yoriki').some((k) => withKasumi.has(k))).toBe(true);
     expect(exitTo('karakuriYashiki').some((k) => withKasumi.has(k))).toBe(false);
-    const withMeibo = reachableWithNpcs(sunpu, start, { kasumiJoined: true, meiboFound: true });
+    const withMeibo = reachable(sunpu, start, { kasumiJoined: true, meiboFound: true }, true);
     expect(exitTo('karakuriYashiki').every((k) => withMeibo.has(k))).toBe(true);
   });
 
   it('町の人には全員話しかけられる（見張りがどいたあとも）', () => {
     const flags = { kasumiJoined: true, meiboFound: true };
-    const area = reachableWithNpcs(sunpu, start, flags);
+    const area = reachable(sunpu, start, flags, true);
     for (const npc of sunpu.npcs.filter((n) => npcVisible(n, flags))) expect(near(area, npc.x, npc.y), npc.id).toBe(true);
   });
 
@@ -288,10 +275,10 @@ describe('第 1 章の駿府', () => {
     const kobo = MAPS.kobo!;
     const koboIn = sunpu.exits.find((e) => e.to === 'kobo')!;
     const kasumi = kobo.npcs.find((n) => n.id === 'koboKasumi')!;
-    expect(near(reachableWithNpcs(kobo, { x: koboIn.toX, y: koboIn.toY }, {}), kasumi.x, kasumi.y)).toBe(true);
+    expect(near(reachable(kobo, { x: koboIn.toX, y: koboIn.toY }, {}, true), kasumi.x, kasumi.y)).toBe(true);
     const yoriki = MAPS.yoriki!;
     const yorikiIn = sunpu.exits.find((e) => e.to === 'yoriki')!;
-    const area = reachableWithNpcs(yoriki, { x: yorikiIn.toX, y: yorikiIn.toY }, {});
+    const area = reachable(yoriki, { x: yorikiIn.toX, y: yorikiIn.toY }, {}, true);
     for (const t of yoriki.triggers!) {
       expect(area.has(`${t.x},${t.y}`)).toBe(true);
       expect(t.unless).toBe('meiboFound');
@@ -302,7 +289,7 @@ describe('第 1 章の駿府', () => {
     const yashiki = MAPS.karakuriYashiki!;
     const entrance = sunpu.exits.find((e) => e.to === 'karakuriYashiki')!;
     const landing = { x: entrance.toX, y: entrance.toY };
-    const area = reachableWithNpcs(yashiki, landing, {});
+    const area = reachable(yashiki, landing, {}, true);
     for (const t of yashiki.triggers!) {
       expect(area.has(`${t.x},${t.y}`), `${t.x},${t.y}`).toBe(true);
       expect(t.unless).toBe('tetsubinDefeated');
@@ -318,7 +305,7 @@ describe('第 1 章の駿府', () => {
       }),
     };
     const device = yashiki.npcs.find((n) => n.id === 'zenmaiDevice')!;
-    expect(near(reachableWithNpcs(walled, landing, {}), device.x, device.y)).toBe(false);
+    expect(near(reachable(walled, landing, {}, true), device.x, device.y)).toBe(false);
   });
 });
 
@@ -329,8 +316,6 @@ describe('序章の狐火の洞', () => {
   const landing = { x: entrance.toX, y: entrance.toY };
   const trigger = cave.triggers!.find((t) => t.event === 'yako')!;
   const crate = cave.npcs.find((n) => n.id === 'cavecrate')!;
-  const near = (area: Set<string>, x: number, y: number) =>
-    [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => area.has(`${x + dx!},${y + dy!}`));
 
   it('清水湊から裏山を通って洞へ行ける', () => {
     const shimizu = MAPS.shimizu!;

@@ -161,7 +161,7 @@ const PROLOGUE: EncounterTable = {
   ],
 };
 
-/** 駿府の敵の組（主人公と霞の 2 人なので 3 体まで）。 */
+/** 駿府の敵の組（3 体の組は主人公と霞の 2 人から。霞の加入前の一人旅では pickGroup が 2 体までに絞る）。 */
 const SUNPU: EncounterTable = {
   level: 4,
   groups: [
