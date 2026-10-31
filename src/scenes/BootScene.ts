@@ -14,6 +14,9 @@ const TILE_COLORS: Record<TileKind, [number, number]> = {
   door: [0x6a4a2e, 0x4a321e],
   floor: [0xb08a5a, 0xa07a4a],
   rock: [0x7a7a72, 0x5a5a54],
+  plain: [0x8aa865, 0x7a9858],
+  town: [0xd8c08e, 0x8a3b2e],
+  gate: [0xd8c08e, 0x5a3a1e],
 };
 
 /** 仮の画像をコードで描いてテクスチャにする。フェーズ 3 で PixelLab の画像に差し替える。 */
@@ -38,6 +41,17 @@ export class BootScene extends Phaser.Scene {
         g.fillRect(0, 0, 2, TILE);
       } else if (kind === 'roof') {
         for (let y = 2; y < TILE; y += 4) g.fillRect(0, y, TILE, 1);
+      } else if (kind === 'town') {
+        // 小さな家の印
+        g.fillStyle(0xe8e0cc, 1);
+        g.fillRect(4, 8, 8, 6);
+        g.fillStyle(accent, 1);
+        g.fillTriangle(2, 9, 14, 9, 8, 3);
+      } else if (kind === 'gate') {
+        // 関所の柵
+        g.fillRect(2, 3, 2, 12);
+        g.fillRect(12, 3, 2, 12);
+        g.fillRect(1, 5, 14, 2);
       } else if (kind === 'water') {
         g.fillRect(2, 5, 5, 1);
         g.fillRect(9, 11, 5, 1);

@@ -72,16 +72,21 @@ export interface EncounterTable {
   groups: EnemyGroup[];
 }
 
-/** 序章（清水湊の裏山）。主人公 1 人なので 1〜2 体にし、2 体の組は鬼火＋鬼火・鬼火＋大蛙だけを Lv2 から出す。 */
+/** 序章の敵の組。主人公 1 人なので 1〜2 体にし、2 体の組は鬼火＋鬼火・鬼火＋大蛙だけを Lv2 から出す。 */
+const PROLOGUE: EncounterTable = {
+  level: 1,
+  groups: [
+    { members: ['onibi'], weight: 3 },
+    { members: ['yamainu'], weight: 3 },
+    { members: ['ogaeru'], weight: 2 },
+    { members: ['onibi', 'onibi'], weight: 1, minPartyLevel: 2 },
+    { members: ['onibi', 'ogaeru'], weight: 1, minPartyLevel: 2 },
+  ],
+};
+
 export const ENCOUNTERS: Record<string, EncounterTable> = {
-  urayama: {
-    level: 1,
-    groups: [
-      { members: ['onibi'], weight: 3 },
-      { members: ['yamainu'], weight: 3 },
-      { members: ['ogaeru'], weight: 2 },
-      { members: ['onibi', 'onibi'], weight: 1, minPartyLevel: 2 },
-      { members: ['onibi', 'ogaeru'], weight: 1, minPartyLevel: 2 },
-    ],
-  },
+  /** 清水湊の裏山。 */
+  urayama: PROLOGUE,
+  /** 駿河の街道（ワールドマップの清水湊のまわり）。裏山と同じ。 */
+  suruga: PROLOGUE,
 };

@@ -1,7 +1,7 @@
 // フィールドのマップ。フェーズ 1 では仮のタイルで、序章の清水湊と裏山だけを用意する。
 // タイルの文字の意味は TILES を参照。
 
-export type TileKind = 'ground' | 'grass' | 'road' | 'tree' | 'water' | 'wall' | 'roof' | 'door' | 'floor' | 'rock';
+export type TileKind = 'ground' | 'grass' | 'road' | 'tree' | 'water' | 'wall' | 'roof' | 'door' | 'floor' | 'rock' | 'plain' | 'town' | 'gate';
 
 export interface TileDef {
   kind: TileKind;
@@ -19,6 +19,10 @@ export const TILES: Record<string, TileDef> = {
   D: { kind: 'door', blocked: true },
   _: { kind: 'floor', blocked: false },
   '^': { kind: 'rock', blocked: true },
+  // ワールドマップ用: 街道（=）と町（O）・関所（G）だけを歩ける。野原（"）は通れない
+  '"': { kind: 'plain', blocked: true },
+  O: { kind: 'town', blocked: false },
+  G: { kind: 'gate', blocked: false },
 };
 
 export type NpcAction = 'inn' | 'teahouse' | 'shop' | 'temple' | 'hikyaku';
@@ -49,6 +53,22 @@ export interface EventTrigger {
   unless?: string;
 }
 
+export interface TownDef {
+  x: number;
+  y: number;
+  name: string;
+  to?: { mapId: string; x: number; y: number };
+  /** まだ訪れられない町で出す台詞。 */
+  lines?: string[];
+}
+
+export interface GateDef {
+  x: number;
+  y: number;
+  flag: string;
+  lines: string[];
+}
+
 export interface ExitDef {
   x: number;
   y: number;
@@ -69,6 +89,12 @@ export interface MapDef {
   areaLevel: number;
   /** 全滅したときに戻る場所（旅籠の前）。 */
   respawn?: { x: number; y: number };
+  /** ワールドマップの町の印。印の上で決定ボタンを押すと to の場所へ入る（to がなければ lines を出す）。乗っただけでは入らない。 */
+  towns?: TownDef[];
+  /** 関所。flag が立つまで通れず、lines を出す。 */
+  gates?: GateDef[];
+  /** 範囲ごとの出現表（encounter より優先する）。 */
+  encounterZones?: { x: number; y: number; w: number; h: number; encounter: string }[];
   /** マップに入ったときに行うイベント。 */
   onEnter?: EventTrigger;
   /** その場所に乗ったときに行うイベント。 */
@@ -87,7 +113,7 @@ export const MAPS: Record<string, MapDef> = {
       'T,WWDWW,WWDWW,==,WWDWWWDWW,T',
       'T,.....,,,,,,,==,,,,,.....,T',
       'T,,,,,,,,,,,,,==,,,,,,,,,,,T',
-      'T=========================,T',
+      'T===========================',
       'T,,,,,,,,,,,,,==,,,,,,,,,,,T',
       'T,RRRRRRR,RRR,==RRR,RRRRR,,T',
       'T,WWWDWWW,WDW,==WDW,WWDWW,,T',
@@ -182,6 +208,8 @@ export const MAPS: Record<string, MapDef> = {
     exits: [
       { x: 14, y: 0, to: 'urayama', toX: 10, toY: 12 },
       { x: 15, y: 0, to: 'urayama', toX: 11, toY: 12 },
+      // 東の街道からワールドマップへ
+      { x: 27, y: 6, to: 'world', toX: 41, toY: 10 },
     ],
     respawn: { x: 23, y: 5 },
     onEnter: { event: 'intro', unless: 'intro' },
@@ -224,7 +252,90 @@ export const MAPS: Record<string, MapDef> = {
   },
 };
 
+/** 町に入る前の印（ワールドマップから町へ）。 */
+const NOT_YET = (name: string, chapter: string): string[] => [`${name}。（${chapter}で訪れる）`];
+
+MAPS.world = {
+  id: 'world',
+  name: '日本',
+  areaLevel: 1,
+  rows: [
+      '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',
+      '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',
+      '~~~~~~~~~~~~~~~~~~~~"""""""""~~~~~~~~~~~~~~~~~~~~~~~~~~~',
+      '~~~~~~~~~~~~~~~~~~~~"""""""""~~~~~~~~~~~~~~~~~~~~~~~~~~~',
+      '~~~~~~~~~~~~~~~~~~~~""""O""""~~~~~~~~~~~~~~~~~~~~~~~~~~~',
+      '~~~~~~~~~~~~~~"""""""""""""""""~~~~~~~~~"""""""""""""~~~',
+      '~~~~~~~~~~~~~~""""""""^^"""""""~~~~~~~~~"""""""TT"O""~~~',
+      '~~~~~~~~~~""""""""""""""""""""^^"^""""^""""^""""""=""~~~',
+      '~~~~~~~~~~""""""^^"""""""^^""""^^"""^^""""^"""""""=""~~~',
+      '~~~~~~~~~~""TT""""""""""""""""""""""""""""""""""""="""~~',
+      '~~~~~~~~~~"""""""""""===O=======O===G==O"====G====O"""~~',
+      '~~~~~~~~~~====O======O"""""O"""""""""""==O""""""""""""~~',
+      '~~~~~~~~~~="""""""""""""""""TT"""""T""""T"""""""""""""~~',
+      '~"""""=====""""""""""""""""""""""""""""""""""""""""~~~~~',
+      '~""====""~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',
+      '~""="^"""~~~~""""""""""~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',
+      '~""O"^"""~~~~""T""^""""~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',
+      '~""""""T"~~~~""""""""""~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',
+      '~""""""""~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',
+      '~""""""""~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',
+      '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',
+      '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',
+  ],
+  npcs: [],
+  exits: [],
+  towns: [
+    { x: 41, y: 11, name: '清水湊', to: { mapId: 'shimizu', x: 26, y: 6 } },
+    { x: 39, y: 10, name: '駿府', lines: NOT_YET('駿府城下', '第 1 章') },
+    { x: 32, y: 10, name: '名古屋', lines: NOT_YET('尾張名古屋', '第 2 章') },
+    { x: 27, y: 11, name: '伊賀', lines: NOT_YET('伊賀上野', '第 4 章') },
+    { x: 24, y: 10, name: '京', lines: NOT_YET('京', '第 3 章') },
+    { x: 21, y: 11, name: '大坂', lines: NOT_YET('大坂', '第 5 章') },
+    { x: 14, y: 11, name: '広島', lines: NOT_YET('広島', '第 6 章') },
+    { x: 3, y: 16, name: '長崎', lines: NOT_YET('長崎・出島', '第 6 章') },
+    // 金沢へは街道でつながず、第 7 章で長崎から北前船（イベント）で渡る
+    { x: 24, y: 4, name: '金沢', lines: NOT_YET('加賀金沢', '第 7 章') },
+    { x: 50, y: 10, name: '江戸', lines: NOT_YET('江戸', '第 8 章') },
+    { x: 50, y: 6, name: '仙台', lines: NOT_YET('仙台', '第 8 章') },
+  ],
+  gates: [
+    { x: 36, y: 10, flag: 'oigawaOpen', lines: ['大井川の渡し場だ。川越し人足「水かさが増えて、今は渡せねえよ」'] },
+    { x: 45, y: 10, flag: 'hakoneTegata', lines: ['箱根の関所だ。役人「通行手形なき者は、通すわけにはいかぬ」'] },
+  ],
+  // 出現範囲は今は駿河だけ。ほかの地域の範囲は、その地域の敵を作るとき（フェーズ 4 の各章）に足す
+  encounterZones: [{ x: 36, y: 9, w: 10, h: 4, encounter: 'suruga' }],
+};
+
 export const START_POSITION = { mapId: 'shimizu', x: 14, y: 7 };
+
+export type TownAction =
+  | { kind: 'enter'; to: { mapId: string; x: number; y: number } }
+  | { kind: 'info'; lines: string[] }
+  | { kind: 'label'; text: string };
+
+/**
+ * ワールドマップの町の印での動き。乗ったとき（step）は名前を出すだけで入らず、
+ * 決定ボタン（ok）で入る（まだ入れない町は案内を出す）。印がなければ null。
+ */
+export function townAction(map: MapDef, x: number, y: number, by: 'step' | 'ok'): TownAction | null {
+  const town = map.towns?.find((t) => t.x === x && t.y === y);
+  if (!town) return null;
+  if (by === 'step') return { kind: 'label', text: town.to ? `${town.name}（決定で入る）` : town.name };
+  if (town.to) return { kind: 'enter', to: town.to };
+  return { kind: 'info', lines: town.lines ?? [town.name] };
+}
+
+/** その場所の出現表の ID（範囲の指定が優先。なければマップ全体の encounter）。 */
+export function encounterAt(map: MapDef, x: number, y: number): string | undefined {
+  const zone = map.encounterZones?.find((z) => x >= z.x && x < z.x + z.w && y >= z.y && y < z.y + z.h);
+  return zone?.encounter ?? map.encounter;
+}
+
+/** 通れない関所（flag がまだ立っていない）。 */
+export function closedGateAt(map: MapDef, x: number, y: number, flags: Record<string, boolean>): GateDef | undefined {
+  return map.gates?.find((g) => g.x === x && g.y === y && !flags[g.flag]);
+}
 
 export function tileAt(map: MapDef, x: number, y: number): TileDef | undefined {
   const ch = map.rows[y]?.[x];
