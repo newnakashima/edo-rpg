@@ -42,18 +42,37 @@ export function preventZoomGestures(target: ZoomGuardTarget, now: () => number =
   target.addEventListener('dblclick', block, active);
 }
 
-/** 拡大されてしまったら、viewport の指定を設定し直して等倍に戻す。 */
-export function resetZoomWhenScaled(win: Window = window): void {
-  const vv = win.visualViewport;
-  const meta = win.document.querySelector<HTMLMetaElement>('meta[name="viewport"]');
-  if (!vv || !meta) return;
+/** viewport を一時的に変えてから元に戻すまでの時間（ミリ秒）。iOS が viewport を読み直す間を空ける。 */
+export const RESET_RESTORE_MS = 100;
+
+export interface ViewportLike {
+  readonly scale: number;
+  addEventListener(type: 'resize', listener: () => void): void;
+}
+
+/**
+ * 拡大されてしまったら、viewport の指定を設定し直して等倍に戻す。
+ * 一度別の値にしてから戻すと、iOS が viewport を読み直して倍率を 1 に戻す。
+ */
+export function installZoomReset(
+  viewport: ViewportLike,
+  meta: { content: string },
+  schedule: (fn: () => void, ms: number) => void = (fn, ms) => void setTimeout(fn, ms),
+): void {
   const original = meta.content;
-  vv.addEventListener('resize', () => {
-    if (vv.scale <= 1.01) return;
-    // 一度別の値にしてから戻すと、iOS が viewport を読み直して倍率を 1 に戻す
+  let restoring = false;
+  viewport.addEventListener('resize', () => {
+    if (viewport.scale <= 1.01 || restoring) return;
+    restoring = true;
     meta.content = `${original}, minimum-scale=1`;
-    win.requestAnimationFrame(() => {
+    schedule(() => {
       meta.content = original;
-    });
+      restoring = false;
+    }, RESET_RESTORE_MS);
   });
+}
+
+export function resetZoomWhenScaled(win: Window = window): void {
+  const meta = win.document.querySelector<HTMLMetaElement>('meta[name="viewport"]');
+  if (win.visualViewport && meta) installZoomReset(win.visualViewport, meta);
 }
