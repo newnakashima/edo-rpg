@@ -72,6 +72,28 @@ describe('雑魚敵の種類', () => {
     }
   });
 
+  it('一人旅では 2 体まで、2 人では 3 体まで（駿府・東海道・名古屋）', () => {
+    const rng = seededRng(8);
+    const sizes = (id: string, size: number) => Array.from({ length: 400 }, () => pickGroup(ENCOUNTERS[id]!, { size, maxLevel: 10 }, rng)?.length ?? 0);
+    expect(Math.max(...sizes('sunpu', 1))).toBe(2);
+    for (const id of ['sunpu', 'tokaido', 'nagoya']) expect(Math.max(...sizes(id, 2)), id).toBe(3);
+  });
+
+  it('一人旅の駿府で、猪とごろつきの 2 体だけの組は出ない', () => {
+    const rng = seededRng(9);
+    for (let i = 0; i < 400; i++) {
+      const g = pickGroup(ENCOUNTERS.sunpu!, { size: 1, maxLevel: 4 }, rng)!;
+      expect(g.includes('inoshishi') && g.includes('gorotsuki')).toBe(false);
+    }
+  });
+
+  it('一人旅の序章でも、足した敵（鎌鼬・狢）が出る', () => {
+    const rng = seededRng(10);
+    const seen = new Set(Array.from({ length: 400 }, () => pickGroup(ENCOUNTERS.urayama!, { size: 1, maxLevel: 1 }, rng)!).flat());
+    expect(seen.has('kamaitachi')).toBe(true);
+    expect(seen.has('mujina')).toBe(true);
+  });
+
   it('序章は主人公 1 人なので、2 体の組は Lv2 から', () => {
     for (const g of ENCOUNTERS.urayama!.groups) {
       expect(g.members.length).toBeLessThanOrEqual(2);

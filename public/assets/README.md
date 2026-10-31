@@ -78,10 +78,10 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 | karakasa | e05b3306-daaa-44cc-93d2-5f950ae1e1a8 | south | tsukumogami umbrella monster: a tall narrow CLOSED folded red paper umbrella standing upright like a cone, with one big round eye in the middle of the folded umbrella and a long red tongue hanging from a mouth under the eye, the bottom ends in ONE single bare human leg wearing ONE wooden geta sandal, standing on one leg, small and centered with empty space around it, JRPG enemy battle sprite, facing viewer（text_guidance_scale 14） |
 | gomanohai | 74abd30a-493f-49c2-b762-0c0f2c48d37c | south-west | Edo period Japanese thief, middle-aged man with stubble, shifty eyes and sly grin, his head and cheeks wrapped in a white cloth like a hood that covers the top of his head and is knotted under his chin (hokkamuri, like a cartoon burglar), plain grey travel kimono, small bundle on his back, holding a short dagger, crouching sneakily, small and centered with empty space around it, full body, JRPG enemy battle sprite, three-quarter front view（text_guidance_scale 12） |
 | hitotsumeKozo | 8d79cb36-bf9f-411a-a6c8-5a4f39c45f0d | south-west | Japanese yokai hitotsume-kozo, a small bald boy monk with one single huge eye in the middle of his face, long red tongue sticking out, wearing a plain blue-grey monk robe, holding a paper lantern on a stick, spooky, small and centered with empty space around it, full body standing, JRPG enemy battle sprite, three-quarter front view |
-| chahakobi | 89f47ffa-1c09-45e4-86d3-284e8b0cee58 | south-west | Japanese karakuri tea-serving doll (chahakobi ningyo), small wooden clockwork doll with white painted face and black hair, wearing a red hakama, holding a tray with a teacup in both hands, big brass wind-up key on its back, brass gears visible at its wooden wheel base, glowing red eyes, small and centered with empty space around it, full body, JRPG enemy battle sprite, three-quarter front view |
+| chahakobi | 053916cb-44ed-48e4-a658-64393ff3f9db | south-west | Japanese karakuri clockwork tea-serving doll robot, a small doll with a white painted face and black hair holding a tray with a teacup, its wooden body has an open panel on the chest showing big brass gears and cogs, a large brass wind-up key sticking out from its back, it rolls on visible wooden wheels instead of feet, stiff mechanical pose, glowing red eyes, small and centered with empty space around it, full body, JRPG enemy battle sprite, three-quarter front view（text_guidance_scale 12。2px 上げた） |
 | kappa | cfadc8a1-5f22-4694-8eac-19ed96430563 | south-west | Japanese river yokai kappa, green scaly skin, a flat white water dish on top of its head ringed by messy hair, yellow beak, brown turtle shell on its back, webbed hands with claws raised, menacing, small and centered with empty space around it, full body standing, JRPG enemy battle sprite, three-quarter front view |
 | aooni | 1109776a-be8c-4138-af33-e50ef80b9874 | south-west | Japanese blue oni (aooni), bright blue skin, one big horn on the forehead, wild white hair, yellow and black striped tiger-skin loincloth, holding a black iron kanabo club with silver studs, angry face with fangs, full body standing, JRPG enemy battle sprite, three-quarter front view, small and centered with empty space around it |
-| wanyudo | 27951643-1fb2-413a-bb18-043386574a79 | south | Japanese yokai wanyudo, a large wooden ox-cart wheel engulfed in orange flames, with a huge angry bald man's face with glaring eyes in the center hub of the wheel, small and centered with empty space around it, JRPG enemy battle sprite, facing viewer |
+| wanyudo | 360a36b2-c156-4ff8-bb96-39a7b3179b19 | south | Japanese yokai wanyudo, a burning wooden ox-cart wheel with small orange flames around its rim, in the center hub of the wheel is the angry face of a bald shaven-headed old monk, no horns, glaring eyes, the whole wheel is small and centered with lots of transparent empty space above and around it, JRPG enemy battle sprite, facing viewer（text_guidance_scale 12。2px 下げた） |
 
 第 1 章の 4 体の作り直しの記録:
 
@@ -89,14 +89,6 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 - 化け提灯: 1 回目は目が 2 つで愛嬌のある顔になった。2 回目は「single huge eye」「torn ripped paper」で一つ目と裂けた口になったが、画像の上下の端まで描かれて頭の輪が切れているか分からなかった。3 回目は 2 回目を init_image にして「small, centered with empty space」で余白を作り採用（計 3 回）。
 - ごろつき・鉄瓶: 1 回目で採用（各 1 回）。
 
-テストプレイのフィードバック（雑魚敵が少ない）で足した序章〜京の 10 体の記録（計 19 回）:
-
-- 狢・茶運び人形・河童・青鬼・輪入道・一つ目小僧: 1 回目で採用（各 1 回）。
-- 猪: 1 回目は立ち姿で突進の構えでなかった。2 回目で「charging, head lowered」で採用（計 2 回）。
-- 鎌鼬: 1 回目はネズミに見えた。2 回目はつむじ風が画像の端に触れ、鎌が細かった。3 回目で「front legs end in large sickle blades」「small and centered」で採用（計 3 回）。
-- 傘お化け: 1 回目・2 回目は足が 2 本で、傘を持った別の生き物になった。3 回目で「closed folded umbrella IS the body」「ONE single leg」で採用（計 3 回）。
-- 護摩の灰: 1 回目は子どもの顔、2 回目は頬かむりでなく鉢巻になった。3 回目で採用（計 3 回）。
-- 野衾（使っていない）: 前足と後ろ足のあいだの皮膜が、5 回とも虫の羽か、皮膜のない姿になった（c57e1650・30f581c3・aeaa9989 ほか）。上限の 5 回に達しても必須の項目（皮膜）を満たさなかったので採用せず、東海道の敵を一つ目小僧に差し替えた。
 - 足元をそろえるため、からくり人形は 2px 上、ごろつきは 1px 上、鉄瓶は 1px 下へずらした（化け提灯は鬼火と同じく浮いているのでそのまま）。
 
 第 2 章の 5 体の作り直しの記録:
@@ -139,6 +131,18 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 - 平家蟹: 1 回目は甲羅に人の顔が見えなかった。2 回目は 1 回目の甲羅に怒った顔を描き足して init_image（strength 350）にして採用（計 2 回）。
 - 南蛮大筒からくり: 1 回目は胸が青い画面のようで歯車と分からず、足元の下の余白も足りなかった。2 回目は 88% に縮めて胸に歯車を描き足し、init_image（strength 300）にして採用（計 2 回）。
 - 足元をそろえるため、南蛮からくり兵・海坊主は 2px 上（上の余白を 1 行残すため、足元は地面の行より 1px 低い）、亡霊武者・外法使い・南蛮大筒からくりは 1px 下、平家蟹は 4px 下へずらした。
+
+テストプレイのフィードバック（雑魚敵が少ない）で足した序章〜京の 10 体の記録（採用した 10 体で計 21 回。使わなかった野衾の 5 回を含めると 26 回）:
+
+- 狢・河童・青鬼・一つ目小僧: 1 回目で採用（各 1 回）。
+- 茶運び人形: 1 回目は赤い袴の少女に見え、背中の鍵が小さくからくりと分からなかった（レビューで指摘）。2 回目で「open panel on the chest showing big brass gears」「wooden wheels instead of feet」で採用（計 2 回）。
+- 輪入道: 1 回目は車輪の中の顔に角と耳があり、入道（坊主頭の男）でなく鬼に見えた（レビューで指摘）。2 回目は坊主頭になったが炎が画像の上端で切れた。3 回目で「small flames around its rim」「lots of transparent empty space」で採用（計 3 回）。
+- 猪: 1 回目は立ち姿で突進の構えでなかった。2 回目で「charging, head lowered」で採用（計 2 回）。
+- 鎌鼬: 1 回目はネズミに見えた。2 回目はつむじ風が画像の端に触れ、鎌が細かった。3 回目で「front legs end in large sickle blades」「small and centered」で採用（計 3 回）。
+- 傘お化け: 1 回目・2 回目は足が 2 本で、傘を持った別の生き物になった。3 回目で「closed folded umbrella IS the body」「ONE single leg」で採用（計 3 回）。
+- 護摩の灰: 1 回目は子どもの顔、2 回目は頬かむりでなく鉢巻になった。3 回目で採用（計 3 回）。
+- 野衾（使っていない）: 前足と後ろ足のあいだの皮膜が、5 回とも虫の羽か、皮膜のない姿になった（c57e1650・30f581c3・aeaa9989 ほか）。上限の 5 回に達しても必須の項目（皮膜）を満たさなかったので採用せず、東海道の敵を一つ目小僧に差し替えた。
+- 足元をそろえるため、鎌鼬は 4px 下、一つ目小僧は 5px 下、河童は 3px 下、輪入道は 2px 下、狢・傘お化け・茶運び人形は 2px 上、護摩の灰は 3px 上、猪は 1px 上へずらした。
 
 ## 物（`objects/`）
 

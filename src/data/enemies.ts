@@ -639,7 +639,8 @@ const SUNPU: EncounterTable = {
     { members: ['gorotsuki', 'gorotsuki', 'bakeChochin'], weight: 1 },
     { members: ['inoshishi'], weight: 2 },
     { members: ['karakasa', 'karakasa'], weight: 2 },
-    { members: ['inoshishi', 'gorotsuki'], weight: 1 },
+    // 猪＋ごろつきは一人旅には重い（主人公 Lv3 で勝率 6%）ので、化け提灯を足した 3 体の組にして霞が加わってから出す
+    { members: ['inoshishi', 'gorotsuki', 'bakeChochin'], weight: 1 },
     { members: ['karakasa', 'bakeChochin', 'bakeChochin'], weight: 1 },
   ],
 };
