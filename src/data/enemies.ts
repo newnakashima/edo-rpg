@@ -12,8 +12,10 @@ export interface EnemyAction {
 export interface EnemyDef {
   id: string;
   name: string;
-  /** 仮画像の色（画像ができるまで使う）。 */
+  /** 仮画像の色（image がないときに使う）。 */
   color: number;
+  /** 戦闘の画像 public/assets/enemies/<id>.png があるか（PixelLab で生成。記録は public/assets/README.md）。 */
+  image?: boolean;
   factors: EnemyFactors;
   /** 弱点（1.5 倍）。 */
   weak?: Element[];
@@ -23,11 +25,17 @@ export interface EnemyDef {
   actions?: EnemyAction[];
 }
 
+/** 敵の画像のテクスチャのキー。 */
+export function enemyImageKey(id: string): string {
+  return `enemy-${id}`;
+}
+
 export const ENEMIES: Record<string, EnemyDef> = {
   onibi: {
     id: 'onibi',
     name: '鬼火',
     color: 0x6fb7ff,
+    image: true,
     factors: { hp: 0.7, atk: 0.9, def: 0.6, spd: 1.2 },
     weak: ['holy'],
     resist: ['fire'],
@@ -40,6 +48,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     id: 'yamainu',
     name: '山犬',
     color: 0x9b7653,
+    image: true,
     factors: { hp: 1.0, atk: 1.0, def: 0.8, spd: 1.1 },
     actions: [
       { skill: 'attack', weight: 5 },
@@ -50,6 +59,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     id: 'ogaeru',
     name: '大蛙',
     color: 0x5f8f3e,
+    image: true,
     factors: { hp: 1.3, atk: 0.9, def: 1.0, spd: 0.7 },
     actions: [
       { skill: 'attack', weight: 4 },
