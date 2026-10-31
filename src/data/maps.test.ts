@@ -98,17 +98,21 @@ function reachable(map: MapDef, from: { x: number; y: number }, flags: Record<st
 describe('ワールドマップ', () => {
   const world = MAPS.world!;
   const shimizu = world.towns!.find((t) => t.name === '清水湊')!;
+  // 町の印は乗っても入らない（決定ボタンで入る）ので、印の上も通り抜けられる
+  const exit = MAPS.shimizu!.exits.find((e) => e.to === 'world')!;
+  const landing = { x: exit.toX, y: exit.toY };
 
-  it('清水湊からは、関所を越えなければ駿府までしか行けない', () => {
-    const area = reachable(world, shimizu, {});
+  it('清水湊の東の街道から出ると、関所を越えなければ清水湊と駿府にしか行けない', () => {
+    const area = reachable(world, landing, {});
     const towns = world.towns!.filter((t) => area.has(`${t.x},${t.y}`)).map((t) => t.name);
     expect(towns.sort()).toEqual(['清水湊', '駿府'].sort());
   });
 
-  it('関所が開けば、街道ですべての町につながる', () => {
+  it('関所が開けば、金沢（北前船で渡る）のほかはすべての町に街道でつながる', () => {
     const flags = Object.fromEntries(world.gates!.map((g) => [g.flag, true]));
-    const area = reachable(world, shimizu, flags);
-    for (const t of world.towns!) expect(area.has(`${t.x},${t.y}`), t.name).toBe(true);
+    const area = reachable(world, landing, flags);
+    const unreachable = world.towns!.filter((t) => !area.has(`${t.x},${t.y}`)).map((t) => t.name);
+    expect(unreachable).toEqual(['金沢']);
   });
 
   it('清水湊のまわりの街道では敵が出る', () => {
@@ -116,9 +120,9 @@ describe('ワールドマップ', () => {
     expect(encounterAt(world, 24, 10)).toBeUndefined();
   });
 
-  it('清水湊から東の街道へ出るとワールドマップの清水湊の隣に出る', () => {
-    const exit = MAPS.shimizu!.exits.find((e) => e.to === 'world')!;
-    expect(tileAt(world, exit.toX, exit.toY)?.blocked).toBe(false);
-    expect(Math.abs(exit.toX - shimizu.x) + Math.abs(exit.toY - shimizu.y)).toBe(1);
+  it('清水湊から東の街道へ出るとワールドマップの清水湊の隣に出て、清水湊の印から町へ戻れる', () => {
+    expect(tileAt(world, landing.x, landing.y)?.blocked).toBe(false);
+    expect(Math.abs(landing.x - shimizu.x) + Math.abs(landing.y - shimizu.y)).toBe(1);
+    expect(shimizu.to?.mapId).toBe('shimizu');
   });
 });

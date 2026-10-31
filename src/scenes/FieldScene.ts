@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { ENCOUNTERS } from '../data/enemies';
-import { closedGateAt, encounterAt, MAPS, START_POSITION, tileAt, type EventTrigger, type MapDef, type NpcDef } from '../data/maps';
+import { closedGateAt, encounterAt, MAPS, START_POSITION, tileAt, type EventTrigger, type MapDef, type NpcDef, type TownDef } from '../data/maps';
 import { pickGroup, step } from '../systems/encounter';
 import { dangoPrice, eatDango, innPrice, stayAtInn } from '../systems/facilities';
 import { prayAtTemple, templePrice } from '../systems/shop';
@@ -41,6 +41,8 @@ export class FieldScene extends Phaser.Scene {
   private moving = false;
   /** 行っている途中のイベント。 */
   private runner: EventRunner | null = null;
+  /** 画面上の地名の表示。 */
+  private areaName: Phaser.GameObjects.GameObject[] = [];
   /** このマップに入ったときのイベントを、まだ行っていない。 */
   private enterPending = false;
   private message!: MessageWindow;
@@ -59,6 +61,7 @@ export class FieldScene extends Phaser.Scene {
     this.overlays = [];
     this.runner = null;
     this.enterPending = false;
+    this.areaName = [];
     const state = getState();
     const map = MAPS[state.mapId];
     if (!map) {
@@ -198,12 +201,27 @@ export class FieldScene extends Phaser.Scene {
   }
 
   private showAreaName(name: string): void {
+    // 前の表示が残っていたら消してから出す（重ならないように）
+    for (const o of this.areaName) {
+      this.tweens.killTweensOf(o);
+      o.destroy();
+    }
     const label = this.add.text(GAME_WIDTH / 2, 14, name, textStyle(11, COLORS.text)).setOrigin(0.5).setScrollFactor(0).setDepth(90);
     const bg = this.add
       .rectangle(GAME_WIDTH / 2, 14, label.width + 16, 16, 0x000000, 0.5)
       .setScrollFactor(0)
       .setDepth(89);
-    this.tweens.add({ targets: [label, bg], alpha: 0, delay: 1500, duration: 600, onComplete: () => [label, bg].forEach((o) => o.destroy()) });
+    this.areaName = [label, bg];
+    this.tweens.add({
+      targets: [label, bg],
+      alpha: 0,
+      delay: 1500,
+      duration: 600,
+      onComplete: () => {
+        [label, bg].forEach((o) => o.destroy());
+        this.areaName = this.areaName.filter((o) => o !== label && o !== bg);
+      },
+    });
   }
 
   update(_time: number, delta: number): void {
@@ -272,24 +290,12 @@ export class FieldScene extends Phaser.Scene {
     const state = getState();
     const exit = this.map.exits.find((e) => e.x === state.x && e.y === state.y);
     if (exit) {
-      setState({ ...state, mapId: exit.to, x: exit.toX, y: exit.toY });
-      this.cameras.main.fadeOut(200, 0, 0, 0);
-      this.cameras.main.once('camerafadeoutcomplete', () => this.scene.restart({}));
-      this.moving = true;
+      this.moveTo(exit.to, exit.toX, exit.toY);
       return;
     }
-    const town = this.map.towns?.find((t) => t.x === state.x && t.y === state.y);
-    if (town?.to) {
-      setState({ ...state, mapId: town.to.mapId, x: town.to.x, y: town.to.y });
-      this.cameras.main.fadeOut(200, 0, 0, 0);
-      this.cameras.main.once('camerafadeoutcomplete', () => this.scene.restart({}));
-      this.moving = true;
-      return;
-    }
-    if (town?.lines) {
-      this.message.show(town.lines);
-      return;
-    }
+    // 町の印に乗ったら名前を出す（入るのは決定ボタン）
+    const town = this.townHere();
+    if (town) this.showAreaName(`${town.name}（決定で入る）`);
     const trigger = this.map.triggers?.find((t) => t.x === state.x && t.y === state.y);
     if (trigger && this.startTrigger(trigger)) return;
     const encounter = encounterAt(this.map, state.x, state.y);
@@ -310,7 +316,30 @@ export class FieldScene extends Phaser.Scene {
     this.time.delayedCall(260, () => this.scene.start('Battle', { enemyIds: group, level: table.level }));
   }
 
+  /** 別のマップ（または同じマップの別の場所）へ移る。 */
+  private moveTo(mapId: string, x: number, y: number): void {
+    setState({ ...getState(), mapId, x, y });
+    this.cameras.main.fadeOut(200, 0, 0, 0);
+    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.restart({}));
+    this.moving = true;
+  }
+
+  private townHere(): TownDef | undefined {
+    const state = getState();
+    return this.map.towns?.find((t) => t.x === state.x && t.y === state.y);
+  }
+
   private interact(): void {
+    // ワールドマップの町の印の上なら、その町へ入る（まだ訪れられない町は案内を出す）
+    const town = this.townHere();
+    if (town?.to) {
+      this.moveTo(town.to.mapId, town.to.x, town.to.y);
+      return;
+    }
+    if (town?.lines) {
+      this.message.show(town.lines);
+      return;
+    }
     const state = getState();
     const [dx, dy] = DELTA[state.facing];
     const npc = this.npcAt(state.x + dx, state.y + dy);
