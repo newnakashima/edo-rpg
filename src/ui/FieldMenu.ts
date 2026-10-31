@@ -125,6 +125,8 @@ export class FieldMenu {
       20 + this.menus.length * 12,
       SUB_W,
       (i) => onChoose(i),
+      // 上のメニューから戻ってきたときにも案内を出し直す
+      () => this.setInfo(prompt),
     );
   }
 
@@ -146,12 +148,12 @@ export class FieldMenu {
         this.chooseMember(
           `${ITEMS[id]?.name ?? ''}を誰に使う？`,
           (target) => {
-          const result = useItemInField(getState(), id, target);
-          // 個数が変わるので、道具の一覧から開き直す（結果の表示は、開き直したときの説明より後に出す）
-          const message = this.apply(result, `${ITEMS[id]?.name ?? ''}を使った。`);
-          this.popToMain();
-          this.openItems();
-          this.setInfo(message);
+            const result = useItemInField(getState(), id, target);
+            // 個数が変わるので、道具の一覧から開き直す（結果の表示は、開き直したときの説明より後に出す）
+            const message = this.apply(result, `${ITEMS[id]?.name ?? ''}を使った。`);
+            this.popToMain();
+            this.openItems();
+            this.setInfo(message);
           },
           (target) => {
             const m = getState().party[target];
