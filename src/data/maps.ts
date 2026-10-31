@@ -1,9 +1,11 @@
-// フィールドのマップ。フェーズ 1 では仮のタイルで、序章の清水湊と裏山だけを用意する。
+// フィールドのマップ。序章の清水湊と裏山、ワールドマップを用意する。
 // タイルの文字の意味は TILES を参照。
 import type { Facing } from '../systems/gameState';
 import type { CharacterSpriteId } from './sprites';
 
-export type TileKind = 'ground' | 'grass' | 'road' | 'tree' | 'water' | 'wall' | 'roof' | 'door' | 'floor' | 'rock' | 'plain' | 'town' | 'gate';
+/** タイルの種類。画像は public/assets/tiles/<種類>.png（PixelLab で生成。記録は public/assets/README.md）。 */
+export const TILE_KINDS = ['ground', 'grass', 'road', 'tree', 'water', 'wall', 'roof', 'door', 'floor', 'rock', 'plain', 'town', 'gate'] as const;
+export type TileKind = (typeof TILE_KINDS)[number];
 
 export interface TileDef {
   kind: TileKind;
