@@ -95,9 +95,10 @@ export class BattleScene extends Phaser.Scene {
     enemies.forEach((e, i) => {
       const def = e.enemyId ? ENEMIES[e.enemyId] : undefined;
       const x = spacing * (i + 1);
-      // 画像のある敵は足元を地面（y = 104）に合わせる。ない敵は仮の塊をティントで色分けする
+      // 画像のある敵は画像の下端を y = 106 に置く。画像（64 × 64）の下には 5px ほどの透明な余白があるので、
+      // 足元（いちばん下の不透明な行、画像の y = 58 付近）が地面の 1 行目（y = 100）に乗る。ない敵は仮の塊をティントで色分けする
       const sprite = def?.image
-        ? this.add.image(x, 104, enemyImageKey(def.id)).setOrigin(0.5, 1)
+        ? this.add.image(x, 106, enemyImageKey(def.id)).setOrigin(0.5, 1)
         : this.add.image(x, 82, 'enemy').setTint(def?.color ?? 0xffffff);
       this.add.text(x, 112, e.name, textStyle(9)).setOrigin(0.5);
       this.enemySprites.set(e.key, sprite);
