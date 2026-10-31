@@ -1,4 +1,5 @@
 import { CHARACTERS, type CharacterId } from '../data/characters';
+import { skillsLearnedBetween } from '../data/skills';
 import { levelForExp, statsAtLevel, totalExpForLevel, type Stats } from './stats';
 
 export interface PartyMember {
@@ -36,6 +37,8 @@ export interface LevelUp {
   id: CharacterId;
   from: number;
   to: number;
+  /** このレベルアップで覚えた技の ID。 */
+  learned: string[];
 }
 
 /**
@@ -52,7 +55,7 @@ export function gainExp(party: PartyMember[], amounts: number[]): { party: Party
     const updated = { ...m, exp: m.exp + amount };
     const to = memberLevel(updated);
     if (to === from) return updated;
-    levelUps.push({ id: m.id, from, to });
+    levelUps.push({ id: m.id, from, to, learned: skillsLearnedBetween(m.id, from, to) });
     const after = memberStats(updated);
     return {
       ...updated,

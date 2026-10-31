@@ -41,7 +41,7 @@ describe('resolveTurn', () => {
   it('防御するとそのターンの被ダメージが半分になる', () => {
     const base = createBattle(hero(), 'm', ['yamainu'], 1);
     // 乱数を固定し、防御あり・なしで敵の攻撃のダメージを比べる
-    const rng = () => seqRng(0.5, 0.1, 0.99, 0.5);
+    const rng = () => seqRng(0.5, 0.1, 0.5);
     const normal = resolveTurn(base, { p0: { kind: 'attack', target: 'e0' } }, rng());
     const guarded = resolveTurn(base, { p0: { kind: 'guard' } }, rng());
     const hit = (events: typeof normal.events) => events.find((e) => e.type === 'attack' && e.actor === 'e0');

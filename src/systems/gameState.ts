@@ -1,4 +1,5 @@
 import type { Gender } from '../data/characters';
+import type { Inventory } from '../data/items';
 import { createMember, type PartyMember } from './party';
 
 export type Facing = 'up' | 'down' | 'left' | 'right';
@@ -9,6 +10,8 @@ export interface GameState {
   party: PartyMember[];
   /** 所持金（文）。 */
   money: number;
+  /** 道具（ID ごとの個数）。 */
+  items: Inventory;
   mapId: string;
   x: number;
   y: number;
@@ -20,11 +23,15 @@ export interface GameState {
   playTimeSec: number;
 }
 
+/** 旅立ちのときに持っている道具。 */
+export const STARTING_ITEMS: Inventory = { kizugusuri: 3, dokukeshi: 1 };
+
 export function newGame(gender: Gender, start: { mapId: string; x: number; y: number }): GameState {
   return {
     gender,
     party: [createMember('hero', 1)],
     money: 50,
+    items: { ...STARTING_ITEMS },
     mapId: start.mapId,
     x: start.x,
     y: start.y,
