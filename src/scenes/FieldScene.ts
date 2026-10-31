@@ -12,7 +12,7 @@ import { playBgm } from '../systems/audio';
 import { browserStorage } from '../systems/save';
 import { getState, setPendingEvent, setState, takePendingEvent } from '../state';
 import { EVENTS } from '../data/events';
-import { CHAR_DISPLAY_ORIGIN, heroSprite, idleFrame, oppositeFacing, personDepth, shouldStandStill, spriteKey, walkAnimKey, type CharacterSpriteId } from '../data/sprites';
+import { CHAR_DISPLAY_ORIGIN, heroSprite, idleFrame, oppositeFacing, personDepth, shouldStandStill, spriteKey, walkAnimKey, walkDepthRow, type CharacterSpriteId } from '../data/sprites';
 import { EventRunner, type EventInput } from '../systems/eventScript';
 import { Controls } from '../ui/input';
 import { FieldMenu } from '../ui/FieldMenu';
@@ -41,7 +41,10 @@ export class FieldScene extends Phaser.Scene {
   /** 主人公。位置は今いるタイルの左上（コマの表示の基準点で、足元をタイルに合わせる）。 */
   private player!: Phaser.GameObjects.Sprite;
   private playerSprite!: CharacterSpriteId;
-  /** 画像のある NPC（ID ごと）。話しかけたときに振り向かせる。 */
+  /**
+   * 画像のある NPC（ID ごと）。話しかけたときに主人公のほうへ振り向かせる。
+   * 振り向いたあとはそのまま（マップに入り直したり戦闘から戻ったりすると、最初の向きに戻る）。
+   */
   private npcSprites = new Map<string, Phaser.GameObjects.Sprite>();
   private moving = false;
   /** 行っている途中のイベント。 */
@@ -308,8 +311,7 @@ export class FieldScene extends Phaser.Scene {
 
     this.moving = true;
     this.player.play(walkAnimKey(this.playerSprite, dir), true);
-    // 下へ歩くときは歩き始めから、上へ歩くときは着いてから、重なり順を移った先に合わせる
-    this.player.setDepth(personDepth(Math.max(state.y, ny)));
+    this.player.setDepth(personDepth(walkDepthRow(state.y, ny)));
     this.tweens.add({
       targets: this.player,
       x: nx * TILE,

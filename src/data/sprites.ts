@@ -44,6 +44,14 @@ export function personDepth(tileY: number): number {
   return 10 + tileY / 1000;
 }
 
+/**
+ * 1 歩のあいだ重なり順に使う行。下へ歩くときは歩き始めから移った先の行、上へ歩くときは着くまで元の行
+ * （どちらも 2 行のうち下の行。上下の人に頭や足元が重なっても、手前・奥が入れ替わらないようにする）。
+ */
+export function walkDepthRow(fromY: number, toY: number): number {
+  return Math.max(fromY, toY);
+}
+
 /** 立ち姿のコマ番号。 */
 export function idleFrame(facing: Facing): number {
   return FACINGS.indexOf(facing) * (1 + WALK_FRAMES);

@@ -25,6 +25,14 @@ describe('マップのデータ', () => {
         }
       });
 
+      it('NPC の ID は重ならず、向きは画像のある NPC だけに指定する', () => {
+        const ids = map.npcs.map((n) => n.id);
+        expect(new Set(ids).size).toBe(ids.length);
+        for (const npc of map.npcs) {
+          if (npc.facing) expect(npc.sprite, `${npc.id} has facing but no sprite`).toBeDefined();
+        }
+      });
+
       it('出口の行き先は、通れて出口でも NPC でもない場所', () => {
         for (const exit of map.exits) {
           expect(tileAt(map, exit.x, exit.y)?.blocked).toBe(false);
