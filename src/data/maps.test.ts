@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ENCOUNTERS, ENEMIES } from './enemies';
 import { EVENTS } from './events';
-import { closedGateAt, encounterAt, MAPS, START_POSITION, tileAt, TILES, type MapDef } from './maps';
+import { closedGateAt, encounterAt, MAPS, START_POSITION, tileAt, TILES, townAction, type MapDef } from './maps';
 
 describe('マップのデータ', () => {
   for (const map of Object.values(MAPS)) {
@@ -120,9 +120,16 @@ describe('ワールドマップ', () => {
     expect(encounterAt(world, 24, 10)).toBeUndefined();
   });
 
-  it('清水湊から東の街道へ出るとワールドマップの清水湊の隣に出て、清水湊の印から町へ戻れる', () => {
+  it('清水湊から東の街道へ出ると、ワールドマップの清水湊の印の隣に出る', () => {
     expect(tileAt(world, landing.x, landing.y)?.blocked).toBe(false);
     expect(Math.abs(landing.x - shimizu.x) + Math.abs(landing.y - shimizu.y)).toBe(1);
-    expect(shimizu.to?.mapId).toBe('shimizu');
+  });
+
+  it('町の印は乗っただけでは入らず、決定ボタンで入る（まだの町は案内を出す）', () => {
+    expect(townAction(world, shimizu.x, shimizu.y, 'step')).toEqual({ kind: 'label', text: '清水湊（決定で入る）' });
+    expect(townAction(world, shimizu.x, shimizu.y, 'ok')).toEqual({ kind: 'enter', to: { mapId: 'shimizu', x: 26, y: 6 } });
+    expect(townAction(world, 39, 10, 'step')).toEqual({ kind: 'label', text: '駿府' });
+    expect(townAction(world, 39, 10, 'ok')).toMatchObject({ kind: 'info' });
+    expect(townAction(world, landing.x, landing.y, 'ok')).toBeNull();
   });
 });

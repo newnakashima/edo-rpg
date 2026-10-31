@@ -309,6 +309,23 @@ MAPS.world = {
 
 export const START_POSITION = { mapId: 'shimizu', x: 14, y: 7 };
 
+export type TownAction =
+  | { kind: 'enter'; to: { mapId: string; x: number; y: number } }
+  | { kind: 'info'; lines: string[] }
+  | { kind: 'label'; text: string };
+
+/**
+ * ワールドマップの町の印での動き。乗ったとき（step）は名前を出すだけで入らず、
+ * 決定ボタン（ok）で入る（まだ入れない町は案内を出す）。印がなければ null。
+ */
+export function townAction(map: MapDef, x: number, y: number, by: 'step' | 'ok'): TownAction | null {
+  const town = map.towns?.find((t) => t.x === x && t.y === y);
+  if (!town) return null;
+  if (by === 'step') return { kind: 'label', text: town.to ? `${town.name}（決定で入る）` : town.name };
+  if (town.to) return { kind: 'enter', to: town.to };
+  return { kind: 'info', lines: town.lines ?? [town.name] };
+}
+
 /** その場所の出現表の ID（範囲の指定が優先。なければマップ全体の encounter）。 */
 export function encounterAt(map: MapDef, x: number, y: number): string | undefined {
   const zone = map.encounterZones?.find((z) => x >= z.x && x < z.x + z.w && y >= z.y && y < z.y + z.h);

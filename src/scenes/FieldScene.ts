@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { ENCOUNTERS } from '../data/enemies';
-import { closedGateAt, encounterAt, MAPS, START_POSITION, tileAt, type EventTrigger, type MapDef, type NpcDef, type TownDef } from '../data/maps';
+import { closedGateAt, encounterAt, MAPS, START_POSITION, tileAt, townAction, type EventTrigger, type MapDef, type NpcDef } from '../data/maps';
 import { pickGroup, step } from '../systems/encounter';
 import { dangoPrice, eatDango, innPrice, stayAtInn } from '../systems/facilities';
 import { prayAtTemple, templePrice } from '../systems/shop';
@@ -294,8 +294,8 @@ export class FieldScene extends Phaser.Scene {
       return;
     }
     // 町の印に乗ったら名前を出す（入るのは決定ボタン）
-    const town = this.townHere();
-    if (town) this.showAreaName(`${town.name}（決定で入る）`);
+    const onTown = townAction(this.map, state.x, state.y, 'step');
+    if (onTown?.kind === 'label') this.showAreaName(onTown.text);
     const trigger = this.map.triggers?.find((t) => t.x === state.x && t.y === state.y);
     if (trigger && this.startTrigger(trigger)) return;
     const encounter = encounterAt(this.map, state.x, state.y);
@@ -324,23 +324,18 @@ export class FieldScene extends Phaser.Scene {
     this.moving = true;
   }
 
-  private townHere(): TownDef | undefined {
-    const state = getState();
-    return this.map.towns?.find((t) => t.x === state.x && t.y === state.y);
-  }
-
   private interact(): void {
     // ワールドマップの町の印の上なら、その町へ入る（まだ訪れられない町は案内を出す）
-    const town = this.townHere();
-    if (town?.to) {
+    const state = getState();
+    const town = townAction(this.map, state.x, state.y, 'ok');
+    if (town?.kind === 'enter') {
       this.moveTo(town.to.mapId, town.to.x, town.to.y);
       return;
     }
-    if (town?.lines) {
+    if (town?.kind === 'info') {
       this.message.show(town.lines);
       return;
     }
-    const state = getState();
     const [dx, dy] = DELTA[state.facing];
     const npc = this.npcAt(state.x + dx, state.y + dy);
     if (!npc) return;
