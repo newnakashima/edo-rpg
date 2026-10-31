@@ -95,13 +95,14 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 ### 地域ごとのタイル（`tiles/<タイルセット>/`）
 
 テストプレイで「町もダンジョンも同じ見た目」と指摘されたため、マップの `tileset`（`src/data/maps.ts` の `TILESETS`）で、一部の種類だけを地域の画像に差し替える。
-`create_tiles_pro` の style mode（共通の `tiles/ground.png`・`roof.png`・`wall.png` を `style_images` に、style_options は輪郭・細部・陰影を写し、配色は写さない）で 16 × 16 を作った。どの組も 1 回目で採用（計 2 回）。
+`create_tiles_pro` の style mode（共通の `tiles/ground.png`・`roof.png`・`wall.png` を `style_images` に、style_options は輪郭・細部・陰影を写し、配色は写さない）で 16 × 16 を作った。どの組も 1 回目で採用（計 3 回）。
 並べたときの継ぎ目と、同じマップの通れるタイルと通れないタイルの見分けを、3 × 3 に並べた見本とゲーム画面で確かめた。
 
 | ID | プロンプト（共通の頭: Edo period Japan top-down RPG map tiles, muted ukiyo-e palette, seamless 16x16.） | 使ったタイル（ZIP の番号 → タイルセット/種類） |
 | --- | --- | --- |
 | 19748264-c606-43e1-a041-9d37a6593518 | 1). snow covered ground … 2). snow covered lawn … 3). trodden snowy road … 4). snow covered dark green pine tree … 5). snow covered dark grey kawara roof tiles … 6). grey boulder rock with white snow on top … 7). wooden ship deck … 8). ship hull rail … 9). straw rice bales (tawara) stacked as ship cargo … 10). tatami mat floor … 11). shoji paper sliding wall … | 0 → snow/ground、1 → snow/grass、2 → snow/road、3 → snow/tree、4 → snow/roof、5 → snow/rock、6 → ship/floor、7 → ship/wall、8 → ship/roof、9 → interior/floor、10 → interior/wall |
 | ef84a959-510b-4d63-9ecd-9cc487ffe7ae | 1). dark cave rock wall … 2). cave floor … 3). dark underground pool water … 4). riveted dark iron plate wall with brass pipes … 5). iron grate floor plates … 6). brass cogwheel machinery block … 7). castle stone wall (ishigaki) … 8). polished dark wooden castle floor boards … 9). crumbled ruined grey stone wall … 10). cracked old stone flagstone floor … 11). dark wooden storehouse wall … 12). earthen storehouse floor (doma) … | 0 → cave/rock、1 → cave/ground、2 → cave/water、3 → karakuri/wall、4 → karakuri/floor、5 → karakuri/roof、6 → castle/wall、7 → castle/floor、8 → ruins/wall、9 → ruins/floor、10 → kura/wall、11 → kura/floor |
+| e629b2a6-3193-42cc-8a93-b99d84a2bda4 | Japanese temple ruins top-down RPG map tiles, muted ukiyo-e palette, seamless 16x16. 1). pile of fallen rubble: broken grey stone blocks and shards of old dark roof tiles heaped on grass, clearly an obstacle 2). collapsed burnt wooden beams … 3). large cracked grey stone block … 4). heap of broken grey foundation stones …（ruins/wall・ruins/floor を style の参照に、配色も写す。レビューで、南蛮寺跡の大半を占める岩が共通の見た目のままと指摘されたため足した） | 0 → ruins/rock |
 
 ## 敵（`enemies/`）
 

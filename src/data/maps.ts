@@ -23,8 +23,8 @@ export const TILESETS = {
   interior: ['wall', 'floor'],
   /** 城の中（天守）。石垣と板の間。 */
   castle: ['wall', 'floor'],
-  /** 廃墟（羅生門跡・鬼の巣・南蛮寺跡）。崩れた石の塀と石畳。 */
-  ruins: ['wall', 'floor'],
+  /** 廃墟（羅生門跡・鬼の巣・南蛮寺跡）。崩れた石の塀と石畳、岩はがれきの山。木は外の木なので共通のまま。 */
+  ruins: ['wall', 'floor', 'rock'],
   /** 船の上（北前船）。甲板、船べり、積み荷の俵。 */
   ship: ['floor', 'wall', 'roof'],
   /** 蔵（堀川の荷蔵）。板の壁と土間。 */
