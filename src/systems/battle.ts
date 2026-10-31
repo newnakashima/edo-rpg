@@ -206,6 +206,14 @@ function effectiveAtk(c: Combatant): number {
   return atk;
 }
 
+/** 防御↑ の倍率。 */
+export const DEF_UP_RATE = 1.5;
+
+/** 防御の補正（防御↑ は 1.5 倍）。 */
+function effectiveDef(c: Combatant): number {
+  return c.status.defUp ? c.stats.def * DEF_UP_RATE : c.stats.def;
+}
+
 /** 会心↑ で会心率に足す値。 */
 const CRIT_UP_BONUS = 0.3;
 
@@ -292,7 +300,7 @@ class TurnContext {
       const miss = missChance(!!actor.status.accDown, !!target.status.evade);
       if (miss > 0 && this.rng() < miss) return null;
     }
-    const def = options.ignoreDefense ? 0 : target.stats.def;
+    const def = options.ignoreDefense ? 0 : effectiveDef(target);
     const result = physicalDamage(effectiveAtk(actor), def, actor.stats.luck, this.rng, actor.status.critUp ? CRIT_UP_BONUS : 0);
     const elementRate = elementMultiplier(options.elements ?? [], target.weak, target.resist);
     const raw = Math.max(1, Math.floor(result.damage * (options.multiplier ?? 1) * elementRate));
@@ -403,7 +411,7 @@ class TurnContext {
         }
         case 'magic': {
           const rate = elementMultiplier(elements, target.weak, target.resist);
-          const raw = magicDamage(effect.power * growthFactor(actor.level), actor.stats.mag, target.stats.def, this.rng);
+          const raw = magicDamage(effect.power * growthFactor(actor.level), actor.stats.mag, effectiveDef(target), this.rng);
           const damage = applyGuard(Math.max(1, Math.floor(raw * rate)), target.guarding);
           this.events.push({ type: 'damage', target: target.key, damage, critical: false, weak: rate > 1, resisted: rate < 1 });
           this.hurt(target, damage);

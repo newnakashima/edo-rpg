@@ -161,6 +161,25 @@ describe('状態異常', () => {
     expect(hit(down)).toBeLessThan(normal);
   });
 
+  it('防御↑ で受けるダメージが減る（物理も術も）', () => {
+    const base = sleepEnemies(createBattle([createMember('hero', 10)], 'm', ['ogaeru'], 1));
+    const hit = (b: BattleState) => {
+      const e = resolveTurn(b, { p0: { kind: 'attack', target: 'e0' } }, seqRng(0.5, 0.5, 0.99, 0.5)).events.find((x) => x.type === 'attack');
+      return e?.type === 'attack' ? e.damage : 0;
+    };
+    const up = structuredClone(base);
+    get(up, 'e0').status.defUp = 3;
+    expect(hit(up)).toBeLessThan(hit(base));
+    const gendo = sleepEnemies(createBattle([createMember('gendo', 10)], 'm', ['tetsubin'], 7));
+    const katsu = (b: BattleState) => {
+      const e = resolveTurn(b, { p0: { kind: 'skill', skill: 'katsu', target: 'e0' } }, seqRng(0.5)).events.find((x) => x.type === 'damage');
+      return e?.type === 'damage' ? e.damage : 0;
+    };
+    const guarded = structuredClone(gendo);
+    get(guarded, 'e0').status.defUp = 3;
+    expect(katsu(guarded)).toBeLessThan(katsu(gendo));
+  });
+
   it('混乱すると、敵味方を問わずランダムな相手を攻撃する', () => {
     const party = [createMember('hero', 1), createMember('kasumi', 1)];
     const b = sleepEnemies(createBattle(party, 'm', ['ogaeru'], 1));
@@ -337,6 +356,18 @@ describe('敵の行動', () => {
     const poison = resolveTurn(b, { p0: { kind: 'guard' } }, seqRng(0, 0.99, 0.81, 0, 0.1));
     expect(poison.events).toContainEqual({ type: 'skill', actor: 'e0', skill: 'dokueki' });
     expect(poison.events).toContainEqual({ type: 'status', target: 'p0', status: 'poison' });
+  });
+
+  it('金鯱からくりは金の鱗で自分の防御を上げ、尾びれで味方全員を打つ', () => {
+    const party = () => [createMember('hero', 9), createMember('kasumi', 9)];
+    // 行動の選択は 攻撃 3 : 尾びれ 2 : 金の鱗 1。0.9 は金の鱗、0.6 は尾びれ
+    const scale = resolveTurn(createBattle(party(), 'm', ['kinshachi'], 10), { p0: { kind: 'guard' }, p1: { kind: 'guard' } }, seqRng(0, 0, 0.99, 0.9));
+    expect(scale.events).toContainEqual({ type: 'skill', actor: 'e0', skill: 'kinUroko' });
+    expect(scale.events).toContainEqual({ type: 'status', target: 'e0', status: 'defUp' });
+    const tail = resolveTurn(createBattle(party(), 'm', ['kinshachi'], 10), { p0: { kind: 'guard' }, p1: { kind: 'guard' } }, seqRng(0, 0, 0.99, 0.6, 0.5));
+    expect(tail.events).toContainEqual({ type: 'skill', actor: 'e0', skill: 'obire' });
+    const hurt = tail.events.filter((e) => e.type === 'damage').map((e) => e.type === 'damage' && e.target);
+    expect(hurt.sort()).toEqual(['p0', 'p1']);
   });
 
   it('鬼火の狐火は術のダメージを与える', () => {

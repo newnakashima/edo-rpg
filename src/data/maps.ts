@@ -1,4 +1,4 @@
-// フィールドのマップ。序章の清水湊・裏山・狐火の洞と、ワールドマップを用意する。
+// フィールドのマップ。序章〜第 2 章の町・ダンジョンと、ワールドマップを用意する。
 // タイルの文字の意味は TILES を参照。
 import type { Facing } from '../systems/gameState';
 import type { CharacterSpriteId } from './sprites';
@@ -80,6 +80,8 @@ export interface GateDef {
   y: number;
   flag: string;
   lines: string[];
+  /** 通れないときに lines の代わりに行うイベント（EVENTS の ID）。関所を開けるイベント（大井川の川越し）に使う。 */
+  event?: string;
 }
 
 export interface ExitDef {
@@ -356,7 +358,8 @@ MAPS.world = {
   towns: [
     { x: 41, y: 11, name: '清水湊', to: { mapId: 'shimizu', x: 26, y: 6 } },
     { x: 39, y: 10, name: '駿府', to: { mapId: 'sunpu', x: 28, y: 8 }, openFlag: 'prologueCleared', lines: ['駿府城下。（清水湊の辰五郎の頼みを片づけてから訪れる）'] },
-    { x: 32, y: 10, name: '名古屋', lines: NOT_YET('尾張名古屋', '第 2 章') },
+    // 名古屋は大井川の西。大井川の渡し場（oigawaOpen）を越えなければ着かない
+    { x: 32, y: 10, name: '名古屋', to: { mapId: 'nagoya', x: 28, y: 8 } },
     { x: 27, y: 11, name: '伊賀', lines: NOT_YET('伊賀上野', '第 4 章') },
     { x: 24, y: 10, name: '京', lines: NOT_YET('京', '第 3 章') },
     { x: 21, y: 11, name: '大坂', lines: NOT_YET('大坂', '第 5 章') },
@@ -368,12 +371,15 @@ MAPS.world = {
     { x: 50, y: 6, name: '仙台', lines: NOT_YET('仙台', '第 8 章') },
   ],
   gates: [
-    { x: 36, y: 10, flag: 'oigawaOpen', lines: ['大井川の渡し場だ。川越し人足「水かさが増えて、今は渡せねえよ」'] },
+    // 第 1 章を終えると、川越し人足のイベント（oigawa）で渡れるようになる
+    { x: 36, y: 10, flag: 'oigawaOpen', lines: ['大井川の渡し場だ。川越し人足「水かさが増えて、今は渡せねえよ」'], event: 'oigawa' },
     { x: 45, y: 10, flag: 'hakoneTegata', lines: ['箱根の関所だ。役人「通行手形なき者は、通すわけにはいかぬ」'] },
   ],
-  // 出現範囲は今は駿河だけ。ほかの地域の範囲は、その地域の敵を作るとき（フェーズ 4 の各章）に足す
+  // 出現範囲は今は駿河と、大井川の西の東海道。ほかの地域の範囲は、その地域の敵を作るとき（フェーズ 4 の各章）に足す
   // 先に書いた範囲が優先。駿府のまわり（大井川の渡し場から駿府まで）は、序章を終えたら駿府の敵（それまでは序章の敵）
+  // 大井川の西（名古屋・京・伊賀のまわり）は東海道の敵。京・伊賀の範囲は第 3・4 章で、この範囲より前に足す
   encounterZones: [
+    { x: 25, y: 9, w: 11, h: 4, encounter: 'tokaido' },
     { x: 36, y: 9, w: 4, h: 4, encounter: 'sunpu', flag: 'prologueCleared' },
     { x: 36, y: 9, w: 10, h: 4, encounter: 'suruga' },
   ],
@@ -707,6 +713,301 @@ MAPS.karakuriYashiki = {
   triggers: [
     { x: 12, y: 4, event: 'tetsubin', unless: 'tetsubinDefeated' },
     { x: 13, y: 4, event: 'tetsubin', unless: 'tetsubinDefeated' },
+  ],
+};
+
+/** 第 2 章の尾張名古屋と、金太の凧屋・堀川の荷蔵・名古屋城の天守。 */
+MAPS.nagoya = {
+  id: 'nagoya',
+  name: '尾張名古屋',
+  areaLevel: 7,
+  rows: [
+    'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
+    'T^^^^^^^^RRRRRRRRRRRR^^^^^^^^T',
+    'T^^^^^^^^WWWWWDDWWWWW^^^^^^^^T',
+    'T~~~~~~~~~~~~~==~~~~~~~~~~~~~T',
+    'T,,,,,,,,,,,,,==,,,,,,,,,,,,,T',
+    'T,RRRRR,RRRRR,==,RRRRR,RRRRR,T',
+    'T,WWDWW,WWDWW,==,WW_WW,WWDWW,T',
+    'T,.....,.....,==,.....,.....,T',
+    '==============================',
+    'T,,,,,,,,,,,,,==,,,,,,,,,,,,,T',
+    'T,RRRRRRR,RRR,==,RRRRRRRRRR,,T',
+    'T,WWWDWWW,WDW,==,WWWW_WWWWW,,T',
+    'T,.......,...,==,..........,,T',
+    'T,,,,,,,,,,,,,==,,,,,,,,,,,,,T',
+    'T,,,TT,,,,,,,,,,,,,,,,,,,TT,,T',
+    'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
+  ],
+  npcs: [
+    {
+      id: 'nagoyaTeahouse',
+      name: '茶屋の娘',
+      x: 4,
+      y: 7,
+      color: 0xc76b8f,
+      lines: [
+        '茶屋の娘「いらっしゃいまし。お城の金の鯱の鱗が、ひと晩でごっそり剥がされたんですって」',
+        '茶屋の娘「あんな高いところ、凧にでも乗らなきゃ届かないって……それで、軽業師の金太さんが疑われてるの。金太さん、そんな人じゃないのに」',
+        '茶屋の娘「お団子はいかが？」',
+      ],
+      after: { flag: 'heardKinshachiRumor', lines: ['茶屋の娘「いらっしゃいまし。お団子はいかが？」'] },
+      setsFlag: 'heardKinshachiRumor',
+      action: 'teahouse',
+    },
+    {
+      id: 'nagoyaYorozu',
+      name: 'よろず屋',
+      x: 10,
+      y: 7,
+      color: 0x6b8c5a,
+      lines: ['よろず屋「尾張の城下は東海道いちの品ぞろえだよ。金創膏も置いてるよ」'],
+      action: 'shop',
+      shop: 'nagoyaYorozu',
+    },
+    {
+      id: 'nagoyaInn',
+      name: '旅籠の主人',
+      x: 25,
+      y: 7,
+      color: 0x5a6b8c,
+      lines: ['旅籠の主人「名古屋へようこそ。お泊まりですかい」'],
+      action: 'inn',
+    },
+    {
+      id: 'atsutaKannushi',
+      name: '熱田の神主',
+      x: 27,
+      y: 4,
+      color: 0xb0b0a0,
+      lines: ['神主「熱田の宮のご加護を。倒れた者があれば、お祓いをして進ぜよう」'],
+      action: 'temple',
+    },
+    {
+      id: 'nagoyaCastleGuard',
+      name: '城の門番',
+      x: 15,
+      y: 3,
+      color: 0x4a4a6b,
+      lines: ['門番「名古屋城である。鱗の一件で、ご城内は立ち入り禁止じゃ」'],
+      after: { flag: 'kinshachiDefeated', lines: ['門番「金の鱗を取り返したのは、おぬしらか。……殿もたいそうお喜びじゃ」'] },
+    },
+    {
+      id: 'nagoyaDoshin',
+      name: '同心',
+      x: 21,
+      y: 9,
+      color: 0x3a4a6a,
+      lines: [
+        '同心「軽業師の金太を見なかったか。鱗を盗んだのはあやつに違いない」',
+        '同心「兄の銀次が『盗んだのはおれだ』と書き置きを残して消えたが、弟をかばっておるのだろう。あの兄弟の凧なら、天守にも届くからな」',
+      ],
+      after: { flag: 'kinshachiDefeated', lines: ['同心「金太の疑いは晴れた。……疑ってすまなんだと、伝えておいてくれ」'] },
+    },
+    {
+      id: 'nagoyaKaji',
+      name: '刀鍛冶',
+      x: 11,
+      y: 12,
+      color: 0x5a5a6b,
+      lines: ['刀鍛冶「関の刀に鎖鎌、尾張にゃ腕のいい職人がそろってるぜ」'],
+      action: 'shop',
+      shop: 'nagoyaKaji',
+    },
+    {
+      id: 'nagoyaHikyaku',
+      name: '飛脚',
+      x: 18,
+      y: 12,
+      color: 0x3e7cb0,
+      lines: ['飛脚「へい、まいど！ 名古屋の飛脚問屋でございやす」'],
+      action: 'hikyaku',
+    },
+    {
+      id: 'horikawaCart',
+      name: '荷車',
+      x: 21,
+      y: 11,
+      color: 0x7a5a3a,
+      lines: ['堀川の荷蔵の戸口を、重い荷車がふさいでいる。びくともしない。'],
+      hideFlag: 'kintaMet',
+    },
+    {
+      id: 'nagoyaMachiya',
+      name: '長屋のおかみ',
+      x: 24,
+      y: 13,
+      color: 0x9c8a5a,
+      lines: [
+        'おかみ「金太と銀次の兄弟は、凧揚げの芸で町の子らの人気者さ。北の通りの凧屋に住んでるよ」',
+        'おかみ「近ごろ、堀川の荷蔵に夜な夜な人の出入りがあってね。運び込んでるのは、江戸から来たっていう浪人どもさ」',
+      ],
+      after: { flag: 'kinshachiDefeated', lines: ['おかみ「銀次のこと、聞いたよ。……金太はひとりで、また凧を揚げてる。兄貴に届くようにってさ」'] },
+    },
+  ],
+  exits: [
+    // 東西の街道からワールドマップへ（名古屋の印の両隣の街道）
+    { x: 29, y: 8, to: 'world', toX: 33, toY: 10 },
+    { x: 0, y: 8, to: 'world', toX: 31, toY: 10 },
+    // 金太の凧屋と堀川の荷蔵（金太に会うまでは荷車がふさぐ）
+    { x: 19, y: 6, to: 'takoya', toX: 6, toY: 5 },
+    { x: 21, y: 11, to: 'horikawaKura', toX: 10, toY: 14 },
+  ],
+  respawn: { x: 25, y: 8 },
+  onEnter: { event: 'nagoyaEnter', unless: 'chapter2Cleared' },
+};
+
+MAPS.takoya = {
+  id: 'takoya',
+  name: '金太の凧屋',
+  areaLevel: 7,
+  rows: [
+    'WWWWWWWWWWWWW',
+    'W___________W',
+    'W_WW_____WW_W',
+    'W___________W',
+    'W___________W',
+    'W___________W',
+    'WWWWWW_WWWWWW',
+  ],
+  npcs: [
+    {
+      id: 'kinta',
+      name: '金太',
+      x: 6,
+      y: 2,
+      color: 0xd08a3a,
+      event: 'kinta',
+    },
+    {
+      id: 'oodako',
+      name: '大凧',
+      x: 2,
+      y: 4,
+      color: 0xc04030,
+      lines: ['人がぶら下がれるほどの大凧だ。骨は竹、紙には赤い字で「金」と大きく書かれている。'],
+    },
+    {
+      id: 'ginjiLetter',
+      name: '文机',
+      x: 10,
+      y: 4,
+      color: 0x7a5a3a,
+      lines: ['文机の上に、銀次の筆の跡がある。「凧の糸は、あと二十間あれば天守に届く」'],
+    },
+  ],
+  exits: [{ x: 6, y: 6, to: 'nagoya', toX: 19, toY: 7 }],
+  respawnMap: 'nagoya',
+};
+
+MAPS.horikawaKura = {
+  id: 'horikawaKura',
+  name: '堀川の荷蔵',
+  areaLevel: 7,
+  rows: [
+    'WWWWWWWWWWWWWWWWWWWWWW',
+    'WWWWWWW________WWWWWWW',
+    'WWWWWWW________WWWWWWW',
+    'WWWWWWWWWW__WWWWWWWWWW',
+    'W____WWWWW__WWWW_____W',
+    'W____WWWWW__WWWW_____W',
+    'W_________________W__W',
+    'WWW_WWWWWWWWWWWW__W__W',
+    'WWW_WWWWWWWWWWWW__W__W',
+    'W______WWWWW_______WWW',
+    'W_WWWW_WWWWW_WWWWW_WWW',
+    'W_WWWW_________WWW___W',
+    'W____WWWWW__WWWWWWWW_W',
+    'WWWW_WWWWW__WWW______W',
+    'W____WWWWW__WWW_WWWWWW',
+    'WWWWWWWWWW__WWWWWWWWWW',
+  ],
+  npcs: [
+    {
+      id: 'horikawaChest1',
+      name: '葛籠',
+      x: 20,
+      y: 8,
+      color: 0x8a6a3a,
+      event: 'horikawaChest1',
+    },
+    {
+      id: 'horikawaChest2',
+      name: '葛籠',
+      x: 1,
+      y: 14,
+      color: 0x8a6a3a,
+      event: 'horikawaChest2',
+    },
+    {
+      id: 'urokoBox',
+      name: '千両箱',
+      x: 8,
+      y: 1,
+      color: 0xb08a3a,
+      lines: ['空の千両箱だ。底に、金の粉がこびりついている。'],
+    },
+  ],
+  exits: [
+    { x: 10, y: 15, to: 'nagoya', toX: 21, toY: 12 },
+    { x: 11, y: 15, to: 'nagoya', toX: 21, toY: 12 },
+  ],
+  encounter: 'nagoya',
+  respawnMap: 'nagoya',
+  // 奥の間への細い通路で、鷲尾の配下が待ち構える
+  triggers: [
+    { x: 10, y: 3, event: 'horikawaOku', unless: 'urokoClue' },
+    { x: 11, y: 3, event: 'horikawaOku', unless: 'urokoClue' },
+  ],
+};
+
+MAPS.tenshu = {
+  id: 'tenshu',
+  name: '名古屋城 天守',
+  areaLevel: 7,
+  rows: [
+    'WWWWWWWWWWWWWWWWWW',
+    'W________________W',
+    'W__WW________WW__W',
+    'W________________W',
+    'WWWWWWWW__WWWWWWWW',
+    'W________W_______W',
+    'W_WWWWWW_W_WWWWW_W',
+    'W_W______W_____W_W',
+    'W_W_WWWWWWWWWW_W_W',
+    'W________________W',
+    'WWWWWWWW__WWWWWWWW',
+  ],
+  npcs: [
+    {
+      id: 'shachiDaiza',
+      name: '鯱の台座',
+      x: 8,
+      y: 1,
+      color: 0xb08a3a,
+      lines: ['大棟の上に、金の鯱の台座がある。鯱の姿はない。'],
+      after: { flag: 'kinshachiDefeated', lines: ['金の鱗を取り戻した。鯱は、明日にも職人の手で元の姿に戻されるという。'] },
+    },
+    {
+      id: 'tenshuChest',
+      name: '葛籠',
+      x: 16,
+      y: 5,
+      color: 0x8a6a3a,
+      event: 'tenshuChest',
+    },
+  ],
+  exits: [
+    // 石落としの穴から、お堀端（城の門の前）へ下りる
+    { x: 8, y: 10, to: 'nagoya', toX: 14, toY: 4 },
+    { x: 9, y: 10, to: 'nagoya', toX: 14, toY: 4 },
+  ],
+  encounter: 'nagoya',
+  respawnMap: 'nagoya',
+  // 大棟へ上がる細い段で、金鯱からくりが待ち構える
+  triggers: [
+    { x: 8, y: 4, event: 'kinshachi', unless: 'kinshachiDefeated' },
+    { x: 9, y: 4, event: 'kinshachi', unless: 'kinshachiDefeated' },
   ],
 };
 

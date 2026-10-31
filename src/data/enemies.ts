@@ -1,4 +1,4 @@
-// docs/balance.md の「敵とボスの一覧」。章を実装するごとに、その地域の敵を足す（今は序章と第 1 章）。
+// docs/balance.md の「敵とボスの一覧」。章を実装するごとに、その地域の敵を足す（今は序章〜第 2 章）。
 import type { EnemyFactors } from '../systems/stats';
 import type { Element } from './skills';
 
@@ -101,6 +101,53 @@ export const ENEMIES: Record<string, EnemyDef> = {
       { skill: 'aobi', weight: 1 },
     ],
   },
+  // 東海道・名古屋（第 2 章）
+  oihagiRonin: {
+    id: 'oihagiRonin',
+    name: '追い剥ぎ浪人',
+    color: 0x6a5a7a,
+    image: true,
+    factors: { hp: 1.1, atk: 1.2, def: 1.0, spd: 1.0 },
+    actions: [
+      { skill: 'attack', weight: 4 },
+      { skill: 'kesagiri', weight: 1 },
+    ],
+  },
+  kawauso: {
+    id: 'kawauso',
+    name: '川獺',
+    color: 0x8a6a4a,
+    image: true,
+    factors: { hp: 0.9, atk: 1.0, def: 0.9, spd: 1.2 },
+    actions: [
+      { skill: 'attack', weight: 4 },
+      { skill: 'bakashi', weight: 1 },
+    ],
+  },
+  zenmaiInu: {
+    id: 'zenmaiInu',
+    name: 'ゼンマイ犬',
+    color: 0x9a8a5a,
+    image: true,
+    factors: { hp: 1.0, atk: 1.1, def: 1.2, spd: 1.1 },
+    weak: ['mech'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'kamitsuki', weight: 1 },
+    ],
+  },
+  kumosuke: {
+    id: 'kumosuke',
+    name: '雲助',
+    color: 0x7a5a4a,
+    image: true,
+    factors: { hp: 1.2, atk: 1.1, def: 1.0, spd: 0.8 },
+    actions: [
+      { skill: 'attack', weight: 4 },
+      { skill: 'ikizue', weight: 1 },
+      { skill: 'odoshi', weight: 1 },
+    ],
+  },
   // ボス（rewardScale あり）。イベントの battle で出し、出現表には入れない
   /** 序章のボス。妖狐だが、実はからくりで操られていた。序章は一人旅なので化かし（混乱）は控えめにする。 */
   yako: {
@@ -130,6 +177,21 @@ export const ENEMIES: Record<string, EnemyDef> = {
       { skill: 'tekken', weight: 2 },
       { skill: 'joki', weight: 2 },
       { skill: 'karakuriYobi', weight: 1 },
+    ],
+    rewardScale: 5,
+  },
+  /** 第 2 章のボス。名古屋城の金の鱗で動く巨大な鯱。金の鱗で守りを固める。 */
+  kinshachi: {
+    id: 'kinshachi',
+    name: '金鯱からくり',
+    color: 0xd0a030,
+    image: true,
+    factors: { hp: 5, atk: 0.95, def: 1.2, spd: 0.9 },
+    weak: ['mech', 'thunder'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'obire', weight: 2 },
+      { skill: 'kinUroko', weight: 1 },
     ],
     rewardScale: 5,
   },
@@ -174,6 +236,32 @@ const SUNPU: EncounterTable = {
   ],
 };
 
+/** 東海道（大井川の西の街道）の敵の組。 */
+const TOKAIDO: EncounterTable = {
+  level: 7,
+  groups: [
+    { members: ['oihagiRonin'], weight: 2 },
+    { members: ['kawauso', 'kawauso'], weight: 2 },
+    { members: ['kumosuke'], weight: 2 },
+    { members: ['oihagiRonin', 'kumosuke'], weight: 2 },
+    { members: ['kawauso', 'kawauso', 'kawauso'], weight: 1 },
+    { members: ['kumosuke', 'kawauso', 'kawauso'], weight: 1 },
+  ],
+};
+
+/** 名古屋の堀川の荷蔵と天守の敵の組。鷲尾の配下の浪人と、からくりのゼンマイ犬。 */
+const NAGOYA: EncounterTable = {
+  level: 7,
+  groups: [
+    { members: ['zenmaiInu'], weight: 2 },
+    { members: ['zenmaiInu', 'zenmaiInu'], weight: 2 },
+    { members: ['oihagiRonin', 'zenmaiInu'], weight: 2 },
+    { members: ['oihagiRonin', 'oihagiRonin'], weight: 1 },
+    { members: ['zenmaiInu', 'zenmaiInu', 'zenmaiInu'], weight: 1 },
+    { members: ['kumosuke', 'zenmaiInu', 'zenmaiInu'], weight: 1 },
+  ],
+};
+
 export const ENCOUNTERS: Record<string, EncounterTable> = {
   /** 清水湊の裏山。 */
   urayama: PROLOGUE,
@@ -181,4 +269,8 @@ export const ENCOUNTERS: Record<string, EncounterTable> = {
   suruga: PROLOGUE,
   /** 駿府のまわりの街道と、からくり屋敷。 */
   sunpu: SUNPU,
+  /** 大井川の西の東海道（名古屋・京・伊賀のまわり）。京・伊賀の地域の敵は、その章で範囲を足す。 */
+  tokaido: TOKAIDO,
+  /** 名古屋の堀川の荷蔵と天守。 */
+  nagoya: NAGOYA,
 };

@@ -14,4 +14,7 @@ export const SHOPS: Record<string, ShopDef> = {
   // 駿府（第 1 章）。霞が加入する町なので、霞の装備も置く
   sunpuYorozu: { id: 'sunpuYorozu', name: 'よろず屋', goods: ['kizugusuri', 'dokukeshi', 'hangontan', 'mankintan', 'kitsukegusuri'] },
   sunpuKaji: { id: 'sunpuKaji', name: '刀鍛冶', goods: ['dotanuki', 'ninjato', 'kusarikatabira', 'shinobishozoku', 'inro', 'omamori'] },
+  // 名古屋（第 2 章）
+  nagoyaYorozu: { id: 'nagoyaYorozu', name: 'よろず屋', goods: ['kizugusuri', 'kintsuba', 'dokukeshi', 'hangontan', 'mankintan', 'kitsukegusuri'] },
+  nagoyaKaji: { id: 'nagoyaKaji', name: '刀鍛冶', goods: ['magoroku', 'kusarigama', 'kusarikatabira', 'shinobishozoku', 'hachigane', 'inro'] },
 };

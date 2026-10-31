@@ -177,3 +177,82 @@ describe('第 1 章の流れ', () => {
     expect(refused.flags.yashikiChest1).toBeFalsy();
   });
 });
+
+describe('第 2 章の流れ', () => {
+  const start = { ...newGame('m', { mapId: 'nagoya', x: 28, y: 8 }), flags: { prologueCleared: true, chapter1Cleared: true } };
+
+  it('大井川の渡し場は、第 1 章を終えるまでは案内だけで、終えたら川獺に勝って渡れる（oigawaOpen）。負けたら渡れない', () => {
+    const before = { ...start, flags: { prologueCleared: true } };
+    const runner = new EventRunner(EVENTS.oigawa!.steps);
+    const first = runner.next(before);
+    expect(first.request.kind).toBe('say');
+    expect(runner.next(first.state).request.kind).toBe('done');
+    expect(run('oigawa', before).flags.oigawaOpen).toBeFalsy();
+    expect(run('oigawa', start).flags.oigawaOpen).toBe(true);
+    expect(run('oigawa', start, 'defeat').flags.oigawaOpen).toBeFalsy();
+    const battle = new EventRunner(EVENTS.oigawa!.steps);
+    let r = battle.next(start);
+    while (r.request.kind === 'say') r = battle.next(r.state);
+    expect(r.request).toMatchObject({ kind: 'battle', enemies: ['kawauso', 'kawauso'], level: 7, loseOk: true });
+  });
+
+  it('名古屋に初めて入ると町の紹介をし、2 回目からは何もしない', () => {
+    const arrived = run('nagoyaEnter', start);
+    expect(arrived.flags.nagoyaArrived).toBe(true);
+    expect(arrived.flags.chapter2Cleared).toBeFalsy();
+    expect(new EventRunner(EVENTS.nagoyaEnter!.steps).next(arrived).request.kind).toBe('done');
+  });
+
+  it('金太に会い（kintaMet）、荷蔵の奥で勝つと手がかり（urokoClue）、金太の大凧で天守へ飛ぶ', () => {
+    const met = run('kinta', start);
+    expect(met.flags.kintaMet).toBe(true);
+    // 手がかりの前に話しても、飛ばない
+    const again = run('kinta', met);
+    expect(again.flags.kintaFlew).toBeFalsy();
+    expect(again.mapId).toBe('nagoya');
+    expect(run('horikawaOku', met, 'defeat').flags.urokoClue).toBeFalsy();
+    const clue = run('horikawaOku', met);
+    expect(clue.flags.urokoClue).toBe(true);
+    // 最初の選択肢（飛ぶ）で天守へ移る
+    const runner = new EventRunner(EVENTS.kinta!.steps);
+    let r = runner.next(clue);
+    while (r.request.kind === 'say') r = runner.next(r.state);
+    expect(r.request.kind).toBe('choice');
+    r = runner.next(r.state, { kind: 'choice', index: 0 });
+    while (r.request.kind === 'say') r = runner.next(r.state);
+    expect(r.request).toEqual({ kind: 'warp', mapId: 'tenshu', x: 8, y: 9 });
+    expect(r.state.flags.kintaFlew).toBe(true);
+    // 「支度をする」なら飛ばない
+    const stay = new EventRunner(EVENTS.kinta!.steps);
+    let s = stay.next(clue);
+    while (s.request.kind === 'say') s = stay.next(s.state);
+    s = stay.next(s.state, { kind: 'choice', index: 1 });
+    while (s.request.kind === 'say') s = stay.next(s.state);
+    expect(s.request.kind).toBe('done');
+    expect(s.state.mapId).toBe('nagoya');
+  });
+
+  it('金鯱からくりは Lv10 で逃げられず、勝つと kinshachiDefeated。負けて出直すと銀次の場面は繰り返さない', () => {
+    const runner = new EventRunner(EVENTS.kinshachi!.steps);
+    let r = runner.next(start);
+    while (r.request.kind === 'say') r = runner.next(r.state);
+    expect(r.request).toMatchObject({ kind: 'battle', enemies: ['kinshachi'], level: 10, canEscape: false, loseOk: false });
+    expect(r.state.flags.kinshachiMet).toBe(true);
+    expect(run('kinshachi', start).flags.kinshachiDefeated).toBe(true);
+    const lost = run('kinshachi', start, 'defeat');
+    expect(lost.flags.kinshachiDefeated).toBeFalsy();
+    const retry = new EventRunner(EVENTS.kinshachi!.steps).next(lost);
+    const pages = retry.request.kind === 'say' ? retry.request.pages.join('') : '';
+    expect(pages).not.toContain('銀次「');
+    expect(run('kinshachi', lost).flags.kinshachiDefeated).toBe(true);
+  });
+
+  it('金鯱からくりを倒して名古屋に入ると第 2 章が終わり、褒美は一度だけ', () => {
+    const arrived = run('nagoyaEnter', start);
+    const cleared = run('nagoyaEnter', run('kinshachi', arrived));
+    expect(cleared.flags.chapter2Cleared).toBe(true);
+    expect(cleared.money).toBe(arrived.money + 500);
+    // 第 2 章のあとの金太は飛ばない
+    expect(run('kinta', cleared).mapId).toBe('nagoya');
+  });
+});

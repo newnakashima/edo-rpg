@@ -109,6 +109,118 @@ const SUNPU_CHAPTER_END: EventStep[] = [
   { type: 'setFlag', flag: 'chapter1Cleared' },
 ];
 
+/** 大井川の渡し場（第 1 章を終えたあと）。川止めの本当のわけは、人足を水に引き込む川獺。 */
+const OIGAWA_CROSSING: EventStep[] = [
+  {
+    type: 'say',
+    lines: [
+      '大井川の渡し場。川会所の前に、川越し人足たちが所在なげに座り込んでいる。',
+      '人足頭「川止めだよ。……いや、水かさのせいじゃねえ。夜になると、川獺どもが人足の足を引っぱって、川へ引きずり込みやがるんだ」',
+      '人足頭「もう三人も流された。お役人は『化かされたんだろう』と取り合っちゃくれねえ」',
+      '霞「人を水に引き込む獣ねえ。片づけてやろうか、{hero}」',
+      'ザバッ……！ 浅瀬から、ずぶ濡れの川獺が躍り出た！',
+    ],
+  },
+  {
+    type: 'battle',
+    enemies: ['kawauso', 'kawauso'],
+    level: 7,
+    ifLose: [{ type: 'say', lines: ['人足たちが駆けつけ、一行を岸へ引き上げた。', '人足頭「無理するこたあねえ。出直してきな」'] }, { type: 'end' }],
+  },
+  {
+    type: 'say',
+    lines: [
+      '川獺は、甲高い声をあげて川下へ逃げていった。',
+      '人足頭「ありがてえ！ これで川明けだ。お礼に、蓮台でお渡ししやしょう」',
+      '一行は人足の担ぐ蓮台に乗り、大井川を渡った。',
+      '人足頭「この先の東海道は、追い剥ぎの浪人や雲助が出る。尾張の名古屋までは、気を抜きなさんなよ」',
+    ],
+  },
+  { type: 'setFlag', flag: 'oigawaOpen' },
+];
+
+/** 名古屋に初めて入ったとき。 */
+const NAGOYA_ARRIVE: EventStep[] = [
+  {
+    type: 'say',
+    lines: [
+      '尾張名古屋。御三家筆頭の城下は、天守の金の鯱を見上げる人だかりで騒然としていた。',
+      '町人「見ろよ、鯱の鱗がまだらに剥がされてやがる……！」',
+      '霞「『金の鱗、尾張より届く』。名簿にあった一文は、このことだったんだ」',
+      '霞「鱗が盗まれたのは、一座が姿を消したのと同じころ。きっと同じ連中の仕業だよ。聞き込みといこう」',
+    ],
+  },
+  { type: 'setFlag', flag: 'nagoyaArrived' },
+];
+
+/** 金鯱からくりを倒して名古屋に戻ったとき（第 2 章の終わり）。第 3 章（京）への導線。 */
+const NAGOYA_CHAPTER_END: EventStep[] = [
+  {
+    type: 'say',
+    lines: [
+      '取り戻した金の鱗は、城の役人の手に戻された。',
+      '役人「鱗を盗んだのは江戸から来た浪人どもで、軽業師の金太は無実であった。……銀次の書き置きは、弟をかばうためのものだったのじゃな」',
+      '役人「殿より、褒美を下される」',
+      '城の役人から 500 文を受け取った。',
+      '金太「兄貴は、凧の糸を少しでも長くするんだって、毎晩遅くまで働いてた。……おれ、兄貴の分まで高く揚げるよ」',
+      '霞「荷蔵の浪人が持ってた文に、もう一つ気になることが書いてあった。『京の鬼、首尾よく』……」',
+      '霞「京で鬼が出るって噂、あんたも聞いたろ？ 次は京だよ、{hero}」',
+    ],
+  },
+  { type: 'giveMoney', amount: 500 },
+  { type: 'setFlag', flag: 'chapter2Cleared' },
+];
+
+/** 金太に初めて会う。兄の銀次が罪をかぶって消えたこと、堀川の荷蔵のことを聞き、荷蔵の前の荷車をどけてもらう。 */
+const KINTA_MEET: EventStep[] = [
+  {
+    type: 'say',
+    lines: [
+      '凧屋の奥で、若い男が大凧の陰に身を潜めていた。',
+      '男「……役人じゃねえな。おれは金太。鱗なんか盗んじゃいねえ！」',
+      '金太「あの晩、兄貴の銀次が『鱗を盗んだのはおれだ』って書き置きを残して、いなくなっちまったんだ」',
+      '金太「兄貴がそんなことするはずねえ。……でも、あの晩、堀川の荷蔵に浪人どもが重そうな箱を運び込むのを見た。兄貴は、あいつらを追っかけてったんだと思う」',
+      '霞「その荷蔵、調べてみる価値はありそうだね」',
+      '金太「荷蔵の戸口は荷車でふさがれてる。おれが動かしといてやるよ。……頼む、兄貴を見つけてくれ！」',
+    ],
+  },
+  { type: 'setFlag', flag: 'kintaMet' },
+];
+
+/** 荷蔵の奥で手がかりを得たあと、金太の大凧で天守へ飛ぶ。負けて出直すときも、ここから飛ぶ。 */
+const KINTA_FLIGHT: EventStep[] = [
+  {
+    type: 'if',
+    flag: 'kintaFlew',
+    then: [{ type: 'say', lines: ['金太「もう一度、天守へ飛ぶかい？ 風はまだ止んじゃいねえ」'] }],
+    else: [
+      {
+        type: 'say',
+        lines: [
+          '{hero}は、荷蔵の奥で見つけた文と、銀次の手ぬぐいのことを話した。',
+          '金太「鱗は天守に……兄貴も、きっとそこにいるんだ」',
+          '金太「お城の門は通れねえ。でも、兄貴とおれの大凧なら、天守の屋根まで飛べる！」',
+        ],
+      },
+    ],
+  },
+  {
+    type: 'choice',
+    prompt: '金太の大凧で天守へ飛ぶか？',
+    options: [
+      {
+        label: '飛ぶ',
+        steps: [
+          { type: 'say', lines: ['夜風に乗って、大凧が名古屋の空へ舞い上がった。', '眼下に城下の灯が遠ざかり、金の鯱の天守が迫ってくる……！'] },
+          { type: 'setFlag', flag: 'kintaFlew' },
+          { type: 'warp', mapId: 'tenshu', x: 8, y: 9 },
+        ],
+      },
+      { label: '支度をする', steps: [{ type: 'say', lines: ['金太「支度ができたら声をかけてくれ。凧はいつでも揚げられる」'] }] },
+    ],
+  },
+];
+
 export const EVENTS: Record<string, EventDef> = {
   /** 清水湊に初めて入ったとき。 */
   intro: {
@@ -302,6 +414,122 @@ export const EVENTS: Record<string, EventDef> = {
       { type: 'setFlag', flag: 'tetsubinDefeated' },
     ],
   },
+  /** 大井川の渡し場。第 1 章を終えるまでは川止めの案内だけ。 */
+  oigawa: {
+    id: 'oigawa',
+    steps: [
+      {
+        type: 'if',
+        flag: 'chapter1Cleared',
+        then: OIGAWA_CROSSING,
+        else: [{ type: 'say', lines: ['大井川の渡し場だ。川越し人足「水かさが増えて、今は渡せねえよ」'] }],
+      },
+    ],
+  },
+  /** 名古屋に入ったとき。初めてなら町の紹介、金鯱からくりを倒したあとなら第 2 章の終わり。 */
+  nagoyaEnter: {
+    id: 'nagoyaEnter',
+    steps: [
+      {
+        type: 'if',
+        flag: 'kinshachiDefeated',
+        then: NAGOYA_CHAPTER_END,
+        else: [{ type: 'if', flag: 'nagoyaArrived', then: [], else: NAGOYA_ARRIVE }],
+      },
+    ],
+  },
+  /** 凧屋の金太。会う → 荷蔵の手がかりのあとで天守へ飛ぶ → 第 2 章のあと。 */
+  kinta: {
+    id: 'kinta',
+    steps: [
+      {
+        type: 'if',
+        flag: 'kinshachiDefeated',
+        then: [{ type: 'say', lines: ['金太「兄貴の凧は、おれが揚げ続ける。……ありがとうな、{hero}」'] }],
+        else: [
+          {
+            type: 'if',
+            flag: 'urokoClue',
+            then: KINTA_FLIGHT,
+            else: [
+              {
+                type: 'if',
+                flag: 'kintaMet',
+                then: [{ type: 'say', lines: ['金太「堀川の荷蔵は、町の南東だ。荷車はどけといたぜ」'] }],
+                else: KINTA_MEET,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  /** 堀川の荷蔵の奥。鷲尾の配下の浪人を倒すと、鱗が天守へ運ばれたことが分かる。 */
+  horikawaOku: {
+    id: 'horikawaOku',
+    steps: [
+      {
+        type: 'say',
+        lines: ['奥の間の前に、浪人がふたり。足もとで、ゼンマイ仕掛けの犬が唸っている。', '浪人「嗅ぎつけたか。江戸の御方の御用だ、生かしては帰さん」'],
+      },
+      { type: 'battle', enemies: ['oihagiRonin', 'oihagiRonin', 'zenmaiInu'], level: 7 },
+      {
+        type: 'say',
+        lines: [
+          '奥の間には、空の千両箱が転がっていた。底に、金の粉がこびりついている。',
+          '浪人の懐から、文が一通。「金の鱗はからくりの心臓とせよ。鯱は天守にて組み上ぐべし」',
+          '千両箱のそばに、凧の絵を染め抜いた手ぬぐいが落ちていた。……銀次のものだろうか。',
+          '霞「鱗で鯱のからくりを動かすつもりか。天守へ行くしかないね。……金太に相談しよう」',
+        ],
+      },
+      { type: 'setFlag', flag: 'urokoClue' },
+    ],
+  },
+  /** 天守の大棟。銀次を心臓に組み込まれた金鯱からくり（第 2 章のボス）と戦う。負けて出直したときは短い台詞にする。 */
+  kinshachi: {
+    id: 'kinshachi',
+    steps: [
+      {
+        type: 'if',
+        flag: 'kinshachiMet',
+        then: [{ type: 'say', lines: ['大棟の上で、金鯱からくりが鱗を逆立てて待ち構えていた。', '金太「兄貴……今度こそ、止めてやるからな！」'] }],
+        else: [
+          {
+            type: 'say',
+            lines: [
+              '大棟の上に、金色の巨体がとぐろを巻いていた。天守の鯱が、からくり仕掛けで動いている！',
+              '剥がされた鱗は、鯱の胸の歯車に打ちつけられ、青白い火花を散らしている。',
+              '胸の奥に、人の姿が見えた。手足をゼンマイに絡め取られている。',
+              '金太「兄貴！ 銀次兄貴！」',
+              '銀次「……金太……来るな……。おれは……もう……」',
+              '霞「人をからくりの心臓にしたのか……！ {hero}、鯱を止めるよ！」',
+              'ギギギ……と歯車がきしみ、金鯱からくりが尾を振り上げた！',
+            ],
+          },
+          { type: 'setFlag', flag: 'kinshachiMet' },
+        ],
+      },
+      { type: 'battle', enemies: ['kinshachi'], level: 10 },
+      {
+        type: 'say',
+        lines: [
+          '金鯱からくりは、金の鱗をまき散らして崩れ落ちた。',
+          '胸の歯車の中から、銀次の体が転がり出た。腕も足も、もう半分がからくりになっている。',
+          '銀次「……金太……おれが盗んだことにすりゃ……おめえは疑われねえと……思ったんだが……」',
+          '銀次「浪人どもを追っかけて……このざまだ……。すまねえ……」',
+          '金太「しゃべるな、兄貴！ 今、医者を……！」',
+          '銀次「……おめえの凧は……いつも……空のいちばん高えところで……揺れてたなあ……」',
+          '銀次の胸のゼンマイが、カタリと止まった。',
+          '……夜明けの風が、天守の上を吹き抜けていった。',
+          '一行は、散らばった金の鱗を拾い集めた。城下へ戻ろう。',
+        ],
+      },
+      { type: 'setFlag', flag: 'kinshachiDefeated' },
+    ],
+  },
+  horikawaChest1: chest('horikawaChest1', 'kintsuba', '金創膏'),
+  horikawaChest2: chest('horikawaChest2', 'kitsukegusuri', '気付け薬'),
+  tenshuChest: chest('tenshuChest', 'hachigane', '鉢金'),
   yashikiChest1: chest('yashikiChest1', 'kintsuba', '金創膏'),
   yashikiChest2: chest('yashikiChest2', 'kitsukegusuri', '気付け薬'),
   yashikiChest3: chest('yashikiChest3', 'inro', '印籠'),

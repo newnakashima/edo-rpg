@@ -319,7 +319,8 @@ export class FieldScene extends Phaser.Scene {
     const gate = closedGateAt(this.map, nx, ny, getState().flags);
     if (gate) {
       this.standStill();
-      this.message.show(gate.lines);
+      // 関所を開けるイベントがあればそれを行う（大井川の川越し）
+      if (!gate.event || !this.startEvent(gate.event)) this.message.show(gate.lines);
       return;
     }
 

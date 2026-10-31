@@ -429,6 +429,8 @@ export class BattleScene extends Phaser.Scene {
         return `${name}の攻撃が上がった！`;
       case 'atkDown':
         return `${name}の攻撃が下がった！`;
+      case 'defUp':
+        return `${name}の守りが固くなった！`;
       case 'accDown':
         return `${name}は煙に巻かれた！`;
       case 'evade':

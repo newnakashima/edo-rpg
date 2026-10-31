@@ -22,6 +22,10 @@ describe('敵の画像', () => {
     for (const id of ['karakuriNingyo', 'gorotsuki', 'bakeChochin', 'tetsubin']) expect(ENEMIES[id]?.image, id).toBe(true);
   });
 
+  it('第 2 章（東海道・名古屋）の敵とボス金鯱からくりにも画像がある', () => {
+    for (const id of ['oihagiRonin', 'kawauso', 'zenmaiInu', 'kumosuke', 'kinshachi']) expect(ENEMIES[id]?.image, id).toBe(true);
+  });
+
   it('テクスチャのキー', () => {
     expect(enemyImageKey('onibi')).toBe('enemy-onibi');
   });
