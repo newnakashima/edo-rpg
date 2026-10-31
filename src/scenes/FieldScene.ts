@@ -90,13 +90,13 @@ export class FieldScene extends Phaser.Scene {
     this.showAreaName(map.name);
 
     // 戦闘や移動から戻ってきたら、途中のイベントの続きを行う。なければ、マップに入ったときのイベントを行う
+    // （移動・全滅の後に途中のイベントが終われば、移った先のマップに入ったときのイベントも行う）
     const pending = takePendingEvent();
     if (pending) {
       this.runner = pending.runner;
       this.advanceEvent(pending.resume);
-    } else if (map.onEnter) {
-      this.startTrigger(map.onEnter);
     }
+    if (!this.runner && !this.moving && map.onEnter) this.startTrigger(map.onEnter);
   }
 
   private startTrigger(trigger: EventTrigger): boolean {
@@ -276,7 +276,7 @@ export class FieldScene extends Phaser.Scene {
       return;
     }
     const useAfter = npc.after && state.flags[npc.after.flag];
-    const lines = useAfter && npc.after ? npc.after.lines : npc.lines;
+    const lines = useAfter && npc.after ? npc.after.lines : (npc.lines ?? []);
     this.message.show(lines, () => {
       if (npc.setsFlag) {
         const s = getState();

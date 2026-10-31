@@ -29,8 +29,8 @@ export interface NpcDef {
   x: number;
   y: number;
   color: number;
-  /** 話しかけたときの台詞。1 要素が 1 ページ。 */
-  lines: string[];
+  /** 話しかけたときの台詞。1 要素が 1 ページ。event があれば使わない。 */
+  lines?: string[];
   /** 台詞のあとに行う施設の処理。 */
   action?: NpcAction;
   /** action が 'shop' のときの店の ID（SHOPS）。 */
@@ -104,7 +104,6 @@ export const MAPS: Record<string, MapDef> = {
         x: 5,
         y: 10,
         color: 0x8a3b2e,
-        lines: [],
         event: 'tatsugoro',
       },
       {
@@ -208,15 +207,14 @@ export const MAPS: Record<string, MapDef> = {
       'TTTTTTTTTT==TTTTTTTTTTTTTT',
     ],
     npcs: [
-        {
-          id: 'urayamaShrine',
-          name: '祠',
-          x: 4,
-          y: 1,
-          color: 0x8c8c7a,
-          lines: [],
-          event: 'urayamaShrine',
-        },
+      {
+        id: 'urayamaShrine',
+        name: '祠',
+        x: 4,
+        y: 1,
+        color: 0x8c8c7a,
+        event: 'urayamaShrine',
+      },
     ],
     exits: [
       { x: 10, y: 13, to: 'shimizu', toX: 14, toY: 1 },

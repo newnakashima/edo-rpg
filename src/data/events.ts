@@ -40,9 +40,14 @@ export const EVENTS: Record<string, EventDef> = {
               {
                 label: '引き受ける',
                 steps: [
-                  { type: 'say', lines: ['辰五郎「恩に着る。これは路銀の足しにしてくんな」', '辰五郎から 100 文と傷薬を受け取った。'] },
+                  { type: 'say', lines: ['辰五郎「恩に着る。これは路銀の足しにしてくんな」', '辰五郎から 100 文を受け取った。'] },
                   { type: 'giveMoney', amount: 100 },
-                  { type: 'giveItem', item: 'kizugusuri', count: 2 },
+                  {
+                    type: 'giveItem',
+                    item: 'kizugusuri',
+                    count: 2,
+                    ifFull: [{ type: 'say', lines: ['辰五郎「傷薬も持たせてえところだが、もう持ちきれねえようだな」'] }],
+                  },
                   { type: 'setFlag', flag: 'talkedToTatsugoro' },
                 ],
               },
@@ -65,8 +70,10 @@ export const EVENTS: Record<string, EventDef> = {
         flag: 'urayamaShrine',
         then: [{ type: 'say', lines: ['苔むした小さな祠だ。静かに手を合わせた。'] }],
         else: [
-          { type: 'say', lines: ['苔むした小さな祠だ。供え物の中に、まだ使えそうな薬がある。', '万金丹を手に入れた。'] },
-          { type: 'giveItem', item: 'mankintan' },
+          { type: 'say', lines: ['苔むした小さな祠だ。供え物の中に、まだ使えそうな薬がある。'] },
+          // 持ちきれないときは、また来たときに受け取れるようにフラグを立てない
+          { type: 'giveItem', item: 'mankintan', ifFull: [{ type: 'say', lines: ['……これ以上は持てない。'] }, { type: 'end' }] },
+          { type: 'say', lines: ['万金丹を手に入れた。'] },
           { type: 'setFlag', flag: 'urayamaShrine' },
         ],
       },

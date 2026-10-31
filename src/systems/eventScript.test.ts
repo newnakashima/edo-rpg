@@ -55,9 +55,9 @@ describe('イベントスクリプト', () => {
     expect(stop.requests.map((r) => r.kind)).toEqual(['choice', 'done']);
   });
 
-  it('道具とお金を渡す（道具は 99 個で止める）', () => {
-    const r = play([{ type: 'giveItem', item: 'kizugusuri', count: 5 }, { type: 'giveMoney', amount: 30 }], game({ items: { kizugusuri: 97 }, money: 10 }));
-    expect(r.state.items.kizugusuri).toBe(99);
+  it('道具とお金を渡す', () => {
+    const r = play([{ type: 'giveItem', item: 'kizugusuri', count: 5 }, { type: 'giveMoney', amount: 30 }], game({ items: { kizugusuri: 1 }, money: 10 }));
+    expect(r.state.items.kizugusuri).toBe(6);
     expect(r.state.money).toBe(40);
   });
 
@@ -80,6 +80,45 @@ describe('イベントスクリプト', () => {
     expect(wiped.runner.done).toBe(true);
   });
 
+  it('逃げても続きへ進む', () => {
+    const r = play([{ type: 'battle', enemies: ['onibi'], level: 1, canEscape: true }, { type: 'setFlag', flag: 'after' }], game(), [], ['escaped']);
+    expect(r.requests[0]).toMatchObject({ canEscape: true, loseOk: false });
+    expect(r.state.flags.after).toBe(true);
+  });
+
+  it('フラグを下ろせる', () => {
+    const r = play([{ type: 'setFlag', flag: 'x', value: false }], game({ flags: { x: true } }));
+    expect(r.state.flags.x).toBe(false);
+  });
+
+  it('範囲外の選択は何も選ばずに続きへ進む', () => {
+    const r = play(
+      [{ type: 'choice', options: [{ label: 'a', steps: [{ type: 'setFlag', flag: 'a' }] }] }, { type: 'setFlag', flag: 'after' }],
+      game(),
+      [5],
+    );
+    expect(r.state.flags).toEqual({ after: true });
+  });
+
+  it('分岐の中の end でイベント全体を終える', () => {
+    const r = play([{ type: 'if', flag: 'x', then: [{ type: 'end' }] }, { type: 'setFlag', flag: 'after' }], game({ flags: { x: true } }));
+    expect(r.state.flags.after).toBeUndefined();
+    expect(r.runner.done).toBe(true);
+  });
+
+  it('持ちきれない道具は渡さず、ifFull を行う', () => {
+    const steps: EventStep[] = [
+      { type: 'giveItem', item: 'kizugusuri', count: 3, ifFull: [{ type: 'setFlag', flag: 'full' }] },
+      { type: 'setFlag', flag: 'after' },
+    ];
+    const full = play(steps, game({ items: { kizugusuri: 97 } }));
+    expect(full.state.items.kizugusuri).toBe(97);
+    expect(full.state.flags).toEqual({ full: true, after: true });
+    const ok = play(steps, game({ items: { kizugusuri: 96 } }));
+    expect(ok.state.items.kizugusuri).toBe(99);
+    expect(ok.state.flags.full).toBeUndefined();
+  });
+
   it('場所を移す', () => {
     const r = play([{ type: 'warp', mapId: 'urayama', x: 3, y: 4 }], game());
     expect(r.requests[0]).toEqual({ kind: 'warp', mapId: 'urayama', x: 3, y: 4 });
@@ -89,6 +128,7 @@ describe('イベントスクリプト', () => {
   it('全回復する', () => {
     const r = play([{ type: 'heal' }], game({ party: [{ ...createMember('hero', 1), hp: 1, mp: 0 }] }));
     expect(r.state.party[0]?.hp).toBe(memberStats(r.state.party[0]!).maxHp);
+    expect(r.state.party[0]?.mp).toBe(memberStats(r.state.party[0]!).maxMp);
   });
 
   it('引数の状態を変更しない', () => {

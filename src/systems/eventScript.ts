@@ -94,7 +94,12 @@ export class EventRunner {
           return { state: s, request: { kind: 'choice', prompt: step.prompt, labels: step.options.map((o) => o.label) } };
         case 'giveItem': {
           const n = step.count ?? 1;
-          if (isKnownItem(step.item)) s = { ...s, items: addItem(s.items, step.item, Math.min(n, MAX_ITEM_COUNT - itemCount(s.items, step.item))) };
+          if (!isKnownItem(step.item) || n < 1) break;
+          if (itemCount(s.items, step.item) + n > MAX_ITEM_COUNT) {
+            if (step.ifFull) this.stack.push({ steps: step.ifFull, index: 0 });
+            break;
+          }
+          s = { ...s, items: addItem(s.items, step.item, n) };
           break;
         }
         case 'giveMoney':
