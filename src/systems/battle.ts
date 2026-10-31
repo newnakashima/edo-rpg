@@ -529,6 +529,15 @@ class TurnContext {
         this.events.push({ type: 'healMp', target: target.key, amount });
         return;
       }
+      case 'healBoth': {
+        const hp = Math.min(target.stats.maxHp - target.hp, effect.hp);
+        const mp = Math.min(target.stats.maxMp - target.mp, effect.mp);
+        target.hp += hp;
+        target.mp += mp;
+        if (hp > 0) this.events.push({ type: 'heal', target: target.key, amount: hp });
+        if (mp > 0) this.events.push({ type: 'healMp', target: target.key, amount: mp });
+        return;
+      }
       case 'cure':
         this.cure(target, effect.ailment);
         return;
@@ -642,6 +651,8 @@ export function itemWorks(effect: ItemEffect, target: Combatant): boolean {
       return target.hp < target.stats.maxHp;
     case 'healMp':
       return target.mp < target.stats.maxMp;
+    case 'healBoth':
+      return target.hp < target.stats.maxHp || target.mp < target.stats.maxMp;
     case 'cure':
       return Object.keys(target.status).some((id) => isAilment(id as StatusId) && (!effect.ailment || id === effect.ailment));
   }

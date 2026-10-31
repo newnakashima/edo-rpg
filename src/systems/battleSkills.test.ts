@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { availableItemCount, createBattle, DEF_UP_RATE, partyAfterBattle, resolveTurn, type BattleState, type Combatant } from './battle';
 import { ENEMIES } from '../data/enemies';
 import { SKILLS } from '../data/skills';
-import { createMember } from './party';
+import { createMember, memberStats } from './party';
 import { seededRng, seqRng } from './testUtils';
 
 function get(state: BattleState, key: string): Combatant {
@@ -445,6 +445,21 @@ describe('道具の消費', () => {
       expect(r.events).toContainEqual({ type: 'itemUnused', actor: 'p0', item, target });
       expect(r.state.items).toEqual(b.items);
     }
+  });
+
+  it('兵糧丸は体力と気力を回復し、両方満タンなら使わない', () => {
+    // 体力・気力の最大が回復量より多いレベルにする
+    const party = [{ ...createMember('hero', 30), hp: 1, mp: 0 }];
+    expect(memberStats(party[0]!).maxHp).toBeGreaterThan(61);
+    expect(memberStats(party[0]!).maxMp).toBeGreaterThan(12);
+    const b = sleepEnemies(createBattle(party, 'm', ['ogaeru'], 1, { items: { hyorogan: 2 } }));
+    const r = resolveTurn(b, { p0: { kind: 'item', item: 'hyorogan', target: 'p0' } }, seqRng(0.5));
+    expect(r.events).toContainEqual({ type: 'heal', target: 'p0', amount: 60 });
+    expect(r.events).toContainEqual({ type: 'healMp', target: 'p0', amount: 12 });
+    expect(r.state.items).toEqual({ hyorogan: 1 });
+    const full = sleepEnemies(createBattle([createMember('hero', 10)], 'm', ['ogaeru'], 1, { items: { hyorogan: 1 } }));
+    const r2 = resolveTurn(full, { p0: { kind: 'item', item: 'hyorogan', target: 'p0' } }, seqRng(0.5));
+    expect(r2.events).toContainEqual({ type: 'itemUnused', actor: 'p0', item: 'hyorogan', target: 'p0' });
   });
 
   it('逃走に失敗したターンは、選んだ道具・技を使わない', () => {

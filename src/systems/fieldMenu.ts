@@ -31,6 +31,7 @@ export function useItemInField(state: GameState, itemId: string, target: number)
   if (e.kind === 'revive') next = { ...m, hp: Math.max(1, Math.floor(s.maxHp * e.rate)) };
   else if (e.kind === 'healHp') next = { ...m, hp: Math.min(s.maxHp, m.hp + e.amount) };
   else if (e.kind === 'healMp') next = { ...m, mp: Math.min(s.maxMp, m.mp + e.amount) };
+  else if (e.kind === 'healBoth') next = { ...m, hp: Math.min(s.maxHp, m.hp + e.hp), mp: Math.min(s.maxMp, m.mp + e.mp) };
   else return { ok: false, reason: 'noEffect' };
   return {
     ok: true,
@@ -126,6 +127,8 @@ export function itemUsableOn(itemId: string, member: PartyMember): boolean {
       return member.hp > 0 && member.hp < s.maxHp;
     case 'healMp':
       return member.hp > 0 && member.mp < s.maxMp;
+    case 'healBoth':
+      return member.hp > 0 && (member.hp < s.maxHp || member.mp < s.maxMp);
     case 'cure':
       return false;
   }
