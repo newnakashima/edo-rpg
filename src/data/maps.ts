@@ -1,4 +1,4 @@
-// フィールドのマップ。序章〜第 2 章の町・ダンジョンと、ワールドマップを用意する。
+// フィールドのマップ。序章〜第 3 章の町・ダンジョンと、ワールドマップを用意する。
 // タイルの文字の意味は TILES を参照。
 import type { Facing } from '../systems/gameState';
 import type { CharacterSpriteId } from './sprites';
@@ -151,6 +151,8 @@ export const MAPS: Record<string, MapDef> = {
         color: 0x8a3b2e,
         sprite: 'tatsugoro',
         event: 'tatsugoro',
+        // 第 3 章の終わりに、鷲尾の配下の刺客に殺される（弔いの場面は第 4 章で足す）
+        hideFlag: 'chapter3Cleared',
       },
       {
         id: 'innkeeper',
@@ -363,7 +365,7 @@ MAPS.world = {
     // 名古屋は大井川の西。大井川の渡し場（oigawaOpen）を越えなければ着かない
     { x: 32, y: 10, name: '名古屋', to: { mapId: 'nagoya', x: 28, y: 8 } },
     { x: 27, y: 11, name: '伊賀', lines: NOT_YET('伊賀上野', '第 4 章') },
-    { x: 24, y: 10, name: '京', lines: NOT_YET('京', '第 3 章') },
+    { x: 24, y: 10, name: '京', to: { mapId: 'kyo', x: 28, y: 6 }, openFlag: 'chapter2Cleared', lines: ['京。（尾張名古屋の一件を片づけてから訪れる）'] },
     { x: 21, y: 11, name: '大坂', lines: NOT_YET('大坂', '第 5 章') },
     { x: 14, y: 11, name: '広島', lines: NOT_YET('広島', '第 6 章') },
     { x: 3, y: 16, name: '長崎', lines: NOT_YET('長崎・出島', '第 6 章') },
@@ -377,12 +379,18 @@ MAPS.world = {
     { x: 36, y: 10, flag: 'oigawaOpen', lines: ['大井川の渡し場だ。川越し人足「水かさが増えて、今は渡せねえよ」'], event: 'oigawa' },
     { x: 45, y: 10, flag: 'hakoneTegata', lines: ['箱根の関所だ。役人「通行手形なき者は、通すわけにはいかぬ」'] },
   ],
-  // 出現範囲は今は駿河と、大井川の西の東海道。ほかの地域の範囲は、その地域の敵を作るとき（フェーズ 4 の各章）に足す
+  // 出現範囲は今は駿河、大井川の西の東海道、京のまわり。ほかの地域の範囲は、その地域の敵を作るとき（フェーズ 4 の各章）に足す
   // 先に書いた範囲が優先。駿府のまわり（大井川の渡し場から駿府まで）は、序章を終えたら駿府の敵（それまでは序章の敵）
-  // 大井川の西（名古屋・京・伊賀のまわり）は東海道の敵。京・伊賀の範囲は第 3・4 章で、この範囲より前に足す
+  // 大井川の西（名古屋・伊賀のまわり）は東海道の敵。伊賀の範囲は第 4 章で、この範囲より前に足す
   // 大井川の西（東海道）で全滅したら名古屋に戻る（ほかは最初の町の清水湊）
-  respawnZones: [{ x: 25, y: 9, w: 11, h: 4, mapId: 'nagoya' }],
+  // 京のまわり（大坂寄りの街道を含む）で全滅したら京に戻る
+  respawnZones: [
+    { x: 21, y: 9, w: 4, h: 4, mapId: 'kyo' },
+    { x: 25, y: 9, w: 11, h: 4, mapId: 'nagoya' },
+  ],
+  // 京のまわり（x 21〜24）は、第 2 章を終えたら京の敵（それまでは敵が出ない）
   encounterZones: [
+    { x: 21, y: 9, w: 4, h: 4, encounter: 'kyoto', flag: 'chapter2Cleared' },
     { x: 25, y: 9, w: 11, h: 4, encounter: 'tokaido' },
     { x: 36, y: 9, w: 4, h: 4, encounter: 'sunpu', flag: 'prologueCleared' },
     { x: 36, y: 9, w: 10, h: 4, encounter: 'suruga' },
@@ -1012,6 +1020,265 @@ MAPS.tenshu = {
   triggers: [
     { x: 8, y: 4, event: 'kinshachi', unless: 'kinshachiDefeated' },
     { x: 9, y: 4, event: 'kinshachi', unless: 'kinshachiDefeated' },
+  ],
+};
+
+/** 第 3 章の京と、羅生門跡・鬼の巣（山寺の廃墟）。 */
+MAPS.kyo = {
+  id: 'kyo',
+  name: '京',
+  areaLevel: 10,
+  rows: [
+    'TTTTTTTTTTTTTT__TTTTTTTTTTTTTT',
+    'T,,,,,,,,,,,,,==,,,,,,,,,,,,,T',
+    'T,RRRRR,RRRRR,==,RRRRR,RRRRR,T',
+    'T,WWDWW,WWDWW,==,WWDWW,WWDWW,T',
+    'T,.....,.....,==,.....,.....,T',
+    'T,,,,,,,,,,,,,==,,,,,,,,,,,,,T',
+    '==============================',
+    'T,,,,,,,,,,,,,==,,,,,,,,,,,,,T',
+    'T,RRRRRRR,RRR,==,RRRRRRRRRR,,T',
+    'T,WWWDWWW,WDW,==,WWWWWDWWWW,,T',
+    'T,.......,...,==,..........,,T',
+    'T,,,,,,,,,,,,,==,,,,,,,,,,,,,T',
+    'T.............==.............T',
+    'T~~~~~~~~~~~~~==~~~~~~~~~~~~~T',
+    'T.............==.............T',
+    'TTTTTTTTTTTTTT==TTTTTTTTTTTTTT',
+  ],
+  npcs: [
+    {
+      id: 'kyoTeahouse',
+      name: '茶屋の娘',
+      x: 4,
+      y: 4,
+      color: 0xc76b8f,
+      lines: [
+        '茶屋の娘「おいでやす。……お客はん、夜は出歩かんほうがよろしおす。羅生門の跡に、鬼が出るんやて」',
+        '茶屋の娘「鬼退治を請け負うたお坊さんがいてはるそうやけど、鴨川の河原で酔いつぶれてはるとか」',
+        '茶屋の娘「お団子はいかがどす？」',
+      ],
+      after: { flag: 'heardOniRumor', lines: ['茶屋の娘「おいでやす。お団子はいかがどす？」'] },
+      setsFlag: 'heardOniRumor',
+      action: 'teahouse',
+    },
+    {
+      id: 'kyoYorozu',
+      name: 'よろず屋',
+      x: 10,
+      y: 4,
+      color: 0x6b8c5a,
+      lines: ['よろず屋「都の品は確かどすえ。鬼退治のお供に、薬はたんと持っておいきやす」'],
+      action: 'shop',
+      shop: 'kyoYorozu',
+    },
+    {
+      id: 'kyoInn',
+      name: '旅籠の主人',
+      x: 25,
+      y: 4,
+      color: 0x5a6b8c,
+      lines: ['旅籠の主人「ようお越しやす。お泊まりどすか」'],
+      action: 'inn',
+    },
+    {
+      id: 'yasakaKannushi',
+      name: '八坂の神主',
+      x: 27,
+      y: 1,
+      color: 0xb0b0a0,
+      lines: ['神主「祇園さんのご加護を。倒れた者があれば、お祓いをして進ぜよう」'],
+      action: 'temple',
+    },
+    {
+      id: 'kyoKaji',
+      name: '刀鍛冶',
+      x: 11,
+      y: 10,
+      color: 0x5a5a6b,
+      lines: ['刀鍛冶「江戸の虎徹に南蛮渡りの胴、都にはなんでも集まりますわ」'],
+      action: 'shop',
+      shop: 'kyoKaji',
+    },
+    {
+      id: 'kyoHikyaku',
+      name: '飛脚',
+      x: 18,
+      y: 10,
+      color: 0x3e7cb0,
+      lines: ['飛脚「へい、まいど！ 京の飛脚問屋でございやす」'],
+      action: 'hikyaku',
+    },
+    {
+      id: 'kyoMachiya',
+      name: '町のおかみ',
+      x: 20,
+      y: 7,
+      color: 0x9c8a5a,
+      lines: [
+        'おかみ「鬼に連れていかれたんは、鴨川の河原に住む人らばっかりや。お奉行所も、河原者のことやと本気で探してくれへん」',
+        'おかみ「むかしの大火のあとから、河原には行き場のない人が集まってはるんよ」',
+      ],
+      after: { flag: 'shutenDefeated', lines: ['おかみ「河原の人らが帰ってきはった。鬼にされとったなんて、ほんまに恐ろしいことや……」'] },
+    },
+    {
+      id: 'gendoKawara',
+      name: '破戒僧',
+      x: 5,
+      y: 12,
+      color: 0x6a4a2a,
+      sprite: 'gendo',
+      facing: 'down',
+      event: 'gendoMeet',
+      hideFlag: 'gendoJoined',
+    },
+    {
+      id: 'kawaramono',
+      name: '河原の男',
+      x: 22,
+      y: 14,
+      color: 0x7a6a5a,
+      lines: ['河原の男「弟が、鬼に……いや、弟が鬼になって、夜の都をさまよっとるんや。見たもんがおるんや！」'],
+      after: { flag: 'rashomonCleared', lines: ['河原の男「弟が帰ってきた！ あのお坊さんが、鬼を祓うてくれはったんや……！」'] },
+    },
+    {
+      id: 'kitaGuardW',
+      name: '奉行所の役人',
+      x: 14,
+      y: 0,
+      color: 0x4a4a6b,
+      lines: ['役人「北の山へは通さぬ。鬼が出るのでな。……羅生門の鬼の一件が片づくまでは、誰であろうと通さん」'],
+      hideFlag: 'rashomonCleared',
+    },
+    {
+      id: 'kitaGuardE',
+      name: '奉行所の役人',
+      x: 15,
+      y: 0,
+      color: 0x4a4a6b,
+      lines: ['役人「羅生門の跡は、五条の橋を渡った南だ。行くなら止めはせぬが……」'],
+      hideFlag: 'rashomonCleared',
+    },
+  ],
+  exits: [
+    // 東西の通りからワールドマップへ（京の印の両隣の街道）
+    { x: 29, y: 6, to: 'world', toX: 25, toY: 10 },
+    { x: 0, y: 6, to: 'world', toX: 23, toY: 10 },
+    // 北の山道から鬼の巣へ（羅生門の鬼を祓うまでは役人がふさぐ）
+    { x: 14, y: 0, to: 'oninosu', toX: 11, toY: 14 },
+    { x: 15, y: 0, to: 'oninosu', toX: 11, toY: 14 },
+    // 五条の橋を渡って南の羅生門跡へ
+    { x: 14, y: 15, to: 'rashomon', toX: 5, toY: 8 },
+    { x: 15, y: 15, to: 'rashomon', toX: 6, toY: 8 },
+  ],
+  respawn: { x: 25, y: 5 },
+  onEnter: { event: 'kyoEnter', unless: 'chapter3Cleared' },
+};
+
+MAPS.rashomon = {
+  id: 'rashomon',
+  name: '羅生門跡',
+  areaLevel: 10,
+  rows: [
+    'TTTTTTTTTTTT',
+    'T^^RRRRRR^^T',
+    'T^^WWWWWW^^T',
+    'T,,,,,,,,,,T',
+    'T,^,,,,,,^,T',
+    'TTTT,,,,TTTT',
+    'T,,,,,,,,,,T',
+    'T,T,,,,,,T,T',
+    'T,,,,,,,,,,T',
+    'TTTTT,,TTTTT',
+  ],
+  npcs: [
+    {
+      id: 'rashomonIshi',
+      name: '石碑',
+      x: 6,
+      y: 3,
+      color: 0x8a8a8a,
+      lines: ['「羅城門跡」と刻まれた古い石碑だ。むかし、この門の楼上には鬼が棲んだという。'],
+    },
+  ],
+  exits: [
+    { x: 5, y: 9, to: 'kyo', toX: 14, toY: 14 },
+    { x: 6, y: 9, to: 'kyo', toX: 15, toY: 14 },
+  ],
+  encounter: 'kyoto',
+  respawnMap: 'kyo',
+  // 門の跡の手前で、鬼にされた河原者たちが待ち構える
+  triggers: [4, 5, 6, 7].map((x) => ({ x, y: 5, event: 'rashomonOni', unless: 'rashomonCleared' })),
+};
+
+MAPS.oninosu = {
+  id: 'oninosu',
+  name: '鬼の巣',
+  areaLevel: 10,
+  rows: [
+    'WWWWWWWWWWWWWWWWWWWWWW',
+    'WWWWWWW________WWWWWWW',
+    'WWWWWWW________WWWWWWW',
+    'WWWWWWWWWW__WWWWWWWWWW',
+    'W______WWW__WWW______W',
+    'W_WWWW_WWW__WWW_WWWW_W',
+    'W_W__W_____________W_W',
+    'W_W__WWWWW_WWWWW_W_W_W',
+    'W____W_____W_____W___W',
+    'WWWW_W_WWWWW_WWWWWWW_W',
+    'W____W_W_____W_______W',
+    'W_WWWW_W_WWWWW_WWWWWWW',
+    'W______W_______W_____W',
+    'WWWWWWWWWW__WWWW_WWW_W',
+    'W_________________W__W',
+    'WWWWWWWWWW__WWWWWWWWWW',
+  ],
+  npcs: [
+    {
+      id: 'oninosuChest1',
+      name: '葛籠',
+      x: 3,
+      y: 6,
+      color: 0x8a6a3a,
+      event: 'oninosuChest1',
+    },
+    {
+      id: 'oninosuChest2',
+      name: '葛籠',
+      x: 20,
+      y: 14,
+      color: 0x8a6a3a,
+      event: 'oninosuChest2',
+    },
+    {
+      id: 'kyoYashamaru',
+      name: '夜叉丸',
+      x: 12,
+      y: 1,
+      color: 0x6a2a6a,
+      lines: ['……'],
+      hideFlag: 'yashamaruKyoFled',
+    },
+    {
+      id: 'oninosuButsudan',
+      name: '朽ちた本尊',
+      x: 8,
+      y: 1,
+      color: 0x8a7a5a,
+      lines: ['首の落ちた仏像だ。台座に、まだ新しい護摩の灰が積もっている。'],
+      after: { flag: 'shutenDefeated', lines: ['首の落ちた仏像だ。玄道が、静かに経を唱えている。'] },
+    },
+  ],
+  exits: [
+    { x: 10, y: 15, to: 'kyo', toX: 14, toY: 1 },
+    { x: 11, y: 15, to: 'kyo', toX: 15, toY: 1 },
+  ],
+  encounter: 'kyoto',
+  respawnMap: 'kyo',
+  // 本堂へ上がる細い段で、夜叉丸と大鬼が待ち構える
+  triggers: [
+    { x: 10, y: 3, event: 'shuten', unless: 'shutenDefeated' },
+    { x: 11, y: 3, event: 'shuten', unless: 'shutenDefeated' },
   ],
 };
 

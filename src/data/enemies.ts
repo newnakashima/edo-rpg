@@ -1,4 +1,4 @@
-// docs/balance.md の「敵とボスの一覧」。章を実装するごとに、その地域の敵を足す（今は序章〜第 2 章）。
+// docs/balance.md の「敵とボスの一覧」。章を実装するごとに、その地域の敵を足す（今は序章〜第 3 章）。
 import type { EnemyFactors } from '../systems/stats';
 import type { Element } from './skills';
 
@@ -148,6 +148,54 @@ export const ENEMIES: Record<string, EnemyDef> = {
       { skill: 'odoshi', weight: 1 },
     ],
   },
+  // 京（第 3 章）
+  akaoni: {
+    id: 'akaoni',
+    name: '赤鬼',
+    color: 0xc04030,
+    image: true,
+    factors: { hp: 1.4, atk: 1.3, def: 1.0, spd: 0.8 },
+    weak: ['holy'],
+    actions: [
+      { skill: 'attack', weight: 4 },
+      { skill: 'kanabo', weight: 1 },
+    ],
+  },
+  ittanmomen: {
+    id: 'ittanmomen',
+    name: '一反木綿',
+    color: 0xe0e0d0,
+    image: true,
+    factors: { hp: 0.8, atk: 1.0, def: 0.7, spd: 1.3 },
+    weak: ['fire'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'makitsuki', weight: 1 },
+    ],
+  },
+  namagusaBozu: {
+    id: 'namagusaBozu',
+    name: '生臭坊主',
+    color: 0x8a6a5a,
+    image: true,
+    factors: { hp: 1.0, atk: 0.9, def: 1.0, spd: 0.9 },
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'jaho', weight: 2 },
+    ],
+  },
+  karakuriGissha: {
+    id: 'karakuriGissha',
+    name: 'からくり牛車',
+    color: 0x6a4a3a,
+    image: true,
+    factors: { hp: 1.3, atk: 1.1, def: 1.4, spd: 0.7 },
+    weak: ['mech'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'totsugeki', weight: 1 },
+    ],
+  },
   // ボス（rewardScale あり）。イベントの battle で出し、出現表には入れない
   /** 序章のボス。妖狐だが、実はからくりで操られていた。序章は一人旅なので化かし（混乱）は控えめにする。 */
   yako: {
@@ -194,6 +242,22 @@ export const ENEMIES: Record<string, EnemyDef> = {
       { skill: 'kinUroko', weight: 1 },
     ],
     rewardScale: 5,
+  },
+  /** 第 3 章のボス。夜叉丸が鬼の巣で呼び出した大鬼。酒の息で眠らせ、怒りで攻撃を上げる。 */
+  shuten: {
+    id: 'shuten',
+    name: '酒呑の大鬼',
+    color: 0xa02020,
+    image: true,
+    factors: { hp: 9, atk: 1.25, def: 1.1, spd: 0.8 },
+    weak: ['holy'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'kanabo', weight: 2 },
+      { skill: 'sakeNoIki', weight: 1 },
+      { skill: 'ikari', weight: 1 },
+    ],
+    rewardScale: 6,
   },
 };
 
@@ -262,6 +326,20 @@ const NAGOYA: EncounterTable = {
   ],
 };
 
+/** 京のまわりの街道・羅生門跡・鬼の巣の敵の組（4 体の組は玄道が加わった 3 人から）。 */
+const KYOTO: EncounterTable = {
+  level: 10,
+  groups: [
+    { members: ['akaoni'], weight: 2 },
+    { members: ['ittanmomen', 'ittanmomen'], weight: 2 },
+    { members: ['namagusaBozu', 'akaoni'], weight: 2 },
+    { members: ['karakuriGissha', 'namagusaBozu'], weight: 2 },
+    { members: ['ittanmomen', 'ittanmomen', 'ittanmomen'], weight: 1 },
+    { members: ['akaoni', 'ittanmomen', 'ittanmomen'], weight: 1 },
+    { members: ['akaoni', 'namagusaBozu', 'ittanmomen', 'ittanmomen'], weight: 1 },
+  ],
+};
+
 export const ENCOUNTERS: Record<string, EncounterTable> = {
   /** 清水湊の裏山。 */
   urayama: PROLOGUE,
@@ -273,4 +351,6 @@ export const ENCOUNTERS: Record<string, EncounterTable> = {
   tokaido: TOKAIDO,
   /** 名古屋の堀川の荷蔵と天守。 */
   nagoya: NAGOYA,
+  /** 京のまわりの街道と、羅生門跡・鬼の巣。 */
+  kyoto: KYOTO,
 };

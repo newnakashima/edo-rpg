@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { ENCOUNTERS, ENEMIES, enemyImageKey } from './enemies';
 import { SKILLS } from './skills';
+import { pickGroup } from '../systems/encounter';
+import { seededRng } from '../systems/testUtils';
 
 describe('敵の画像', () => {
   it('image のある敵の画像が public/assets/enemies/ にあり、画像のファイルは全て使われている', () => {
@@ -24,6 +26,10 @@ describe('敵の画像', () => {
 
   it('第 2 章（東海道・名古屋）の敵とボス金鯱からくりにも画像がある', () => {
     for (const id of ['oihagiRonin', 'kawauso', 'zenmaiInu', 'kumosuke', 'kinshachi']) expect(ENEMIES[id]?.image, id).toBe(true);
+  });
+
+  it('第 3 章（京）の敵とボス酒呑の大鬼にも画像がある', () => {
+    for (const id of ['akaoni', 'ittanmomen', 'namagusaBozu', 'karakuriGissha', 'shuten']) expect(ENEMIES[id]?.image, id).toBe(true);
   });
 
   it('テクスチャのキー', () => {
@@ -56,5 +62,16 @@ describe('敵の行動', () => {
       expect(called, skill.id).toBeDefined();
       expect(called?.rewardScale, skill.id).toBeUndefined();
     }
+  });
+});
+
+describe('京の敵の組', () => {
+  it('4 体の組は玄道が加わった 3 人からで、玄道に会う前の 2 人旅では 3 体まで', () => {
+    const table = ENCOUNTERS.kyoto!;
+    expect(table.groups.some((g) => g.members.length === 4)).toBe(true);
+    const rng = seededRng(3);
+    const sizes = (size: number) => Array.from({ length: 300 }, () => pickGroup(table, { size, maxLevel: 10 }, rng)?.length ?? 0);
+    expect(Math.max(...sizes(2))).toBe(3);
+    expect(Math.max(...sizes(3))).toBe(4);
   });
 });
