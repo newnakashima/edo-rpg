@@ -41,11 +41,13 @@ export const ITEMS: Record<string, ItemDef> = {
   awaokoshi: { id: 'awaokoshi', name: '粟おこし', price: 40, effect: { kind: 'healHp', amount: 100 }, target: 'ally', field: true, description: '大坂の名物の干菓子。体力を 100 回復する' },
   kintsuba: { id: 'kintsuba', name: '金創膏', price: 60, effect: { kind: 'healHp', amount: 120 }, target: 'ally', field: true, description: '体力を 120 回復する' },
   kasutera: { id: 'kasutera', name: 'カステラ', price: 110, effect: { kind: 'healHp', amount: 200 }, target: 'ally', field: true, description: '長崎の南蛮菓子。体力を 200 回復する' },
+  shibafune: { id: 'shibafune', name: '柴舟', price: 130, effect: { kind: 'healHp', amount: 240 }, target: 'ally', field: true, description: '金沢の生姜の煎餅。体力を 240 回復する' },
   // 気力
   amazake: { id: 'amazake', name: '甘酒', price: 20, effect: { kind: 'healMp', amount: 8 }, target: 'ally', field: true, description: '体の温まる甘酒。気力を 8 回復する' },
   mankintan: { id: 'mankintan', name: '万金丹', price: 40, effect: { kind: 'healMp', amount: 15 }, target: 'ally', field: true, description: '気力を 15 回復する' },
   matcha: { id: 'matcha', name: '宇治の抹茶', price: 70, effect: { kind: 'healMp', amount: 24 }, target: 'ally', field: true, description: '宇治の濃い抹茶。気力を 24 回復する' },
   konpeito: { id: 'konpeito', name: '金平糖', price: 90, effect: { kind: 'healMp', amount: 30 }, target: 'ally', field: true, description: '南蛮渡りの砂糖菓子。気力を 30 回復する' },
+  bocha: { id: 'bocha', name: '加賀棒茶', price: 110, effect: { kind: 'healMp', amount: 36 }, target: 'ally', field: true, description: '茎を焙じた加賀の茶。気力を 36 回復する' },
   // 体力と気力
   hyorogan: { id: 'hyorogan', name: '兵糧丸', price: 60, effect: { kind: 'healBoth', hp: 60, mp: 12 }, target: 'ally', field: true, description: '忍びの携帯食。体力を 60、気力を 12 回復する' },
   // 状態異常（戦闘が終わると治るので、戦闘中だけ）

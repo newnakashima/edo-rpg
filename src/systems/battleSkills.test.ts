@@ -815,3 +815,58 @@ describe('第 6 章（長崎・島原）の敵の技', () => {
     }
   });
 });
+
+describe('第 7 章（北前船・金沢）の敵の技', () => {
+  const four = () => [createMember('hero', 30), createMember('kasumi', 30), createMember('gendo', 30), createMember('orin', 30)];
+  const guard = { p0: { kind: 'guard' }, p1: { kind: 'guard' }, p2: { kind: 'guard' }, p3: { kind: 'guard' } } as const;
+
+  /** 味方は防御だけで、毎ターン全回復しながら進め、各ターンのイベントを返す。 */
+  function turns(enemies: string[], level: number, n: number, seed: number) {
+    let b = createBattle(four(), 'm', enemies, level, { canEscape: false });
+    const rng = seededRng(seed);
+    const all: { state: BattleState; events: ReturnType<typeof resolveTurn>['events'] }[] = [];
+    for (let t = 0; t < n && b.outcome === 'ongoing'; t++) {
+      const r = resolveTurn(b, guard, rng);
+      b = r.state;
+      for (const c of b.combatants) if (c.side === 'party') c.hp = c.stats.maxHp;
+      all.push({ state: b, events: r.events });
+    }
+    return all;
+  }
+
+  it('影武者の御下知はからくり藩士（Lv22）を呼び、呼んだ藩士が 2 体生きているあいだは呼ばない', () => {
+    const log = turns(['kagemusha'], 24, 80, 7);
+    const summons = log.flatMap((t) => t.events.filter((e) => e.type === 'summon'));
+    expect(summons.length).toBeGreaterThan(0);
+    for (const t of log) {
+      const called = t.state.combatants.filter((c) => c.side === 'enemy' && c.enemyId === 'karakuriHanshi');
+      expect(called.filter((c) => c.hp > 0).length).toBeLessThanOrEqual(2);
+      for (const c of called) expect(c.level).toBe(22);
+    }
+  });
+
+  it('夜叉丸の呪いは味方 4 人全員を狙い（攻撃↓）、分身は自分の回避↑', () => {
+    const log = turns(['yashamaru'], 25, 120, 11);
+    const noroi = log.find((t) => t.events.some((e) => e.type === 'skill' && e.skill === 'noroi'))!;
+    expect(noroi).toBeDefined();
+    const i = noroi.events.findIndex((e) => e.type === 'skill' && e.skill === 'noroi');
+    const targets = noroi.events
+      .slice(i + 1, i + 5)
+      .filter((e) => e.type === 'status' || e.type === 'statusFailed')
+      .map((e) => ('target' in e ? e.target : ''));
+    expect(targets.sort()).toEqual(['p0', 'p1', 'p2', 'p3']);
+    const bunshin = log.find((t) => t.events.some((e) => e.type === 'skill' && e.skill === 'yashaBunshin'))!;
+    expect(bunshin.events).toContainEqual({ type: 'status', target: 'e0', status: 'evade' });
+  });
+
+  it('夜叉丸の妖術と雪入道の雪崩は味方 4 人全員に当てる', () => {
+    for (const [enemy, level, skill] of [['yashamaru', 25, 'yojutsu'], ['yukiNyudo', 22, 'nadare']] as const) {
+      const log = turns([enemy], level, 120, 3);
+      const t = log.find((x) => x.events.some((e) => e.type === 'skill' && e.skill === skill))!;
+      expect(t, skill).toBeDefined();
+      const i = t.events.findIndex((e) => e.type === 'skill' && e.skill === skill);
+      const hit = t.events.slice(i + 1, i + 5).filter((e) => e.type === 'damage' || e.type === 'miss').map((e) => ('target' in e ? e.target : ''));
+      expect(hit.sort(), skill).toEqual(['p0', 'p1', 'p2', 'p3']);
+    }
+  });
+});

@@ -35,5 +35,9 @@ export const SHOPS: Record<string, ShopDef> = {
   nagasakiYorozu: { id: 'nagasakiYorozu', name: 'よろず屋', goods: ['kintsuba', 'kasutera', 'mankintan', 'konpeito', 'hyorogan', 'dokukeshi', 'hakka', 'hangontan', 'kitsukegusuri', 'ninjin'] },
   nagasakiKaji: { id: 'nagasakiKaji', name: '刀鍛冶', goods: ['tadayoshi', 'karakuriKagizume', 'rakanShakujo', 'orandaDo', 'kageShozoku', 'hachigane'] },
   dejimaShop: { id: 'dejimaShop', name: '商館', goods: ['gewehr', 'tomegane', 'kasutera'] },
+  // 金沢（第 7 章）
+  kanazawaYorozu: { id: 'kanazawaYorozu', name: 'よろず屋', goods: ['kintsuba', 'shibafune', 'mankintan', 'bocha', 'hyorogan', 'dokukeshi', 'hakka', 'hangontan', 'kitsukegusuri', 'ninjin'] },
+  kanazawaKaji: { id: 'kanazawaKaji', name: '刀鍛冶', goods: ['kanewaka', 'yukiKodachi', 'hakusanShakujo', 'kagaZutsu', 'kagaGusoku', 'yukiShozoku', 'hachigane'] },
+  kanazawaKinpaku: { id: 'kanazawaKinpaku', name: '金箔屋', goods: ['kinpakuMamori', 'shibafune', 'bocha'] },
   nagoyaKaji: { id: 'nagoyaKaji', name: '刀鍛冶', goods: ['magoroku', 'kusarigama', 'kusarikatabira', 'shinobishozoku', 'hachigane', 'inro'] },
 };

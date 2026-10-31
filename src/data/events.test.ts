@@ -520,3 +520,122 @@ describe('第 6 章の流れ', () => {
     expect(cleared.party).toHaveLength(4);
   });
 });
+
+describe('第 7 章の流れ', () => {
+  const base = newGame('m', { mapId: 'nagasaki', x: 14, y: 22 });
+  const ch6 = {
+    ...base,
+    party: [createMember('hero', 22), createMember('gendo', 22), createMember('orin', 22), createMember('kasumi', 22)],
+    flags: { intro: true, chapter5Cleared: true, kasumiRejoined: true, nagasakiArrived: true, nanbanOzutsuDefeated: true, noritoLearned: true, chapter6Cleared: true },
+  };
+  /** 最後の warp の行き先（イベントの途中の warp は、場面の側で行う）。 */
+  const warpOf = (id: string, state: GameState): { mapId: string; x: number; y: number } | undefined => {
+    const runner = new EventRunner(EVENTS[id]!.steps);
+    let r = runner.next(state);
+    let last: { mapId: string; x: number; y: number } | undefined;
+    for (let guard = 0; guard < 50 && r.request.kind !== 'done'; guard++) {
+      if (r.request.kind === 'warp') last = { mapId: r.request.mapId, x: r.request.x, y: r.request.y };
+      if (r.request.kind === 'choice') r = runner.next(r.state, { kind: 'choice', index: 0 });
+      else if (r.request.kind === 'battle') r = runner.next(r.state, { kind: 'battle', outcome: 'victory' });
+      else r = runner.next(r.state);
+    }
+    return last;
+  };
+
+  it('長崎の北前船の船頭は、第 6 章を終えるまでは乗せず、終えると北前船の甲板へ、金沢に着いたあとは金沢の湊へ直に運ぶ', () => {
+    expect(warpOf('kitamaeNagasaki', { ...ch6, flags: { ...ch6.flags, chapter6Cleared: false } })).toBeUndefined();
+    expect(warpOf('kitamaeNagasaki', ch6)).toEqual({ mapId: 'kitamaebune', x: 11, y: 10 });
+    expect(warpOf('kitamaeNagasaki', { ...ch6, flags: { ...ch6.flags, kanazawaArrived: true } })).toMatchObject({ mapId: 'kanazawa' });
+  });
+
+  it('船首で船幽霊と海坊主（Lv22）に勝つと kanazawaArrived で金沢の湊へ。負けたら着かず、出直すと口上を短くする', () => {
+    const boarded = run('kitamaeEnter', ch6);
+    expect(boarded.flags.kitamaeBoarded).toBe(true);
+    const runner = new EventRunner(EVENTS.funayureiAttack!.steps);
+    const r = skipSay(runner, runner.next(boarded));
+    expect(r.request).toMatchObject({ kind: 'battle', enemies: ['funayurei', 'umibozu', 'funayurei'], level: 22, canEscape: false, loseOk: false });
+    expect(warpOf('funayureiAttack', boarded)).toEqual({ mapId: 'kanazawa', x: 4, y: 22 });
+    expect(run('funayureiAttack', boarded).flags.kanazawaArrived).toBe(true);
+    const lost = run('funayureiAttack', boarded, 'defeat');
+    expect(lost.flags.kanazawaArrived).toBeFalsy();
+    const retry = new EventRunner(EVENTS.funayureiAttack!.steps).next(lost);
+    expect(retry.request.kind === 'say' && retry.request.pages).toHaveLength(2);
+  });
+
+  const arrived = run('funayureiAttack', run('kitamaeEnter', ch6));
+
+  it('金沢に初めて入ると kanazawaIntro。2 回目からは何もしない。金沢の船頭は長崎へ戻せる', () => {
+    const intro = run('kanazawaEnter', arrived);
+    expect(intro.flags.kanazawaIntro).toBe(true);
+    expect(new EventRunner(EVENTS.kanazawaEnter!.steps).next(intro).request.kind).toBe('done');
+    expect(warpOf('kitamaeKanazawa', intro)).toEqual({ mapId: 'nagasaki', x: 14, y: 22 });
+  });
+
+  const intro = run('kanazawaEnter', arrived);
+
+  it('長瀬左近から抜け穴のことを聞くと sakonHeard。2 回目は短い', () => {
+    const heard = run('sakonMeet', intro);
+    expect(heard.flags.sakonHeard).toBe(true);
+    const again = new EventRunner(EVENTS.sakonMeet!.steps).next(heard);
+    expect(again.request.kind === 'say' && again.request.pages).toHaveLength(1);
+  });
+
+  const heard = run('sakonMeet', intro);
+
+  it('徽軫灯籠で加賀の忍びに勝つと nukeanaOpen。負けたら開かない', () => {
+    const runner = new EventRunner(EVENTS.kotojiToro!.steps);
+    const r = skipSay(runner, runner.next(heard));
+    expect(r.request).toMatchObject({ kind: 'battle', level: 22, canEscape: false, loseOk: false });
+    expect(run('kotojiToro', heard).flags.nukeanaOpen).toBe(true);
+    expect(run('kotojiToro', heard, 'defeat').flags.nukeanaOpen).toBeFalsy();
+  });
+
+  const opened = run('kotojiToro', heard);
+
+  it('影武者（Lv24）に勝つと kagemushaDefeated、夜叉丸（Lv25）に勝つと yashamaruDefeated。負けて出直すと口上を短くする', () => {
+    for (const [id, enemy, level, flag] of [
+      ['kagemusha', 'kagemusha', 24, 'kagemushaDefeated'],
+      ['yashamaruBattle', 'yashamaru', 25, 'yashamaruDefeated'],
+    ] as const) {
+      const runner = new EventRunner(EVENTS[id]!.steps);
+      const r = skipSay(runner, runner.next(opened));
+      expect(r.request).toMatchObject({ kind: 'battle', enemies: [enemy], level, canEscape: false, loseOk: false });
+      expect(run(id, opened).flags[flag]).toBe(true);
+      const lost = run(id, opened, 'defeat');
+      expect(lost.flags[flag]).toBeFalsy();
+      const retry = new EventRunner(EVENTS[id]!.steps).next(lost);
+      expect(retry.request.kind === 'say' && retry.request.pages).toHaveLength(1);
+    }
+  });
+
+  it('殿様を救うと tonoRescued で城の前へ。金沢に入ると第 7 章が終わり（chapter7Cleared・kagaTegata）、褒美は一度だけ', () => {
+    const won = run('yashamaruBattle', run('kagemusha', opened));
+    const rescued = run('tonoRescue', won);
+    expect(rescued.flags.tonoRescued).toBe(true);
+    expect(warpOf('tonoRescue', won)).toEqual({ mapId: 'kanazawa', x: 28, y: 15 });
+    const cleared = run('kanazawaEnter', rescued);
+    expect(cleared.flags.chapter7Cleared).toBe(true);
+    expect(cleared.flags.kagaTegata).toBe(true);
+    expect(cleared.money).toBe(rescued.money + 3000);
+    // もう一度起きても褒美は増えない
+    expect(run('kanazawaEnter', cleared).money).toBe(cleared.money);
+    // 金沢の onEnter は chapter7Cleared で止まる（2 回目の褒美はない）
+    expect(MAPS.kanazawa!.onEnter).toEqual({ event: 'kanazawaEnter', unless: 'chapter7Cleared' });
+  });
+});
+
+describe('イベントの warp', () => {
+  it('warp の直後に battle を置かない（戦闘から戻ったときに移動先の onEnter が行われない既知の制限のため。FieldScene.ts）', () => {
+    const check = (steps: readonly EventStep[], where: string): void => {
+      steps.forEach((st, i) => {
+        if (st.type === 'warp') expect(steps[i + 1]?.type, where).not.toBe('battle');
+        if (st.type === 'if') {
+          check(st.then, where);
+          check(st.else ?? [], where);
+        }
+        if (st.type === 'choice') for (const o of st.options) check(o.steps, where);
+      });
+    };
+    for (const ev of Object.values(EVENTS)) check(ev.steps, ev.id);
+  });
+});

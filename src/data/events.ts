@@ -411,6 +411,116 @@ const NAGASAKI_CHAPTER_END: EventStep[] = [
   { type: 'setFlag', flag: 'chapter6Cleared' },
 ];
 
+/** 長崎の湊の北前船の船頭。第 6 章を終えると金沢へ渡れる。一度金沢に着いたら、あとは船旅を省いて湊から湊へ。 */
+const KITAMAE_NAGASAKI: EventStep[] = [
+  {
+    type: 'if',
+    flag: 'chapter6Cleared',
+    then: [
+      {
+        type: 'if',
+        flag: 'kanazawaArrived',
+        then: [
+          {
+            type: 'choice',
+            prompt: '船頭「金沢へ渡るかね？」',
+            options: [
+              {
+                label: '金沢へ渡る',
+                steps: [
+                  { type: 'say', lines: ['船頭「よっしゃ、帆を上げえ！」', '北前船は日本海をぐるりと回り、加賀の金石の湊に着いた。'] },
+                  { type: 'warp', mapId: 'kanazawa', x: 4, y: 22 },
+                ],
+              },
+              { label: 'やめておく', steps: [{ type: 'say', lines: ['船頭「気が向いたら、いつでも声をかけんさい」'] }] },
+            ],
+          },
+        ],
+        else: [
+          { type: 'say', lines: ['船頭「金沢へ行くんなら、わしの船に乗りんさい。海はしけとるが、北前船の船乗りをなめちゃいかんよ」'] },
+          {
+            type: 'choice',
+            prompt: '北前船に乗るか？',
+            options: [
+              {
+                label: '乗る',
+                steps: [
+                  { type: 'say', lines: ['船頭「よっしゃ、帆を上げえ！ 加賀の湊まで、十日の船旅じゃ」'] },
+                  { type: 'warp', mapId: 'kitamaebune', x: 11, y: 10 },
+                ],
+              },
+              { label: 'まだ乗らない', steps: [{ type: 'say', lines: ['船頭「支度ができたら声をかけんさい。荷を積んで待っとるけえ」'] }] },
+            ],
+          },
+        ],
+      },
+    ],
+    else: [{ type: 'say', lines: ['船頭「わしは北前船の船頭じゃ。蝦夷地まで、日本の海をぐるりと回るんよ。……今は荷待ちで、しばらく出られん」'] }],
+  },
+];
+
+/** 北前船に乗ったとき（第 7 章の始まり）。 */
+const KITAMAE_ENTER: EventStep[] = [
+  {
+    type: 'if',
+    flag: 'kitamaeBoarded',
+    then: [{ type: 'say', lines: ['北前船は、ふたたび北の海へ漕ぎ出した。'] }],
+    else: [
+      {
+        type: 'say',
+        lines: [
+          '北前船は長崎の湊を出て、玄界灘から日本海へ。',
+          '船は西風を帆にはらんで、北へ、北へと進んでいく。',
+          '船頭「船首の方へは近寄りなさんな。このあたりの海は、夜になると出るけえのう」',
+          'お凛「出るって、何がだい」',
+          '船頭「……船幽霊じゃ」',
+        ],
+      },
+      { type: 'setFlag', flag: 'kitamaeBoarded' },
+    ],
+  },
+];
+
+/** 加賀金沢に初めて入ったとき。 */
+const KANAZAWA_ARRIVE: EventStep[] = [
+  {
+    type: 'say',
+    lines: [
+      '加賀金沢。百万石の御城下は、うっすらと雪におおわれていた。',
+      '霞「殿様は病で伏せってることになってる。それなのに、ときどき櫓から手を振る姿が見えるらしい」',
+      '玄道「顔色ひとつ変えずに、な。からくりの影武者なら、それも道理よ」',
+      'お凛「でも、どうやって確かめるんだい。お城には入れてもらえないだろう」',
+      '霞「殿様に古くから仕えた老臣が、ご家老に疎まれて屋敷に引きこもってるって聞いた。長町の武家屋敷だ。まずはそこを訪ねよう」',
+    ],
+  },
+  { type: 'setFlag', flag: 'kanazawaIntro' },
+];
+
+/** 殿様を救い出して金沢に戻ったとき（第 7 章の終わり）。 */
+const KANAZAWA_CHAPTER_END: EventStep[] = [
+  {
+    type: 'say',
+    lines: [
+      '抜け穴から城へ戻った殿様の姿に、家臣たちは息をのんだ。',
+      '家老・土橋玄蕃は、からくりの影武者のことを問われると、何も言えずに捕らえられた。',
+      '城の大広間に、一行は呼ばれた。',
+      '殿様「そなたたちのおかげで、加賀は救われた。礼を言う」',
+      '殿様「玄蕃は白状した。からくりの影武者は、江戸の老中・鷲尾但馬守の差し金。加賀は、その試しに使われたのだと」',
+      '殿様「鷲尾は、江戸城でも同じことをしておる。……上様のお姿を、もう一年も、誰もまともに見ておらぬのだ」',
+      '霞「やっぱり……将軍様の影武者を操ってるのは、鷲尾だ」',
+      '殿様「この手形を持っていくがよい。加賀百万石の名にかけて、江戸の御城の門をくぐれるようにしてある」',
+      '{hero}たちは、加賀の殿様から江戸城の手形を授かった！',
+      '長瀬左近「殿のお顔が、ようやく笑うてくだされた。……わしからも、これを」',
+      '長瀬左近から 3000 文を受け取った。',
+      '玄道「夜叉丸の娘は、江戸の鷲尾の屋敷か。……約束は、果たさねばならんな」',
+      'お凛「行こう、江戸へ。おとっつぁんの仇の、そのまた親玉のところへ」',
+    ],
+  },
+  { type: 'giveMoney', amount: 3000 },
+  { type: 'setFlag', flag: 'kagaTegata' },
+  { type: 'setFlag', flag: 'chapter7Cleared' },
+];
+
 export const EVENTS: Record<string, EventDef> = {
   /** 辰五郎の頼みと、野狐を倒したあとの報告（序章の終わり）。 */
   tatsugoro: {
@@ -1088,6 +1198,256 @@ export const EVENTS: Record<string, EventDef> = {
       { type: 'setFlag', flag: 'noritoLearned' },
     ],
   },
+  // 第 7 章「百万石の影」
+  /** 長崎の湊の北前船の船頭（第 6 章を終えると金沢へ渡れる）。 */
+  kitamaeNagasaki: { id: 'kitamaeNagasaki', steps: KITAMAE_NAGASAKI },
+  /** 北前船に乗ったとき。 */
+  kitamaeEnter: { id: 'kitamaeEnter', steps: KITAMAE_ENTER },
+  /** 北前船の船首のくびれ。船幽霊と海坊主が船を襲う。倒すと金沢の湊に着く（kanazawaArrived）。 */
+  funayureiAttack: {
+    id: 'funayureiAttack',
+    steps: [
+      {
+        type: 'if',
+        flag: 'funayureiMet',
+        then: [{ type: 'say', lines: ['海の底から、ふたたび青白い手が伸びてきた。', '「柄杓を……柄杓を貸せえ……」'] }],
+        else: [
+          {
+            type: 'say',
+            lines: [
+              '日が暮れると、海に霧が立ちこめた。',
+              '船のまわりの波間から、青白い手が何本も伸びてくる。',
+              '「柄杓を……柄杓を貸せえ……」',
+              '船頭「船幽霊じゃ！ 柄杓を渡したら、それで水を汲み入れて船を沈めよる！」',
+              '船頭「底を抜いた柄杓を投げるけえ、そのあいだに追い払うてくれ！」',
+              '霧の向こうから、黒い大きな影が身を起こした。',
+            ],
+          },
+          { type: 'setFlag', flag: 'funayureiMet' },
+        ],
+      },
+      { type: 'battle', enemies: ['funayurei', 'umibozu', 'funayurei'], level: 22 },
+      {
+        type: 'say',
+        lines: [
+          '船幽霊たちは、底の抜けた柄杓で空しく水をすくいながら、霧の中へ消えていった。',
+          '船頭「助かったわい。……ありゃあ、海で死んだ者の魂よ。成仏できずに、仲間を探しとるんじゃ」',
+          '玄道は、霧の晴れた海に向かって、しばらく経を唱えていた。',
+          '幾日かののち、船は加賀の金石の湊に着いた。',
+        ],
+      },
+      { type: 'setFlag', flag: 'kanazawaArrived' },
+      { type: 'warp', mapId: 'kanazawa', x: 4, y: 22 },
+    ],
+  },
+  /** 金沢の湊の北前船の船頭。長崎へ戻れる。 */
+  kitamaeKanazawa: {
+    id: 'kitamaeKanazawa',
+    steps: [
+      { type: 'say', lines: ['船頭「わしの船は、しばらく金石の湊に泊まっとるけえ。長崎へ戻るなら乗せちゃるよ」'] },
+      {
+        type: 'choice',
+        prompt: '長崎へ戻るか？',
+        options: [
+          {
+            label: '長崎へ戻る',
+            steps: [
+              { type: 'say', lines: ['北前船は日本海を西へ回り、長崎の湊に着いた。'] },
+              { type: 'warp', mapId: 'nagasaki', x: 14, y: 22 },
+            ],
+          },
+          { label: '金沢に残る', steps: [{ type: 'say', lines: ['船頭「そうかね。用があったら、また来んさい」'] }] },
+        ],
+      },
+    ],
+  },
+  /** 金沢に入ったとき。初めてなら町の紹介、殿様を救い出したあとなら第 7 章の終わり。 */
+  kanazawaEnter: {
+    id: 'kanazawaEnter',
+    steps: [
+      {
+        type: 'if',
+        flag: 'tonoRescued',
+        // 褒美は一度だけ（onEnter の unless に加え、イベントの側でも chapter7Cleared を見る）
+        then: [{ type: 'if', flag: 'chapter7Cleared', then: [], else: KANAZAWA_CHAPTER_END }],
+        else: [{ type: 'if', flag: 'kanazawaIntro', then: [], else: KANAZAWA_ARRIVE }],
+      },
+    ],
+  },
+  /** 長町の武家屋敷の老臣・長瀬左近。殿様が地下に閉じ込められていると聞き、兼六園の抜け穴を教わる（sakonHeard。兼六園の番人がどく）。 */
+  sakonMeet: {
+    id: 'sakonMeet',
+    steps: [
+      {
+        type: 'if',
+        flag: 'tonoRescued',
+        then: [{ type: 'say', lines: ['長瀬左近「殿をお救いくだされたこと、生涯忘れませぬ」'] }],
+        else: [
+          {
+            type: 'if',
+            flag: 'sakonHeard',
+            then: [{ type: 'say', lines: ['長瀬左近「抜け穴の入口は、霞ヶ池の北の岸の、二本足の灯籠じゃ。殿を……殿を頼みましたぞ」'] }],
+            else: [
+              {
+                type: 'say',
+                lines: [
+                  '長瀬左近「……公儀の隠密どのか。よう来てくだされた」',
+                  '長瀬左近「殿が病に伏せられたのは、半年前のこと。それからは、家老の土橋玄蕃が何もかも取り仕切っておる」',
+                  '長瀬左近「月に一度、殿は大広間にお出ましになる。だが、あれは殿ではない。……三十年お仕えしたわしには分かる」',
+                  '長瀬左近「目が、笑わぬのだ。わしが幼いころの殿の話をしても、ただうなずくばかりで」',
+                  '霞「からくりの影武者だね。じゃあ、本物の殿様は」',
+                  '長瀬左近「城の地下の蔵に閉じ込められておるのだろう。玄蕃が江戸から呼んだ職人どもが、毎晩そこへ下りていく」',
+                  '長瀬左近「城の門は玄蕃の手の者が固めておる。だが、昔から言い伝えがある。兼六園から、城の地下へ通じる抜け穴じゃ」',
+                  '長瀬左近「霞ヶ池の北の岸に、二本足の灯籠……徽軫灯籠がある。その奥のどこかに入口があるはずじゃ」',
+                  '長瀬左近「兼六園の番人には、わしから話を通しておこう。……殿を、お救いくだされ」',
+                ],
+              },
+              { type: 'setFlag', flag: 'sakonHeard' },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  /** 兼六園の徽軫灯籠。家老の配下の忍びに襲われ、退けると抜け穴の石が動く（nukeanaOpen）。 */
+  kotojiToro: {
+    id: 'kotojiToro',
+    steps: [
+      {
+        type: 'if',
+        flag: 'nukeanaOpen',
+        then: [{ type: 'say', lines: ['二本の足で池をまたぐ灯籠だ。片方の足の下の石が、ずれたままになっている。'] }],
+        else: [
+          {
+            type: 'say',
+            lines: [
+              '池をまたぐように、二本の足で立つ石の灯籠。琴の糸を支える琴柱に似ていることから、徽軫灯籠と呼ばれる。',
+              '霞「……見な。片方の足のまわりだけ、雪が踏み固められてる」',
+              '灯籠の足もとの石を押すと、北の木立の奥で、ごとりと重い音がした。',
+              '加賀の忍び「そこまでだ。ご家老の秘密を知った者は、生かして帰さぬ」',
+            ],
+          },
+          { type: 'battle', enemies: ['kagaShinobi', 'karakuriHanshi', 'kagaShinobi'], level: 22 },
+          {
+            type: 'say',
+            lines: [
+              '北の木立の奥の細い道をふさいでいた苔むした石が、横にずれていた。',
+              '石の陰に、地の底へ下りる石段が口を開けている。',
+              '玄道「城の地下へ通じる抜け穴、か。……左近どのの言い伝えは、まことであったな」',
+            ],
+          },
+          { type: 'setFlag', flag: 'nukeanaOpen' },
+        ],
+      },
+    ],
+  },
+  /** からくり蔵の影武者の間。殿様に化けていたからくりの影武者（中ボス）。倒すと玄道が祝詞で魂のゼンマイを解き放つ。 */
+  kagemusha: {
+    id: 'kagemusha',
+    steps: [
+      {
+        type: 'if',
+        flag: 'kagemushaMet',
+        then: [{ type: 'say', lines: ['影武者が、ふたたび上座から立ち上がった。'] }],
+        else: [
+          {
+            type: 'say',
+            lines: [
+              '広間の上座に、殿様の装束をまとった人物が座っている。',
+              '影武者「……何者じゃ。余は加賀の主であるぞ。控えよ」',
+              '声は殿様のものだが、口もとがかすかに遅れて動く。胸の奥から、ゼンマイの巻ける音がする。',
+              '霞「大広間でうなずいてたのは、あんただね」',
+              '影武者「控えよ。控えよ。控えよ……者ども、出あえ」',
+            ],
+          },
+          { type: 'setFlag', flag: 'kagemushaMet' },
+        ],
+      },
+      { type: 'battle', enemies: ['kagemusha'], level: 24 },
+      {
+        type: 'say',
+        lines: [
+          '影武者の胸が割れ、青く光るゼンマイがのぞいた。ゼンマイには、人の名を書いた札が下がっている。',
+          '玄道「……蘭斎の祝詞を使うときが来たようだ」',
+          '玄道が祝詞を唱えると、ゼンマイがゆっくりとほどけ、青い光が天井へ昇っていった。',
+          '玄道「囚われておった魂は、これで行くべきところへ行ける」',
+          'お凛「殿様はどこだい。この先かい」',
+          '霞「東の通路の奥から、人の気配がする。……それと、嫌な気配もね」',
+        ],
+      },
+      { type: 'setFlag', flag: 'kagemushaDefeated' },
+    ],
+  },
+  /** 座敷牢の前で待つ夜叉丸（第 7 章のボス）。倒すと、鷲尾に家族を人質に取られていたことを明かし、息を引き取る。 */
+  yashamaruBattle: {
+    id: 'yashamaruBattle',
+    steps: [
+      {
+        type: 'if',
+        flag: 'yashamaruMet',
+        then: [{ type: 'say', lines: ['夜叉丸「何度来ても同じこと。……この先へは、行かせぬ」'] }],
+        else: [
+          {
+            type: 'say',
+            lines: [
+              '座敷牢の前に、黒い狩衣の男が立っていた。般若の面が、灯りに白く浮かぶ。',
+              '夜叉丸「駿府、京……そして加賀。よくもここまで追ってきたものだ」',
+              '{hero}「殿様を返してもらおうか」',
+              '夜叉丸「それはできぬ。この牢の主を江戸へ連れ帰るのが、おれに課せられた役目だ」',
+              '玄道「おぬしほどの術者が、なぜ鷲尾の走狗に甘んじる」',
+              '夜叉丸「……問答は無用」',
+            ],
+          },
+          { type: 'setFlag', flag: 'yashamaruMet' },
+        ],
+      },
+      { type: 'battle', enemies: ['yashamaru'], level: 25 },
+      {
+        type: 'say',
+        lines: [
+          '夜叉丸は膝をついた。割れた面の下から、やつれた男の顔がのぞいた。',
+          '夜叉丸「……強いな。駿府で会ったときとは、別人だ」',
+          '夜叉丸の胸もとに、青く光るゼンマイの印が浮かび上がる。',
+          '玄道「これは……鷲尾の呪の印か。しくじれば命を巻き取る仕掛けを、己の体に」',
+          '夜叉丸「鷲尾は、おれの妻と娘を屋敷に閉じ込めている。言うことを聞かねば、ふたりの魂をゼンマイに巻くと」',
+          '夜叉丸「妻は、もう……。だが、娘のお鈴は、まだ生きているはずだ」',
+          '夜叉丸「頼む。お鈴を……鷲尾の屋敷から……」',
+          '玄道は、蘭斎の祝詞を唱えた。ゼンマイの印がほどけ、夜叉丸の顔から苦しみの色が消えていった。',
+          '夜叉丸「……ああ、軽い。これほど体が軽いのは、何年ぶりか……」',
+          '夜叉丸は、静かに目を閉じた。',
+          '霞「……約束するよ。あんたの娘は、あたしたちが連れ出す」',
+        ],
+      },
+      { type: 'setFlag', flag: 'yashamaruDefeated' },
+    ],
+  },
+  /** 座敷牢の加賀の殿様。救い出すと、抜け穴から城へ戻る（tonoRescued。金沢に入ると第 7 章の終わり）。 */
+  tonoRescue: {
+    id: 'tonoRescue',
+    steps: [
+      {
+        type: 'say',
+        lines: [
+          '座敷牢の格子の奥に、痩せた男が端座していた。',
+          '殿様「……そなたらは、玄蕃の手の者ではないな」',
+          '霞「公儀の……いや、ただの渡世人の一行さ。長瀬左近さまに頼まれて、お迎えにあがりました」',
+          '殿様「左近が……。あの頑固者め、まだわしを見捨てておらなんだか」',
+          '{hero}は格子の錠を断ち切った。',
+          '殿様「礼を言う。……城へ戻るぞ。わしの顔を、家臣どもに見せてやらねばならぬ」',
+        ],
+      },
+      { type: 'setFlag', flag: 'tonoRescued' },
+      { type: 'warp', mapId: 'kanazawa', x: 28, y: 15 },
+    ],
+  },
+  kitamaeChest: chest('kitamaeChest', 'kakimeshi', '牡蠣飯'),
+  kenrokuChest1: chest('kenrokuChest1', 'bocha', '加賀棒茶'),
+  kenrokuChest2: chest('kenrokuChest2', 'yukiShozoku', '雪隠れ装束'),
+  kenrokuChest3: chest('kenrokuChest3', 'kitsukegusuri', '気付け薬'),
+  guraChest1: chest('guraChest1', 'shibafune', '柴舟'),
+  guraChest2: chest('guraChest2', 'kinpakuMamori', '金箔の御守り'),
+  guraChest3: chest('guraChest3', 'ninjin', '朝鮮人参'),
+  guraChest4: chest('guraChest4', 'kagaZutsu', '加賀筒'),
   nanbanjiChest1: chest('nanbanjiChest1', 'konpeito', '金平糖'),
   nanbanjiChest2: chest('nanbanjiChest2', 'kitsukegusuri', '気付け薬'),
   nanbanjiChest3: chest('nanbanjiChest3', 'tomegane', '遠眼鏡'),

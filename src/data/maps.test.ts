@@ -1028,6 +1028,81 @@ describe('第 6 章の広島・長崎・島原', () => {
 
 });
 
+describe('第 7 章のマップ（北前船・金沢・兼六園・からくり蔵）', () => {
+  const ship = MAPS.kitamaebune!;
+  const kanazawa = MAPS.kanazawa!;
+  const garden = MAPS.kenrokuen!;
+  const gura = MAPS.karakuriGura!;
+  const exitTo = (m: MapDef, to: string) => m.exits.find((e) => e.to === to)!;
+
+  it('金沢はワールドマップの街道につながず、ワールドマップの印からは入れない（北前船で渡る）。町からワールドマップへの出口もない', () => {
+    const town = MAPS.world!.towns!.find((t) => t.name === '金沢')!;
+    expect(town.to).toBeUndefined();
+    expect(kanazawa.exits.some((e) => e.to === 'world')).toBe(false);
+  });
+
+  it('北前船の甲板は、乗った場所から船首の船幽霊の場所へ行け、そこを通らなければ船首に出られない。全滅したら長崎へ', () => {
+    const area = reachable(ship, { x: 11, y: 10 }, {}, true);
+    for (const t of ship.triggers!) {
+      expect(area.has(`${t.x},${t.y}`)).toBe(true);
+      expect(t.unless).toBe('kanazawaArrived');
+    }
+    for (const npc of ship.npcs) expect(near(area, npc.x, npc.y), npc.id).toBe(true);
+    expect(reachable(wallTriggers(ship), { x: 11, y: 10 }, {}, true).has('35,10')).toBe(false);
+    expect(respawnPoint('kitamaebune')).toEqual({ mapId: 'nagasaki', ...MAPS.nagasaki!.respawn });
+  });
+
+  it('金沢の湊（船で着く場所）から町の人に話しかけられ、兼六園の参道は長瀬左近の話を聞く（sakonHeard）まで番人がふさぐ', () => {
+    const start = { x: 4, y: 22 };
+    const gate = exitTo(kanazawa, 'kenrokuen');
+    expect(reachable(kanazawa, start, {}, true).has(`${gate.x},${gate.y}`)).toBe(false);
+    expect(reachable(kanazawa, start, { sakonHeard: true }, true).has(`${gate.x},${gate.y}`)).toBe(true);
+    const area = reachable(kanazawa, start, {}, true);
+    for (const npc of kanazawa.npcs.filter((n) => n.id !== 'kenrokuBan')) expect(near(area, npc.x, npc.y), npc.id).toBe(true);
+    // 殿様を救ったあとに戻る城の前と、船頭が運ぶ湊は歩ける
+    for (const [x, y] of [[28, 15], [4, 22]] as const) expect(tileAt(kanazawa, x, y)?.blocked).toBe(false);
+  });
+
+  it('兼六園の抜け穴（からくり蔵への出口）は、徽軫灯籠の戦い（nukeanaOpen）まで石がふさぐ。葛籠と見どころにはすべて近づける', () => {
+    const start = { x: exitTo(kanazawa, 'kenrokuen').toX, y: exitTo(kanazawa, 'kenrokuen').toY };
+    const down = exitTo(garden, 'karakuriGura');
+    expect(reachable(garden, start, {}, true).has(`${down.x},${down.y}`)).toBe(false);
+    expect(reachable(garden, start, { nukeanaOpen: true }, true).has(`${down.x},${down.y}`)).toBe(true);
+    const area = reachable(garden, start, {}, true);
+    for (const npc of garden.npcs.filter((n) => !n.hideFlag)) expect(near(area, npc.x, npc.y), npc.id).toBe(true);
+    // 兼六園から町へ戻ると、番人の奥の参道に出る（番人を通ってきたあとなので、町へ出られる）
+    const back = exitTo(garden, 'kanazawa');
+    expect(reachable(kanazawa, { x: back.toX, y: back.toY }, { sakonHeard: true }, true).has('4,22')).toBe(true);
+  });
+
+  it('からくり蔵は、影武者の間の入口を通らなければ夜叉丸の場所へ行けず、夜叉丸の場所を通らなければ殿様に近づけない', () => {
+    const landing = { x: exitTo(garden, 'karakuriGura').toX, y: exitTo(garden, 'karakuriGura').toY };
+    const area = reachable(gura, landing, {}, true);
+    for (const t of gura.triggers!) expect(area.has(`${t.x},${t.y}`), `${t.x},${t.y}`).toBe(true);
+    for (const npc of gura.npcs) expect(near(area, npc.x, npc.y), npc.id).toBe(true);
+    const walled = reachable(wallTriggers(gura), landing, {}, true);
+    const tono = gura.npcs.find((n) => n.id === 'kagaTono')!;
+    expect(near(walled, tono.x, tono.y)).toBe(false);
+    // 影武者の入口だけをふさいでも、夜叉丸の場所へは行けない
+    const onlyKage = { ...gura, triggers: gura.triggers!.filter((t) => t.event === 'kagemusha') };
+    const yasha = gura.triggers!.find((t) => t.event === 'yashamaruBattle')!;
+    expect(reachable(wallTriggers(onlyKage), landing, {}, true).has(`${yasha.x},${yasha.y}`)).toBe(false);
+  });
+
+  it('兼六園・からくり蔵で全滅したら金沢の旅籠の前に戻る', () => {
+    for (const id of ['kenrokuen', 'karakuriGura']) expect(respawnPoint(id), id).toEqual({ mapId: 'kanazawa', ...kanazawa.respawn });
+  });
+
+  it('第 7 章の出現表は Lv22 で、5 種類以上の敵が出る。新しい敵には画像がある', () => {
+    for (const id of ['kitamae', 'kenrokuen', 'karakuriGura']) {
+      const t = ENCOUNTERS[id]!;
+      expect(t.level, id).toBe(22);
+      expect(new Set(t.groups.flatMap((g) => g.members)).size, id).toBeGreaterThanOrEqual(5);
+    }
+    for (const id of ['funayurei', 'karakuriHanshi', 'yukiOnna', 'kagaShinobi', 'yukiNyudo', 'kinpakuNingyo', 'kagemusha', 'yashamaru']) expect(ENEMIES[id]?.image, id).toBe(true);
+  });
+});
+
 describe('マップの広さと使い回し（テストプレイの指摘: どの町もダンジョンも同じ・狭い）', () => {
   /** 建物の中や、塀で囲まれた小さな区画（出島）。町・ダンジョンより狭くてよい。 */
   const SMALL = ['kobo', 'yoriki', 'takoya', 'dejima'];
@@ -1091,8 +1166,11 @@ describe('マップの広さと使い回し（テストプレイの指摘: ど�
       }
     };
     for (const ev of Object.values(EVENTS)) walk(ev.steps);
+    // 金沢のように船（イベントの warp）でしか着かない町は、ワールドマップの印がないので warp を入口にする
+    // （兼六園から戻る出口を入口にすると、まだ番人がふさいでいる参道の内側から調べてしまう）
     const entrance = (m: MapDef) =>
       MAPS.world!.towns!.find((t) => t.to?.mapId === m.id)?.to ??
+      (m.respawn ? warps.find((w) => w.mapId === m.id) : undefined) ??
       Object.values(MAPS).flatMap((o) => o.exits.filter((e) => e.to === m.id).map((e) => ({ x: e.toX, y: e.toY })))[0] ??
       warps.find((w) => w.mapId === m.id);
     for (const m of maps) {

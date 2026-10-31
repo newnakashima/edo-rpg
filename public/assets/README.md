@@ -223,6 +223,25 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 - 怨霊: 1 回目は顔が髪で隠れず足があった。2 回目も顔が見えた。3 回目で顔は髪で隠れたが足が残った。4 回目は 3 回目の足を Pillow で消して裾を細い尾に描き替え、髪のすき間に光る目を描き足して採用（計 4 回）。
 - 足元をそろえるため、烏天狗（95%）・伊賀のくノ一（98%）・海賊（98%）は縮めて足元を y = 58 に置き、猫又は 1px 下、博徒・がしゃどくろは 2px 上、牛鬼は 1px 上へずらした（磯女・怨霊はそのまま）。
 
+第 7 章（北前船・金沢）の 8 体の記録（計 12 回。Pillow での描き直し 2 回を含む）。設定は上と同じ（64 × 64、ボスの影武者・夜叉丸は 96 × 96、direction south-west）:
+
+| ID | PixelLab のジョブ ID | プロンプト |
+| --- | --- | --- |
+| funayurei | cdca7381-9abd-4cea-8662-709a7786ad9e | ghost of a drowned Japanese fisherman sailor (funayurei), gaunt man with a pale blue-green skull-like face and hollow glowing eyes, dripping wet messy black hair, white twisted headband, tattered grey-blue sailor clothes, raising a long-handled wooden ladle (hishaku) high above his head with both hands, lower body is a swirl of dark blue sea water and white foam with no legs, small and centered with empty space around it, JRPG enemy battle sprite, three-quarter front view（text_guidance_scale 11。柄杓の先がへらに見えたので、Pillow で丸い椀に描き直した） |
+| karakuriHanshi | 8febdcf5-9dbb-44d0-844c-ce7d1918acab | clockwork robot samurai made of riveted dark iron plates, robot body and robot head with a black iron topknot and glowing red eyes, wearing a light blue Edo samurai kamishimo vest with big stiff triangular winged shoulder pieces, round brass cogwheels with teeth exposed in its open chest and at its knees, holding a long straight yari spear upright, full body standing, small and centered with empty space around it, JRPG enemy battle sprite, three-quarter front view（text_guidance_scale 11） |
+| yukiOnna | 021324a6-fe78-4899-8146-694a7224dc53 | Japanese snow woman yokai yuki-onna, beautiful pale blue-white skinned woman with very long straight black hair, pure white kimono, breathing a cold icy blue mist from her lips, snowflakes swirling around her, cold expressionless eyes, full body standing, small and centered with empty space around it, JRPG enemy battle sprite, three-quarter front view |
+| kagaShinobi | f37fb515-f901-4a9c-bd97-a0264637e0b6 | Japanese snow country ninja, white and light grey ninja outfit with a white hood and white face mask covering the face except narrow eyes, dark grey belt and leg wraps, holding a short straight ninja sword in a reverse grip, crouching ready stance, full body, small and centered with empty space around it, JRPG enemy battle sprite, three-quarter front view（黒い伊賀者と見分けるため白い装束にした） |
+| yukiNyudo | 6eaefa27-e89c-4927-a401-8b28481ed424 | Japanese snow giant yokai yuki-nyudo, a huge hulking round monk-shaped giant made of packed white snow, bald round snowy head, two dark angry eyes and a wide mouth, thick snowy arms raised, icicles hanging from its arms, light blue shading on white snow, full body, small and centered with empty space around it, JRPG enemy battle sprite, three-quarter front view |
+| kinpakuNingyo | 390c337f-51ea-4761-be53-57828b753f1e | gold leaf covered karakuri clockwork doll, shiny gold kimono, gold painted doll face with black eyes and red lips, black bobbed hair, a round brass cogwheel on its chest, brass wind-up key on its back, holding an open golden folding fan in one hand, full body standing, JRPG enemy battle sprite, three-quarter front view（`enemies/karakuriNingyo.png` の赤い着物と顔を金に塗り替えたものを init_image に、init_image_strength 150。肌色のままの顔と手を金に塗り、扇を Pillow で描き足した） |
+| kagemusha | 948529ac-4674-4ed3-b364-6bb90db16a96 | karakuri clockwork impostor of a Japanese daimyo lord, wearing ornate purple and gold daimyo court robes (hitatare) and a tall black eboshi court hat, expressionless white porcelain doll face with blank eyes, a cracked opening in its chest showing brass cogwheels and glowing blue light, holding a drawn katana, stiff menacing stance, full body, JRPG boss battle sprite, three-quarter front view（96 × 96） |
+| yashamaru | 57422ebf-c01d-445f-9394-536289f9ec09 | Edo period Japanese evil sorcerer (onmyoji) young man, long unkempt black hair down to his shoulders, pale white face with sharp eyes, a white hannya demon mask with horns pushed to the side of his head, loose dark purple robe with wide sleeves and a black sash, holding up white paper ofuda talismans burning with purple fire, purple flames swirling around him, menacing, full body standing, JRPG boss battle sprite, three-quarter front view（96 × 96。面は横に寄せず顔にかかったが、物語の「割れた面」に合うのでそのまま使った） |
+
+- 雪女・加賀の忍び・雪入道・影武者・夜叉丸: 1 回目で採用（各 1 回）。
+- 船幽霊: 1 回目は西洋のシーツお化け、2 回目は白い着物と黒髪の女になり雪女と見分けにくく、柄杓も壺に見えた。3 回目で男の水夫の亡霊になったが柄杓の先がへらに見えた。4 回目は Pillow で柄杓の先を丸い椀に描き直して採用（計 4 回）。
+- からくり藩士: 1 回目は西洋風の甲冑で地面に影が残り、2 回目は人間の侍に見えた。3 回目で「clockwork robot ... riveted dark iron plates」を前に出して採用（計 3 回）。
+- 金箔からくり: 1 回目はかわいい娘、2 回目は西洋のロボットになった。3 回目は既存のからくり人形を金に塗った下絵から作り、4 回目に顔と手を金に塗って扇を描き足して採用（計 4 回）。
+- 足元をそろえるため、64 × 64 の 6 体は足元を y = 58、96 × 96 の 2 体は 89% に縮めて足元を y = 90 に置いた。
+
 ## 物（`objects/`）
 
 マップに置く物の画像。`src/data/sprites.ts` の `OBJECT_DEFS`、マップの NPC の `object` で使う。葛籠は 1 コマ 16 × 16（タイルと同じ）で、横に並べた 2 コマ（列 0: 閉じた姿、列 1: 開いた姿）。ほかの物は 32 × 32 の 1 コマで、下端の中央をタイルの下端の中央に合わせて置く（町の人と釣り合う大きさ）。
@@ -243,3 +262,5 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 
 - 3 回目（89dcac26-52b0-4ab4-8b12-4806560bdbbc）で ishidan を採用。description の終わりを small isolated object with empty transparent space around it にし、説明を small square opening in the ground with a low grey stone rim, inside it grey stone steps go down into darkness, only 20 pixels wide, transparent background around の言い方で 4 通り作り、透過の余白があり段の見えるものを選んだ
 - 判定の観点（全物共通）: 説明の主な特徴が見える、背景が透過、見下ろし気味でタイルと矛盾しない、濃い輪郭、落ち着いた配色（出島・研究所の洋物を除く）、32 × 32 に収まり下端が地面、ほかの物と見分けがつく。ゲーム画面で工房・鍵屋の辻・鬼の巣・研究所・原城跡・出島を確かめた
+
+- toro（第 7 章の兼六園の徽軫灯籠）: `create_image_pixflux`（32 × 32、`no_background: true`、黒の 1px 輪郭、low top-down、medium detail）。1 回目（d043095d-010f-4c31-af44-35b4876048e4。Japanese kotoji-toro stone lantern of Kenroku-en garden, grey granite lantern with a wide flat umbrella-shaped roof (kasa) and a square fire box with a window, standing on TWO separate stone legs of different lengths …、text_guidance_scale 11）は脚が 1 本の台座で、火袋の赤い光が目に見えた。2 回目（fb8c0764-5ae6-415b-8ffc-cc3031042408。脚を「TWO thin straight stone legs standing apart」と言い直し、text_guidance_scale 13）も台座で、窓が目に見えた。3 回目は 1 回目の笠と火袋を使い、Pillow で窓を 1 つの黄色い灯りに、脚を長い左脚と石に乗った短い右脚に描き直して採用（計 3 回）
