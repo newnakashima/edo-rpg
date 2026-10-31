@@ -245,6 +245,8 @@ export class FieldScene extends Phaser.Scene {
           this.cameras.main.fadeOut(400, 0, 0, 0);
           this.cameras.main.once('camerafadeoutcomplete', () => {
             this.moving = false;
+            // 暗転中に押された決定でメッセージを読み飛ばさないようにする
+            this.controls.flush();
             this.cameras.main.fadeIn(400, 0, 0, 0);
             this.message.show(['ぐっすり眠った。体力と気力が回復した。', '旅籠の主人「記録もつけていきなさるかい？」'], () => this.openSave());
           });

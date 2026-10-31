@@ -77,6 +77,9 @@ describe('save', () => {
     expect(deserialize(JSON.stringify({ ...ok, state: { ...ok.state, flags: { a: 'yes' } } }))).toBeNull();
     expect(deserialize(JSON.stringify({ ...ok, state: { ...ok.state, x: 'NaN' } }))).toBeNull();
     expect(deserialize(JSON.stringify({ ...ok, state: { ...ok.state, x: 1.5 } }))).toBeNull();
+    expect(deserialize(JSON.stringify({ ...ok, state: { ...ok.state, money: -1 } }))).toBeNull();
+    expect(deserialize(JSON.stringify({ ...ok, state: { ...ok.state, money: 1.5 } }))).toBeNull();
+    expect(deserialize(JSON.stringify({ ...ok, state: { ...ok.state, playTimeSec: -1 } }))).toBeNull();
     expect(deserialize(JSON.stringify({ ...ok, state: { ...ok.state, party: [{ id: 'hero', exp: 0, hp: -1, mp: 1 }] } }))).toBeNull();
   });
 });

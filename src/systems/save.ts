@@ -38,6 +38,10 @@ function isFiniteNumber(v: unknown): v is number {
   return typeof v === 'number' && Number.isFinite(v);
 }
 
+function isNonNegativeInteger(v: unknown): v is number {
+  return Number.isInteger(v) && (v as number) >= 0;
+}
+
 const FACINGS = new Set(['up', 'down', 'left', 'right']);
 
 /** 読み込んだ値がゲームの状態として正しい形かを確かめる。 */
@@ -47,14 +51,13 @@ export function isGameState(v: unknown): v is GameState {
   if (!Array.isArray(v.party) || v.party.length === 0) return false;
   for (const m of v.party) {
     if (!isObject(m) || typeof m.id !== 'string' || !Object.hasOwn(CHARACTERS, m.id)) return false;
-    if (!isFiniteNumber(m.exp) || !isFiniteNumber(m.hp) || !isFiniteNumber(m.mp)) return false;
-    if (m.exp < 0 || m.hp < 0 || m.mp < 0) return false;
+    if (!isNonNegativeInteger(m.exp) || !isNonNegativeInteger(m.hp) || !isNonNegativeInteger(m.mp)) return false;
   }
-  if (!isFiniteNumber(v.money) || typeof v.mapId !== 'string') return false;
+  if (!isNonNegativeInteger(v.money) || typeof v.mapId !== 'string') return false;
   if (!Number.isInteger(v.x) || !Number.isInteger(v.y)) return false;
   if (typeof v.facing !== 'string' || !FACINGS.has(v.facing)) return false;
   if (!isObject(v.flags) || !Object.values(v.flags).every((f) => typeof f === 'boolean')) return false;
-  if (!isFiniteNumber(v.stepsToEncounter) || !isFiniteNumber(v.playTimeSec)) return false;
+  if (!isNonNegativeInteger(v.stepsToEncounter) || !isFiniteNumber(v.playTimeSec) || v.playTimeSec < 0) return false;
   return true;
 }
 
