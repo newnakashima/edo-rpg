@@ -44,8 +44,39 @@ describe('敵の画像', () => {
     for (const id of ['nanbanHei', 'umibozu', 'boreiMusha', 'gehoTsukai', 'heikegani', 'nanbanOzutsu']) expect(ENEMIES[id]?.image, id).toBe(true);
   });
 
+  it('テストプレイのフィードバックで足した序章〜京の敵にも画像がある', () => {
+    for (const id of ['kamaitachi', 'mujina', 'inoshishi', 'karakasa', 'gomanohai', 'hitotsumeKozo', 'chahakobi', 'kappa', 'aooni', 'wanyudo']) {
+      expect(ENEMIES[id]?.image, id).toBe(true);
+    }
+  });
+
   it('テクスチャのキー', () => {
     expect(enemyImageKey('onibi')).toBe('enemy-onibi');
+  });
+});
+
+describe('雑魚敵の種類', () => {
+  // テストプレイで「雑魚敵のバリエーションが少ない」と指摘されたため、地域ごとに 5 種類以上にする（伊賀より先は次の PR で足す）
+  const kinds = (id: string) => new Set(ENCOUNTERS[id]!.groups.flatMap((g) => g.members)).size;
+
+  it('序章〜京の出現表は 5 種類以上の敵が出る', () => {
+    for (const id of ['urayama', 'suruga', 'sunpu', 'tokaido', 'nagoya', 'kyoto']) expect(kinds(id), id).toBeGreaterThanOrEqual(5);
+  });
+
+  it('出現表に入っていない雑魚敵はいない（呼ばれて出る敵を除く）', () => {
+    const inTables = new Set(Object.values(ENCOUNTERS).flatMap((t) => t.groups.flatMap((g) => g.members)));
+    const summoned = new Set(Object.values(SKILLS).flatMap((s) => (s.effect.kind === 'summon' ? [s.effect.enemy] : [])));
+    for (const e of Object.values(ENEMIES)) {
+      if (e.rewardScale !== undefined || summoned.has(e.id)) continue;
+      expect(inTables.has(e.id), e.id).toBe(true);
+    }
+  });
+
+  it('序章は主人公 1 人なので、2 体の組は Lv2 から', () => {
+    for (const g of ENCOUNTERS.urayama!.groups) {
+      expect(g.members.length).toBeLessThanOrEqual(2);
+      if (g.members.length === 2) expect(g.minPartyLevel, g.members.join('+')).toBeGreaterThanOrEqual(2);
+    }
   });
 });
 
