@@ -7,9 +7,10 @@ import type { Gender } from './characters';
 export const CHAR_FRAME = 40;
 /**
  * タイルの左上に置いたとき、コマのどの点をタイルの左上に合わせるか。
- * 左右はコマの中央（20）をタイルの中央（8）に、足元（コマの y = 33。scripts/pack_character.py の FOOT_Y）をタイルの下端（15）に合わせる。
+ * 左右はコマの中央（20）をタイルの中央（8）に、足のいちばん下の行（コマの y = 32。scripts/pack_character.py の FOOT_Y - 1）を
+ * タイルのいちばん下の行（15）に合わせる。
  */
-export const CHAR_DISPLAY_ORIGIN = { x: 12, y: 18 } as const;
+export const CHAR_DISPLAY_ORIGIN = { x: 12, y: 17 } as const;
 /** 歩行のコマ数（列 1〜4。列 0 は立ち）。 */
 export const WALK_FRAMES = 4;
 /** 歩行アニメーションの速さ（コマ/秒）。1 歩（140ms）で約 2 コマ進む。 */

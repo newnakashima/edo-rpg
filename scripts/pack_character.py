@@ -7,8 +7,9 @@
 - 行: 下・左・右・上（src/data/sprites.ts の FACINGS と同じ順）
 - 列: 0 = 立ち、1〜4 = 歩行（名前に walk を含むアニメーションのコマ）
 - 1 コマの大きさは、立ち姿と歩行のうち大きいキャンバスに合わせる（今は 40 × 40）。
-- 左右はコマの中央に置く。上下は、どの行も足元（行の中でいちばん下の不透明ピクセル）が同じ高さ（FOOT_Y）にそろうように置く。
-  src/data/sprites.ts の CHAR_DISPLAY_ORIGIN.y は、この FOOT_Y をタイルの下端に合わせる値にしている。
+- 左右はコマの中央に置く。上下は、どの行も足元がそろうように置く。足元の境目を FOOT_Y とし、
+  行の中でいちばん下の不透明ピクセルが FOOT_Y - 1 の行に来る（FOOT_Y の行から下は透明）。
+  src/data/sprites.ts の CHAR_DISPLAY_ORIGIN.y は、この FOOT_Y - 1 の行をタイルのいちばん下の行に合わせる値にしている。
 """
 import json
 import sys
@@ -18,7 +19,7 @@ from PIL import Image
 
 ROWS = ["south", "west", "east", "north"]
 WALK_FRAMES = 4
-# 足元をそろえる高さ（コマの上端からのピクセル。40 × 40 のコマで、下に 6px の余白を残す）
+# 足元の境目（コマの上端からのピクセル。足のいちばん下の行は FOOT_Y - 1。40 × 40 のコマで、下に 7px の余白を残す）
 FOOT_Y = 33
 
 
@@ -64,7 +65,7 @@ def main(src: str, out: str) -> None:
         fail(f"コマの高さ {h} が足元の高さ FOOT_Y = {FOOT_Y} に足りません")
     sheet = Image.new("RGBA", (w * (1 + WALK_FRAMES), h * len(ROWS)), (0, 0, 0, 0))
     for r, row in enumerate(grid):
-        # 行の中では上下の位置関係（歩行の上下動）を保ったまま、行全体の足元を FOOT_Y にそろえる
+        # 行の中では上下の位置関係（歩行の上下動）を保ったまま、行全体の足元の境目を FOOT_Y にそろえる（getbbox の下端は境目を返す）
         tops = [(h - im.height) // 2 for im in row]
         boxes = [im.getbbox() for im in row]
         bottoms = [t + b[3] for t, b in zip(tops, boxes) if b]
