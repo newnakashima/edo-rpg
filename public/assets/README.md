@@ -33,6 +33,19 @@ standard の size 24 では笠と合羽が描き分けられないため、主�
 - hero_m: 1 回目（standard、size 24、text_guidance_scale 12）は笠が紺色の帽子になり、合羽も着物にしか見えなかった。2 回目は mode `v3` にして、笠を「light tan」、合羽を「grey-blue」と色で描き分け、「wider than his shoulders」「like a bell」で形を言い、採用（計 2 回）。
 - hero_f: 1 回目（standard）は笠は出たが、合羽が着物になり、横向きで笠が消えた。2 回目（v3）は渡世人の形になったが、笠で髪が隠れて男女の区別がつかなかった。3 回目は「pretty young woman」「red lips」を足したところ、胸から上しか描かれず脚が切れた。4 回目は 2 回目の正面に黒髪と赤い襟を描き足して参照画像にし、4 方向を回して採用（計 4 回）。
 
+### 敵方の人物（`chars/yashamaru.png`・`chars/oboro.png`・`chars/borei.png`）
+
+テストプレイで「主要人物以外のキャラクターに画像がない」と指摘された残り。フィールドに立っているだけなので歩行は作らず、`scripts/pack_character.py` が歩行のコマにも立ち姿を置く。
+主人公と同じく mode `v3`（size 28、黒の 1px 輪郭、medium detail、low top-down。8 方向のうち下・左・右・上を使う）。
+
+| ID | PixelLab のキャラクター ID | 生成プロンプト | 回数 |
+| --- | --- | --- | --- |
+| yashamaru | 4b304f52-a2aa-4b6d-b373-139c42f49373 | chibi Edo period Japanese evil sorcerer (onmyoji) young man, long unkempt black hair down to his shoulders, pale white face with sharp eyes, loose dark purple robe with wide sleeves and a black sash, holding white paper talismans (ofuda) in one hand | 1 |
+| oboro | 79da6516-c1ec-4413-95bd-1e4130545709 | chibi Edo period Japanese old ninja master, grey cloth hood covering his head, very long white beard down to his chest, grey ninja outfit with black belt, grey leg wraps, katana in a black scabbard at his hip（戦闘の画像 `enemies/oboro.png` に合わせた） | 1 |
+| borei | 28d55aa9-474f-4c8d-aa99-9847dd2182c3 | chibi Japanese ghost (yurei), a small white TRIANGLE of cloth (hitaikakushi) pointing up in the middle of the forehead, long black hair hanging forward on both sides of a pale blue face, pale blue-white translucent body, white burial kimono crossed left over right, hands hanging limply at the wrists, lower body fading into wispy pale mist with no feet | 2 |
+
+- borei: 1 回目（bcc58de0-6585-449d-830f-d487ee996aac。white triangular cloth headband）は額の布がただの白い鉢巻きになり、三角に見えなかった。2 回目は「a small white TRIANGLE of cloth … pointing up in the middle of the forehead」と形と位置を言い、採用
+
 ### 町の人（`chars/npc_*.png`）
 
 テストプレイで「主要人物以外のキャラクターに画像がない」と指摘されたため、町の人を 19 の類型に分けて 1 体ずつ作った（どの町の人にどれを使うかは `src/data/maps.ts` の `sprite`）。
