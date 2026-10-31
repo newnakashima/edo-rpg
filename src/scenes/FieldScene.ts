@@ -12,7 +12,7 @@ import { playBgm } from '../systems/audio';
 import { browserStorage } from '../systems/save';
 import { getState, setPendingEvent, setState, takePendingEvent } from '../state';
 import { EVENTS } from '../data/events';
-import { CHAR_DISPLAY_ORIGIN, heroSprite, idleFrame, objectKey, oppositeFacing, personDepth, shouldStandStill, spriteKey, walkAnimKey, walkDepthRow, type CharacterSpriteId } from '../data/sprites';
+import { CHAR_DISPLAY_ORIGIN, heroSprite, idleFrame, objectDisplayOrigin, objectKey, oppositeFacing, personDepth, shouldStandStill, spriteKey, walkAnimKey, walkDepthRow, type CharacterSpriteId } from '../data/sprites';
 import { EventRunner, type EventInput } from '../systems/eventScript';
 import { Controls } from '../ui/input';
 import { FieldMenu } from '../ui/FieldMenu';
@@ -114,8 +114,10 @@ export class FieldScene extends Phaser.Scene {
         this.npcSprites.set(npc.id, sprite);
         this.npcObjects.set(npc.id, sprite);
       } else if (npc.object) {
-        // 葛籠などの物。開いたかどうかは refreshNpcs でコマを切り替える
-        this.npcObjects.set(npc.id, this.add.image(npc.x * TILE, npc.y * TILE, objectKey(npc.object), 0).setOrigin(0));
+        // 葛籠などの物。開いたかどうかは refreshNpcs でコマを切り替える。大きな物は上にはみ出すので、人と同じ重なり順にする
+        const origin = objectDisplayOrigin(npc.object);
+        const image = this.add.image(npc.x * TILE, npc.y * TILE, objectKey(npc.object), 0).setDisplayOrigin(origin.x, origin.y).setDepth(personDepth(npc.y));
+        this.npcObjects.set(npc.id, image);
       } else {
         this.npcObjects.set(npc.id, this.add.image(npc.x * TILE, npc.y * TILE, 'person').setOrigin(0).setTint(npc.color));
       }
