@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { characterName } from '../data/characters';
-import { ENEMIES } from '../data/enemies';
+import { ENEMIES, enemyImageKey } from '../data/enemies';
 import { ITEMS, ownedItems } from '../data/items';
 import { MAPS, START_POSITION } from '../data/maps';
 import { ailmentMarks, isAilment, SKILLS, STATUS_NAMES, type StatusId } from '../data/skills';
@@ -95,7 +95,10 @@ export class BattleScene extends Phaser.Scene {
     enemies.forEach((e, i) => {
       const def = e.enemyId ? ENEMIES[e.enemyId] : undefined;
       const x = spacing * (i + 1);
-      const sprite = this.add.image(x, 82, 'enemy').setTint(def?.color ?? 0xffffff);
+      // 画像のある敵は足元を地面（y = 104）に合わせる。ない敵は仮の塊をティントで色分けする
+      const sprite = def?.image
+        ? this.add.image(x, 104, enemyImageKey(def.id)).setOrigin(0.5, 1)
+        : this.add.image(x, 82, 'enemy').setTint(def?.color ?? 0xffffff);
       this.add.text(x, 112, e.name, textStyle(9)).setOrigin(0.5);
       this.enemySprites.set(e.key, sprite);
     });
