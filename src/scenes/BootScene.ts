@@ -20,7 +20,10 @@ const TILE_COLORS: Record<TileKind, [number, number]> = {
   gate: [0xd8c08e, 0x5a3a1e],
 };
 
-/** 画像を読み込み、まだ画像のないものは仮の画像をコードで描いてテクスチャにする。 */
+/**
+ * 画像を読み込み、まだ画像のないもの（タイル・NPC・敵）は仮の画像をコードで描いてテクスチャにする。
+ * 読み込みに失敗したときの代わりの画像は用意していない（画像はビルドに同梱する静的なファイルで、CI の build で配置を確かめるため）。
+ */
 export class BootScene extends Phaser.Scene {
   constructor() {
     super('Boot');
@@ -91,7 +94,6 @@ export class BootScene extends Phaser.Scene {
     g.fillStyle(0x000000, 0.35);
     g.fillRect(4, 14, 8, 1);
     g.generateTexture('person', 16, 16);
-
 
     // 敵（白い塊をティントで色分けする）
     g.clear();

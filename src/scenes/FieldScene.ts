@@ -12,7 +12,7 @@ import { playBgm } from '../systems/audio';
 import { browserStorage } from '../systems/save';
 import { getState, setPendingEvent, setState, takePendingEvent } from '../state';
 import { EVENTS } from '../data/events';
-import { CHAR_DISPLAY_ORIGIN, heroSprite, idleFrame, spriteKey, walkAnimKey, type CharacterSpriteId } from '../data/sprites';
+import { CHAR_DISPLAY_ORIGIN, heroSprite, idleFrame, shouldStandStill, spriteKey, walkAnimKey, type CharacterSpriteId } from '../data/sprites';
 import { EventRunner, type EventInput } from '../systems/eventScript';
 import { Controls } from '../ui/input';
 import { FieldMenu } from '../ui/FieldMenu';
@@ -174,6 +174,7 @@ export class FieldScene extends Phaser.Scene {
         setPendingEvent({ runner, fromMapId });
         this.runner = null;
         this.moving = true;
+        this.standStill();
         this.cameras.main.flash(250, 255, 255, 255);
         this.time.delayedCall(260, () =>
           this.scene.start('Battle', { enemyIds: request.enemies, level: request.level, canEscape: request.canEscape, loseOk: request.loseOk }),
@@ -183,6 +184,7 @@ export class FieldScene extends Phaser.Scene {
         setPendingEvent({ runner, fromMapId });
         this.runner = null;
         this.moving = true;
+        this.standStill();
         this.cameras.main.fadeOut(200, 0, 0, 0);
         this.cameras.main.once('camerafadeoutcomplete', () => this.scene.restart({}));
         return;
@@ -238,13 +240,12 @@ export class FieldScene extends Phaser.Scene {
     this.followPlayer();
 
     if (this.message.isOpen) {
-      if (!this.moving) this.standStill();
+      if (shouldStandStill({ moving: this.moving, busy: true, held: false })) this.standStill();
       this.message.update(this.controls);
       return;
     }
     const top = this.overlays[this.overlays.length - 1];
-    // 歩いていないとき（止まった、メニューや会話を開いた、イベントが始まった）は立ち姿に戻す
-    if (!this.moving && (top || this.runner || !this.controls.heldDirection())) this.standStill();
+    if (shouldStandStill({ moving: this.moving, busy: !!top || !!this.runner, held: this.controls.heldDirection() !== null })) this.standStill();
     if (top) {
       top.update(this.controls);
       return;
@@ -335,6 +336,7 @@ export class FieldScene extends Phaser.Scene {
     );
     if (!group) return;
     this.moving = true;
+    this.standStill();
     this.cameras.main.flash(250, 255, 255, 255);
     this.time.delayedCall(260, () => this.scene.start('Battle', { enemyIds: group, level: table.level }));
   }
@@ -345,6 +347,7 @@ export class FieldScene extends Phaser.Scene {
     this.cameras.main.fadeOut(200, 0, 0, 0);
     this.cameras.main.once('camerafadeoutcomplete', () => this.scene.restart({}));
     this.moving = true;
+    this.standStill();
   }
 
   private interact(): void {
