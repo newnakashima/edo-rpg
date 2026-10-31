@@ -627,7 +627,7 @@ export const EVENTS: Record<string, EventDef> = {
               {
                 type: 'if',
                 flag: 'kintaMet',
-                then: [{ type: 'say', lines: ['金太「堀川の荷蔵は、町の南東だ。荷車はどけといたぜ」'] }],
+                then: [{ type: 'say', lines: ['金太「堀川の荷蔵は、町の西の外れ、堀川を渡った岸の蔵だ。荷車はどけといたぜ」'] }],
                 else: KINTA_MEET,
               },
             ],

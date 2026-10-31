@@ -841,6 +841,36 @@ describe('マップの広さと使い回し（テストプレイの指摘: ど�
     }
   });
 
+  it('入口から、町の人・葛籠・見どころの全員に話しかけられる（ほかの町の人に道をふさがれない。物語の始めも、見張りがどいたあとも）', () => {
+    // イベントの warp（大凧で天守へ、など）も入口に数える
+    const warps: { mapId: string; x: number; y: number }[] = [];
+    const walk = (steps: readonly EventStep[]): void => {
+      for (const st of steps) {
+        if (st.type === 'warp') warps.push(st);
+        if (st.type === 'if') {
+          walk(st.then);
+          walk(st.else ?? []);
+        }
+        if (st.type === 'choice') for (const o of st.options) walk(o.steps);
+      }
+    };
+    for (const ev of Object.values(EVENTS)) walk(ev.steps);
+    const entrance = (m: MapDef) =>
+      MAPS.world!.towns!.find((t) => t.to?.mapId === m.id)?.to ??
+      Object.values(MAPS).flatMap((o) => o.exits.filter((e) => e.to === m.id).map((e) => ({ x: e.toX, y: e.toY })))[0] ??
+      warps.find((w) => w.mapId === m.id);
+    for (const m of maps.filter((x) => !NOT_YET_REMADE.includes(x.id))) {
+      const start = entrance(m);
+      expect(start, m.id).toBeDefined();
+      if (!start) continue;
+      const later = Object.fromEntries(m.npcs.filter((n) => n.hideFlag).map((n) => [n.hideFlag!, true]));
+      for (const flags of [{}, later]) {
+        const area = reachable(m, start, flags, true);
+        for (const npc of m.npcs.filter((n) => npcVisible(n, flags))) expect(near(area, npc.x, npc.y), `${m.id}/${npc.id}`).toBe(true);
+      }
+    }
+  });
+
   it('歩けるマスはすべてつながっている（宝箱や町の人が閉じた区画にいない。古いセーブの位置で閉じ込められない）', () => {
     for (const m of maps.filter((x) => !NOT_YET_REMADE.includes(x.id))) {
       const open: { x: number; y: number }[] = [];
