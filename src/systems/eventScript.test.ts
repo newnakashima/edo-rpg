@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { EventStep } from '../data/eventTypes';
-import { EventRunner, joinParty, MAX_PARTY } from './eventScript';
+import { EventRunner, joinParty, leaveParty, MAX_PARTY } from './eventScript';
 import { newGame, type GameState } from './gameState';
 import { createMember, memberLevel, memberStats } from './party';
 
@@ -155,5 +155,37 @@ describe('仲間の加入', () => {
     // 満員の判定だけを確かめるため、霞のいない 4 人で埋める
     const full = game({ party: Array.from({ length: MAX_PARTY }, () => createMember('hero', 1)) });
     expect(joinParty(full, 'kasumi')).toBe(full);
+  });
+});
+
+describe('一時加入と一時離脱（第 5 章）', () => {
+  const four = () => game({ party: [createMember('hero', 15), createMember('kasumi', 16, { weapon: 'tekkokagi' }), createMember('gendo', 15), createMember('orin', 15)] });
+
+  it('leave は仲間を抜き、経験値・HP・装備をそのまま away に預ける。主人公といない仲間には何もしない', () => {
+    const s = four();
+    const kasumi = s.party[1]!;
+    const r = leaveParty(s, 'kasumi');
+    expect(r.party.map((m) => m.id)).toEqual(['hero', 'gendo', 'orin']);
+    expect(r.away).toEqual([kasumi]);
+    expect(leaveParty(r, 'kasumi')).toBe(r);
+    expect(leaveParty(s, 'hero')).toBe(s);
+  });
+
+  it('ゲストは平均レベルではなく guestLevel（兵庫は 18）で加わり、抜けるときは預けない', () => {
+    const left = leaveParty(four(), 'kasumi');
+    const joined = joinParty(left, 'hyogo');
+    const hyogo = joined.party[3]!;
+    expect(hyogo.id).toBe('hyogo');
+    expect(memberLevel(hyogo)).toBe(18);
+    expect(hyogo.equip).toEqual({ weapon: 'hyogoKatana', armor: 'hyogoHaori' });
+    const gone = leaveParty(joined, 'hyogo');
+    expect(gone.party.map((m) => m.id)).toEqual(['hero', 'gendo', 'orin']);
+    expect(gone.away.map((m) => m.id)).toEqual(['kasumi']);
+  });
+
+  it('イベントの leave 手順で抜ける', () => {
+    const r = play([{ type: 'leave', member: 'kasumi' }], four());
+    expect(r.state.party.map((m) => m.id)).not.toContain('kasumi');
+    expect(r.state.away.map((m) => m.id)).toEqual(['kasumi']);
   });
 });

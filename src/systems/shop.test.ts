@@ -104,3 +104,16 @@ describe('伊賀上野の店（第 4 章）', () => {
     for (const g of goods) expect(EQUIPMENT[g]?.wearers.length, g).toBeGreaterThan(0);
   });
 });
+
+describe('大坂の店（第 5 章）', () => {
+  it('刀鍛冶には、いる 3 人（主人公・玄道・お凛）の武器と防具があり、抜けている霞とゲストの兵庫の品はない', () => {
+    const goods = SHOPS.osakaKaji!.goods;
+    for (const id of ['hero', 'gendo', 'orin'] as const) {
+      for (const slot of ['weapon', 'armor'] as const) {
+        expect(goods.some((g) => EQUIPMENT[g]?.slot === slot && canEquip(id, g)), `${id} ${slot}`).toBe(true);
+      }
+    }
+    for (const g of goods) expect(EQUIPMENT[g]?.wearers.some((w) => w !== 'kasumi' && w !== 'hyogo'), g).toBe(true);
+    expect(goods.some((g) => EQUIPMENT[g]?.slot === 'weapon' && canEquip('kasumi', g))).toBe(false);
+  });
+});

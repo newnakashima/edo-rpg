@@ -137,3 +137,21 @@ describe('経験値の行', () => {
     expect(expLine(m)).toBe(`経験 ${m.exp}  次 ――`);
   });
 });
+
+describe('ゲストの装備と経験値の表示', () => {
+  const withHyogo = () => ({ ...newGame('m', { mapId: 'osaka', x: 1, y: 1 }), party: [createMember('hero', 18), createMember('hyogo', 18)], items: { sukehiro: 1 } });
+
+  it('ゲストの装備は付けることも外すこともできず、所持品も変わらない', () => {
+    const s = withHyogo();
+    expect(changeEquipment(s, 1, 'weapon', null)).toEqual({ ok: false, reason: 'guest' });
+    expect(changeEquipment(s, 1, 'armor', null)).toEqual({ ok: false, reason: 'guest' });
+    expect(changeEquipment({ ...s, items: { hyogoKatana: 1 } }, 1, 'weapon', 'hyogoKatana')).toEqual({ ok: false, reason: 'guest' });
+    // ほかの仲間はふつうに付け替えられる
+    expect(changeEquipment(s, 0, 'weapon', 'sukehiro').ok).toBe(true);
+  });
+
+  it('ゲストは次のレベルまでの経験値を出さない', () => {
+    expect(expLine(createMember('hyogo', 18))).toMatch(/次 ――$/);
+    expect(expLine(createMember('hero', 18))).not.toMatch(/――/);
+  });
+});

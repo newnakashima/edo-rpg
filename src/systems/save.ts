@@ -12,7 +12,7 @@ import { memberStats } from './party';
  * - 3: 仲間の装備（party[].equip）を追加
  * - 4: 飛脚の預かり（storage）を追加
  */
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;
 export const SLOT_COUNT = 3;
 const KEY_PREFIX = 'edo-rpg/save/';
 
@@ -74,8 +74,8 @@ function isInventory(v: unknown): boolean {
 export function isGameState(v: unknown): v is GameState {
   if (!isObject(v)) return false;
   if (v.gender !== 'm' && v.gender !== 'f') return false;
-  if (!Array.isArray(v.party) || v.party.length === 0) return false;
-  for (const m of v.party) {
+  if (!Array.isArray(v.party) || v.party.length === 0 || !Array.isArray(v.away)) return false;
+  for (const m of [...v.party, ...v.away]) {
     if (!isObject(m) || typeof m.id !== 'string' || !Object.hasOwn(CHARACTERS, m.id)) return false;
     if (!isNonNegativeInteger(m.exp) || !isNonNegativeInteger(m.hp) || !isNonNegativeInteger(m.mp)) return false;
     if (!isValidEquip(m.id, m.equip)) return false;
@@ -111,6 +111,9 @@ function migrate(version: unknown, state: unknown): unknown {
     } else if (v === 3) {
       // 版 3 には預かりがない。空で始める
       s = { ...s, storage: {} };
+    } else if (v === 4) {
+      // 版 4 には一時離脱の仲間がない（第 5 章より前なので、抜けている仲間はいない）
+      s = { ...s, away: [] };
     }
     v++;
   }

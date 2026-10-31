@@ -49,3 +49,15 @@ describe('party', () => {
     expect(createMember('hero', 1, {}).equip).toEqual({});
   });
 });
+
+describe('ゲスト（榊兵庫）', () => {
+  it('経験値を得ず、レベルも上がらない（ほかの仲間は得る）', () => {
+    const hyogo = createMember('hyogo', 18);
+    const hero = createMember('hero', 10);
+    const { party, levelUps } = gainExp([hero, hyogo], [5000, 5000]);
+    expect(party[1]).toEqual(hyogo);
+    expect(memberLevel(party[1]!)).toBe(18);
+    expect(party[0]!.exp).toBe(hero.exp + 5000);
+    expect(levelUps.map((l) => l.id)).toEqual(['hero']);
+  });
+});

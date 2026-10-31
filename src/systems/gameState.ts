@@ -8,6 +8,8 @@ export type Facing = 'up' | 'down' | 'left' | 'right';
 export interface GameState {
   gender: Gender;
   party: PartyMember[];
+  /** 一時的に抜けている仲間（経験値と装備を預かる。第 5 章の霞）。 */
+  away: PartyMember[];
   /** 所持金（文）。 */
   money: number;
   /** 道具・装備品（ID ごとの個数）。 */
@@ -32,6 +34,7 @@ export function newGame(gender: Gender, start: { mapId: string; x: number; y: nu
   return {
     gender,
     party: [createMember('hero', 1)],
+    away: [],
     money: 50,
     items: { ...STARTING_ITEMS },
     storage: {},

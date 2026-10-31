@@ -21,7 +21,7 @@ describe('save', () => {
     const storage = memoryStorage();
     const s = { ...state(), money: 123, flags: { intro: true } };
     save(storage, 1, s, new Date('2026-10-31T00:00:00Z'));
-    expect(load(storage, 1)).toEqual({ version: 4, savedAt: '2026-10-31T00:00:00.000Z', state: s });
+    expect(load(storage, 1)).toEqual({ version: 5, savedAt: '2026-10-31T00:00:00.000Z', state: s });
   });
 
   it('空きスロットは null', () => {
@@ -89,7 +89,7 @@ describe('save', () => {
     delete v1state.items;
     const text = JSON.stringify({ version: 1, savedAt: '2026-10-31T00:00:00.000Z', state: v1state });
     expect(deserialize(text)?.state.items).toEqual(STARTING_ITEMS);
-    expect(deserialize(text)?.version).toBe(4);
+    expect(deserialize(text)?.version).toBe(5);
   });
 
   it('未対応の版や、おかしな道具のデータは読まない', () => {
@@ -105,7 +105,7 @@ describe('版 3（装備）', () => {
   it('版 2 のセーブデータは加入時の装備を付けて読む', () => {
     const v2state = { ...state(), party: [{ id: 'hero', exp: 0, hp: 10, mp: 1 }] };
     const data = deserialize(JSON.stringify({ version: 2, savedAt: '2026-10-31T00:00:00.000Z', state: v2state }));
-    expect(data?.version).toBe(4);
+    expect(data?.version).toBe(5);
     expect(data?.state.party[0]?.equip).toEqual(STARTING_EQUIPMENT.hero);
   });
 
@@ -132,7 +132,7 @@ describe('版 4（預かり）', () => {
     const v3state: Record<string, unknown> = { ...state() };
     delete v3state.storage;
     const data = deserialize(JSON.stringify({ version: 3, savedAt: '2026-10-31T00:00:00.000Z', state: v3state }));
-    expect(data?.version).toBe(4);
+    expect(data?.version).toBe(5);
     expect(data?.state.storage).toEqual({});
   });
 
@@ -141,6 +141,25 @@ describe('版 4（預かり）', () => {
     expect(deserialize(JSON.stringify({ ...ok, state: { ...ok.state, storage: { nope: 1 } } }))).toBeNull();
     expect(deserialize(JSON.stringify({ ...ok, state: { ...ok.state, storage: [] } }))).toBeNull();
     expect(deserialize(JSON.stringify({ ...ok, state: { ...ok.state, storage: { dotanuki: 2 } } }))).not.toBeNull();
+  });
+});
+
+describe('版 5（一時離脱の仲間）', () => {
+  it('版 4 のセーブデータは一時離脱の仲間なしで読む', () => {
+    const v4state: Record<string, unknown> = { ...state() };
+    delete v4state.away;
+    const data = deserialize(JSON.stringify({ version: 4, savedAt: '2026-10-31T00:00:00.000Z', state: v4state }));
+    expect(data?.version).toBe(5);
+    expect(data?.state.away).toEqual([]);
+  });
+
+  it('一時離脱の仲間（経験値・装備）を読み戻せ、おかしなデータは読まない', () => {
+    const s = { ...state(), away: [createMember('kasumi', 15, { weapon: 'tekkokagi' })] };
+    expect(deserialize(serialize(s))?.state.away).toEqual(s.away);
+    const ok = JSON.parse(serialize(state())) as { state: Record<string, unknown> };
+    expect(deserialize(JSON.stringify({ ...ok, state: { ...ok.state, away: undefined } }))).toBeNull();
+    expect(deserialize(JSON.stringify({ ...ok, state: { ...ok.state, away: [{ id: 'nope', exp: 0, hp: 1, mp: 1, equip: {} }] } }))).toBeNull();
+    expect(deserialize(JSON.stringify({ ...ok, state: { ...ok.state, away: [{ ...createMember('kasumi', 1), equip: { weapon: 'dotanuki' } }] } }))).toBeNull();
   });
 });
 

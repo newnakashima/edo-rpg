@@ -610,3 +610,69 @@ describe('第 4 章の清水湊と伊賀上野', () => {
     for (const id of ['igaSato', 'kagiya']) expect(respawnPoint(id)).toEqual({ mapId: 'iga', ...iga.respawn });
   });
 });
+
+describe('第 5 章の大坂', () => {
+  const osaka = MAPS.osaka!;
+  const world = MAPS.world!;
+  const town = world.towns!.find((t) => t.name === '大坂')!;
+  const start = town.to!;
+  const exitTo = (mapId: string) => osaka.exits.filter((e) => e.to === mapId).map((e) => `${e.x},${e.y}`);
+
+  it('大坂は第 4 章を終える（chapter4Cleared）まで入れず、まわりの街道もそれまでは京の範囲のまま', () => {
+    expect(townAction(world, town.x, town.y, 'ok', { orinJoined: true })).toMatchObject({ kind: 'info' });
+    expect(townAction(world, town.x, town.y, 'ok', { chapter4Cleared: true })).toEqual({ kind: 'enter', to: start });
+    const before = { chapter2Cleared: true };
+    const after = { chapter2Cleared: true, chapter4Cleared: true };
+    expect(encounterAt(world, 21, 10, before)).toBe('kyoto');
+    expect(encounterAt(world, 18, 11, before)).toBeUndefined();
+    for (const [x, y] of [[17, 11], [20, 11], [21, 10]] as const) {
+      expect(encounterAt(world, x, y, after), `${x},${y}`).toBe('osaka');
+      expect(respawnPoint('world', x, y, after)).toEqual({ mapId: 'osaka', ...osaka.respawn });
+    }
+    expect(respawnPoint('world', 21, 10, before).mapId).toBe('kyo');
+    expect(encounterAt(world, 22, 10, after)).toBe('kyoto');
+  });
+
+  it('大坂に入ると osakaEnter を行い、第 5 章を終えたら行わない', () => {
+    expect(osaka.onEnter).toEqual({ event: 'osakaEnter', unless: 'chapter5Cleared' });
+  });
+
+  it('大坂から街道へ出ると、大坂の印の隣に出る', () => {
+    for (const exit of osaka.exits.filter((e) => e.to === 'world')) {
+      expect(Math.abs(exit.toX - town.x) + Math.abs(exit.toY - town.y)).toBe(1);
+    }
+  });
+
+  it('米蔵は兵庫が加わる（hyogoJoined）まで用心棒がふさぐ。兵庫は加わると私塾から消える', () => {
+    const before = reachable(osaka, start, {}, true);
+    expect(exitTo('komeKura').some((k) => before.has(k))).toBe(false);
+    const after = reachable(osaka, start, { hyogoJoined: true }, true);
+    expect(exitTo('komeKura').every((k) => after.has(k))).toBe(true);
+    const juku = osaka.npcs.find((n) => n.id === 'hyogoJuku')!;
+    expect(npcVisible(juku, { hyogoJoined: true })).toBe(false);
+  });
+
+  it('町の人には全員話しかけられる', () => {
+    const area = reachable(osaka, start, {}, true);
+    for (const npc of osaka.npcs) expect(near(area, npc.x, npc.y), npc.id).toBe(true);
+  });
+
+  it('米蔵の地下の入口から百俵からくりの場所へ行け、そこを通らなければ奥には入れない。葛籠にはすべて近づける', () => {
+    const kura = MAPS.komeKura!;
+    const enter = osaka.exits.find((e) => e.to === 'komeKura')!;
+    const landing = { x: enter.toX, y: enter.toY };
+    const area = reachable(kura, landing, {}, true);
+    for (const t of kura.triggers!) {
+      expect(area.has(`${t.x},${t.y}`)).toBe(true);
+      expect(t.unless).toBe('hyakuhyoDefeated');
+    }
+    for (const c of kura.npcs.filter((n) => n.event?.startsWith('komeKuraChest'))) expect(near(area, c.x, c.y), c.id).toBe(true);
+    const kikai = kura.npcs.find((n) => n.id === 'komeKuraKikai')!;
+    expect(near(area, kikai.x, kikai.y)).toBe(true);
+    expect(near(reachable(wallTriggers(kura), landing, {}, true), kikai.x, kikai.y)).toBe(false);
+  });
+
+  it('米蔵の地下で全滅したら大坂の旅籠の前に戻る', () => {
+    expect(respawnPoint('komeKura')).toEqual({ mapId: 'osaka', ...osaka.respawn });
+  });
+});

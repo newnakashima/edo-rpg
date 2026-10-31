@@ -23,5 +23,8 @@ export const SHOPS: Record<string, ShopDef> = {
   // 伊賀上野（第 4 章）。お凛が加入した 4 人で来るので、4 人分の装備を置く
   igaYorozu: { id: 'igaYorozu', name: 'よろず屋', goods: ['kizugusuri', 'kintsuba', 'dokukeshi', 'hangontan', 'mankintan', 'kitsukegusuri'] },
   igaKaji: { id: 'igaKaji', name: '刀鍛冶', goods: ['osafune', 'shinobiKodachi', 'tetsuShakujo', 'nanbanju', 'toseiGusoku', 'igaShozoku', 'nanbando', 'hachigane'] },
+  // 大坂（第 5 章）。霞は抜けているので、霞の装備は置かない（兵庫の装備は変えられない）
+  osakaYorozu: { id: 'osakaYorozu', name: 'よろず屋', goods: ['kizugusuri', 'kintsuba', 'dokukeshi', 'hangontan', 'mankintan', 'kitsukegusuri'] },
+  osakaKaji: { id: 'osakaKaji', name: '刀鍛冶', goods: ['sukehiro', 'kongoShakujo', 'renpatsuju', 'nanbanGusoku', 'toseiGusoku', 'hachigane', 'inro'] },
   nagoyaKaji: { id: 'nagoyaKaji', name: '刀鍛冶', goods: ['magoroku', 'kusarigama', 'kusarikatabira', 'shinobishozoku', 'hachigane', 'inro'] },
 };

@@ -1,7 +1,7 @@
 // docs/characters.md、docs/balance.md の「能力値」の表。
 import type { Stats } from '../systems/stats';
 
-export type CharacterId = 'hero' | 'kasumi' | 'gendo' | 'orin';
+export type CharacterId = 'hero' | 'kasumi' | 'gendo' | 'orin' | 'hyogo';
 export type Gender = 'm' | 'f';
 
 export interface CharacterDef {
@@ -11,6 +11,11 @@ export interface CharacterDef {
   job: string;
   /** Lv1 の能力値。 */
   base: Stats;
+  /**
+   * 一時加入のゲスト（第 5 章の榊兵庫）のレベル。ゲストはこのレベルで加入し、経験値を得ず（成長しない）、装備を変えられない。
+   * 抜けるときは一時離脱の預かり（GameState.away）に入れない。
+   */
+  guestLevel?: number;
 }
 
 export const CHARACTERS: Record<CharacterId, CharacterDef> = {
@@ -38,7 +43,19 @@ export const CHARACTERS: Record<CharacterId, CharacterDef> = {
     job: '鉄砲打ち',
     base: { maxHp: 26, maxMp: 8, atk: 12, def: 6, mag: 7, spd: 9, luck: 7 },
   },
+  hyogo: {
+    id: 'hyogo',
+    name: '榊兵庫',
+    job: '侍',
+    base: { maxHp: 30, maxMp: 8, atk: 12, def: 10, mag: 4, spd: 8, luck: 6 },
+    guestLevel: 18,
+  },
 };
+
+/** 一時加入のゲスト（経験値を得ず、装備を変えられない）か。 */
+export function isGuest(id: CharacterId): boolean {
+  return CHARACTERS[id].guestLevel !== undefined;
+}
 
 export function characterName(id: CharacterId, gender: Gender): string {
   const name = CHARACTERS[id].name;

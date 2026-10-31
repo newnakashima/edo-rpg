@@ -1,4 +1,4 @@
-// docs/balance.md の「敵とボスの一覧」。章を実装するごとに、その地域の敵を足す（今は序章〜第 4 章）。
+// docs/balance.md の「敵とボスの一覧」。章を実装するごとに、その地域の敵を足す（今は序章〜第 5 章）。
 import type { EnemyFactors } from '../systems/stats';
 import type { Element } from './skills';
 
@@ -233,6 +233,53 @@ export const ENEMIES: Record<string, EnemyDef> = {
       { skill: 'kyukoka', weight: 1 },
     ],
   },
+  // 大坂（第 5 章）
+  yojinbo: {
+    id: 'yojinbo',
+    name: '米問屋の用心棒',
+    color: 0x5a4a3a,
+    image: true,
+    factors: { hp: 1.2, atk: 1.2, def: 1.1, spd: 0.9 },
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'kesagiri', weight: 1 },
+    ],
+  },
+  teppoAshigaru: {
+    id: 'teppoAshigaru',
+    name: '鉄砲足軽',
+    color: 0x4a5a6a,
+    image: true,
+    factors: { hp: 1.0, atk: 1.3, def: 1.0, spd: 0.9 },
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'teppo', weight: 1 },
+    ],
+  },
+  karakuriTawara: {
+    id: 'karakuriTawara',
+    name: 'からくり俵',
+    color: 0xc0a060,
+    image: true,
+    factors: { hp: 1.3, atk: 1.0, def: 1.4, spd: 0.7 },
+    weak: ['mech', 'fire'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'tawaraGoroshi', weight: 1 },
+    ],
+  },
+  bakeNezumi: {
+    id: 'bakeNezumi',
+    name: '化け鼠',
+    color: 0x7a6a6a,
+    image: true,
+    factors: { hp: 0.8, atk: 1.0, def: 0.8, spd: 1.3 },
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'kamitsuki', weight: 1 },
+      { skill: 'dokueki', weight: 1 },
+    ],
+  },
   // ボス（rewardScale あり）。イベントの battle で出し、出現表には入れない
   /** 序章のボス。妖狐だが、実はからくりで操られていた。序章は一人旅なので化かし（混乱）は控えめにする。 */
   yako: {
@@ -323,6 +370,21 @@ export const ENEMIES: Record<string, EnemyDef> = {
       { skill: 'nirengeki', weight: 2 },
       { skill: 'shikomibari', weight: 1 },
       { skill: 'gishu', weight: 1 },
+    ],
+    rewardScale: 6,
+  },
+  /** 第 5 章のボス。米蔵の地下のからくり工場の守り神。俵落とし（全体）と米ぬかの煙（命中↓）。 */
+  hyakuhyo: {
+    id: 'hyakuhyo',
+    name: '百俵からくり',
+    color: 0xb09050,
+    image: true,
+    factors: { hp: 14, atk: 1.2, def: 1.4, spd: 0.7 },
+    weak: ['mech', 'fire'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'tawaraOtoshi', weight: 2 },
+      { skill: 'komenuka', weight: 1 },
     ],
     rewardScale: 6,
   },
@@ -420,6 +482,19 @@ const IGA: EncounterTable = {
   ],
 };
 
+/** 大坂のまわりの街道と米蔵の地下の敵の組（霞の代わりに兵庫が加わった 4 人で来る）。 */
+const OSAKA: EncounterTable = {
+  level: 16,
+  groups: [
+    { members: ['yojinbo', 'yojinbo'], weight: 2 },
+    { members: ['bakeNezumi', 'bakeNezumi', 'bakeNezumi'], weight: 2 },
+    { members: ['teppoAshigaru', 'yojinbo'], weight: 2 },
+    { members: ['karakuriTawara', 'bakeNezumi', 'bakeNezumi'], weight: 2 },
+    { members: ['karakuriTawara', 'teppoAshigaru', 'yojinbo'], weight: 1 },
+    { members: ['yojinbo', 'teppoAshigaru', 'teppoAshigaru', 'bakeNezumi'], weight: 1 },
+  ],
+};
+
 export const ENCOUNTERS: Record<string, EncounterTable> = {
   /** 清水湊の裏山。 */
   urayama: PROLOGUE,
@@ -435,4 +510,6 @@ export const ENCOUNTERS: Record<string, EncounterTable> = {
   kyoto: KYOTO,
   /** 伊賀のまわりの街道と、伊賀者の里。 */
   iga: IGA,
+  /** 大坂のまわりの街道と、米蔵の地下。 */
+  osaka: OSAKA,
 };
