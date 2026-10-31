@@ -786,6 +786,14 @@ describe('第 6 章の広島・長崎・島原', () => {
     for (const id of ['dejima', 'nanbanji', 'harajo', 'kenkyujo']) expect(respawnPoint(id), id).toEqual({ mapId: 'nagasaki', ...nagasaki.respawn });
   });
 
+  it('第 6 章の町とダンジョンは、第 5 章までのどの町・ダンジョンより広い（テストプレイで狭いと言われたため）', () => {
+    const area = (m: MapDef) => m.rows.length * (m.rows[0]?.length ?? 0);
+    const ids = ['hiroshima', 'nagasaki', 'dejima', 'nanbanji', 'harajo', 'kenkyujo'];
+    const before = Object.values(MAPS).filter((m) => m.id !== 'world' && !ids.includes(m.id));
+    const largest = Math.max(...before.map(area));
+    for (const id of ids) expect(area(MAPS[id]!), id).toBeGreaterThan(largest);
+  });
+
   it('第 6 章の町とダンジョンは、ほかのマップと形を使い回していない', () => {
     const ids = ['hiroshima', 'nagasaki', 'dejima', 'nanbanji', 'harajo', 'kenkyujo'];
     const shapes = new Map(Object.values(MAPS).map((m) => [m.id, m.rows.join('\n')]));

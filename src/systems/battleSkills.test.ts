@@ -660,22 +660,23 @@ describe('第 6 章（長崎・島原）の敵の技', () => {
     }
   });
 
-  it('構えのあいだに眠らされても構えは解けず、起きて動けたときに大筒を撃つ', () => {
+  it.each(['sleep', 'paralysis', 'confusion'] as const)('構えのあいだに %s で思うように動けなくても構えは解けず、次に動けたときに大筒を撃つ', (status) => {
     const { state } = untilCharged(0);
-    get(state, 'e0').status.sleep = 1;
-    const slept = resolveTurn(state, guard, seededRng(7));
-    expect(slept.events.some((e) => e.type === 'cannotAct' && e.actor === 'e0')).toBe(true);
-    expect(get(slept.state, 'e0').charged).toBe('ozutsu');
-    const woke = resolveTurn(slept.state, guard, seededRng(8));
-    expect(woke.events.some((e) => e.type === 'skill' && e.actor === 'e0' && e.skill === 'ozutsu')).toBe(true);
+    get(state, 'e0').status[status] = 1;
+    const held = resolveTurn(state, guard, seededRng(7));
+    expect(held.events.some((e) => e.type === 'skill' && e.actor === 'e0')).toBe(false);
+    expect(get(held.state, 'e0').charged).toBe('ozutsu');
+    const fired = resolveTurn(held.state, guard, seededRng(8));
+    expect(fired.events.some((e) => e.type === 'skill' && e.actor === 'e0' && e.skill === 'ozutsu')).toBe(true);
   });
 
   it('大筒は防御した味方へのダメージが、防御しないときより小さい', () => {
     const { state } = untilCharged(1);
-    const attack = { p0: { kind: 'attack', target: 'e0' }, p1: { kind: 'attack', target: 'e0' }, p2: { kind: 'attack', target: 'e0' }, p3: { kind: 'attack', target: 'e0' } } as const;
+    // 味方が何もしない（乱数を使わない）ときと防御するときを、同じ乱数で比べる
+    const idle = {};
     const sum = (r: ReturnType<typeof resolveTurn>) =>
       r.events.filter((e) => e.type === 'damage' && e.target.startsWith('p')).reduce((s, e) => s + (e.type === 'damage' ? e.damage : 0), 0);
-    expect(sum(resolveTurn(state, guard, seededRng(3)))).toBeLessThan(sum(resolveTurn(state, attack, seededRng(3))));
+    expect(sum(resolveTurn(state, guard, seededRng(3)))).toBeLessThan(sum(resolveTurn(state, idle, seededRng(3))));
   });
 
   it('ぶどう弾は味方にランダムに 2〜3 回当たる', () => {
@@ -713,5 +714,55 @@ describe('第 6 章（長崎・島原）の敵の技', () => {
       for (const c of b.combatants) if (c.side === 'party') c.hp = c.stats.maxHp;
     }
     throw new Error('onami was not used');
+  });
+
+  /** enemy が skill を使うまでターンを進め、技を使ったあとのイベントを返す（味方は防御だけ。毎ターン全回復）。 */
+  function untilSkill(enemy: string, skill: string, setup: (b: BattleState) => void = () => {}) {
+    let b = createBattle(four(), 'm', [enemy], 19, { canEscape: false });
+    setup(b);
+    const rng = seededRng(17);
+    for (let t = 0; t < 200; t++) {
+      const r = resolveTurn(b, guard, rng);
+      const i = r.events.findIndex((e) => e.type === 'skill' && e.actor === 'e0' && e.skill === skill);
+      if (i >= 0) return r.events.slice(i + 1);
+      b = r.state;
+      for (const c of b.combatants) {
+        if (c.side === 'party') {
+          c.status = {};
+          c.hp = c.stats.maxHp;
+        }
+      }
+      setup(b);
+    }
+    throw new Error(`${skill} was not used`);
+  }
+
+  it('亡霊武者の亡者の太刀は防御を無視する（防御がとても高い味方にも、ふつうに当たる）', () => {
+    const tough = (b: BattleState) => {
+      for (const c of b.combatants) if (c.side === 'party') c.stats = { ...c.stats, def: 9999 };
+    };
+    const hit = untilSkill('boreiMusha', 'monoTachi', tough).find((e) => e.type === 'damage');
+    expect(hit?.type === 'damage' && hit.damage).toBeGreaterThan(10);
+  });
+
+  it('外法使いの外法の炎は火の術で、火に弱い相手には効果が大きい', () => {
+    expect(SKILLS.gehoHomura?.effect.kind).toBe('magic');
+    expect(SKILLS.gehoHomura?.elements).toEqual(['fire']);
+    expect(untilSkill('gehoTsukai', 'gehoHomura').some((e) => e.type === 'damage')).toBe(true);
+  });
+
+  it('外法使いの惑わしの香は混乱を、平家蟹の泡は命中↓ をかけようとする', () => {
+    for (const [enemy, skill, status] of [['gehoTsukai', 'madowashi', 'confusion'], ['heikegani', 'awa', 'accDown']] as const) {
+      const after = untilSkill(enemy, skill).filter((e) => e.type === 'status' || e.type === 'statusFailed');
+      expect(after.length, skill).toBeGreaterThan(0);
+      for (const e of after) expect(e).toMatchObject({ status });
+    }
+  });
+
+  it('南蛮からくり兵の南蛮剣と平家蟹の大ばさみは、味方 1 人に当たる', () => {
+    for (const [enemy, skill] of [['nanbanHei', 'nanbanKen'], ['heikegani', 'hasami']] as const) {
+      const first = untilSkill(enemy, skill).find((e) => e.type === 'damage' || e.type === 'miss');
+      expect(first && 'target' in first && first.target.startsWith('p'), skill).toBe(true);
+    }
   });
 });
