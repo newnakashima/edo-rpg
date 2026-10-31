@@ -95,6 +95,34 @@ standard の size 24 では笠と合羽が描き分けられないため、主�
 - 飛脚: 1 回目は現代風の帽子で棒がなく、2 回目は文箱を手に提げ、3 回目も棒を担がなかった。4 回目で棒を肩に担いだが先の文箱が出なかった。5 回目は 4 回目の 4 方向に Pillow で文箱（と横向きの棒）を描き足して採用（計 5 回）。上限で採用したため、小さく見ると文箱が棒の先の旗のようにも見える点が残る。
 - ほかの 15 類型は 1 回目で採用。
 
+## 顔グラフィック（`faces/`）
+
+会話の窓の左に出す 48 × 48 の顔（`src/data/faces.ts`。台詞の「名前「」の名前から引く）。表情差分はまだない（通常だけ）。
+立ち姿のある人は、シートの下向きの立ち姿（40 × 40 の 1 コマ目）を `create_portrait_character`（direction `character_to_portrait`、result_size 48、view `low top-down`）で胸像にした。足りない所は `edit_image`（文での編集）か Pillow で直した。
+立ち姿のない蘭斎は `create_image_pro`（48 × 48、玄道の顔を style_image）で 25 候補を作って選んだ。権六は戦闘の画像（`enemies/gonroku.png`）を胸像にした。
+
+共通の要件: 48 × 48・背景透過、胸から上で目と口が見える、立ち姿と同じ人物と分かる、暗い色の輪郭、正面向き。
+
+| ID | 元にしたもの | 直し方（edit_image の指示の要点など） | 回数 |
+| --- | --- | --- | --- |
+| hero_m | chars/hero_m.png | 1 回目は笠の影で目が描かれなかった。2 回目は edit_image「show his face clearly under the straw hat brim: two sharp dark eyes and eyebrows visible」で採用 | 2 |
+| hero_f | chars/hero_f.png | 1 回目は目が影で見えず、髪が短かった。2 回目は edit_image「two dark eyes with eyelashes under the hat brim, long straight black hair falling down over both shoulders」で採用 | 2 |
+| kasumi | chars/kasumi.png | そのまま採用 | 1 |
+| gendo | chars/gendo.png | そのまま採用 | 1 |
+| orin | chars/orin.png | そのまま採用 | 1 |
+| tatsugoro | chars/tatsugoro.png | 1 回目はまげがなく若者の顔だった。2 回目は edit_image「stout middle-aged yakuza boss: shaved crown with a black topknot, thick eyebrows, stern face with a few wrinkles」で採用 | 2 |
+| hyogo | chars/hyogo.png | 1 回目は家紋がなかった。2 回目は edit_image「a small white round family crest on each side of the chest」で採用 | 2 |
+| yashamaru | chars/yashamaru.png | 1 回目は頬の赤みで少女に見えた。2 回目（edit_image「narrow sharp cold eyes … remove the pink blush」）は半眼のくま顔になり、3 回目（edit_image「eyes wide open, narrow and sharp with a cold piercing glare … porcelain white」）は女性的な顔に戻った。4 回目は create_image_pro（立ち姿を reference、玄道の顔を style_image）で「sinister young MAN … masculine angular face with a sharp narrow jaw, thin straight dark eyebrows angled down, long narrow cold sharp eyes」の 25 候補から 6 番を採用。編集を重ねると女性的な顔に戻りやすいので、男の顔は Pro で顎と眉を言うほうがよい | 4 |
+| kinta | chars/kinta.png | 1 回目は上着が市松でなかった。2 回目は edit_image「bright red and yellow checkered pattern」で市松になったが、片目だけ紫で、髪の外に浮いた点があった。3 回目は Pillow でその 2 点を直して採用 | 3 |
+| oboro | chars/oboro.png | そのまま採用 | 1 |
+| gonroku | enemies/gonroku.png | 1 回目・2 回目（edit_image「long pale scar running diagonally across his left cheek」）とも頬の傷が見分けられなかった。3 回目は Pillow で左の頬に斜めの傷を描いて採用 | 3 |
+| ranzai | （なし） | create_image_pro「elderly Edo period Japanese Dutch-studies scholar … small round wire-rimmed glasses, grey-streaked black hair combed straight back and tied at the back of the head … dark brown haori jacket over a dull green kimono」の 25 候補のうち、丸眼鏡があり下端に線の出ていない 12 番を採用 | 1 |
+| sakon | chars/sakon.png | 1 回目は肩衣が棘のある鎧になった。2 回目は edit_image「a stiff flat dark navy shoulder vest whose shoulders stick straight out sideways like wide flat wings … small white topknot」で採用 | 2 |
+| kagaTono | chars/kagaTono.png | 1 回目は髪が紫で、肩章とネクタイの洋装になった。2 回目は edit_image「jet black hair tied in a neat topknot, … traditional deep purple kimono and haori with small gold family crests … Remove the gold epaulettes and the necktie」で直ったが、耳に金の耳飾りのような点が出た。3 回目は Pillow でその点を消して採用 | 3 |
+
+- create_portrait_character は顔の細部（目の色の左右差、浮いた点、耳飾り）がときどき崩れるので、8 倍に拡大して確かめる。
+- create_image_pro は候補によって下端に灰色の横線が出る。選ぶときに下端の行を確かめる。
+
 ## タイル（`tiles/`）
 
 `create_tiles_pro`（tile_type `square_topdown`、tile_view `top-down`、tile_size 16、outline_mode `segmentation`）で、1 回に番号付きで複数のタイルを作り、種類ごとに 1 枚を選んで `tiles/<種類>.png` に置く（種類は `src/data/maps.ts` の `TILE_KINDS`）。

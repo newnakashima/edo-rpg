@@ -20,6 +20,7 @@ import { TradeMenu, type TradeMode } from '../ui/TradeMenu';
 import { SaveSlotMenu } from '../ui/SaveSlotMenu';
 import { COLORS, GAME_HEIGHT, GAME_WIDTH, setupCamera, textStyle, TILE } from '../ui/theme';
 import { Menu, MessageWindow } from '../ui/widgets';
+import { faceForPage, faceKey } from '../data/faces';
 
 const DELTA: Record<Facing, [number, number]> = {
   up: [0, -1],
@@ -131,7 +132,10 @@ export class FieldScene extends Phaser.Scene {
 
     this.followPlayer();
 
-    this.message = new MessageWindow(this, 8, GAME_HEIGHT - 62, GAME_WIDTH - 16, 54);
+    this.message = new MessageWindow(this, 8, GAME_HEIGHT - 62, GAME_WIDTH - 16, 54, (page) => {
+      const face = faceForPage(page);
+      return face && faceKey(face);
+    });
     this.showAreaName(map.name);
 
     // 戦闘や移動から戻ってきたら、途中のイベントの続きを行う。なければ、マップに入ったときのイベントを行う
