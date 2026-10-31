@@ -106,6 +106,8 @@ export interface MapDef {
   respawn?: { x: number; y: number };
   /** respawn のないマップ（ダンジョンなど）で全滅したときに戻る町のマップ。省くと最初の町（清水湊）。 */
   respawnMap?: string;
+  /** 範囲ごとの全滅時の戻り先の町（respawnMap より優先する。ワールドマップの地域ごとに近くの町へ戻す）。 */
+  respawnZones?: { x: number; y: number; w: number; h: number; mapId: string }[];
   /** ワールドマップの町の印。印の上で決定ボタンを押すと to の場所へ入る（to がなければ lines を出す）。乗っただけでは入らない。 */
   towns?: TownDef[];
   /** 関所。flag が立つまで通れず、lines を出す。 */
@@ -378,6 +380,8 @@ MAPS.world = {
   // 出現範囲は今は駿河と、大井川の西の東海道。ほかの地域の範囲は、その地域の敵を作るとき（フェーズ 4 の各章）に足す
   // 先に書いた範囲が優先。駿府のまわり（大井川の渡し場から駿府まで）は、序章を終えたら駿府の敵（それまでは序章の敵）
   // 大井川の西（名古屋・京・伊賀のまわり）は東海道の敵。京・伊賀の範囲は第 3・4 章で、この範囲より前に足す
+  // 大井川の西（東海道）で全滅したら名古屋に戻る（ほかは最初の町の清水湊）
+  respawnZones: [{ x: 25, y: 9, w: 11, h: 4, mapId: 'nagoya' }],
   encounterZones: [
     { x: 25, y: 9, w: 11, h: 4, encounter: 'tokaido' },
     { x: 36, y: 9, w: 4, h: 4, encounter: 'sunpu', flag: 'prologueCleared' },
@@ -1034,10 +1038,15 @@ export function npcVisible(npc: NpcDef, flags: Record<string, boolean>): boolean
   return !npc.hideFlag || !flags[npc.hideFlag];
 }
 
-/** そのマップで全滅したときに戻る場所。マップに respawn がなければ respawnMap の町、それもなければ最初の町。 */
-export function respawnPoint(mapId: string): { mapId: string; x: number; y: number } {
+/**
+ * そのマップで全滅したときに戻る場所。マップに respawn がなければ、(x, y) を含む respawnZones の町、
+ * なければ respawnMap の町、それもなければ最初の町。
+ */
+export function respawnPoint(mapId: string, x?: number, y?: number): { mapId: string; x: number; y: number } {
   const map = MAPS[mapId];
-  const town = map?.respawn ? map : MAPS[map?.respawnMap ?? START_POSITION.mapId];
+  const zone =
+    x === undefined || y === undefined ? undefined : map?.respawnZones?.find((z) => x >= z.x && x < z.x + z.w && y >= z.y && y < z.y + z.h);
+  const town = map?.respawn ? map : MAPS[zone?.mapId ?? map?.respawnMap ?? START_POSITION.mapId];
   return town?.respawn ? { mapId: town.id, ...town.respawn } : START_POSITION;
 }
 

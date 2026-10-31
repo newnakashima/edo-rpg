@@ -265,10 +265,19 @@ describe('NPC の出入りと全滅時の戻り先', () => {
     expect(respawnPoint('nowhere')).toEqual({ mapId: 'shimizu', x: 23, y: 5 });
   });
 
-  it('respawnMap の町には respawn がある', () => {
+  it('respawnMap・respawnZones の町には respawn がある', () => {
     for (const map of Object.values(MAPS)) {
       if (map.respawnMap) expect(MAPS[map.respawnMap]?.respawn, `${map.id} -> ${map.respawnMap}`).toBeDefined();
+      for (const z of map.respawnZones ?? []) expect(MAPS[z.mapId]?.respawn, `${map.id} -> ${z.mapId}`).toBeDefined();
     }
+  });
+
+  it('ワールドマップでは、大井川の西（東海道）なら名古屋、それ以外は清水湊に戻る', () => {
+    expect(respawnPoint('world', 34, 10)).toEqual({ mapId: 'nagoya', x: 25, y: 8 });
+    expect(respawnPoint('world', 25, 9)).toEqual({ mapId: 'nagoya', x: 25, y: 8 });
+    expect(respawnPoint('world', 36, 10)).toEqual({ mapId: 'shimizu', x: 23, y: 5 });
+    expect(respawnPoint('world', 38, 10)).toEqual({ mapId: 'shimizu', x: 23, y: 5 });
+    expect(respawnPoint('world')).toEqual({ mapId: 'shimizu', x: 23, y: 5 });
   });
 
   it('hideFlag はどこかのイベントの setFlag で立つ', () => {
