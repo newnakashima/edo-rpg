@@ -76,6 +76,9 @@ export const EQUIPMENT: Record<string, EquipDef> = {
   omamori: { id: 'omamori', name: '御守り', slot: 'accessory', price: 50, bonus: { luck: 5 }, wearers: ALL, description: '寺社の御守り' },
   hachigane: { id: 'hachigane', name: '鉢金', slot: 'accessory', price: 160, bonus: { def: 3 }, wearers: ALL, description: '額を守る鉄の板' },
   tomegane: { id: 'tomegane', name: '遠眼鏡', slot: 'accessory', price: 900, bonus: { spd: 2, luck: 6 }, wearers: ALL, description: '遠くまで見通す南蛮の筒' },
+  waraji: { id: 'waraji', name: 'わらじ', slot: 'accessory', price: 15, bonus: { spd: 2 }, wearers: ALL, description: '履き替え用の新しい草鞋' },
+  chochin: { id: 'chochin', name: '提灯', slot: 'accessory', price: 60, bonus: { def: 1, luck: 3 }, wearers: ALL, description: '夜道を照らす小田原提灯' },
+  kiseru: { id: 'kiseru', name: 'キセル', slot: 'accessory', price: 120, bonus: { mag: 4 }, wearers: ALL, description: '一服すると頭が冴える煙管' },
   inro: { id: 'inro', name: '印籠', slot: 'accessory', price: 150, bonus: { maxHp: 10 }, wearers: ALL, description: '薬を入れる小箱' },
 };
 

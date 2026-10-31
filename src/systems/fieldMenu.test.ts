@@ -32,6 +32,22 @@ describe('道具をメニューで使う', () => {
   });
 });
 
+describe('兵糧丸（体力と気力）', () => {
+  it('体力と気力を両方回復し、どちらかが減っていれば使える', () => {
+    const s = game({ party: [{ ...createMember('hero', 10), hp: 1, mp: 0 }], items: { hyorogan: 2 } });
+    const max = memberStats(s.party[0]!);
+    const r = useItemInField(s, 'hyorogan', 0);
+    expect(r.ok && r.state.party[0]?.hp).toBe(Math.min(max.maxHp, 61));
+    expect(r.ok && r.state.party[0]?.mp).toBe(Math.min(max.maxMp, 12));
+    expect(r.ok && r.state.items).toEqual({ hyorogan: 1 });
+    // 気力だけ減っている
+    const mpOnly = { ...createMember('hero', 10), mp: 0 };
+    expect(itemUsableOn('hyorogan', mpOnly)).toBe(true);
+    expect(itemUsableOn('hyorogan', createMember('hero', 10))).toBe(false);
+    expect(itemUsableOn('hyorogan', { ...createMember('hero', 10), hp: 0, mp: 0 })).toBe(false);
+  });
+});
+
 describe('道具をメニューで使う（続き）', () => {
   it('万金丹で気力を回復し、満タンなら使わない', () => {
     const s = game({ party: [{ ...createMember('hero', 1), mp: 1 }], items: { mankintan: 1 } });
