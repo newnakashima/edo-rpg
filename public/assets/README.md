@@ -66,6 +66,12 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 | karakuriTawara | 913eab51-f699-4982-a1bb-3ba96b029da4 | south-west | karakuri clockwork rice bale monster, a round straw Japanese rice bale (tawara) body tied with thick ropes, big brass gears sticking out of its sides, four short riveted iron mechanical legs, glowing red eyes peeking from the straw, small and centered with empty space around it, full body, JRPG enemy battle sprite, three-quarter front view |
 | bakeNezumi | bbf3a582-4663-4f3a-8e99-cdb3c2a59453 | south-west | giant Japanese yokai rat (bake-nezumi), big grey-brown furry rat standing on hind legs, long pink tail, glowing red eyes, bared sharp yellow fangs, menacing claws raised, small and centered with empty space around it, full body, JRPG enemy battle sprite, three-quarter front view |
 | hyakuhyo | f364c017-c6c6-46b6-b8d0-15739974b60f | south-west | huge monster built from stacked yellow straw rice bales (tawara) with rough straw texture and brown rope ties, dark bronze cogwheels with teeth at its shoulders and knees, one glowing red eye, menacing, full body, JRPG boss battle sprite, three-quarter front view（96 × 96。2 回目の f96f56af-c2d4-4593-a35c-99fca4b14abe を 90% に縮めて足元を y = 90 に置き、肩と膝に暗い青銅の歯車を Pillow で描き足したものを init_image に、init_image_strength 300） |
+| nanbanHei | ae66a7de-60b8-4992-9dd0-22422f36465b | south-west | Japanese karakuri clockwork soldier robot in European nanban armor, steel morion helmet with curved brim and crest, steel breastplate with an open window in the chest showing big round brass cogwheels with visible teeth, brass cogwheels at both shoulders and knees, holding a thin straight rapier sword, glowing red eyes, small and centered with empty space around it, full body standing, JRPG enemy battle sprite, three-quarter front view |
+| umibozu | b02bc299-c3d3-4826-9734-dfb98353452b | south | Japanese sea yokai umibozu, a huge round bald black shadowy monk-shaped head and shoulders rising out of dark blue ocean waves, two big glowing yellow eyes, no mouth, white foamy waves curling around its base, small and centered with empty space around it, JRPG enemy battle sprite, facing viewer |
+| boreiMusha | eaf98a46-e12b-4958-8325-dfa80fb65beb | south-west | ghost samurai warrior (borei musha), pale glowing blue-white skeletal face, tattered broken dark red Japanese samurai yoroi armor with a horned kabuto helmet, ghostly translucent wisps trailing from his body, holding a chipped katana, full body standing, JRPG enemy battle sprite, three-quarter front view, small and centered with empty space around it |
+| gehoTsukai | c09caaa2-b512-48d1-9802-dbefe7363ee5 | south-west | Edo period Japanese dark sorcerer (geho tsukai), long dark purple hooded robes, white noh mask over his face, holding up a long white paper ofuda talisman strip with red writing that is burning with bright purple fire, sinister, full body standing, JRPG enemy battle sprite, three-quarter front view, small and centered with empty space around it |
+| heikegani | 69f97ae4-855d-4440-b294-d015e5e8b336 | south-west | giant red Heike crab yokai, an angry frowning human samurai face with fierce eyebrows clearly carved on its red back shell, two huge raised pincer claws, eight spiky legs, full body, JRPG enemy battle sprite（1 回目の 413b2ace-ea31-4a9e-b65a-71fbd13d3159 の甲羅の模様を消し、怒った顔を Pillow で描き足したものを init_image に、init_image_strength 350） |
+| nanbanOzutsu | 606be5dd-9c66-4c91-a12a-13eae4df85d5 | south-west | giant clockwork iron war machine robot with a huge black bronze cannon barrel mounted on its shoulder pointing forward, heavy riveted dark iron body mixing European armor and Japanese samurai armor plates, open chest showing round brass cogwheels with teeth and glowing blue light, thick iron legs, menacing, full body, JRPG boss battle sprite, three-quarter front view（96 × 96。1 回目の def5a72a-069d-424b-b95f-3f3f56220a92 を 88% に縮めて足元を y = 90 に置き、胸に真鍮の歯車を描き足したものを init_image に、init_image_strength 300） |
 
 第 1 章の 4 体の作り直しの記録:
 
@@ -105,3 +111,12 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 - 米問屋の用心棒: 1 回目は上の余白が 2 行しかなく、足元が y = 61 で、足元をそろえると髷が切れた。2 回目は 1 回目を縮めて余白を作ったものを init_image（strength 300）にして採用（計 2 回）。
 - 百俵からくり: 1 回目は金色のロボットのようになり、俵にも歯車にも見えなかった。2 回目は「straw texture」「rope ties」で俵の山になったが、歯車がなく、上の余白もなかった。3 回目は 2 回目を 90% に縮め、肩と膝に暗い青銅の歯車を描き足して init_image（strength 300）にして採用（計 3 回。明るい真鍮色の歯車は藁に埋もれて見えなかったので、暗い色にした）。
 - 足元をそろえるため、鉄砲足軽は 1px 上、化け鼠は 2px 下へずらした（ほかの 3 体はそのまま）。
+
+第 6 章の 6 体の作り直しの記録:
+
+- 海坊主・亡霊武者: 1 回目で採用（各 1 回）。
+- 南蛮からくり兵: 1 回目は肩に金の飾りがあるだけで歯車が見えなかった。2 回目は「open window in the chest showing big round brass cogwheels」で胸と膝に歯車が出たので採用（計 2 回）。
+- 外法使い: 1 回目は手の紫のものが水晶に見え、炎か護符か分からなかった。2 回目は「ofuda talisman strip with red writing」「burning with bright purple fire」で護符と紫の炎が出たので採用（計 2 回）。
+- 平家蟹: 1 回目は甲羅に人の顔が見えなかった。2 回目は 1 回目の甲羅に怒った顔を描き足して init_image（strength 350）にして採用（計 2 回）。
+- 南蛮大筒からくり: 1 回目は胸が青い画面のようで歯車と分からず、足元の下の余白も足りなかった。2 回目は 88% に縮めて胸に歯車を描き足し、init_image（strength 300）にして採用（計 2 回）。
+- 足元をそろえるため、南蛮からくり兵・海坊主は 2px 上（上の余白を 1 行残すため、足元は地面の行より 1px 低い）、亡霊武者・外法使い・南蛮大筒からくりは 1px 下、平家蟹は 4px 下へずらした。

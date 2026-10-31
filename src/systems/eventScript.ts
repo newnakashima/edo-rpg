@@ -3,7 +3,8 @@ import { CHARACTERS, characterName, isGuest } from '../data/characters';
 import type { EventStep } from '../data/eventTypes';
 import { addItem, isKnownItem, itemCount, MAX_ITEM_COUNT } from '../data/items';
 import type { GameState } from './gameState';
-import { createMember, memberLevel, restoreAll } from './party';
+import { createMember, memberLevel, memberStats, restoreAll } from './party';
+import { totalExpForLevel } from './stats';
 
 /** パーティーの最大人数。 */
 export const MAX_PARTY = 4;
@@ -23,14 +24,34 @@ interface Frame {
   index: number;
 }
 
+/** その時点のパーティーの平均レベル（切り捨て、最低 1）。 */
+function averageLevel(state: GameState): number {
+  return Math.max(1, Math.floor(state.party.reduce((s, m) => s + memberLevel(m), 0) / Math.max(1, state.party.length)));
+}
+
 /**
  * 仲間に加える。加入済み・満員なら何もしない。レベルはその時点のパーティーの平均（切り捨て、最低 1）。ゲストは guestLevel。
- * 一時離脱中（away にいる）の仲間も何もしない（新しく作ると二重になるため。away から戻す手順は第 6 章で足す）。
+ * 一時離脱中（away にいる）の仲間も何もしない（新しく作ると二重になるため。away から戻すのは rejoinParty）。
  */
 export function joinParty(state: GameState, member: GameState['party'][number]['id']): GameState {
   if (state.party.some((m) => m.id === member) || state.away.some((m) => m.id === member) || state.party.length >= MAX_PARTY) return state;
-  const avg = Math.max(1, Math.floor(state.party.reduce((s, m) => s + memberLevel(m), 0) / Math.max(1, state.party.length)));
-  return { ...state, party: [...state.party, createMember(member, CHARACTERS[member].guestLevel ?? avg)] };
+  return { ...state, party: [...state.party, createMember(member, CHARACTERS[member].guestLevel ?? averageLevel(state))] };
+}
+
+/**
+ * 一時離脱中（away にいる）の仲間を戻す。装備はそのまま、経験値は平均レベルまで引き上げ（下げない）、HP・MP は満タン。
+ * away にいない・満員なら何もしない。
+ */
+export function rejoinParty(state: GameState, member: GameState['party'][number]['id']): GameState {
+  const m = state.away.find((x) => x.id === member);
+  if (!m || state.party.length >= MAX_PARTY) return state;
+  const raised = { ...m, exp: Math.max(m.exp, totalExpForLevel(averageLevel(state))) };
+  const stats = memberStats(raised);
+  return {
+    ...state,
+    party: [...state.party, { ...raised, hp: stats.maxHp, mp: stats.maxMp }],
+    away: state.away.filter((x) => x.id !== member),
+  };
 }
 
 /** 仲間を一時的に抜く。ゲストでなければ away に預ける。主人公と、いない仲間には何もしない。 */
@@ -122,6 +143,9 @@ export class EventRunner {
           break;
         case 'leave':
           s = leaveParty(s, step.member);
+          break;
+        case 'rejoin':
+          s = rejoinParty(s, step.member);
           break;
         case 'heal':
           s = { ...s, party: restoreAll(s.party) };

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { EventStep } from '../data/eventTypes';
-import { EventRunner, joinParty, leaveParty, MAX_PARTY } from './eventScript';
+import { EventRunner, joinParty, leaveParty, MAX_PARTY, rejoinParty } from './eventScript';
 import { newGame, type GameState } from './gameState';
 import { createMember, memberLevel, memberStats } from './party';
 
@@ -192,5 +192,46 @@ describe('一時加入と一時離脱（第 5 章）', () => {
     const r = play([{ type: 'leave', member: 'kasumi' }], four());
     expect(r.state.party.map((m) => m.id)).not.toContain('kasumi');
     expect(r.state.away.map((m) => m.id)).toEqual(['kasumi']);
+  });
+});
+
+describe('一時離脱からの復帰（第 6 章）', () => {
+  const four = () => game({ party: [createMember('hero', 15), createMember('kasumi', 16, { weapon: 'tekkokagi' }), createMember('gendo', 15), createMember('orin', 15)] });
+
+  it('rejoin は away の仲間を装備そのままで戻し、平均レベル（切り捨て）まで経験値を引き上げ、HP・MP を満タンにする', () => {
+    const left = leaveParty(four(), 'kasumi');
+    const kasumi = left.away[0]!;
+    // 霞が抜けているあいだに、残りの 3 人が Lv20〜22 に上がった（平均 21）
+    const grown = { ...left, party: [createMember('hero', 22), createMember('gendo', 21), createMember('orin', 20)], away: [{ ...kasumi, hp: 1, mp: 0 }] };
+    const r = rejoinParty(grown, 'kasumi');
+    expect(r.party.map((m) => m.id)).toEqual(['hero', 'gendo', 'orin', 'kasumi']);
+    expect(r.away).toEqual([]);
+    const back = r.party[3]!;
+    expect(memberLevel(back)).toBe(21);
+    expect(back.equip).toEqual(kasumi.equip);
+    expect(back.hp).toBe(memberStats(back).maxHp);
+    expect(back.mp).toBe(memberStats(back).maxMp);
+  });
+
+  it('預けたときのほうが平均より高ければ、経験値は下げない', () => {
+    const left = leaveParty(four(), 'kasumi');
+    const low = { ...left, party: [createMember('hero', 10), createMember('gendo', 10), createMember('orin', 10)] };
+    const r = rejoinParty(low, 'kasumi');
+    expect(r.party[3]!.exp).toBe(left.away[0]!.exp);
+  });
+
+  it('away にいない仲間・満員なら何もしない', () => {
+    const s = four();
+    expect(rejoinParty(s, 'kasumi')).toBe(s);
+    const left = leaveParty(s, 'kasumi');
+    const full = { ...left, party: [...left.party, createMember('hyogo', 18)] };
+    expect(rejoinParty(full, 'kasumi')).toBe(full);
+  });
+
+  it('イベントの rejoin 手順で戻る', () => {
+    const left = leaveParty(four(), 'kasumi');
+    const r = play([{ type: 'rejoin', member: 'kasumi' }], left);
+    expect(r.state.party.map((m) => m.id)).toContain('kasumi');
+    expect(r.state.away).toEqual([]);
   });
 });

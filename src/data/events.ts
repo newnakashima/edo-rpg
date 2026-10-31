@@ -354,6 +354,59 @@ const OSAKA_CHAPTER_END: EventStep[] = [
   { type: 'setFlag', flag: 'chapter5Cleared' },
 ];
 
+/** 広島に初めて入ったとき（第 6 章の始まり）。霞が戻ってくる。 */
+const HIROSHIMA_ARRIVE: EventStep[] = [
+  {
+    type: 'say',
+    lines: [
+      '安芸広島。いくつにも分かれた川に、橋が架かる城下町だ。',
+      '橋のたもとで、見覚えのある影が欄干にもたれていた。',
+      '霞「遅かったじゃないか。くたばってなくて何よりだよ」',
+      'お凛「霞！ 江戸はどうだったんだい」',
+      '霞「……上役は動かなかった。鷲尾の手は、公儀隠密の頭にまで回ってる。あたしの知らせは、握りつぶされたよ」',
+      '霞「でも、ただで帰ってきたわけじゃない。からくりの出どころを突き止めた」',
+      '霞「長崎だ。出島のオランダ商館から、南蛮の機械学の書が密かに持ち出されてる。持ち出したのは、出島で学んだ蘭学者らしい」',
+      '玄道「からくりの源流を断てば、鷲尾の兵も増やせぬというわけか」',
+      '霞「そういうこと。西国街道を西へ、長崎まで。……また、よろしく頼むよ」',
+      '霞が一行に戻った！',
+    ],
+  },
+  // 広島に着くのは第 5 章の終わりに兵庫が抜けた 3 人のときだけなので、満員で rejoin が空振りすることはない。
+  // 仲間の人数の決まりが変わって満員になりうるなら、イベントに「仲間がいるか」の条件を足して、戻れたときだけフラグを立てる
+  { type: 'rejoin', member: 'kasumi' },
+  { type: 'setFlag', flag: 'kasumiRejoined' },
+];
+
+/** 長崎に初めて入ったとき。 */
+const NAGASAKI_ARRIVE: EventStep[] = [
+  {
+    type: 'say',
+    lines: [
+      '長崎。湊には唐やオランダの船が浮かび、坂の町に異国の言葉が行き交っている。',
+      '湊の先に、扇の形をした小さな島が見える。あれが出島だ。',
+      '霞「出島の通詞に話を聞こう。書が消えた蔵のことを、いちばんよく知ってるはずだ」',
+    ],
+  },
+  { type: 'setFlag', flag: 'nagasakiArrived' },
+];
+
+/** 南蛮大筒からくりを倒して長崎に戻ったとき（第 6 章の終わり）。北前船で金沢へ向かう（第 7 章への導線）。 */
+const NAGASAKI_CHAPTER_END: EventStep[] = [
+  {
+    type: 'say',
+    lines: [
+      '長崎に戻ると、湊に一隻の北前船が入っていた。',
+      '霞「蘭斎の帳面を読んだよ。研究所のからくりは、加賀の金沢にも送られてる」',
+      '霞「加賀じゃ、殿様が病で伏せってることになってる。……だけど、人前に出てくる殿様は、顔色ひとつ変えないんだってさ」',
+      '玄道「からくりの影武者か。江戸で鷲尾が将軍にしておることの、試しかもしれんな」',
+      'お凛「だったら、金沢で尻尾をつかんでやろうじゃないか」',
+      '北前船の船頭「金沢へ行くんなら、わしの船に乗りんさい。日本海をぐるりと回って、加賀の湊まで運んじゃるけえ」',
+      '{hero}たちは、蘭斎から託された祝詞を胸に、北の海を目指すことにした。',
+    ],
+  },
+  { type: 'setFlag', flag: 'chapter6Cleared' },
+];
+
 export const EVENTS: Record<string, EventDef> = {
   /** 辰五郎の頼みと、野狐を倒したあとの報告（序章の終わり）。 */
   tatsugoro: {
@@ -914,6 +967,131 @@ export const EVENTS: Record<string, EventDef> = {
       { type: 'setFlag', flag: 'hyakuhyoDefeated' },
     ],
   },
+  /** 広島に入ったとき。初めてなら霞が戻る（away から戻し、平均レベルまで引き上げる）。 */
+  hiroshimaEnter: { id: 'hiroshimaEnter', steps: HIROSHIMA_ARRIVE },
+  /** 長崎に入ったとき。初めてなら町の紹介、南蛮大筒からくりを倒したあとなら第 6 章の終わり。 */
+  nagasakiEnter: {
+    id: 'nagasakiEnter',
+    steps: [
+      {
+        type: 'if',
+        flag: 'nanbanOzutsuDefeated',
+        then: NAGASAKI_CHAPTER_END,
+        else: [{ type: 'if', flag: 'nagasakiArrived', then: [], else: NAGASAKI_ARRIVE }],
+      },
+    ],
+  },
+  /** 出島の通詞。南蛮の機械学の書を持ち出した蘭学者・若林蘭斎のことを聞く（dejimaHeard。南蛮寺跡の石段の役人がどく）。 */
+  tsujiMeet: {
+    id: 'tsujiMeet',
+    steps: [
+      {
+        type: 'if',
+        flag: 'dejimaHeard',
+        then: [{ type: 'say', lines: ['通詞「蘭斎どのの行方は、東の山の南蛮寺跡が手がかりです。どうか、お気をつけて」'] }],
+        else: [
+          {
+            type: 'say',
+            lines: [
+              '通詞「公儀の御用の方ですか。……はい、書物蔵から消えたのは、南蛮の機械学の書、十二冊です」',
+              '通詞「ゼンマイと歯車で、人の手を借りずに動く仕掛けの書です。オランダでも、まだ試しの段の学問だとか」',
+              '通詞「持ち出したのは、若林蘭斎という蘭学者でしょう。出島で学び、誰よりもあの書に夢中でした」',
+              '通詞「一年ほど前から、江戸の偉いお方の後ろ盾を得たと言って、長崎を離れていました。ところがこのごろ、東の山の南蛮寺跡で姿を見たという者がいるのです」',
+              '霞「南蛮寺跡か。奉行所が石段をふさいでたね。……公儀の札を見せれば通してくれるだろう」',
+              '通詞「蘭斎どのは、悪い人ではないのです。学問のためなら、誰の金でも受け取ってしまう……それだけの人なのです」',
+            ],
+          },
+          { type: 'setFlag', flag: 'dejimaHeard' },
+        ],
+      },
+    ],
+  },
+  /** 南蛮寺跡の礼拝堂の跡。研究所のからくり兵と戦い、蘭斎の書き付けから島原の原城跡を知る（shimabaraOpen）。 */
+  nanbanjiOku: {
+    id: 'nanbanjiOku',
+    steps: [
+      {
+        type: 'if',
+        flag: 'nanbanjiOkuMet',
+        then: [{ type: 'say', lines: ['礼拝堂の跡の前で、ふたたび鉄の兵が立ちはだかった。'] }],
+        else: [
+          {
+            type: 'say',
+            lines: [
+              '焼け落ちた礼拝堂の跡から、がしゃり、がしゃりと鉄の足音が近づいてくる。',
+              '南蛮の鎧をまとったからくりの兵が、外法使いに率いられて現れた。',
+              '外法使い「蘭斎先生の邪魔はさせぬ」',
+            ],
+          },
+          { type: 'setFlag', flag: 'nanbanjiOkuMet' },
+        ],
+      },
+      { type: 'battle', enemies: ['nanbanHei', 'gehoTsukai', 'nanbanHei'], level: 19 },
+      {
+        type: 'say',
+        lines: [
+          '礼拝堂の跡の床に、書き付けの束が落ちていた。蘭斎の字だ。',
+          '「魂のゼンマイ、ここにては力足らず。島原の古城の地の底にて、試しを続けるべし」',
+          '「乱にて死せる者、あまたあり。かの地には、魂の力が満ちておる」',
+          '玄道「……死者の魂まで、からくりの糧にする気か」',
+          '霞「島原の原城跡だ。長崎から東の街道で行ける」',
+        ],
+      },
+      { type: 'setFlag', flag: 'shimabaraOpen' },
+    ],
+  },
+  /** 原城跡の地下の研究所で待つ南蛮大筒からくり（第 6 章のボス）。倒すと、深手の蘭斎が祝詞を託して息を引き取る。 */
+  nanbanOzutsu: {
+    id: 'nanbanOzutsu',
+    steps: [
+      {
+        type: 'if',
+        flag: 'nanbanOzutsuMet',
+        then: [{ type: 'say', lines: ['大筒の砲口が、ふたたびこちらを向いた。', '霞「構えに入ったら、身を守るんだよ！」'] }],
+        else: [
+          {
+            type: 'say',
+            lines: [
+              '奥の研究室の入口を、鉄の巨体がふさいでいた。',
+              '背に南蛮の大筒を負い、胸の奥でいくつものゼンマイが青く光っている。',
+              '研究室の奥から、かすれた声がした。',
+              '蘭斎「……来るな。その子は、止められん。わしにも、もう止められんのだ……」',
+              '大筒が、ゆっくりとこちらを向いた。',
+              '霞「大筒の構えに入ったら、身を守るんだよ！」',
+            ],
+          },
+          { type: 'setFlag', flag: 'nanbanOzutsuMet' },
+        ],
+      },
+      { type: 'battle', enemies: ['nanbanOzutsu'], level: 22 },
+      {
+        type: 'say',
+        lines: [
+          '南蛮大筒からくりは、胸のゼンマイをはじけさせて崩れ落ちた。青い光が、ひとつ、またひとつと天井へ昇っていく。',
+          '研究室の奥で、白髪の男が机にもたれていた。胸に、鉄のかけらが深く刺さっている。',
+          '蘭斎「……わしが、若林蘭斎だ。からくりで、人を重い仕事から解き放てると……そう信じて、鷲尾様の金を受け取った」',
+          '蘭斎「だが、からくりを動かすには、人の魂をゼンマイに巻き込まねばならなかった。気づいたときには、もう引き返せなかった」',
+          '蘭斎「……せめて、これを持っていってくれ。魂のゼンマイをほどき、閉じ込めた魂を解き放つ祝詞だ」',
+          '蘭斎は、震える手で一枚の書き付けを玄道に渡した。',
+          '玄道「……確かに預かった。おぬしの学問は、わしらが正しく使おう」',
+          '蘭斎「出島の、あの書は……美しかった。わしは、ただ……」',
+          '蘭斎は、それきり動かなくなった。',
+          '玄道は、長いあいだ経を唱えていた。',
+          '長崎に戻ろう。',
+        ],
+      },
+      { type: 'setFlag', flag: 'nanbanOzutsuDefeated' },
+      { type: 'setFlag', flag: 'noritoLearned' },
+    ],
+  },
+  nanbanjiChest1: chest('nanbanjiChest1', 'konpeito', '金平糖'),
+  nanbanjiChest2: chest('nanbanjiChest2', 'kitsukegusuri', '気付け薬'),
+  nanbanjiChest3: chest('nanbanjiChest3', 'tomegane', '遠眼鏡'),
+  harajoChest1: chest('harajoChest1', 'kasutera', 'カステラ'),
+  harajoChest2: chest('harajoChest2', 'rakanShakujo', '羅漢錫杖'),
+  harajoChest3: chest('harajoChest3', 'kitsukegusuri', '気付け薬'),
+  kenkyujoChest1: chest('kenkyujoChest1', 'konpeito', '金平糖'),
+  kenkyujoChest2: chest('kenkyujoChest2', 'orandaDo', '阿蘭陀胴'),
   komeKuraChest1: chest('komeKuraChest1', 'mankintan', '万金丹'),
   komeKuraChest2: chest('komeKuraChest2', 'renpatsuju', '連発からくり銃'),
   igaSatoChest1: chest('igaSatoChest1', 'mankintan', '万金丹'),

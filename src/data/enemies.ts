@@ -1,4 +1,4 @@
-// docs/balance.md の「敵とボスの一覧」。章を実装するごとに、その地域の敵を足す（今は序章〜第 5 章）。
+// docs/balance.md の「敵とボスの一覧」。章を実装するごとに、その地域の敵を足す（今は序章〜第 6 章）。
 import type { EnemyFactors } from '../systems/stats';
 import type { Element } from './skills';
 
@@ -280,6 +280,69 @@ export const ENEMIES: Record<string, EnemyDef> = {
       { skill: 'dokueki', weight: 1 },
     ],
   },
+  // 西国街道・長崎・島原（第 6 章）
+  nanbanHei: {
+    id: 'nanbanHei',
+    name: '南蛮からくり兵',
+    color: 0x8a8a9a,
+    image: true,
+    factors: { hp: 1.2, atk: 1.2, def: 1.4, spd: 0.9 },
+    weak: ['mech', 'thunder'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'nanbanKen', weight: 1 },
+    ],
+  },
+  umibozu: {
+    id: 'umibozu',
+    name: '海坊主',
+    color: 0x2a3a4a,
+    image: true,
+    factors: { hp: 1.4, atk: 1.2, def: 1.0, spd: 0.8 },
+    weak: ['holy'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'onami', weight: 1 },
+    ],
+  },
+  boreiMusha: {
+    id: 'boreiMusha',
+    name: '亡霊武者',
+    color: 0x6a7a8a,
+    image: true,
+    factors: { hp: 1.1, atk: 1.3, def: 1.1, spd: 1.0 },
+    weak: ['holy'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'monoTachi', weight: 1 },
+    ],
+  },
+  gehoTsukai: {
+    id: 'gehoTsukai',
+    name: '外法使い',
+    color: 0x4a2a5a,
+    image: true,
+    factors: { hp: 0.9, atk: 1.0, def: 0.8, spd: 1.1 },
+    actions: [
+      { skill: 'attack', weight: 2 },
+      { skill: 'gehoHomura', weight: 2 },
+      { skill: 'madowashi', weight: 1 },
+    ],
+  },
+  // 瀬戸内の浜に出る。docs/balance.md の表にない、西国街道の雑魚敵（テストプレイで雑魚敵の種類が少ないと言われたため足した）
+  heikegani: {
+    id: 'heikegani',
+    name: '平家蟹',
+    color: 0x9a4a3a,
+    image: true,
+    factors: { hp: 1.1, atk: 1.1, def: 1.4, spd: 0.8 },
+    weak: ['thunder'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'hasami', weight: 1 },
+      { skill: 'awa', weight: 1 },
+    ],
+  },
   // ボス（rewardScale あり）。イベントの battle で出し、出現表には入れない
   /** 序章のボス。妖狐だが、実はからくりで操られていた。序章は一人旅なので化かし（混乱）は控えめにする。 */
   yako: {
@@ -385,6 +448,21 @@ export const ENEMIES: Record<string, EnemyDef> = {
       { skill: 'attack', weight: 3 },
       { skill: 'tawaraOtoshi', weight: 2 },
       { skill: 'komenuka', weight: 1 },
+    ],
+    rewardScale: 6,
+  },
+  /** 第 6 章のボス。原城跡の地下の研究所を守る。装填（構え）の次のターンに大筒（全体・大）を撃つ。 */
+  nanbanOzutsu: {
+    id: 'nanbanOzutsu',
+    name: '南蛮大筒からくり',
+    color: 0x6a6a7a,
+    image: true,
+    factors: { hp: 12, atk: 1.1, def: 1.3, spd: 0.8 },
+    weak: ['mech', 'thunder'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'soten', weight: 2 },
+      { skill: 'budodan', weight: 1 },
     ],
     rewardScale: 6,
   },
@@ -495,6 +573,44 @@ const OSAKA: EncounterTable = {
   ],
 };
 
+/** 西国街道（大坂の西〜広島〜長崎）の敵の組（霞が戻る前の 3 人でも通るので、4 体の組は控えめにする）。 */
+const SAIGOKU: EncounterTable = {
+  level: 19,
+  groups: [
+    { members: ['heikegani', 'heikegani'], weight: 2 },
+    { members: ['umibozu'], weight: 2 },
+    { members: ['gehoTsukai', 'heikegani'], weight: 2 },
+    { members: ['umibozu', 'heikegani', 'heikegani'], weight: 1 },
+    { members: ['gehoTsukai', 'gehoTsukai', 'umibozu'], weight: 1 },
+  ],
+};
+
+/** 長崎の南蛮寺跡と、長崎のまわりの街道の敵の組。 */
+const NAGASAKI: EncounterTable = {
+  level: 19,
+  groups: [
+    { members: ['nanbanHei'], weight: 2 },
+    { members: ['gehoTsukai', 'gehoTsukai'], weight: 2 },
+    { members: ['nanbanHei', 'gehoTsukai'], weight: 2 },
+    { members: ['umibozu', 'heikegani', 'gehoTsukai'], weight: 2 },
+    { members: ['nanbanHei', 'nanbanHei', 'gehoTsukai'], weight: 1 },
+    { members: ['gehoTsukai', 'gehoTsukai', 'heikegani', 'heikegani'], weight: 1 },
+  ],
+};
+
+/** 島原の原城跡と地下の研究所の敵の組。乱で討ち死にした武者の亡霊と、研究所のからくり兵。 */
+const HARAJO: EncounterTable = {
+  level: 19,
+  groups: [
+    { members: ['boreiMusha', 'boreiMusha'], weight: 2 },
+    { members: ['nanbanHei', 'boreiMusha'], weight: 2 },
+    { members: ['gehoTsukai', 'boreiMusha', 'boreiMusha'], weight: 2 },
+    { members: ['nanbanHei', 'nanbanHei'], weight: 1 },
+    { members: ['boreiMusha', 'boreiMusha', 'boreiMusha'], weight: 1 },
+    { members: ['nanbanHei', 'gehoTsukai', 'boreiMusha', 'boreiMusha'], weight: 1 },
+  ],
+};
+
 export const ENCOUNTERS: Record<string, EncounterTable> = {
   /** 清水湊の裏山。 */
   urayama: PROLOGUE,
@@ -512,4 +628,10 @@ export const ENCOUNTERS: Record<string, EncounterTable> = {
   iga: IGA,
   /** 大坂のまわりの街道と、米蔵の地下。 */
   osaka: OSAKA,
+  /** 西国街道（大坂の西〜広島のまわり）。 */
+  saigoku: SAIGOKU,
+  /** 長崎のまわりの街道と、南蛮寺跡。 */
+  nagasaki: NAGASAKI,
+  /** 島原の原城跡と、地下の研究所。 */
+  harajo: HARAJO,
 };

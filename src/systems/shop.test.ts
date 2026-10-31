@@ -117,3 +117,29 @@ describe('大坂の店（第 5 章）', () => {
     expect(goods.some((g) => EQUIPMENT[g]?.slot === 'weapon' && canEquip('kasumi', g))).toBe(false);
   });
 });
+
+describe('広島・長崎の店（第 6 章）', () => {
+  const hasAll = (goods: string[]) => {
+    for (const id of ['hero', 'kasumi', 'gendo', 'orin'] as const) {
+      for (const slot of ['weapon', 'armor'] as const) {
+        expect(goods.some((g) => EQUIPMENT[g]?.slot === slot && canEquip(id, g)), `${id} ${slot}`).toBe(true);
+      }
+    }
+  };
+
+  it('広島の刀鍛冶には、霞が戻った 4 人それぞれの武器と防具がある', () => {
+    hasAll(SHOPS.hiroshimaKaji!.goods);
+  });
+
+  it('長崎は刀鍛冶と出島の商館を合わせて 4 人それぞれの武器と防具がある（お凛の銃は商館）', () => {
+    hasAll([...SHOPS.nagasakiKaji!.goods, ...SHOPS.dejimaShop!.goods]);
+    expect(SHOPS.dejimaShop!.goods).toContain('gewehr');
+  });
+
+  it('第 6 章の店の品はすべて定義されている', () => {
+    for (const id of ['hiroshimaYorozu', 'hiroshimaKaji', 'hiroshimaKakibune', 'nagasakiYorozu', 'nagasakiKaji', 'dejimaShop']) {
+      for (const g of SHOPS[id]!.goods) expect(isKnownItem(g), `${id}: ${g}`).toBe(true);
+    }
+  });
+});
+

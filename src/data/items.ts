@@ -27,7 +27,10 @@ export interface ItemDef {
 export const ITEMS: Record<string, ItemDef> = {
   kizugusuri: { id: 'kizugusuri', name: '傷薬', price: 8, effect: { kind: 'healHp', amount: 30 }, target: 'ally', field: true, description: '体力を 30 回復する' },
   kintsuba: { id: 'kintsuba', name: '金創膏', price: 60, effect: { kind: 'healHp', amount: 120 }, target: 'ally', field: true, description: '体力を 120 回復する' },
+  kakimeshi: { id: 'kakimeshi', name: '牡蠣飯', price: 30, effect: { kind: 'healHp', amount: 90 }, target: 'ally', field: true, description: '広島の牡蠣の炊き込み飯。体力を 90 回復する' },
+  kasutera: { id: 'kasutera', name: 'カステラ', price: 110, effect: { kind: 'healHp', amount: 200 }, target: 'ally', field: true, description: '長崎の南蛮菓子。体力を 200 回復する' },
   mankintan: { id: 'mankintan', name: '万金丹', price: 40, effect: { kind: 'healMp', amount: 15 }, target: 'ally', field: true, description: '気力を 15 回復する' },
+  konpeito: { id: 'konpeito', name: '金平糖', price: 90, effect: { kind: 'healMp', amount: 30 }, target: 'ally', field: true, description: '南蛮渡りの砂糖菓子。気力を 30 回復する' },
   dokukeshi: { id: 'dokukeshi', name: '毒消し', price: 6, effect: { kind: 'cure', ailment: 'poison' }, target: 'ally', field: false, description: '毒を治す' },
   kitsukegusuri: { id: 'kitsukegusuri', name: '気付け薬', price: 100, effect: { kind: 'revive', rate: 0.25 }, target: 'ally', field: true, description: '戦闘不能から起こす' },
   hangontan: { id: 'hangontan', name: '反魂丹', price: 30, effect: { kind: 'cure' }, target: 'ally', field: false, description: '状態異常をすべて治す' },

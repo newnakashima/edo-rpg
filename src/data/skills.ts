@@ -69,7 +69,12 @@ export type SkillEffect =
    * 敵だけが使う。enemy の敵を level（省くと使い手のレベル）で 1 体呼ぶ。呼んだ敵が max 体生きていれば呼ばずに通常攻撃をする。
    * 呼んだ敵は倒しても経験値・お金にならない（呼ばせ続けて稼げないようにする）。
    */
-  | { kind: 'summon'; enemy: string; max: number; level?: number };
+  | { kind: 'summon'; enemy: string; max: number; level?: number }
+  /**
+   * 敵だけが使う。構えに入り（溜め）、使い手の次の行動を必ず next の技にする（第 6 章の南蛮大筒からくりの装填 → 大筒）。
+   * 構えのあいだに眠り・麻痺などで動けなくても、構えは解けずに次に動けたときに next を使う。
+   */
+  | { kind: 'charge'; next: string };
 
 export interface SkillDef {
   id: string;
@@ -164,6 +169,17 @@ export const SKILLS: Record<string, SkillDef> = {
   tawaraGoroshi: { id: 'tawaraGoroshi', name: '体当たり', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.3 }, description: '' },
   tawaraOtoshi: { id: 'tawaraOtoshi', name: '俵落とし', mp: 0, target: 'allEnemies', effect: { kind: 'physical', multiplier: 0.8 }, description: '' },
   komenuka: { id: 'komenuka', name: '米ぬかの煙', mp: 0, target: 'allEnemies', effect: { kind: 'status', status: 'accDown', turns: 3, chance: 0.6 }, description: '' },
+  // 西国街道・長崎・島原（第 6 章）
+  nanbanKen: { id: 'nanbanKen', name: '南蛮剣', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.3 }, description: '' },
+  onami: { id: 'onami', name: '大波', mp: 0, target: 'allEnemies', effect: { kind: 'physical', multiplier: 0.7 }, description: '' },
+  monoTachi: { id: 'monoTachi', name: '亡者の太刀', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.0, ignoreDefense: true }, description: '' },
+  gehoHomura: { id: 'gehoHomura', name: '外法の炎', mp: 0, target: 'enemy', effect: { kind: 'magic', power: 12 }, elements: ['fire'], description: '' },
+  madowashi: { id: 'madowashi', name: '惑わしの香', mp: 0, target: 'enemy', effect: { kind: 'status', status: 'confusion', turns: 2, chance: 0.4 }, description: '' },
+  hasami: { id: 'hasami', name: '大ばさみ', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.3 }, description: '' },
+  awa: { id: 'awa', name: '泡', mp: 0, target: 'enemy', effect: { kind: 'status', status: 'accDown', turns: 3, chance: 0.6 }, description: '' },
+  soten: { id: 'soten', name: '装填', mp: 0, target: 'self', effect: { kind: 'charge', next: 'ozutsu' }, description: '' },
+  ozutsu: { id: 'ozutsu', name: '大筒', mp: 0, target: 'allEnemies', effect: { kind: 'physical', multiplier: 1.3 }, description: '' },
+  budodan: { id: 'budodan', name: 'ぶどう弾', mp: 0, target: 'randomEnemies', effect: { kind: 'physical', multiplier: 0.6, hits: 2, maxHits: 3 }, description: '' },
   kinUroko: { id: 'kinUroko', name: '金の鱗', mp: 0, target: 'self', effect: { kind: 'status', status: 'defUp', turns: 3 }, description: '' },
 };
 

@@ -45,6 +45,8 @@ export interface Combatant {
   enemyId?: string;
   /** 戦闘の途中で呼ばれた敵（倒しても経験値・お金にならない）。 */
   summoned?: boolean;
+  /** 溜め（charge）の構えに入っている敵が、次に必ず使う技の ID。 */
+  charged?: string;
 }
 
 export type Command =
@@ -91,6 +93,8 @@ export type BattleEvent =
   | { type: 'defeated'; target: string }
   /** 敵が仲間を呼んだ（target は新しく加わった敵の key）。 */
   | { type: 'summon'; actor: string; target: string }
+  /** 敵が溜めの構えに入った（次の行動で skill を使う）。 */
+  | { type: 'charge'; actor: string; skill: string }
   | { type: 'escape'; success: boolean };
 
 export type Outcome = 'ongoing' | 'victory' | 'defeat' | 'escaped';
@@ -381,6 +385,11 @@ class TurnContext {
       this.summon(actor, effect.enemy, effect.level ?? actor.level);
       return;
     }
+    if (effect.kind === 'charge') {
+      actor.charged = effect.next;
+      this.events.push({ type: 'charge', actor: actor.key, skill: effect.next });
+      return;
+    }
 
     if (skill.target === 'randomEnemies' && effect.kind === 'physical') {
       const hits = randInt(this.rng, effect.hits ?? 1, effect.maxHits ?? effect.hits ?? 1);
@@ -562,7 +571,9 @@ class TurnContext {
     }
 
     if (actor.side === 'enemy') {
-      const action = this.enemyAction(actor);
+      // 溜めの構えに入っていれば、その技を必ず使う
+      const action = actor.charged ?? this.enemyAction(actor);
+      actor.charged = undefined;
       const skill = SKILLS[action];
       // 呼べる数に達していたら、呼ぶ代わりに通常攻撃をする
       const full = skill?.effect.kind === 'summon' && this.summonFull(actor, skill.effect);

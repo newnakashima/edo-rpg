@@ -40,6 +40,10 @@ describe('敵の画像', () => {
     for (const id of ['yojinbo', 'teppoAshigaru', 'karakuriTawara', 'bakeNezumi', 'hyakuhyo']) expect(ENEMIES[id]?.image, id).toBe(true);
   });
 
+  it('第 6 章（西国街道・長崎・島原）の敵と南蛮大筒からくりにも画像がある', () => {
+    for (const id of ['nanbanHei', 'umibozu', 'boreiMusha', 'gehoTsukai', 'heikegani', 'nanbanOzutsu']) expect(ENEMIES[id]?.image, id).toBe(true);
+  });
+
   it('テクスチャのキー', () => {
     expect(enemyImageKey('onibi')).toBe('enemy-onibi');
   });
@@ -102,5 +106,30 @@ describe('大坂の敵の組', () => {
     const rng = seededRng(5);
     const sizes = Array.from({ length: 300 }, () => pickGroup(table, { size: 4, maxLevel: 18 }, rng)?.length ?? 0);
     expect(Math.max(...sizes)).toBe(4);
+  });
+});
+
+describe('第 6 章（西国街道・長崎・島原）の敵の組', () => {
+  it('3 つの表はどれも Lv19', () => {
+    for (const id of ['saigoku', 'nagasaki', 'harajo']) expect(ENCOUNTERS[id]?.level, id).toBe(19);
+  });
+
+  it('西国街道は霞が戻る前の 3 人でも通るので 3 体まで。長崎・原城跡には 4 体の組がある', () => {
+    expect(Math.max(...ENCOUNTERS.saigoku!.groups.map((g) => g.members.length))).toBe(3);
+    for (const id of ['nagasaki', 'harajo']) expect(ENCOUNTERS[id]!.groups.some((g) => g.members.length === 4), id).toBe(true);
+  });
+});
+
+describe('溜めの技', () => {
+  it('charge の next は定義された技で、溜めの技は自分に使う', () => {
+    const charges = Object.values(SKILLS).filter((s) => s.effect.kind === 'charge');
+    expect(charges.map((s) => s.id)).toContain('soten');
+    for (const s of charges) {
+      expect(s.target, s.id).toBe('self');
+      if (s.effect.kind === 'charge') {
+        expect(SKILLS[s.effect.next], s.effect.next).toBeDefined();
+        expect(SKILLS[s.effect.next]?.effect.kind, s.effect.next).not.toBe('charge');
+      }
+    }
   });
 });
