@@ -446,3 +446,78 @@ describe('第 2 章の名古屋', () => {
     for (const id of ['takoya', 'horikawaKura', 'tenshu']) expect(respawnPoint(id)).toEqual({ mapId: 'nagoya', x: 25, y: 8 });
   });
 });
+
+describe('第 3 章の京', () => {
+  const kyo = MAPS.kyo!;
+  const world = MAPS.world!;
+  const town = world.towns!.find((t) => t.name === '京')!;
+  const start = town.to!;
+  const exitTo = (mapId: string) => kyo.exits.filter((e) => e.to === mapId).map((e) => `${e.x},${e.y}`);
+
+  it('京は第 2 章を終える（chapter2Cleared）まで入れず、まわりの街道もそれまでは敵が出ない', () => {
+    expect(townAction(world, town.x, town.y, 'ok', {})).toMatchObject({ kind: 'info' });
+    expect(townAction(world, town.x, town.y, 'ok', { chapter2Cleared: true })).toEqual({ kind: 'enter', to: start });
+    expect(encounterAt(world, 23, 10, {})).toBeUndefined();
+    for (const [x, y] of [[21, 9], [24, 12], [23, 10]] as const) expect(encounterAt(world, x, y, { chapter2Cleared: true }), `${x},${y}`).toBe('kyoto');
+    expect(encounterAt(world, 25, 10, { chapter2Cleared: true })).toBe('tokaido');
+    expect(respawnPoint('world', 23, 10)).toEqual({ mapId: 'kyo', ...kyo.respawn });
+  });
+
+  it('京から街道へ出ると、京の印の隣に出る', () => {
+    for (const exit of kyo.exits.filter((e) => e.to === 'world')) {
+      expect(Math.abs(exit.toX - town.x) + Math.abs(exit.toY - town.y)).toBe(1);
+    }
+  });
+
+  it('羅生門跡には最初から行け、鬼の巣は羅生門の鬼を祓う（rashomonCleared）まで役人がふさぐ', () => {
+    const before = reachable(kyo, start, {}, true);
+    expect(exitTo('rashomon').every((k) => before.has(k))).toBe(true);
+    expect(exitTo('oninosu').some((k) => before.has(k))).toBe(false);
+    const after = reachable(kyo, start, { rashomonCleared: true }, true);
+    expect(exitTo('oninosu').every((k) => after.has(k))).toBe(true);
+  });
+
+  it('町の人と河原の玄道には全員話しかけられる', () => {
+    const area = reachable(kyo, start, {}, true);
+    for (const npc of kyo.npcs) expect(near(area, npc.x, npc.y), npc.id).toBe(true);
+  });
+
+  it('羅生門跡の鬼の場所は、通らなければ門の跡に近づけない', () => {
+    const rashomon = MAPS.rashomon!;
+    const enter = kyo.exits.find((e) => e.to === 'rashomon')!;
+    const landing = { x: enter.toX, y: enter.toY };
+    const area = reachable(rashomon, landing, {}, true);
+    for (const t of rashomon.triggers!) {
+      expect(area.has(`${t.x},${t.y}`)).toBe(true);
+      expect(t.unless).toBe('rashomonCleared');
+    }
+    const ishi = rashomon.npcs.find((n) => n.id === 'rashomonIshi')!;
+    expect(near(area, ishi.x, ishi.y)).toBe(true);
+    expect(near(reachable(wallTriggers(rashomon), landing, {}, true), ishi.x, ishi.y)).toBe(false);
+  });
+
+  it('鬼の巣の入口から大鬼の場所へ行け、そこを通らなければ本堂には入れない。葛籠にはすべて近づける', () => {
+    const nest = MAPS.oninosu!;
+    const enter = kyo.exits.find((e) => e.to === 'oninosu')!;
+    const landing = { x: enter.toX, y: enter.toY };
+    const area = reachable(nest, landing, {}, true);
+    for (const t of nest.triggers!) {
+      expect(area.has(`${t.x},${t.y}`)).toBe(true);
+      expect(t.unless).toBe('shutenDefeated');
+    }
+    for (const c of nest.npcs.filter((n) => n.event?.startsWith('oninosuChest'))) expect(near(area, c.x, c.y), c.id).toBe(true);
+    const butsu = nest.npcs.find((n) => n.id === 'oninosuButsudan')!;
+    expect(near(area, butsu.x, butsu.y)).toBe(true);
+    expect(near(reachable(wallTriggers(nest), landing, {}, true), butsu.x, butsu.y)).toBe(false);
+  });
+
+  it('羅生門跡・鬼の巣で全滅したら京の旅籠の前に戻る', () => {
+    for (const id of ['rashomon', 'oninosu']) expect(respawnPoint(id)).toEqual({ mapId: 'kyo', ...kyo.respawn });
+  });
+
+  it('辰五郎は第 3 章を終えると清水湊から姿を消す', () => {
+    const tatsugoro = MAPS.shimizu!.npcs.find((n) => n.id === 'tatsugoro')!;
+    expect(npcVisible(tatsugoro, { chapter2Cleared: true })).toBe(true);
+    expect(npcVisible(tatsugoro, { chapter3Cleared: true })).toBe(false);
+  });
+});

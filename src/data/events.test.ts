@@ -7,6 +7,7 @@ import { isKnownItem } from './items';
 import { MAPS, tileAt } from './maps';
 import { EventRunner } from '../systems/eventScript';
 import { newGame, type GameState } from '../systems/gameState';
+import { createMember } from '../systems/party';
 
 /** イベントの手順を、分岐の中まで含めてすべてたどる。 */
 function* walk(steps: readonly EventStep[]): Generator<EventStep> {
@@ -265,5 +266,55 @@ describe('第 2 章の流れ', () => {
     expect(cleared.money).toBe(arrived.money + 500);
     // 第 2 章のあとの金太は飛ばない
     expect(run('kinta', cleared).mapId).toBe('nagoya');
+  });
+});
+
+describe('第 3 章の流れ', () => {
+  const base = newGame('m', { mapId: 'kyo', x: 28, y: 6 });
+  const start = { ...base, party: [...base.party, createMember('kasumi', 11)], flags: { prologueCleared: true, chapter1Cleared: true, kasumiJoined: true, chapter2Cleared: true } };
+
+  it('京に初めて入ると町の紹介をし、2 回目からは何もしない', () => {
+    const arrived = run('kyoEnter', start);
+    expect(arrived.flags.kyoArrived).toBe(true);
+    expect(arrived.flags.chapter3Cleared).toBeFalsy();
+    expect(new EventRunner(EVENTS.kyoEnter!.steps).next(arrived).request.kind).toBe('done');
+  });
+
+  it('河原で玄道が仲間になる（gendoJoined）。もう一度起きても増えない', () => {
+    const joined = run('gendoMeet', start);
+    expect(joined.flags.gendoJoined).toBe(true);
+    expect(joined.party.map((m) => m.id)).toEqual(['hero', 'kasumi', 'gendo']);
+    expect(run('gendoMeet', joined).party).toHaveLength(3);
+  });
+
+  it('羅生門跡の鬼は、玄道に会う前は戦わず、会ったあとで赤鬼 2 体に勝つと rashomonCleared。負けたら立たない', () => {
+    const before = new EventRunner(EVENTS.rashomonOni!.steps);
+    const r0 = skipSay(before, before.next(start));
+    expect(r0.request.kind).toBe('done');
+    expect(r0.state.flags.rashomonCleared).toBeFalsy();
+    const joined = run('gendoMeet', start);
+    const runner = new EventRunner(EVENTS.rashomonOni!.steps);
+    expect(skipSay(runner, runner.next(joined)).request).toMatchObject({ kind: 'battle', enemies: ['akaoni', 'akaoni'], level: 10, canEscape: false, loseOk: false });
+    expect(run('rashomonOni', joined).flags.rashomonCleared).toBe(true);
+    expect(run('rashomonOni', joined, 'defeat').flags.rashomonCleared).toBeFalsy();
+  });
+
+  it('鬼の巣で夜叉丸が消え（yashamaruKyoFled）、酒呑の大鬼（Lv13）に勝つと shutenDefeated。負けて出直すと夜叉丸の場面は繰り返さない', () => {
+    const runner = new EventRunner(EVENTS.shuten!.steps);
+    const r = skipSay(runner, runner.next(start));
+    expect(r.request).toMatchObject({ kind: 'battle', enemies: ['shuten'], level: 13, canEscape: false, loseOk: false });
+    expect(r.state.flags.yashamaruKyoFled).toBe(true);
+    expect(run('shuten', start).flags.shutenDefeated).toBe(true);
+    const lost = run('shuten', start, 'defeat');
+    expect(lost.flags.shutenDefeated).toBeFalsy();
+    const retry = new EventRunner(EVENTS.shuten!.steps).next(lost);
+    const pages = retry.request.kind === 'say' ? retry.request.pages.join('') : '';
+    expect(pages).not.toContain('夜叉丸「');
+    expect(run('shuten', lost).flags.shutenDefeated).toBe(true);
+  });
+
+  it('酒呑の大鬼を倒して京に入ると第 3 章が終わる（chapter3Cleared）', () => {
+    const cleared = run('kyoEnter', run('shuten', run('kyoEnter', start)));
+    expect(cleared.flags.chapter3Cleared).toBe(true);
   });
 });

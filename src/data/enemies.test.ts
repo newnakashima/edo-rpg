@@ -26,6 +26,10 @@ describe('敵の画像', () => {
     for (const id of ['oihagiRonin', 'kawauso', 'zenmaiInu', 'kumosuke', 'kinshachi']) expect(ENEMIES[id]?.image, id).toBe(true);
   });
 
+  it('第 3 章（京）の敵とボス酒呑の大鬼にも画像がある', () => {
+    for (const id of ['akaoni', 'ittanmomen', 'namagusaBozu', 'karakuriGissha', 'shuten']) expect(ENEMIES[id]?.image, id).toBe(true);
+  });
+
   it('テクスチャのキー', () => {
     expect(enemyImageKey('onibi')).toBe('enemy-onibi');
   });

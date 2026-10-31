@@ -139,6 +139,13 @@ export const SKILLS: Record<string, SkillDef> = {
   kamitsuki: { id: 'kamitsuki', name: '噛みつき', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.2 }, description: '' },
   ikizue: { id: 'ikizue', name: '息杖', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.25 }, description: '' },
   obire: { id: 'obire', name: '尾びれ', mp: 0, target: 'allEnemies', effect: { kind: 'physical', multiplier: 0.8 }, description: '' },
+  // 京（第 3 章）
+  kanabo: { id: 'kanabo', name: '金棒', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.3 }, description: '' },
+  makitsuki: { id: 'makitsuki', name: '巻きつき', mp: 0, target: 'enemy', effect: { kind: 'status', status: 'paralysis', turns: 2, chance: 0.45 }, description: '' },
+  jaho: { id: 'jaho', name: '邪法', mp: 0, target: 'enemy', effect: { kind: 'magic', power: 8 }, description: '' },
+  totsugeki: { id: 'totsugeki', name: '突進', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.4 }, description: '' },
+  sakeNoIki: { id: 'sakeNoIki', name: '酒の息', mp: 0, target: 'allEnemies', effect: { kind: 'status', status: 'sleep', turns: 2, chance: 0.4 }, description: '' },
+  ikari: { id: 'ikari', name: '怒り', mp: 0, target: 'self', effect: { kind: 'status', status: 'atkUp', turns: 3 }, description: '' },
   kinUroko: { id: 'kinUroko', name: '金の鱗', mp: 0, target: 'self', effect: { kind: 'status', status: 'defUp', turns: 3 }, description: '' },
 };
 
