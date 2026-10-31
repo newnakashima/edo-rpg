@@ -169,7 +169,6 @@ describe('報酬', () => {
       money: enemyMoney(7) * 3 + enemyMoney(7),
     });
   });
-  });
 
   it('戦闘後の HP を仲間に書き戻す', () => {
     const party = hero();
