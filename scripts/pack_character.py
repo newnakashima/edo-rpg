@@ -60,6 +60,8 @@ def main(src: str, out: str) -> None:
 
     w = max(im.width for row in grid for im in row)
     h = max(im.height for row in grid for im in row)
+    if FOOT_Y >= h:
+        fail(f"コマの高さ {h} が足元の高さ FOOT_Y = {FOOT_Y} に足りません")
     sheet = Image.new("RGBA", (w * (1 + WALK_FRAMES), h * len(ROWS)), (0, 0, 0, 0))
     for r, row in enumerate(grid):
         # 行の中では上下の位置関係（歩行の上下動）を保ったまま、行全体の足元を FOOT_Y にそろえる
@@ -69,9 +71,13 @@ def main(src: str, out: str) -> None:
         if not bottoms:
             fail(f"{ROWS[r]} の行がすべて透明です")
         shift = FOOT_Y - max(bottoms)
-        for c, (im, top) in enumerate(zip(row, tops)):
-            # コマからはみ出す分（キャンバスの上下の透明な余白）は切り落とす
+        for c, (im, top, box) in enumerate(zip(row, tops, boxes)):
+            if box is None:
+                continue  # 透明なコマは置かない
+            # コマからはみ出す分は切り落とす。透明な余白でなければ（絵が切れるなら）止める
             y = top + shift
+            if y + box[1] < 0 or y + box[3] > h:
+                fail(f"{ROWS[r]} の {c} 列目の絵が、足元をそろえるとコマからはみ出します")
             im = im.crop((0, max(0, -y), im.width, min(im.height, h - y)))
             sheet.alpha_composite(im, (c * w + (w - im.width) // 2, r * h + max(0, y)))
     Path(out).parent.mkdir(parents=True, exist_ok=True)
