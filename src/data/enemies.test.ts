@@ -50,17 +50,24 @@ describe('敵の画像', () => {
     }
   });
 
+  it('テストプレイのフィードバックで足した伊賀〜原城の敵にも画像がある', () => {
+    for (const id of ['karasuTengu', 'igaKunoichi', 'nekomata', 'bakuto', 'isoonna', 'ushioni', 'kaizoku', 'gashadokuro', 'onryo']) {
+      expect(ENEMIES[id]?.image, id).toBe(true);
+    }
+  });
+
   it('テクスチャのキー', () => {
     expect(enemyImageKey('onibi')).toBe('enemy-onibi');
   });
 });
 
 describe('雑魚敵の種類', () => {
-  // テストプレイで「雑魚敵のバリエーションが少ない」と指摘されたため、地域ごとに 5 種類以上にする（伊賀より先は次の PR で足す）
+  // テストプレイで「雑魚敵のバリエーションが少ない」と指摘されたため、地域ごとに 5 種類以上にする
   const kinds = (id: string) => new Set(ENCOUNTERS[id]!.groups.flatMap((g) => g.members)).size;
 
-  it('序章〜京の出現表は 5 種類以上の敵が出る', () => {
-    for (const id of ['urayama', 'suruga', 'sunpu', 'tokaido', 'nagoya', 'kyoto']) expect(kinds(id), id).toBeGreaterThanOrEqual(5);
+  it('どの出現表も 5 種類以上の敵が出る', () => {
+    expect(Object.keys(ENCOUNTERS).length).toBeGreaterThanOrEqual(11);
+    for (const id of Object.keys(ENCOUNTERS)) expect(kinds(id), id).toBeGreaterThanOrEqual(5);
   });
 
   it('出現表に入っていない雑魚敵はいない（呼ばれて出る敵を除く）', () => {

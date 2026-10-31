@@ -185,6 +185,10 @@ export const SKILLS: Record<string, SkillDef> = {
   atsuiCha: { id: 'atsuiCha', name: '熱い茶', mp: 0, target: 'enemy', effect: { kind: 'magic', power: 4 }, elements: ['fire'], description: '' },
   kappaZumo: { id: 'kappaZumo', name: '河童相撲', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.3 }, description: '' },
   hinowa: { id: 'hinowa', name: '火の輪', mp: 0, target: 'enemy', effect: { kind: 'magic', power: 6 }, elements: ['fire'], description: '' },
+  kaibyoBi: { id: 'kaibyoBi', name: '化け猫火', mp: 0, target: 'enemy', effect: { kind: 'magic', power: 10 }, elements: ['fire'], description: '' },
+  saikoro: { id: 'saikoro', name: '賽の目勝負', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 2.0, gamble: true }, description: '' },
+  nigiritsubushi: { id: 'nigiritsubushi', name: '握り潰し', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.4 }, description: '' },
+  urami: { id: 'urami', name: '怨み', mp: 0, target: 'enemy', effect: { kind: 'magic', power: 11 }, description: '' },
   kinUroko: { id: 'kinUroko', name: '金の鱗', mp: 0, target: 'self', effect: { kind: 'status', status: 'defUp', turns: 3 }, description: '' },
 };
 

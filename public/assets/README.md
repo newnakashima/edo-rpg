@@ -82,6 +82,15 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 | kappa | cfadc8a1-5f22-4694-8eac-19ed96430563 | south-west | Japanese river yokai kappa, green scaly skin, a flat white water dish on top of its head ringed by messy hair, yellow beak, brown turtle shell on its back, webbed hands with claws raised, menacing, small and centered with empty space around it, full body standing, JRPG enemy battle sprite, three-quarter front view |
 | aooni | 1109776a-be8c-4138-af33-e50ef80b9874 | south-west | Japanese blue oni (aooni), bright blue skin, one big horn on the forehead, wild white hair, yellow and black striped tiger-skin loincloth, holding a black iron kanabo club with silver studs, angry face with fangs, full body standing, JRPG enemy battle sprite, three-quarter front view, small and centered with empty space around it |
 | wanyudo | 360a36b2-c156-4ff8-bb96-39a7b3179b19 | south | Japanese yokai wanyudo, a burning wooden ox-cart wheel with small orange flames around its rim, in the center hub of the wheel is the angry face of a bald shaven-headed old monk, no horns, glaring eyes, the whole wheel is small and centered with lots of transparent empty space above and around it, JRPG enemy battle sprite, facing viewer（text_guidance_scale 12。2px 下げた） |
+| karasuTengu | 7f9a68fc-22c7-4a38-88bb-08f2fd77ad54 | south-west | Japanese karasu-tengu, a crow-headed tengu warrior with a black crow head and sharp beak, large black feathered wings spread from its back, wearing white and red yamabushi mountain monk clothes with a small black tokin cap and pom-pom sash, holding a short sword, fierce, small and centered with empty space around it, full body standing, JRPG enemy battle sprite, three-quarter front view（上の余白がなかったので 95% に縮めた） |
+| igaKunoichi | 486b875c-e979-4df5-950a-8377e6753db7 | south-west | Iga kunoichi enemy, a female ninja in a dark purple ninja outfit with a purple cloth mask covering her mouth and nose, long black ponytail, holding a kunai knife in each hand, cold sharp eyes, crouching ready stance, small and centered with empty space around it, full body, JRPG enemy battle sprite, three-quarter front view（98% に縮めた） |
+| nekomata | 933cd89c-56b2-4a65-97ec-079779a72938 | south-west | Japanese yokai nekomata, a big sinister black and white cat standing on its hind legs, behind it TWO separate long black tails rising up and curling apart in a V shape, glowing yellow eyes, sharp fangs, blue ghost flames floating near it, small and centered with empty space around it, full body, JRPG enemy battle sprite, three-quarter front view（text_guidance_scale 12） |
+| bakuto | 5c491400-51ba-4359-9c6e-a302cbbf1c2d | south-west | Edo period Japanese gambler (bakuto), tough man with his kimono slipped off one shoulder showing a tattooed arm, topknot, holding up a bamboo dice cup (tsubo) in one hand and two white dice in the other, smug grin, small and centered with empty space around it, full body standing, JRPG enemy battle sprite, three-quarter front view |
+| isoonna | 8958fd78-b5e4-46c4-9c35-db40d4ee40ef | south | Japanese sea yokai iso-onna, a small pale ghostly woman in a white kimono standing on a small round black rock, her very long wet black hair hangs straight down to the rock, tiny white foam around the rock, the whole figure is small and centered with lots of transparent empty space on all four sides, full body, JRPG enemy battle sprite, facing viewer（text_guidance_scale 12） |
+| ushioni | 3ae0eeaf-c8e8-47b9-b6d2-7f1a1c464e87 | south-west | Japanese sea yokai ushi-oni (gyuki), a monster with a horned black bull head with glaring red eyes and fangs on a huge spider-like body with six long jointed spiky legs, dark body, rising from the seashore, small and centered with empty space around it, full body, JRPG enemy battle sprite, three-quarter front view |
+| kaizoku | b4517619-2549-4382-a689-d77d5223043b | south-west | Edo period Japanese pirate (kaizoku) of the western seas, rough sun-tanned sailor with a twisted blue headband, open short happi jacket over bare chest, baggy pants, holding a curved sword (katana), scarred angry face, small and centered with empty space around it, full body standing, JRPG enemy battle sprite, three-quarter front view（98% に縮めた） |
+| gashadokuro | 999eaf16-f3ef-4333-b041-bf810ddd6a09 | south | Japanese yokai gashadokuro, a giant skeleton rising from the ground, big skull with glowing eyes and a large ribcage and two bony arms with claw fingers reaching forward, upper body only emerging from dark ground, ghostly purple glow, small and centered with empty space around it, JRPG enemy battle sprite, facing viewer |
+| onryo | 7fba63f8-71bd-4c86-95a5-75d98b6d7e26 | south | Japanese yurei ghost floating in the air, a woman in a white kimono with her head bowed forward so that her long straight black hair hangs down in front of her face like a curtain, covering her face completely except one glaring eye showing through a gap in the hair, limp hands dangling forward, no feet, the bottom of the kimono fades into a wispy ghost tail, small and centered with empty space around it, JRPG enemy battle sprite, facing viewer（text_guidance_scale 14。生成後、残った足を Pillow で消して裾を細い尾にし、髪のすき間に目を描き足した） |
 
 第 1 章の 4 体の作り直しの記録:
 
@@ -143,6 +152,14 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 - 護摩の灰: 1 回目は子どもの顔、2 回目は頬かむりでなく鉢巻になった。3 回目で採用（計 3 回）。
 - 野衾（使っていない）: 前足と後ろ足のあいだの皮膜が、5 回とも虫の羽か、皮膜のない姿になった（c57e1650・30f581c3・aeaa9989 ほか）。上限の 5 回に達しても必須の項目（皮膜）を満たさなかったので採用せず、東海道の敵を一つ目小僧に差し替えた。
 - 足元をそろえるため、鎌鼬は 4px 下、一つ目小僧は 5px 下、河童は 3px 下、輪入道は 2px 下、狢・傘お化け・茶運び人形は 2px 上、護摩の灰は 3px 上、猪は 1px 上へずらした。
+
+伊賀〜原城に足した 9 体の記録（計 15 回。Pillow での描き直し 1 回を含む）:
+
+- 烏天狗・伊賀のくノ一・博徒・牛鬼・海賊・がしゃどくろ: 1 回目で採用（各 1 回）。
+- 猫又: 1 回目は尾が 1 本しか見えなかった。2 回目で「TWO separate long tails ... in a V shape」で採用（計 2 回）。
+- 磯女: 1 回目は髪が足元まで届かず、2 回目は岩と波しぶきが画像の端で切れた。3 回目で「small round black rock」「lots of transparent empty space on all four sides」で採用（計 3 回）。
+- 怨霊: 1 回目は顔が髪で隠れず足があった。2 回目も顔が見えた。3 回目で顔は髪で隠れたが足が残った。4 回目は 3 回目の足を Pillow で消して裾を細い尾に描き替え、髪のすき間に光る目を描き足して採用（計 4 回）。
+- 足元をそろえるため、烏天狗（95%）・伊賀のくノ一（98%）・海賊（98%）は縮めて足元を y = 58 に置き、猫又は 1px 下、博徒・がしゃどくろは 2px 上、牛鬼は 1px 上へずらした（磯女・怨霊はそのまま）。
 
 ## 物（`objects/`）
 
