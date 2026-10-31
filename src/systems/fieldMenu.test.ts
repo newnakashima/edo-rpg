@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { changeEquipment, fieldSkills, itemUsableOn, statsWithEquipment, useItemInField, useSkillInField } from './fieldMenu';
+import { changeEquipment, expLine, fieldSkills, itemUsableOn, statsWithEquipment, useItemInField, useSkillInField } from './fieldMenu';
 import { newGame, type GameState } from './gameState';
 import { createMember, memberStats } from './party';
+import { MAX_LEVEL } from './stats';
 
 function game(over: Partial<GameState> = {}): GameState {
   return { ...newGame('m', { mapId: 'shimizu', x: 1, y: 1 }), ...over };
@@ -121,5 +122,18 @@ describe('装備', () => {
   it('付け替えた後の能力値を比べられる', () => {
     const hero = createMember('hero', 1);
     expect(statsWithEquipment(hero, 'weapon', 'dotanuki').atk).toBe(memberStats(hero).atk + 5);
+  });
+});
+
+describe('経験値の行', () => {
+  it('累計と次のレベルまでの残りを出す', () => {
+    expect(expLine({ ...createMember('hero', 1), exp: 7 })).toBe('経験 7  次 13');
+    expect(expLine(createMember('hero', 2))).toBe('経験 20  次 56');
+    expect(expLine(createMember('hero', 2), ' ')).toBe('経験 20 次 56');
+  });
+
+  it('最大レベルでは残りを出さない', () => {
+    const m = createMember('hero', MAX_LEVEL);
+    expect(expLine(m)).toBe(`経験 ${m.exp}  次 ――`);
   });
 });

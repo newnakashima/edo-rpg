@@ -43,6 +43,13 @@ export function levelForExp(exp: number): number {
   return level;
 }
 
+/** 累計経験値から、次のレベルまでの残りの経験値を求める。最大レベルなら null。 */
+export function expRemainingToNext(exp: number): number | null {
+  const level = levelForExp(exp);
+  if (level >= MAX_LEVEL) return null;
+  return totalExpForLevel(level + 1) - exp;
+}
+
 /** 敵 1 体を倒したときの経験値。 */
 export function enemyExp(enemyLevel: number): number {
   return Math.round(0.4 * enemyLevel ** 2 + 0.6 * enemyLevel) + 3;

@@ -4,7 +4,7 @@ import { characterName } from '../data/characters';
 import { EQUIP_SLOTS, EQUIPMENT, SLOT_NAMES, canEquip, type EquipSlot } from '../data/equipment';
 import { ITEMS, itemCount, itemName, ownedEquipment, ownedItems } from '../data/items';
 import { SKILLS } from '../data/skills';
-import { changeEquipment, fieldSkills, itemUsableOn, statsWithEquipment, useItemInField, useSkillInField, type FieldResult } from '../systems/fieldMenu';
+import { changeEquipment, expLine, fieldSkills, itemUsableOn, statsWithEquipment, useItemInField, useSkillInField, type FieldResult } from '../systems/fieldMenu';
 import { memberLevel, memberStats } from '../systems/party';
 import type { Stats } from '../systems/stats';
 import { getState, setState } from '../state';
@@ -266,8 +266,8 @@ export class FieldMenu {
     );
   }
 
-  private statsLine(s: Stats, withHp = true): string {
-    return `攻 ${s.atk}  防 ${s.def}  術 ${s.mag}  速 ${s.spd}  運 ${s.luck}${withHp ? `  体 ${s.maxHp}` : ''}`;
+  private statsLine(s: Stats, withHp = true, sep = '  '): string {
+    return [`攻 ${s.atk}`, `防 ${s.def}`, `術 ${s.mag}`, `速 ${s.spd}`, `運 ${s.luck}`, ...(withHp ? [`体 ${s.maxHp}`] : [])].join(sep);
   }
 
   private compareLine(before: Stats, after: Stats): string {
@@ -319,7 +319,14 @@ export class FieldMenu {
       const top = y + 20 + i * lineH * 3;
       const name = characterName(m.id, state.gender);
       objs.push(this.scene.add.text(x + 8, top, `${name}  Lv${memberLevel(m)}  体力 ${m.hp}/${s.maxHp}  気力 ${m.mp}/${s.maxMp}`, textStyle(10)));
-      objs.push(this.scene.add.text(x + 8, top + lineH, this.statsLine(s, false), textStyle(9, COLORS.dim)));
+      // 窓の高さに余裕がないので、経験値は能力値と同じ行の右端に寄せる。数値が大きく重なるときは間を詰める。
+      const statsText = this.scene.add.text(x + 8, top + lineH, this.statsLine(s, false), textStyle(9, COLORS.dim));
+      const expText = this.scene.add.text(x + w - 8, top + lineH, expLine(m), textStyle(9, COLORS.dim)).setOrigin(1, 0);
+      if (statsText.width + 6 > w - 16 - expText.width) {
+        statsText.setText(this.statsLine(s, false, ' '));
+        expText.setText(expLine(m, ' '));
+      }
+      objs.push(statsText, expText);
       const equips = EQUIP_SLOTS.map((slot) => {
         const id = m.equip[slot];
         return id ? itemName(id) : '――';

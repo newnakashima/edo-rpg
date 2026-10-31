@@ -5,7 +5,7 @@ import { SKILLS, skillsAtLevel } from '../data/skills';
 import { healAmount } from './combat';
 import type { GameState } from './gameState';
 import { memberLevel, memberStats, type PartyMember } from './party';
-import { growthFactor } from './stats';
+import { expRemainingToNext, growthFactor } from './stats';
 
 export type FieldResult =
   | { ok: true; state: GameState; changes: { index: number; hp: number; mp: number }[] }
@@ -126,4 +126,10 @@ export function itemUsableOn(itemId: string, member: PartyMember): boolean {
     case 'cure':
       return false;
   }
+}
+
+/** メニューの強さの窓に出す経験値の行（累計と、次のレベルまでの残り）。 */
+export function expLine(member: PartyMember, sep = '  '): string {
+  const rest = expRemainingToNext(member.exp);
+  return `経験 ${member.exp}${sep}次 ${rest === null ? '――' : rest}`;
 }
