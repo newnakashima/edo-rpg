@@ -23,6 +23,8 @@ export interface EnemyDef {
   resist?: Element[];
   /** 行動の候補。省くと通常攻撃だけ。 */
   actions?: EnemyAction[];
+  /** ボスの経験値とお金の倍率（docs/balance.md の「ボス」）。省くと 1（雑魚敵）。 */
+  rewardScale?: number;
 }
 
 /** 敵の画像のテクスチャのキー。 */
@@ -65,6 +67,22 @@ export const ENEMIES: Record<string, EnemyDef> = {
       { skill: 'attack', weight: 4 },
       { skill: 'dokueki', weight: 1 },
     ],
+  },
+  // ボス（rewardScale あり）。イベントの battle で出し、出現表には入れない
+  /** 序章のボス。妖狐だが、実はからくりで操られていた。序章は一人旅なので化かし（混乱）は控えめにする。 */
+  yako: {
+    id: 'yako',
+    name: '野狐',
+    color: 0xe08a3a,
+    image: true,
+    factors: { hp: 3, atk: 0.65, def: 1.0, spd: 1.2 },
+    weak: ['holy'],
+    actions: [
+      { skill: 'attack', weight: 5 },
+      { skill: 'kitsunebiUzu', weight: 3 },
+      { skill: 'bakashi', weight: 1 },
+    ],
+    rewardScale: 3,
   },
 };
 

@@ -154,6 +154,11 @@ describe('報酬', () => {
     expect(computeRewards(b).exp).toEqual({ p0: Math.floor(enemyExp(1) / 2), p1: enemyExp(1) });
   });
 
+  it('ボスは経験値とお金が rewardScale 倍', () => {
+    const b = createBattle([createMember('hero', 3)], 'm', ['yako'], 4, { canEscape: false });
+    expect(computeRewards(b)).toEqual({ exp: { p0: enemyExp(4) * 3 }, money: enemyMoney(4) * 3 });
+  });
+
   it('戦闘後の HP を仲間に書き戻す', () => {
     const party = hero();
     const b = createBattle(party, 'm', ['onibi'], 1);

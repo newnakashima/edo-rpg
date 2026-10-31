@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ENEMIES, enemyImageKey } from './enemies';
+import { ENCOUNTERS, ENEMIES, enemyImageKey } from './enemies';
 
 describe('敵の画像', () => {
   it('image のある敵の画像が public/assets/enemies/ にあり、画像のファイルは全て使われている', () => {
@@ -13,7 +13,19 @@ describe('敵の画像', () => {
     for (const id of ['onibi', 'yamainu', 'ogaeru']) expect(ENEMIES[id]?.image, id).toBe(true);
   });
 
+  it('序章のボス野狐にも画像がある', () => {
+    expect(ENEMIES.yako?.image).toBe(true);
+  });
+
   it('テクスチャのキー', () => {
     expect(enemyImageKey('onibi')).toBe('enemy-onibi');
+  });
+});
+
+describe('ボス', () => {
+  it('ボス（rewardScale のある敵）は出現表に入れない', () => {
+    const bosses = Object.values(ENEMIES).filter((e) => e.rewardScale !== undefined).map((e) => e.id);
+    expect(bosses).toContain('yako');
+    for (const table of Object.values(ENCOUNTERS)) for (const g of table.groups) for (const id of g.members) expect(bosses).not.toContain(id);
   });
 });

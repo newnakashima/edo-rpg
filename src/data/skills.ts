@@ -119,6 +119,8 @@ export const SKILLS: Record<string, SkillDef> = {
   // 敵の技
   kitsunebi: { id: 'kitsunebi', name: '狐火', mp: 0, target: 'enemy', effect: { kind: 'magic', power: 3 }, elements: ['fire'], description: '' },
   dokueki: { id: 'dokueki', name: '毒液', mp: 0, target: 'enemy', effect: { kind: 'status', status: 'poison', turns: 99, chance: 0.6 }, description: '' },
+  kitsunebiUzu: { id: 'kitsunebiUzu', name: '狐火の渦', mp: 0, target: 'allEnemies', effect: { kind: 'magic', power: 5 }, elements: ['fire'], description: '' },
+  bakashi: { id: 'bakashi', name: '化かし', mp: 0, target: 'enemy', effect: { kind: 'status', status: 'confusion', turns: 2, chance: 0.35 }, description: '' },
   toboe: { id: 'toboe', name: '遠吠え', mp: 0, target: 'self', effect: { kind: 'status', status: 'atkUp', turns: 3 }, description: '' },
 };
 

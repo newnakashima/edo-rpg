@@ -149,3 +149,33 @@ describe('ワールドマップ', () => {
     expect(townAction(world, landing.x, landing.y, 'ok')).toBeNull();
   });
 });
+
+describe('序章の狐火の洞', () => {
+  const urayama = MAPS.urayama!;
+  const cave = MAPS.kitsunebiCave!;
+  const entrance = urayama.exits.find((e) => e.to === 'kitsunebiCave')!;
+  const landing = { x: entrance.toX, y: entrance.toY };
+  const trigger = cave.triggers!.find((t) => t.event === 'yako')!;
+  const crate = cave.npcs.find((n) => n.id === 'cavecrate')!;
+  const near = (area: Set<string>, x: number, y: number) =>
+    [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => area.has(`${x + dx!},${y + dy!}`));
+
+  it('清水湊から裏山を通って洞へ行ける', () => {
+    const shimizu = MAPS.shimizu!;
+    const toUrayama = shimizu.exits.find((e) => e.to === 'urayama')!;
+    expect(reachable(urayama, { x: toUrayama.toX, y: toUrayama.toY }, {}).has(`${entrance.x},${entrance.y}`)).toBe(true);
+  });
+
+  it('洞の入口から野狐の待つ場所へ行け、そこを通らなければ奥の木箱には近づけない', () => {
+    const area = reachable(cave, landing, {});
+    expect(area.has(`${trigger.x},${trigger.y}`)).toBe(true);
+    expect(trigger.unless).toBe('yakoDefeated');
+    expect(near(area, crate.x, crate.y)).toBe(true);
+    // 野狐の場所を壁にすると、木箱のまわりに届かない
+    const walled: MapDef = {
+      ...cave,
+      rows: cave.rows.map((row, y) => (y === trigger.y ? row.slice(0, trigger.x) + '^' + row.slice(trigger.x + 1) : row)),
+    };
+    expect(near(reachable(walled, landing, {}), crate.x, crate.y)).toBe(false);
+  });
+});

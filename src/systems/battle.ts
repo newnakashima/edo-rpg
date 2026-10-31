@@ -675,14 +675,15 @@ export interface Rewards {
   money: number;
 }
 
-/** 勝利したときの経験値とお金。経験値は生き残った味方それぞれが全額を得る。 */
+/** 勝利したときの経験値とお金。経験値は生き残った味方それぞれが全額を得る。ボスは rewardScale 倍。 */
 export function computeRewards(state: BattleState): Rewards {
   const enemies = state.combatants.filter((c) => c.side === 'enemy');
-  const money = enemies.reduce((sum, e) => sum + enemyMoney(e.level), 0);
+  const scale = (e: Combatant): number => (e.enemyId ? (ENEMIES[e.enemyId]?.rewardScale ?? 1) : 1);
+  const money = enemies.reduce((sum, e) => sum + enemyMoney(e.level) * scale(e), 0);
   const exp: Record<string, number> = {};
   for (const member of state.combatants.filter((c) => c.side === 'party')) {
     exp[member.key] = isAlive(member)
-      ? enemies.reduce((sum, e) => sum + adjustedExp(enemyExp(e.level), member.level, e.level), 0)
+      ? enemies.reduce((sum, e) => sum + adjustedExp(enemyExp(e.level) * scale(e), member.level, e.level), 0)
       : 0;
   }
   return { exp, money };
