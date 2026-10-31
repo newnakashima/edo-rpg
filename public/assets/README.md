@@ -212,8 +212,19 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 
 ## 物（`objects/`）
 
-マップに置く物の画像。1 コマ 16 × 16（タイルと同じ）で、横に並べた 2 コマ（列 0: 閉じた姿、列 1: 開いた姿）。`src/data/sprites.ts` の `OBJECT_SPRITES`、マップの NPC の `object` で使う。
+マップに置く物の画像。`src/data/sprites.ts` の `OBJECT_DEFS`、マップの NPC の `object` で使う。葛籠は 1 コマ 16 × 16（タイルと同じ）で、横に並べた 2 コマ（列 0: 閉じた姿、列 1: 開いた姿）。ほかの物は 32 × 32 の 1 コマで、下端の中央をタイルの下端の中央に合わせて置く（町の人と釣り合う大きさ）。
 
 | ID | 作り方 |
 | --- | --- |
 | tsuzura | 葛籠（宝箱）。`python3 scripts/draw_tsuzura.py public/assets/objects/tsuzura.png` で手で描いた（上面は生成り・黄土の網目、前面は茶の網目、中央に朱の紐。開いた姿は蓋を奥に立て、中の暗がりを見せる）。PixelLab の `create_image_pixflux`（32 × 32、high top-down、黒の 1px 輪郭）で 2 回作ったが（4bc9d422-2f75-4458-b4d3-9778c1a12b03、100b7c5b-053e-4231-ab63-084b2dd88d5a）、どちらも 20px を超え、16 × 16 に縮めると網目がつぶれて葛籠と分からなかったため使っていない |
+
+### 人でない物（32 × 32）
+
+テストプレイで「主要人物以外のキャラクターに画像がない」と指摘されたため、色の仮表示だった物 26 か所に 24 種類の画像を作った（文机と石碑は 2 か所ずつで使う）。
+`create_1_direction_object`（size 32、view `top-down`）。size 32 では 1 回で 64 個の候補ができるので、`item_descriptions` に物ごとの説明を並べて 1 回で作り、`select_object_frames` で選んだものを `https://api.pixellab.ai/mcp/objects/<ID>/download`（PNG）から取った。共通の description: Edo period Japan RPG map prop, pixel art, dark outline, muted traditional colors
+
+- 1 回目（4c276f4a-a642-42fb-825f-3aca8d945e76）で 19 種類を採用: hokora・kibako・ningyoTana・zenmaiSochi・niguruma・oodako・senryobako・shachiDaiza・sekihi・kakejiku・jizo・komeKikai・ushi・shoroAto・haka・saidan・tsuka・zenmaiTana・ransaiTsukue。説明は各物の英語の説明（例: hokora は small wooden Shinto roadside shrine (hokora) with tiny gabled roof and red paper streamers, on a stone base）
+- 1 回目で作り直したもの: fuzukue（脚の長い洋机になった）、ningyo（胸のゼンマイが見えない）、butsuzo（首がある）、ishidan（石段が見えず穴に見えた）、jikkenDai（護符の箱が青く光っていない）
+- 2 回目（b11c522e-253c-4b13-8a4c-be8854904f04）で fuzukue（very low Japanese floor writing desk … short stubby legs）・ningyo（chest panel open revealing a bright golden brass coiled spring）・butsuzo（NO HEAD … the head lies on the ground beside it）・jikkenDai（iron box … glowing bright blue symbols）を採用。各 3 通りの言い方で作り、要件を満たすものを選んだ
+- ishidan: 2 回目は段が描けたが 32 × 32 を埋めて透過の余白がなく、まわりのタイルを覆うため作り直した
+
