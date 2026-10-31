@@ -36,6 +36,18 @@ describe('施設', () => {
     expect(r.state.party[1]?.hp).toBe(0);
   });
 
+  it('団子はお金が足りなければ食べられず、最大 HP を超えて回復しない', () => {
+    expect(eatDango({ ...newGame('m', start), money: 5 }, 1)).toEqual({ ok: false, reason: 'money' });
+    const r = eatDango({ ...newGame('m', start), money: 6, party: [{ ...createMember('hero', 1), hp: 29 }] }, 1);
+    expect(r.ok && r.state.party[0]?.hp).toBe(30);
+  });
+
+  it('旅籠では MP も回復する', () => {
+    const s = { ...newGame('m', start), money: 14, party: [{ ...createMember('hero', 1), mp: 0 }] };
+    const r = stayAtInn(s, 1);
+    expect(r.ok && r.state.party[0]?.mp).toBe(6);
+  });
+
   it('全滅すると所持金が半分になり、旅籠の前で全回復する', () => {
     const s = { ...newGame('m', start), money: 51, party: [{ ...createMember('hero', 1), hp: 0 }] };
     const r = reviveAfterDefeat(s, { mapId: 'shimizu', x: 23, y: 5 });

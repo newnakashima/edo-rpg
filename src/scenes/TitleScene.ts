@@ -5,6 +5,7 @@ import { Menu } from '../ui/widgets';
 import { browserStorage, listSlots } from '../systems/save';
 import { SaveSlotMenu } from '../ui/SaveSlotMenu';
 import { setState } from '../state';
+import { playBgm } from '../systems/audio';
 
 export class TitleScene extends Phaser.Scene {
   private controls!: Controls;
@@ -16,6 +17,7 @@ export class TitleScene extends Phaser.Scene {
 
   create(): void {
     setupCamera(this);
+    playBgm('bgm_title');
     this.controls = new Controls(this);
     this.cameras.main.setBackgroundColor('#141420');
     // 富士と街道の仮の背景
@@ -33,8 +35,13 @@ export class TitleScene extends Phaser.Scene {
     this.add.text(GAME_WIDTH / 2, 28, '江戸からくり渡世録', textStyle(22, COLORS.text)).setOrigin(0.5);
     this.add.text(GAME_WIDTH / 2, 50, '― 試作版 ―', textStyle(9, COLORS.dim)).setOrigin(0.5);
 
+    this.openMain();
+  }
+
+  private openMain(): void {
+    this.active?.destroy();
     const storage = browserStorage();
-    const hasSave = storage !== null && listSlots(storage).some((s) => s !== null);
+    const hasSave = storage !== null && listSlots(storage).some((s) => s.status === 'ok');
     this.active = new Menu(
       this,
       GAME_WIDTH / 2 - 50,
@@ -51,14 +58,15 @@ export class TitleScene extends Phaser.Scene {
   private openLoad(): void {
     const storage = browserStorage();
     if (!storage) return;
-    const menu = this.active;
-    this.active = new SaveSlotMenu(this, storage, 'load', (data) => {
-      if (!data) {
-        this.active?.destroy();
-        this.active = menu;
+    // 元のメニューは閉じる（タップで裏のメニューが選ばれないように）
+    this.active?.destroy();
+    this.controls.flush();
+    this.active = new SaveSlotMenu(this, storage, 'load', (result) => {
+      if (result.kind !== 'loaded') {
+        this.openMain();
         return;
       }
-      setState(data.state);
+      setState(result.data.state);
       this.scene.start('Field');
     });
   }

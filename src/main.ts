@@ -26,7 +26,7 @@ const game = new Phaser.Game({
   scene: [BootScene, TitleScene, CharacterSelectScene, FieldScene, BattleScene],
 });
 
-// 動作確認用: ?debug を付けて開いたときだけ、コンソールからゲームを触れるようにする
-if (new URLSearchParams(window.location.search).has('debug')) {
+// 動作確認用: 開発サーバーで ?debug を付けて開いたときだけ、コンソールからゲームを触れるようにする
+if (import.meta.env.DEV && new URLSearchParams(window.location.search).has('debug')) {
   Object.assign(window, { __game: game, __getState: getState });
 }

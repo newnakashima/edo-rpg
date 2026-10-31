@@ -14,6 +14,7 @@ import {
 } from '../systems/battle';
 import { reviveAfterDefeat } from '../systems/facilities';
 import { gainExp } from '../systems/party';
+import { playBgm } from '../systems/audio';
 import { defaultRng } from '../systems/random';
 import { getState, setState } from '../state';
 import { Controls } from '../ui/input';
@@ -54,6 +55,7 @@ export class BattleScene extends Phaser.Scene {
     const state = getState();
     this.battle = createBattle(state.party, state.gender, data.enemyIds, data.level, { canEscape: data.canEscape ?? true });
 
+    playBgm('bgm_battle');
     this.cameras.main.setBackgroundColor('#20283a');
     const g = this.add.graphics();
     g.fillStyle(0x2f4a2e, 1);
@@ -145,6 +147,8 @@ export class BattleScene extends Phaser.Scene {
 
   private openMenu(items: { label: string; enabled?: boolean }[], onSelect: (i: number) => void, onCancel?: () => void): void {
     this.menu?.destroy();
+    // 演出中に押された入力で、勝手に選ばれないようにする
+    this.controls.flush();
     const menu: Menu = new Menu(
       this,
       140,
@@ -246,6 +250,7 @@ export class BattleScene extends Phaser.Scene {
     const { party: leveled, levelUps } = gainExp(party, amounts);
     setState({ ...state, party: leveled, money: state.money + rewards.money });
     const exp = Math.max(0, ...amounts);
+    this.controls.flush();
     const pages = [`敵をすべて倒した！\n経験値 ${exp} と ${rewards.money} 文を手に入れた。`];
     for (const up of levelUps) {
       pages.push(`${characterName(up.id, state.gender)}は Lv${up.to} に上がった！`);
@@ -263,6 +268,7 @@ export class BattleScene extends Phaser.Scene {
       ? { mapId: respawnMap.id, ...respawnMap.respawn }
       : START_POSITION;
     this.log.setText('');
+    this.controls.flush();
     this.message.show(['一行は力尽きた……', '気がつくと、旅籠の布団の上だった。所持金が半分になっている。'], () => {
       setState(reviveAfterDefeat(getState(), respawn));
       this.finish();

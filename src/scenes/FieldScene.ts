@@ -7,6 +7,7 @@ import { dangoPrice, eatDango, innPrice, stayAtInn } from '../systems/facilities
 import type { Facing } from '../systems/gameState';
 import { memberLevel, memberStats } from '../systems/party';
 import { defaultRng } from '../systems/random';
+import { playBgm } from '../systems/audio';
 import { browserStorage } from '../systems/save';
 import { getState, setState } from '../state';
 import { Controls } from '../ui/input';
@@ -55,6 +56,14 @@ export class FieldScene extends Phaser.Scene {
       return;
     }
     this.map = map;
+    // 読み込んだ位置が通れない場所なら（マップの変更などで）、全滅時の戻り先か最初の場所に移す
+    if (tileAt(map, state.x, state.y)?.blocked !== false) {
+      const fallback = map.respawn ? { mapId: map.id, ...map.respawn } : START_POSITION;
+      setState({ ...state, ...fallback });
+      this.scene.restart();
+      return;
+    }
+    playBgm(map.encounter ? 'bgm_road' : 'bgm_town');
 
     for (let y = 0; y < map.rows.length; y++) {
       for (let x = 0; x < (map.rows[y]?.length ?? 0); x++) {
@@ -205,6 +214,7 @@ export class FieldScene extends Phaser.Scene {
   }
 
   private pushOverlay(o: Overlay): void {
+    this.controls.flush();
     this.overlays.push(o);
   }
 
@@ -230,8 +240,11 @@ export class FieldScene extends Phaser.Scene {
             return;
           }
           setState(result.state);
+          // 暗転している間は動けないようにする
+          this.moving = true;
           this.cameras.main.fadeOut(400, 0, 0, 0);
           this.cameras.main.once('camerafadeoutcomplete', () => {
+            this.moving = false;
             this.cameras.main.fadeIn(400, 0, 0, 0);
             this.message.show(['ぐっすり眠った。体力と気力が回復した。', '旅籠の主人「記録もつけていきなさるかい？」'], () => this.openSave());
           });
@@ -254,9 +267,10 @@ export class FieldScene extends Phaser.Scene {
       this,
       storage,
       'save',
-      (data) => {
+      (result) => {
         this.closeOverlay(slots);
-        if (data) this.message.show(['記録しました。']);
+        if (result.kind === 'saved') this.message.show(['記録しました。']);
+        if (result.kind === 'failed') this.message.show(['記録できませんでした（ブラウザの保存領域が一杯か、使えません）。']);
       },
       getState(),
     );

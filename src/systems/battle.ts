@@ -104,7 +104,7 @@ function judge(state: BattleState): Outcome {
 
 /**
  * 1 ターンを進める。commands は生きている味方の key ごとのコマンド。
- * 逃げるを選んだ味方がいれば、行動の前に逃走を判定する。失敗したら、そのターンは敵だけが行動する。
+ * 逃げるを選んだ味方がいれば、行動の前に逃走を判定する。失敗したら、そのターンは味方は攻撃できず（防御は有効）、敵だけが行動する。
  * 戻り値の state は新しいオブジェクトで、引数の state は変更しない。
  */
 export function resolveTurn(
@@ -136,13 +136,11 @@ export function resolveTurn(
     partyActs = false;
   }
 
-  // 防御は行動順より先に効く
-  if (partyActs) {
-    for (const c of aliveOf(state, 'party')) {
-      if (commands[c.key]?.kind === 'guard') {
-        c.guarding = true;
-        events.push({ type: 'guard', actor: c.key });
-      }
+  // 防御は行動順より先に効く（逃走に失敗したターンも有効）
+  for (const c of aliveOf(state, 'party')) {
+    if (commands[c.key]?.kind === 'guard') {
+      c.guarding = true;
+      events.push({ type: 'guard', actor: c.key });
     }
   }
 

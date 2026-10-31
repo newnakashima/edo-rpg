@@ -22,6 +22,10 @@ class PadState {
     this.held.clear();
     this.pressed.clear();
   }
+
+  clearPressed(): void {
+    this.pressed.clear();
+  }
 }
 
 export const pad = new PadState();
@@ -106,8 +110,17 @@ export class Controls {
       kb.off('keyup', onUp);
       window.removeEventListener('blur', onBlur);
     });
-    // 前のシーンで押された入力を持ち越さない
-    pad.clear();
+    // 前のシーンで押された入力を持ち越さない（押し続けている方向は持ち越す）
+    pad.clearPressed();
+  }
+
+  /**
+   * 溜まっている「押された瞬間」の入力を捨てる。メニューを開くときや演出の後に呼び、
+   * 歩いている間や演出中に押した入力でカーソルが動いたり選択されたりしないようにする。
+   */
+  flush(): void {
+    this.pressed.clear();
+    pad.clearPressed();
   }
 
   private consume(key: Button | Facing): boolean {

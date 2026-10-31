@@ -58,12 +58,33 @@ describe('resolveTurn', () => {
     expect(events).toEqual([{ type: 'escape', success: true }]);
   });
 
-  it('逃走に失敗すると、そのターンは敵だけが行動する', () => {
-    const b = createBattle(hero(), 'm', ['ogaeru'], 1);
-    const { state, events } = resolveTurn(b, { p0: { kind: 'escape' } }, seqRng(0.999, 0.5));
+  it('逃走に失敗すると、そのターンは敵だけが行動する（防御は有効）', () => {
+    const party = [createMember('hero', 1), createMember('kasumi', 1)];
+    const b = createBattle(party, 'm', ['ogaeru'], 1);
+    const { state, events } = resolveTurn(b, { p0: { kind: 'escape' }, p1: { kind: 'guard' } }, seqRng(0.999, 0.5));
     expect(state.outcome).toBe('ongoing');
     expect(events[0]).toEqual({ type: 'escape', success: false });
-    expect(events.filter((e) => e.type === 'attack').every((e) => e.type === 'attack' && e.actor === 'e0')).toBe(true);
+    expect(events).toContainEqual({ type: 'guard', actor: 'p1' });
+    const attacks = events.filter((e) => e.type === 'attack');
+    expect(attacks.length).toBeGreaterThan(0);
+    expect(attacks.every((e) => e.actor === 'e0')).toBe(true);
+    expect(state.combatants.find((c) => c.key === 'p1')?.guarding).toBe(true);
+  });
+
+  it('逃走率は生きている味方の平均素早さで決まる', () => {
+    // 霞（速 13）と主人公（速 8）の平均 10.5、大蛙（速 4）との差 6.5 で 63%
+    const party = [createMember('hero', 1), createMember('kasumi', 1)];
+    const b = createBattle(party, 'm', ['ogaeru'], 1);
+    expect(resolveTurn(b, { p0: { kind: 'escape' } }, seqRng(0.62)).state.outcome).toBe('escaped');
+    expect(resolveTurn(b, { p0: { kind: 'escape' } }, seqRng(0.64, 0.5)).state.outcome).toBe('ongoing');
+  });
+
+  it('会心と撃破のイベントを出す', () => {
+    const b = createBattle([createMember('hero', 10)], 'm', ['onibi'], 1);
+    // 主人公が先に動く: 行動順の乱数 2 つ、会心の判定（0 で会心）、ダメージの乱数
+    const { events } = resolveTurn(b, { p0: { kind: 'attack', target: 'e0' } }, seqRng(0.9, 0.1, 0, 0.5));
+    expect(events[0]).toMatchObject({ type: 'attack', actor: 'p0', target: 'e0', critical: true });
+    expect(events[1]).toEqual({ type: 'defeated', target: 'e0' });
   });
 
   it('逃げられない戦闘では必ず失敗する', () => {
@@ -113,6 +134,11 @@ describe('報酬', () => {
     const rewards = computeRewards(b);
     expect(rewards.exp).toEqual({ p0: enemyExp(1) * 2, p1: 0 });
     expect(rewards.money).toBe(enemyMoney(1) * 2);
+  });
+
+  it('味方が敵より 4 レベル以上高いと、その味方の経験値は半分', () => {
+    const b = createBattle([createMember('hero', 5), createMember('kasumi', 4)], 'm', ['onibi'], 1);
+    expect(computeRewards(b).exp).toEqual({ p0: Math.floor(enemyExp(1) / 2), p1: enemyExp(1) });
   });
 
   it('戦闘後の HP を仲間に書き戻す', () => {

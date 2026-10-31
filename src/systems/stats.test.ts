@@ -62,7 +62,17 @@ describe('能力値', () => {
 
   it('雑魚敵は倍率 k と敵レベルから求める', () => {
     const s = enemyStats({ hp: 1, atk: 1, def: 1, spd: 1 }, 1);
-    expect(s).toMatchObject({ maxHp: 16, atk: 10, def: 5, spd: 7, luck: 4 });
+    expect(s).toEqual({ maxHp: 16, maxMp: 0, atk: 10, def: 5, mag: 5, spd: 7, luck: 4 });
+    const f = growthFactor(13);
+    expect(enemyStats({ hp: 1, atk: 1.2, def: 0.9, spd: 1.4 }, 13)).toEqual({
+      maxHp: Math.floor(16 * f),
+      maxMp: 0,
+      atk: Math.floor(1.2 * 10 * f),
+      def: Math.floor(0.9 * 5 * f),
+      mag: Math.floor(1.2 * 5 * f),
+      spd: Math.floor(1.4 * 7 * f),
+      luck: 16,
+    });
     const big = enemyStats({ hp: 1.4, atk: 1, def: 1, spd: 1 }, 10);
     expect(big.maxHp).toBe(Math.floor(1.4 * 16 * growthFactor(10)));
   });

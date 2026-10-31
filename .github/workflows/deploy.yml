@@ -26,6 +26,9 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      # build は型チェックも行う
       - run: npm run build
       - uses: actions/upload-pages-artifact@v3
         with:
