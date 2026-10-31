@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { STARTING_EQUIPMENT } from '../data/equipment';
 import { newGame, STARTING_ITEMS } from './gameState';
 import { createMember } from './party';
-import { MAPS } from '../data/maps';
-import { deserialize, listSlots, load, MAPS_REBUILT_IN_V6, readSlot, save, SAVE_VERSION, serialize, SLOT_COUNT, slotKey, type KeyValueStorage } from './save';
+import { MAPS, TILES } from '../data/maps';
+import { deserialize, listSlots, load, MAPS_REBUILT_IN_V6, readSlot, save, SAVE_VERSION, serialize, SLOT_COUNT, slotKey, WORLD_TOWNS_BEFORE_V7, type KeyValueStorage } from './save';
 
 function memoryStorage(): KeyValueStorage & { data: Map<string, string> } {
   const data = new Map<string, string>();
@@ -201,8 +201,7 @@ describe('版 6（序章〜第 5 章の町・ダンジョンの作り直し）',
     expect(v5('kitsunebiCave', 10, 12)).toMatchObject({ mapId: 'shimizu', ...MAPS.shimizu!.respawn });
   });
 
-  it('ワールドマップや、作り直していない第 6 章のマップの位置はそのまま', () => {
-    expect(v5('world', 41, 10)).toMatchObject({ mapId: 'world', x: 41, y: 10 });
+  it('作り直していない第 6 章のマップの位置はそのまま（ワールドマップは版 7 で移す）', () => {
     expect(v5('hiroshima', 40, 13)).toMatchObject({ mapId: 'hiroshima', x: 40, y: 13 });
   });
 
@@ -213,5 +212,32 @@ describe('版 6（序章〜第 5 章の町・ダンジョンの作り直し）',
 
   it('作り直したマップの一覧は、どれも実在する', () => {
     for (const id of MAPS_REBUILT_IN_V6) expect(MAPS[id], id).toBeDefined();
+  });
+});
+
+describe('版 7（ワールドマップを広げた）', () => {
+  const v6 = (mapId: string, x: number, y: number) =>
+    deserialize(JSON.stringify({ version: 6, savedAt: '2026-10-31T00:00:00.000Z', state: { ...state(), mapId, x, y } }))?.state;
+  const town = (name: string) => MAPS.world!.towns!.find((t) => t.name === name)!;
+
+  it('版 6 でワールドマップにいたら、古い座標でいちばん近い町の、新しい印の上へ移す', () => {
+    // 清水湊の印の北（清水湊から出たところ）
+    expect(v6('world', 41, 10)).toMatchObject({ mapId: 'world', x: town('清水湊').x, y: town('清水湊').y });
+    // 名古屋と大井川の渡し場のあいだ
+    expect(v6('world', 34, 10)).toMatchObject({ mapId: 'world', x: town('名古屋').x, y: town('名古屋').y });
+    // 長崎の東
+    expect(v6('world', 4, 16)).toMatchObject({ mapId: 'world', x: town('長崎').x, y: town('長崎').y });
+  });
+
+  it('古い町の一覧の名前は、どれも新しいワールドマップにあり、印の上は歩ける', () => {
+    for (const t of WORLD_TOWNS_BEFORE_V7) {
+      const now = town(t.name);
+      expect(now, t.name).toBeDefined();
+      expect(TILES[MAPS.world!.rows[now.y]![now.x]!]?.blocked, t.name).toBe(false);
+    }
+  });
+
+  it('ワールドマップ以外のマップの位置はそのまま', () => {
+    expect(v6('osaka', 26, 9)).toMatchObject({ mapId: 'osaka', x: 26, y: 9 });
   });
 });

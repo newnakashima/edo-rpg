@@ -286,6 +286,7 @@ describe('ワールドマップ', () => {
   // 町の印は乗っても入らない（決定ボタンで入る）ので、印の上も通り抜けられる
   const exit = MAPS.shimizu!.exits.find((e) => e.to === 'world')!;
   const landing = { x: exit.toX, y: exit.toY };
+  const oigawa = world.gates!.find((g) => g.flag === 'oigawaOpen')!;
 
   it('清水湊の東の街道から出ると、関所を越えなければ清水湊と駿府にしか行けない', () => {
     const area = reachable(world, landing, {});
@@ -301,23 +302,23 @@ describe('ワールドマップ', () => {
   });
 
   it('清水湊のまわりの街道では敵が出る', () => {
-    expect(encounterAt(world, 42, 10, {})).toBe('suruga');
-    expect(encounterAt(world, 24, 10, {})).toBeUndefined();
+    expect(encounterAt(world, 114, 30, {})).toBe('suruga');
+    expect(encounterAt(world, 68, 28, {})).toBeUndefined();
   });
 
   it('大井川の西の東海道では東海道の敵が出る', () => {
-    // 範囲は x 25〜35、y 9〜12（大井川の渡し場 x 36 からは駿府・駿河の範囲）
-    for (const [x, y] of [[25, 9], [35, 10], [25, 12], [35, 12]] as const) expect(encounterAt(world, x, y, {}), `${x},${y}`).toBe('tokaido');
-    expect(encounterAt(world, 35, 13, {})).toBeUndefined();
-    expect(encounterAt(world, 36, 10, {})).toBe('suruga');
-    expect(encounterAt(world, 37, 10, { prologueCleared: true })).toBe('sunpu');
+    // 範囲は x 74〜102、y 20〜40（大井川の渡し場 x 103 からは駿府・駿河の範囲）
+    for (const [x, y] of [[74, 20], [102, 30], [74, 40], [102, 40]] as const) expect(encounterAt(world, x, y, {}), `${x},${y}`).toBe('tokaido');
+    expect(encounterAt(world, 90, 41, {})).toBeUndefined();
+    expect(encounterAt(world, oigawa.x, oigawa.y, {})).toBe('suruga');
+    expect(encounterAt(world, oigawa.x + 1, oigawa.y, { prologueCleared: true })).toBe('sunpu');
   });
 
   it('大井川の渡し場は oigawaOpen まで通れず、通れないときは川越しのイベントを行う。開けば名古屋へ行ける', () => {
-    const gate = closedGateAt(world, 36, 10, {});
+    const gate = closedGateAt(world, oigawa.x, oigawa.y, {});
     expect(gate?.event).toBe('oigawa');
     expect(EVENTS.oigawa).toBeDefined();
-    expect(closedGateAt(world, 36, 10, { oigawaOpen: true })).toBeUndefined();
+    expect(closedGateAt(world, oigawa.x, oigawa.y, { oigawaOpen: true })).toBeUndefined();
     const nagoya = world.towns!.find((t) => t.name === '名古屋')!;
     expect(reachable(world, landing, {}).has(`${nagoya.x},${nagoya.y}`)).toBe(false);
     expect(reachable(world, landing, { oigawaOpen: true }).has(`${nagoya.x},${nagoya.y}`)).toBe(true);
@@ -338,8 +339,9 @@ describe('ワールドマップ', () => {
     expect(townAction(world, shimizu.x, shimizu.y, 'step', {})).toEqual({ kind: 'label', text: '清水湊（決定で入る）' });
     expect(townAction(world, shimizu.x, shimizu.y, 'ok', {})).toEqual({ kind: 'enter', to: shimizu.to });
     expect(shimizu.to?.mapId).toBe('shimizu');
-    expect(townAction(world, 24, 10, 'step', {})).toEqual({ kind: 'label', text: '京' });
-    expect(townAction(world, 24, 10, 'ok', {})).toMatchObject({ kind: 'info' });
+    const kyo = world.towns!.find((t) => t.name === '京')!;
+    expect(townAction(world, kyo.x, kyo.y, 'step', {})).toEqual({ kind: 'label', text: '京' });
+    expect(townAction(world, kyo.x, kyo.y, 'ok', {})).toMatchObject({ kind: 'info' });
     expect(townAction(world, landing.x, landing.y, 'ok', {})).toBeNull();
   });
 
@@ -355,11 +357,12 @@ describe('ワールドマップ', () => {
 
   it('駿府のまわりの街道では、序章を終えたら駿府の敵、それまでは序章の敵が出る。清水湊のまわりはいつも序章の敵', () => {
     const cleared = { prologueCleared: true };
-    expect(encounterAt(world, 38, 10, cleared)).toBe('sunpu');
-    expect(encounterAt(world, 39, 11, cleared)).toBe('sunpu');
-    expect(encounterAt(world, 38, 10, {})).toBe('suruga');
-    expect(encounterAt(world, 39, 11, {})).toBe('suruga');
-    expect(encounterAt(world, 41, 10, cleared)).toBe('suruga');
+    // 駿府から出た先（印の東西）も駿府の範囲
+    for (const exit of MAPS.sunpu!.exits.filter((e) => e.to === 'world')) {
+      expect(encounterAt(world, exit.toX, exit.toY, cleared), `${exit.toX},${exit.toY}`).toBe('sunpu');
+      expect(encounterAt(world, exit.toX, exit.toY, {}), `${exit.toX},${exit.toY}`).toBe('suruga');
+    }
+    expect(encounterAt(world, landing.x, landing.y, cleared)).toBe('suruga');
   });
 
   it('名古屋から街道へ出ると、名古屋の印の隣に出る', () => {
@@ -367,6 +370,70 @@ describe('ワールドマップ', () => {
     for (const exit of MAPS.nagoya!.exits.filter((e) => e.to === 'world')) {
       expect(Math.abs(exit.toX - nagoya.x) + Math.abs(exit.toY - nagoya.y)).toBe(1);
     }
+  });
+
+  describe('広さ（テストプレイの指摘: マップ全体が小さすぎる）', () => {
+    const open = Object.fromEntries(world.gates!.map((g) => [g.flag, true]));
+    /** 街道を歩いたときの歩数（関所はすべて開けて数える）。 */
+    const steps = (from: { x: number; y: number }, to: { x: number; y: number }): number | undefined => {
+      const dist = new Map<string, number>([[`${from.x},${from.y}`, 0]]);
+      const queue = [from];
+      while (queue.length > 0) {
+        const p = queue.shift()!;
+        const d = dist.get(`${p.x},${p.y}`)!;
+        if (p.x === to.x && p.y === to.y) return d;
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+          const n = { x: p.x + dx, y: p.y + dy };
+          const key = `${n.x},${n.y}`;
+          if (dist.has(key) || tileAt(world, n.x, n.y)?.blocked !== false || closedGateAt(world, n.x, n.y, open)) continue;
+          dist.set(key, d + 1);
+          queue.push(n);
+        }
+      }
+      return undefined;
+    };
+    const townOf = (name: string) => world.towns!.find((t) => t.name === name)!;
+
+    it('ワールドマップは 8000 マス以上、歩ける街道は 250 マス以上（旧 56×22・街道 70 マスほど）', () => {
+      expect(world.rows.length * world.rows[0]!.length).toBeGreaterThanOrEqual(8000);
+      const walkable = world.rows.flatMap((row, y) => [...row].filter((_, x) => tileAt(world, x, y)?.blocked === false)).length;
+      expect(walkable).toBeGreaterThanOrEqual(250);
+    });
+
+    it('隣り合う町のあいだは、清水湊と駿府のほかは 12 歩以上、清水湊から長崎までは 140 歩以上かかる（旧 40 歩ほど）', () => {
+      const route = ['駿府', '名古屋', '京', '大坂', '広島', '長崎'];
+      for (const [a, b] of route.slice(0, -1).map((n, i) => [n, route[i + 1]!] as const)) {
+        expect(steps(townOf(a), townOf(b)), `${a}〜${b}`).toBeGreaterThanOrEqual(12);
+      }
+      expect(steps(townOf('名古屋'), townOf('伊賀'))).toBeGreaterThanOrEqual(12);
+      expect(steps(townOf('清水湊'), townOf('長崎'))).toBeGreaterThanOrEqual(140);
+    });
+
+    it('脇道の行き止まりに葛籠があり、関所が開けばどれにも近づける（富士の裾野は最初から）', () => {
+      const chests = world.npcs.filter((n) => n.object === 'tsuzura');
+      expect(chests.length).toBeGreaterThanOrEqual(6);
+      const all = reachable(world, landing, open, true);
+      for (const c of chests) {
+        expect(near(all, c.x, c.y), c.id).toBe(true);
+        // 行き止まり: 葛籠の上下左右で歩けるのは 1 マスだけ
+        const ways = [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(([dx, dy]) => tileAt(world, c.x + dx!, c.y + dy!)?.blocked === false);
+        expect(ways.length, c.id).toBe(1);
+      }
+      const fuji = chests.find((c) => c.id === 'worldChestFuji')!;
+      expect(near(reachable(world, landing, {}, true), fuji.x, fuji.y)).toBe(true);
+    });
+
+    it('関所が開けば、金沢の印（北前船で渡る）のほかの歩けるマスはすべてつながっている', () => {
+      const kanazawa = townOf('金沢');
+      const all = reachable(world, landing, open);
+      const lost: string[] = [];
+      world.rows.forEach((row, y) =>
+        [...row].forEach((_, x) => {
+          if (tileAt(world, x, y)?.blocked === false && !all.has(`${x},${y}`) && !(x === kanazawa.x && y === kanazawa.y)) lost.push(`${x},${y}`);
+        }),
+      );
+      expect(lost).toEqual([]);
+    });
   });
 
   it('駿府から街道へ出ると、駿府の印の隣に出る', () => {
@@ -405,10 +472,10 @@ describe('NPC の出入りと全滅時の戻り先', () => {
   it('ワールドマップでは、大井川の西（東海道）なら名古屋、それ以外は清水湊に戻る', () => {
     const nagoya = { mapId: 'nagoya', ...MAPS.nagoya!.respawn };
     const shimizu = { mapId: 'shimizu', ...MAPS.shimizu!.respawn };
-    expect(respawnPoint('world', 34, 10)).toEqual(nagoya);
-    expect(respawnPoint('world', 25, 9)).toEqual(nagoya);
-    expect(respawnPoint('world', 36, 10)).toEqual(shimizu);
-    expect(respawnPoint('world', 38, 10)).toEqual(shimizu);
+    expect(respawnPoint('world', 100, 30)).toEqual(nagoya);
+    expect(respawnPoint('world', 75, 28)).toEqual(nagoya);
+    expect(respawnPoint('world', 103, 30)).toEqual(shimizu);
+    expect(respawnPoint('world', 107, 30)).toEqual(shimizu);
     expect(respawnPoint('world')).toEqual(shimizu);
   });
 
@@ -596,10 +663,11 @@ describe('第 3 章の京', () => {
   it('京は第 2 章を終える（chapter2Cleared）まで入れず、まわりの街道もそれまでは敵が出ない', () => {
     expect(townAction(world, town.x, town.y, 'ok', {})).toMatchObject({ kind: 'info' });
     expect(townAction(world, town.x, town.y, 'ok', { chapter2Cleared: true })).toEqual({ kind: 'enter', to: start });
-    expect(encounterAt(world, 23, 10, {})).toBeUndefined();
-    for (const [x, y] of [[21, 9], [24, 12], [23, 10]] as const) expect(encounterAt(world, x, y, { chapter2Cleared: true }), `${x},${y}`).toBe('kyoto');
-    expect(encounterAt(world, 25, 10, { chapter2Cleared: true })).toBe('tokaido');
-    expect(respawnPoint('world', 23, 10)).toEqual({ mapId: 'kyo', ...kyo.respawn });
+    expect(encounterAt(world, 67, 28, {})).toBeUndefined();
+    // 大坂寄りの街道・比叡山への脇道・東海道の伊賀への分かれ道の手前まで
+    for (const [x, y] of [[64, 34], [67, 28], [70, 22], [73, 28]] as const) expect(encounterAt(world, x, y, { chapter2Cleared: true }), `${x},${y}`).toBe('kyoto');
+    expect(encounterAt(world, 75, 28, { chapter2Cleared: true })).toBe('tokaido');
+    expect(respawnPoint('world', 67, 28)).toEqual({ mapId: 'kyo', ...kyo.respawn });
   });
 
   it('京に入ると kyoEnter を行い、第 3 章を終えたら行わない', () => {
@@ -683,14 +751,15 @@ describe('第 4 章の清水湊と伊賀上野', () => {
   it('伊賀はお凛が加わる（orinJoined）まで入れず、まわりの街道もそれまでは東海道の敵・名古屋に戻る', () => {
     expect(townAction(world, town.x, town.y, 'ok', { chapter3Cleared: true })).toMatchObject({ kind: 'info' });
     expect(townAction(world, town.x, town.y, 'ok', { orinJoined: true })).toEqual({ kind: 'enter', to: start });
-    for (const [x, y] of [[26, 10], [27, 10], [28, 10]] as const) {
+    // 伊賀への脇道・伊賀の印の北・伊勢への道
+    for (const [x, y] of [[74, 30], [77, 32], [82, 35]] as const) {
       expect(encounterAt(world, x, y, { chapter3Cleared: true }), `${x},${y}`).toBe('tokaido');
       expect(encounterAt(world, x, y, { orinJoined: true }), `${x},${y}`).toBe('iga');
       expect(respawnPoint('world', x, y, { chapter3Cleared: true }).mapId).toBe('nagoya');
       expect(respawnPoint('world', x, y, { orinJoined: true })).toEqual({ mapId: 'iga', ...iga.respawn });
     }
-    expect(encounterAt(world, 25, 10, { orinJoined: true })).toBe('tokaido');
-    expect(encounterAt(world, 29, 10, { orinJoined: true })).toBe('tokaido');
+    expect(encounterAt(world, 74, 28, { orinJoined: true })).toBe('tokaido');
+    expect(encounterAt(world, 79, 28, { orinJoined: true })).toBe('tokaido');
   });
 
   it('伊賀上野に入ると igaEnter を行い、着いたあとは行わない', () => {
@@ -762,14 +831,14 @@ describe('第 5 章の大坂', () => {
     expect(townAction(world, town.x, town.y, 'ok', { chapter4Cleared: true })).toEqual({ kind: 'enter', to: start });
     const before = { chapter2Cleared: true };
     const after = { chapter2Cleared: true, chapter4Cleared: true };
-    expect(encounterAt(world, 21, 10, before)).toBe('kyoto');
-    expect(encounterAt(world, 18, 11, before)).toBeUndefined();
-    for (const [x, y] of [[17, 11], [20, 11], [21, 10]] as const) {
+    expect(encounterAt(world, 63, 34, before)).toBe('kyoto');
+    expect(encounterAt(world, 57, 30, before)).toBeUndefined();
+    for (const [x, y] of [[52, 29], [57, 32], [61, 34], [63, 34]] as const) {
       expect(encounterAt(world, x, y, after), `${x},${y}`).toBe('osaka');
       expect(respawnPoint('world', x, y, after)).toEqual({ mapId: 'osaka', ...osaka.respawn });
     }
-    expect(respawnPoint('world', 21, 10, before).mapId).toBe('kyo');
-    expect(encounterAt(world, 22, 10, after)).toBe('kyoto');
+    expect(respawnPoint('world', 63, 34, before).mapId).toBe('kyo');
+    expect(encounterAt(world, 65, 30, after)).toBe('kyoto');
   });
 
   it('大坂に入ると osakaEnter を行い、第 5 章を終えたら行わない', () => {
@@ -832,17 +901,17 @@ describe('第 6 章の広島・長崎・島原', () => {
   });
 
   it('大坂より西の街道は、第 5 章を終えたら西国街道の敵・全滅で広島へ。長崎・島原のまわりは霞が戻ったら長崎の敵、長崎に着いたら全滅で長崎へ', () => {
-    const roadW = { x: 12, y: 11 };
+    const roadW = { x: 30, y: 30 };
     expect(encounterAt(world, roadW.x, roadW.y, { chapter4Cleared: true })).toBeUndefined();
     expect(encounterAt(world, roadW.x, roadW.y, ch5)).toBe('saigoku');
     expect(respawnPoint('world', roadW.x, roadW.y, ch5)).toEqual({ mapId: 'hiroshima', ...hiroshima.respawn });
-    const nearNagasaki = { x: 5, y: 16 };
+    const nearNagasaki = { x: 10, y: 45 };
     expect(encounterAt(world, nearNagasaki.x, nearNagasaki.y, ch5)).toBe('saigoku');
     expect(encounterAt(world, nearNagasaki.x, nearNagasaki.y, { ...ch5, kasumiRejoined: true })).toBe('nagasaki');
     expect(respawnPoint('world', nearNagasaki.x, nearNagasaki.y, { ...ch5, kasumiRejoined: true }).mapId).toBe('hiroshima');
     expect(respawnPoint('world', nearNagasaki.x, nearNagasaki.y, { ...ch5, kasumiRejoined: true, nagasakiArrived: true })).toEqual({ mapId: 'nagasaki', ...nagasaki.respawn });
     // 大坂のまわりは大坂の敵のまま
-    expect(encounterAt(world, 18, 11, ch5)).toBe('osaka');
+    expect(encounterAt(world, 57, 30, ch5)).toBe('osaka');
   });
 
   it('広島・長崎・原城跡からワールドマップへ出ると、それぞれの印の隣に出る', () => {

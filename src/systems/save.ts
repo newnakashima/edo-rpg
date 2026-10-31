@@ -2,7 +2,7 @@
 import { CHARACTERS, isGuest, type CharacterId } from '../data/characters';
 import { EQUIP_SLOTS, EQUIPMENT, STARTING_EQUIPMENT, type EquipSlot } from '../data/equipment';
 import { isKnownItem, MAX_ITEM_COUNT } from '../data/items';
-import { respawnPoint } from '../data/maps';
+import { MAPS, respawnPoint } from '../data/maps';
 import { STARTING_ITEMS, type GameState } from './gameState';
 import { memberStats } from './party';
 
@@ -15,7 +15,7 @@ import { memberStats } from './party';
  * - 5: 一時離脱の仲間（away）を追加
  * - 6: 序章〜第 5 章の町・ダンジョンを作り直した（古い位置は、新しい形では壁の中や見張りの向こうになりうる）
  */
-export const SAVE_VERSION = 6;
+export const SAVE_VERSION = 7;
 
 /** 版 6 で形を作り直したマップ。版 5 までのセーブがこの中にいたら、旅籠の前（ダンジョンなら近くの町の旅籠の前）へ移す。 */
 export const MAPS_REBUILT_IN_V6: readonly string[] = [
@@ -23,6 +23,23 @@ export const MAPS_REBUILT_IN_V6: readonly string[] = [
   'nagoya', 'takoya', 'horikawaKura', 'tenshu', 'kyo', 'rashomon', 'oninosu',
   'iga', 'igaSato', 'kagiya', 'osaka', 'komeKura',
 ];
+/**
+ * 版 7 でワールドマップを広げた。版 6 までのワールドマップの町の印の位置（古い座標）と町の名前。
+ * 版 6 までのセーブがワールドマップにいたら、古い座標でいちばん近い町の、新しいワールドマップの印の上へ移す。
+ */
+export const WORLD_TOWNS_BEFORE_V7: readonly { x: number; y: number; name: string }[] = [
+  { x: 41, y: 11, name: '清水湊' }, { x: 39, y: 10, name: '駿府' }, { x: 32, y: 10, name: '名古屋' },
+  { x: 27, y: 11, name: '伊賀' }, { x: 24, y: 10, name: '京' }, { x: 21, y: 11, name: '大坂' },
+  { x: 14, y: 11, name: '広島' }, { x: 3, y: 16, name: '長崎' }, { x: 7, y: 16, name: '島原' },
+];
+
+function worldPositionV7(x: number, y: number): { x: number; y: number } {
+  const dist = (t: { x: number; y: number }) => Math.abs(t.x - x) + Math.abs(t.y - y);
+  const nearest = WORLD_TOWNS_BEFORE_V7.reduce((a, b) => (dist(b) < dist(a) ? b : a));
+  const town = MAPS.world!.towns!.find((t) => t.name === nearest.name)!;
+  return { x: town.x, y: town.y };
+}
+
 export const SLOT_COUNT = 3;
 const KEY_PREFIX = 'edo-rpg/save/';
 
@@ -133,6 +150,9 @@ function migrate(version: unknown, state: unknown): unknown {
     } else if (v === 5 && typeof s.mapId === 'string' && MAPS_REBUILT_IN_V6.includes(s.mapId)) {
       // 版 5 までの位置は、作り直したマップでは壁の中や、見張りの向こう（大坂の米蔵の岸など）になりうる
       s = { ...s, ...respawnPoint(s.mapId) };
+    } else if (v === 6 && s.mapId === 'world' && typeof s.x === 'number' && typeof s.y === 'number') {
+      // 版 6 までのワールドマップの座標は、広げたワールドマップでは海や野原の上になる
+      s = { ...s, ...worldPositionV7(s.x, s.y) };
     }
     v++;
   }
