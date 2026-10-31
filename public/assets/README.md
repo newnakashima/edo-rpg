@@ -10,14 +10,28 @@ PixelLab MCP で生成した画像の記録です。作り直すときは、こ�
 
 | ID | PixelLab のキャラクター ID | 生成プロンプト | 歩行の action_description |
 | --- | --- | --- | --- |
-| hero_m | 1607d210-3505-4c6a-9d28-95a77f29dc1e | Edo period Japanese wandering gambler (matatabi) man, wide round straw sandogasa hat, striped indigo travel cape (kappa) over kimono, long sword at hip, straw sandals | walking forward at a steady pace, hat stays on head, sword stays at left hip |
-| hero_f | 52a674fd-5353-482d-8e78-abb0714fb775 | Edo period Japanese wandering gambler woman, tied-up black hair, wide round straw sandogasa hat, striped dark plum travel cape (kappa) over kimono, short sword at hip, straw sandals | walking forward at a steady pace, hat stays on head |
+| hero_m | db7af63f-6f1c-4f28-bc9d-5cc5c501c1ac | （下の「主人公」を参照） | walking forward at a steady pace, wide straw hat stays on head, cape sways slightly, sword stays at left hip |
+| hero_f | 5c419406-e8e0-4156-b627-84c216bc3ac2 | （下の「主人公」を参照） | walking forward at a steady pace, wide straw hat stays on head, cape sways slightly, sword stays at left hip |
 | kasumi | f5b98b82-be0e-4db3-9c14-96ccb14ac47b | Edo period Japanese female ninja (kunoichi), dark navy ninja outfit, cloth mask covering mouth, black hair in ponytail, small blade at back | walking forward at a steady pace |
 | gendo | c4c4be3a-4027-4d27-abd2-55c907790716 | Edo period Japanese corrupt wandering monk, shaved bald head, ragged black monk robe, holding a tall wooden staff, gourd of sake at waist, burly | walking forward at a steady pace, holding the staff |
 | orin | 90640155-04f7-4a06-9f27-ca89ad1d8ddf | Edo period Japanese town girl, red and cream kimono with sleeves tied back by a tasuki cord, black hair in bun, carrying a brass clockwork rifle on her back | walking forward at a steady pace, rifle stays on back |
 | tatsugoro | 7eed1a60-5cf2-414a-9dd2-4dde656229a0 | Edo period Japanese yakuza boss, stout portly middle-aged man, dark brown haori jacket over kimono, topknot hair, stern face | walking forward at a steady, dignified pace |
 
 霞・玄道はまだマップに登場しないため、シートだけを置いている（フェーズ 4 で NPC の `sprite` に指定する）。
+
+### 主人公（`chars/hero_m.png`・`chars/hero_f.png`）
+
+テストプレイで「三度笠姿の渡世人に全然見えない」と指摘されたため作り直した。初めの版（mode `standard`、size 24。キャラクター ID 1607d210…・52a674fd…）は、笠がサファリハットのような形で、縞の合羽が縞のシャツと半ズボンに見え、水兵のようだった。
+standard の size 24 では笠と合羽が描き分けられないため、主人公は mode `v3`（8 方向。シートには下・左・右・上だけを使う）で作った。背丈は 26〜28px で、町の人（24px 前後）より少し大きい。
+
+- hero_m: `create_character`（mode `v3`、size 28、黒の 1px 輪郭、medium detail、low top-down）。プロンプト: chibi Edo period Japanese wandering swordsman traveler (matatabi). On his head a very wide light tan straw hat shaped like a flat shallow cone (sandogasa), wider than his shoulders. A long plain grey-blue travel cape (dochu-gappa) hangs from his shoulders down to his knees, covering his arms and body like a bell. The hilt and long black scabbard of a katana stick out diagonally from the cape at his left hip. Below the cape: white cloth leg wraps on the shins and straw sandals.
+- hero_f: hero_m と同じ言い方で作った女の版（d0a7ac48 の次の 4f89acdb。合羽は dark plum purple）の正面の絵に、肩にかかる黒髪と赤い襟を Pillow で描き足し、透明の余白で 32 × 32 にしたものを参照画像にして、`create_character`（mode `v3`、`reference_image_base64`、4 方向）で作った。プロンプト: chibi Edo period Japanese wandering swordswoman traveler (onna matatabi), young woman with long black hair falling over her shoulders and a red kimono collar, very wide light tan straw sandogasa hat shaped like a flat shallow cone, long dark plum purple travel cape down to her knees, katana hilt and black scabbard at her left hip, white leg wraps and straw sandals
+- 歩行はどちらも `animate_character`（mode `v3`、4 コマ、`keep_first_frame: false`、下・左・右・上。40 × 40）。
+
+作り直しの経過:
+
+- hero_m: 1 回目（standard、size 24、text_guidance_scale 12）は笠が紺色の帽子になり、合羽も着物にしか見えなかった。2 回目は mode `v3` にして、笠を「light tan」、合羽を「grey-blue」と色で描き分け、「wider than his shoulders」「like a bell」で形を言い、採用（計 2 回）。
+- hero_f: 1 回目（standard）は笠は出たが、合羽が着物になり、横向きで笠が消えた。2 回目（v3）は渡世人の形になったが、笠で髪が隠れて男女の区別がつかなかった。3 回目は「pretty young woman」「red lips」を足したところ、胸から上しか描かれず脚が切れた。4 回目は 2 回目の正面に黒髪と赤い襟を描き足して参照画像にし、4 方向を回して採用（計 4 回）。
 
 ### 町の人（`chars/npc_*.png`）
 
