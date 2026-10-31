@@ -92,6 +92,17 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 | b174b9da-2d40-4e52-900c-50ea310dfb21 | Edo period Japanese town, top-down RPG map tiles, muted ukiyo-e palette (indigo, vermilion, ink black, off-white). 1). packed brown earth ground 2). green grass with small tufts 3). light sandy dirt road 4). round dark green pine tree canopy seen from above 5). blue water with small ripples 6). white plaster wall of a Japanese house with dark wooden beam at bottom 7). dark grey Japanese kawara roof tiles in horizontal rows 8). dark wooden sliding door of a Japanese house 9). wooden plank floor 10). grey boulder rock on grass 11). open plain grass field for world map 12). tiny Japanese town icon with roof on a road for world map 13). wooden checkpoint barrier gate (sekisho) on a road | 1 → ground、3 → grass、4 → road、7 → water、8 → wall、9 → roof、10 → door、11 → floor、12 → rock、14 → town、15 → gate |
 | 653bfbb0-b997-426e-ab19-98a4ffee2b45 | Edo period Japan top-down RPG map tiles, muted ukiyo-e palette. 1). a single dense dark green pine tree seen from above with dark outline and a visible brown trunk at the bottom, on dark ground, clearly an obstacle 2). light yellow-green open meadow with tiny pale flowers, brighter than lawn grass 3). dense dark green pine tree canopy from above, round clump with black outline 4). pale khaki dry grassland for a world map | 0 → tree、5 → plain（最初の組の木と野原は草と見分けにくかったため作り直した） |
 
+### 地域ごとのタイル（`tiles/<タイルセット>/`）
+
+テストプレイで「町もダンジョンも同じ見た目」と指摘されたため、マップの `tileset`（`src/data/maps.ts` の `TILESETS`）で、一部の種類だけを地域の画像に差し替える。
+`create_tiles_pro` の style mode（共通の `tiles/ground.png`・`roof.png`・`wall.png` を `style_images` に、style_options は輪郭・細部・陰影を写し、配色は写さない）で 16 × 16 を作った。どの組も 1 回目で採用（計 2 回）。
+並べたときの継ぎ目と、同じマップの通れるタイルと通れないタイルの見分けを、3 × 3 に並べた見本とゲーム画面で確かめた。
+
+| ID | プロンプト（共通の頭: Edo period Japan top-down RPG map tiles, muted ukiyo-e palette, seamless 16x16.） | 使ったタイル（ZIP の番号 → タイルセット/種類） |
+| --- | --- | --- |
+| 19748264-c606-43e1-a041-9d37a6593518 | 1). snow covered ground … 2). snow covered lawn … 3). trodden snowy road … 4). snow covered dark green pine tree … 5). snow covered dark grey kawara roof tiles … 6). grey boulder rock with white snow on top … 7). wooden ship deck … 8). ship hull rail … 9). straw rice bales (tawara) stacked as ship cargo … 10). tatami mat floor … 11). shoji paper sliding wall … | 0 → snow/ground、1 → snow/grass、2 → snow/road、3 → snow/tree、4 → snow/roof、5 → snow/rock、6 → ship/floor、7 → ship/wall、8 → ship/roof、9 → interior/floor、10 → interior/wall |
+| ef84a959-510b-4d63-9ecd-9cc487ffe7ae | 1). dark cave rock wall … 2). cave floor … 3). dark underground pool water … 4). riveted dark iron plate wall with brass pipes … 5). iron grate floor plates … 6). brass cogwheel machinery block … 7). castle stone wall (ishigaki) … 8). polished dark wooden castle floor boards … 9). crumbled ruined grey stone wall … 10). cracked old stone flagstone floor … 11). dark wooden storehouse wall … 12). earthen storehouse floor (doma) … | 0 → cave/rock、1 → cave/ground、2 → cave/water、3 → karakuri/wall、4 → karakuri/floor、5 → karakuri/roof、6 → castle/wall、7 → castle/floor、8 → ruins/wall、9 → ruins/floor、10 → kura/wall、11 → kura/floor |
+
 ## 敵（`enemies/`）
 
 `create_image_pixflux`（64 × 64、`no_background: true`、黒の 1px 輪郭、view `side`、medium detail）で 1 体ずつ作る（1 体 1 回）。ボスは 96 × 96 で作る。

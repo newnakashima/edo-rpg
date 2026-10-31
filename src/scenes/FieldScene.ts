@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { ENCOUNTERS } from '../data/enemies';
-import { closedGateAt, encounterAt, MAPS, npcObjectFrame, npcVisible, respawnPoint, START_POSITION, tileAt, townAction, type EventTrigger, type MapDef, type NpcDef } from '../data/maps';
+import { closedGateAt, encounterAt, MAPS, npcObjectFrame, npcVisible, respawnPoint, START_POSITION, tileAt, tileTextureKey, townAction, type EventTrigger, type MapDef, type NpcDef } from '../data/maps';
 import { pickGroup, step } from '../systems/encounter';
 import { dangoPrice, eatDango, innPrice, stayAtInn } from '../systems/facilities';
 import { prayAtTemple, templePrice } from '../systems/shop';
@@ -93,7 +93,7 @@ export class FieldScene extends Phaser.Scene {
     for (let y = 0; y < map.rows.length; y++) {
       for (let x = 0; x < (map.rows[y]?.length ?? 0); x++) {
         const tile = tileAt(map, x, y);
-        if (tile) this.add.image(x * TILE, y * TILE, `tile-${tile.kind}`).setOrigin(0);
+        if (tile) this.add.image(x * TILE, y * TILE, tileTextureKey(map.tileset, tile.kind)).setOrigin(0);
       }
     }
     // ワールドマップでは町の名前を印の上に出す

@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { ENEMIES, enemyImageKey } from '../data/enemies';
-import { TILE_KINDS } from '../data/maps';
+import { TILE_KINDS, TILESETS, tileTextureKey, type TilesetId } from '../data/maps';
 import { CHAR_FRAME, CHARACTER_SPRITES, FACINGS, OBJECT_DEFS, OBJECT_SPRITES, objectKey, spriteKey, walkAnimKey, walkFrame, WALK_FPS, WALK_FRAMES } from '../data/sprites';
 
 /**
@@ -13,7 +13,10 @@ export class BootScene extends Phaser.Scene {
   }
 
   preload(): void {
-    for (const kind of TILE_KINDS) this.load.image(`tile-${kind}`, `assets/tiles/${kind}.png`);
+    for (const kind of TILE_KINDS) this.load.image(tileTextureKey(undefined, kind), `assets/tiles/${kind}.png`);
+    for (const [set, kinds] of Object.entries(TILESETS) as [TilesetId, readonly (typeof TILE_KINDS)[number][]][]) {
+      for (const kind of kinds) this.load.image(tileTextureKey(set, kind), `assets/tiles/${set}/${kind}.png`);
+    }
     for (const enemy of Object.values(ENEMIES)) {
       if (enemy.image) this.load.image(enemyImageKey(enemy.id), `assets/enemies/${enemy.id}.png`);
     }
