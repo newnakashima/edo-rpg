@@ -5,6 +5,7 @@ import {
   enemyExp,
   enemyMoney,
   enemyStats,
+  expRemainingToNext,
   expToNext,
   growthFactor,
   levelForExp,
@@ -75,5 +76,20 @@ describe('能力値', () => {
     });
     const big = enemyStats({ hp: 1.4, atk: 1, def: 1, spd: 1 }, 10);
     expect(big.maxHp).toBe(Math.floor(1.4 * 16 * growthFactor(10)));
+  });
+});
+
+describe('次のレベルまでの残りの経験値', () => {
+  it('累計経験値から残りを求める', () => {
+    expect(expRemainingToNext(0)).toBe(20);
+    expect(expRemainingToNext(19)).toBe(1);
+    expect(expRemainingToNext(20)).toBe(expToNext(2));
+    expect(expRemainingToNext(totalExpForLevel(10) + 5)).toBe(expToNext(10) - 5);
+  });
+
+  it('最大レベルでは null', () => {
+    expect(expRemainingToNext(totalExpForLevel(MAX_LEVEL))).toBeNull();
+    expect(expRemainingToNext(totalExpForLevel(MAX_LEVEL) + 1000)).toBeNull();
+    expect(expRemainingToNext(totalExpForLevel(MAX_LEVEL) - 1)).toBe(1);
   });
 });
