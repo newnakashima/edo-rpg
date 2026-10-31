@@ -1,5 +1,7 @@
 // フィールドのマップ。フェーズ 1 では仮のタイルで、序章の清水湊と裏山だけを用意する。
 // タイルの文字の意味は TILES を参照。
+import type { Facing } from '../systems/gameState';
+import type { CharacterSpriteId } from './sprites';
 
 export type TileKind = 'ground' | 'grass' | 'road' | 'tree' | 'water' | 'wall' | 'roof' | 'door' | 'floor' | 'rock' | 'plain' | 'town' | 'gate';
 
@@ -32,7 +34,12 @@ export interface NpcDef {
   name: string;
   x: number;
   y: number;
+  /** 画像ができるまでの仮の人の色（sprite がなければ使う）。 */
   color: number;
+  /** 画像のある人はそのシート（src/data/sprites.ts）。 */
+  sprite?: CharacterSpriteId;
+  /** 最初の向き（sprite があるときだけ。既定は下）。 */
+  facing?: Facing;
   /** 話しかけたときの台詞。1 要素が 1 ページ。event があれば使わない。 */
   lines?: string[];
   /** 台詞のあとに行う施設の処理。 */
@@ -130,6 +137,7 @@ export const MAPS: Record<string, MapDef> = {
         x: 5,
         y: 10,
         color: 0x8a3b2e,
+        sprite: 'tatsugoro',
         event: 'tatsugoro',
       },
       {
@@ -202,6 +210,7 @@ export const MAPS: Record<string, MapDef> = {
         x: 8,
         y: 11,
         color: 0xd04a4a,
+        sprite: 'orin',
         lines: ['お凛「おとっつぁんもおとっつぁんだよ。よそ者なんかに頼るなんて」'],
       },
     ],

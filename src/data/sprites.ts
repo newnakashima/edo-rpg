@@ -20,7 +20,7 @@ export const WALK_FPS = 14;
 export const FACINGS: readonly Facing[] = ['down', 'left', 'right', 'up'];
 
 /** シートがあるキャラクター。 */
-export const CHARACTER_SPRITES = ['hero_m', 'hero_f'] as const;
+export const CHARACTER_SPRITES = ['hero_m', 'hero_f', 'kasumi', 'gendo', 'orin', 'tatsugoro'] as const;
 export type CharacterSpriteId = (typeof CHARACTER_SPRITES)[number];
 
 export function spriteKey(id: CharacterSpriteId): string {
@@ -29,6 +29,19 @@ export function spriteKey(id: CharacterSpriteId): string {
 
 export function heroSprite(gender: Gender): CharacterSpriteId {
   return gender === 'm' ? 'hero_m' : 'hero_f';
+}
+
+/** 反対の向き（話しかけられた人が、話しかけた人のほうを向く）。 */
+export function oppositeFacing(facing: Facing): Facing {
+  return ({ up: 'down', down: 'up', left: 'right', right: 'left' } as const)[facing];
+}
+
+/**
+ * フィールドの人の重なり順。下（y が大きい）にいる人ほど手前に描く。
+ * 頭が上のタイルにはみ出すため、上にいる人の足元に下の人の頭が重なる。町の名前の表示（5）より上にする。
+ */
+export function personDepth(tileY: number): number {
+  return 10 + tileY / 1000;
 }
 
 /** 立ち姿のコマ番号。 */
