@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FACINGS, heroSprite, idleFrame, shouldStandStill, walkFrame, WALK_FRAMES } from './sprites';
+import { CHAR_FRAME, CHARACTER_SPRITES, FACINGS, heroSprite, idleFrame, oppositeFacing, personDepth, shouldStandStill, walkDepthRow, walkFrame, WALK_FRAMES } from './sprites';
 
 describe('キャラクターのスプライトシート', () => {
   it('行は下・左・右・上、列は立ちと歩行 4 コマ', () => {
@@ -39,5 +39,35 @@ describe('立ち姿に戻すか', () => {
 
   it('メニュー・会話・イベントの最中は、方向が押されていても戻す', () => {
     expect(shouldStandStill({ moving: false, busy: true, held: true })).toBe(true);
+  });
+});
+
+describe('向きと重なり順', () => {
+  it('反対の向き', () => {
+    expect(FACINGS.map(oppositeFacing)).toEqual(['up', 'right', 'left', 'down']);
+  });
+
+  it('下にいる人ほど手前に描き、町の名前の表示（5）より上', () => {
+    expect(personDepth(3)).toBeLessThan(personDepth(4));
+    expect(personDepth(0)).toBeGreaterThan(5);
+    expect(personDepth(200)).toBeLessThan(11);
+  });
+});
+
+describe('歩くときの重なり順', () => {
+  it('下へ歩くときは歩き始めから移った先、上へ歩くときは着くまで元の行', () => {
+    expect(walkDepthRow(4, 5)).toBe(5);
+    expect(walkDepthRow(5, 4)).toBe(5);
+    expect(walkDepthRow(4, 4)).toBe(4);
+  });
+});
+
+describe('シートの画像', () => {
+  it('全てのキャラクターのシートが public/assets/chars/ にある', () => {
+    const files = Object.keys(import.meta.glob('../../public/assets/chars/*.png'));
+    for (const id of CHARACTER_SPRITES) {
+      expect(files, id).toContain(`../../public/assets/chars/${id}.png`);
+    }
+    expect(CHAR_FRAME).toBe(40);
   });
 });
