@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "mcp__PixelLab__(create_.*|animate_.*|edit_.*|inpaint_.*|image_to_pixelart.*|transfer_outfit|correct_pixelart|unzoom_image|reduce_colors|pixelart_workbench|vfx_workbench)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/pixellab-reminder.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
