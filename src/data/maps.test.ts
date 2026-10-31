@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { ENCOUNTERS, ENEMIES } from './enemies';
 import { EVENTS } from './events';
-import { closedGateAt, encounterAt, MAPS, START_POSITION, tileAt, TILES, townAction, type MapDef } from './maps';
+import { closedGateAt, encounterAt, MAPS, START_POSITION, TILE_KINDS, tileAt, TILES, townAction, type MapDef } from './maps';
+
+describe('タイルの画像', () => {
+  it('全ての種類の画像が public/assets/tiles/ にあり、全ての種類が使われている', () => {
+    const files = Object.keys(import.meta.glob('../../public/assets/tiles/*.png'));
+    for (const kind of TILE_KINDS) expect(files, kind).toContain(`../../public/assets/tiles/${kind}.png`);
+    expect(new Set(Object.values(TILES).map((t) => t.kind))).toEqual(new Set(TILE_KINDS));
+  });
+});
 
 describe('マップのデータ', () => {
   for (const map of Object.values(MAPS)) {
