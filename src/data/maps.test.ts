@@ -3,7 +3,7 @@ import { ENCOUNTERS, ENEMIES } from './enemies';
 import type { EventStep } from './eventTypes';
 import { CHEST_EVENTS, EVENTS } from './events';
 import { SHOPS } from './shops';
-import { OBJECT_FRAME, OBJECT_SPRITES } from './sprites';
+import { OBJECT_DEFS, OBJECT_SPRITES } from './sprites';
 import { EQUIPMENT } from './equipment';
 import { ITEMS, MAX_ITEM_COUNT } from './items';
 import { EventRunner } from '../systems/eventScript';
@@ -15,6 +15,29 @@ describe('タイルの画像', () => {
     const files = Object.keys(import.meta.glob('../../public/assets/tiles/*.png'));
     for (const kind of TILE_KINDS) expect(files, kind).toContain(`../../public/assets/tiles/${kind}.png`);
     expect(new Set(Object.values(TILES).map((t) => t.kind))).toEqual(new Set(TILE_KINDS));
+  });
+});
+
+describe('人でない物の画像（テストプレイの指摘: 主要人物以外に画像がない）', () => {
+  // 人ではない物（祠・机など）。人は sprite、葛籠は object: 'tsuzura'
+  const things = Object.values(MAPS).flatMap((m) => m.npcs.filter((n) => !n.sprite).map((n) => ({ map: m.id, npc: n })));
+
+  it('町の人でない物は、どれも物の画像を使う（色の仮表示がない）', () => {
+    expect(things.length).toBeGreaterThan(30);
+    // 夜叉丸・朧・亡霊は人なので、歩行の画像を作るまでは除く
+    const people = ['yashamaru', 'kyoYashamaru', 'igaOboro', 'harajoBorei'];
+    for (const { map, npc } of things.filter((t) => !people.includes(t.npc.id))) expect(npc.object, `${map} ${npc.id}`).toBeDefined();
+  });
+
+  it('物の画像はどれもどこかで使う', () => {
+    const used = new Set(things.map((t) => t.npc.object));
+    for (const id of OBJECT_SPRITES) expect(used.has(id), id).toBe(true);
+  });
+
+  it('姿の変わらない物は、話しかけてフラグが立っても列 0 のまま', () => {
+    for (const { map, npc } of things.filter((t) => t.npc.object && OBJECT_DEFS[t.npc.object].frames === 1)) {
+      expect(npcObjectFrame(npc, { [npc.event ?? npc.id]: true }), `${map} ${npc.id}`).toBe(0);
+    }
   });
 });
 
@@ -36,10 +59,11 @@ describe('葛籠の画像', () => {
     const files = Object.keys(inlined);
     for (const id of OBJECT_SPRITES) {
       expect(files, id).toContain(`../../public/assets/objects/${id}.png`);
-      // 閉じた姿・開いた姿の 2 コマ（PNG の IHDR の幅・高さ）
+      // コマの大きさ × コマ数（葛籠は閉じた姿・開いた姿の 2 コマ）。PNG の IHDR の幅・高さ
       const png = atob(inlined[`../../public/assets/objects/${id}.png`]!.split(',')[1]!);
       const u32 = (at: number) => [0, 1, 2, 3].reduce((v, i) => v * 256 + png.charCodeAt(at + i), 0);
-      expect([u32(16), u32(20)], id).toEqual([OBJECT_FRAME * 2, OBJECT_FRAME]);
+      const { size, frames } = OBJECT_DEFS[id];
+      expect([u32(16), u32(20)], id).toEqual([size * frames, size]);
     }
   });
 

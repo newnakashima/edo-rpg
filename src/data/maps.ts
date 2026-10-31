@@ -1,7 +1,7 @@
 // フィールドのマップ。序章〜第 6 章の町・ダンジョンと、ワールドマップを用意する。
 // タイルの文字の意味は TILES を参照。
 import type { Facing } from '../systems/gameState';
-import type { CharacterSpriteId, ObjectSpriteId } from './sprites';
+import { OBJECT_DEFS, type CharacterSpriteId, type ObjectSpriteId } from './sprites';
 
 /** タイルの種類。画像は public/assets/tiles/<種類>.png（PixelLab で生成。記録は public/assets/README.md）。 */
 export const TILE_KINDS = ['ground', 'grass', 'road', 'tree', 'water', 'wall', 'roof', 'door', 'floor', 'rock', 'plain', 'town', 'gate'] as const;
@@ -369,6 +369,7 @@ export const MAPS: Record<string, MapDef> = {
         x: 4,
         y: 9,
         color: 0x8c8c7a,
+        object: 'hokora',
         event: 'urayamaShrine',
       },
       {
@@ -445,6 +446,7 @@ export const MAPS: Record<string, MapDef> = {
         x: 17,
         y: 1,
         color: 0x7a5a3a,
+        object: 'kibako',
         lines: ['木箱には駿府の工房の焼き印。中には、ゼンマイ仕掛けが埋め込まれた人形の残骸が入っている。'],
       },
       {
@@ -884,6 +886,7 @@ MAPS.kobo = {
       x: 25,
       y: 2,
       color: 0x7a5a3a,
+      object: 'fuzukue',
       lines: ['文机の上に、書きかけの文がある。「黒田様　例の品、今月も屋敷の蔵へお届け申し候」'],
     },
     {
@@ -892,6 +895,7 @@ MAPS.kobo = {
       x: 3,
       y: 15,
       color: 0xb08a5a,
+      object: 'ningyo',
       lines: ['作りかけの人形だ。胸の中に、ゼンマイと、人の髪の束が巻き込まれている……。'],
     },
       {
@@ -900,6 +904,7 @@ MAPS.kobo = {
         x: 17,
         y: 2,
         color: 0xc0b090,
+        object: 'ningyoTana',
         lines: ['棚に人形の頭がずらりと並んでいる。どれも、町で見かけたような顔をしている……。'],
       },
       {
@@ -1062,6 +1067,7 @@ MAPS.karakuriYashiki = {
       x: 20,
       y: 1,
       color: 0x8a8a8a,
+      object: 'zenmaiSochi',
       lines: ['歯車と管が絡み合った、異様な装置だ。'],
       after: { flag: 'yashamaruFled', lines: ['人をゼンマイに封じる装置の残骸だ。夜叉丸に壊され、もう動かない。'] },
     },
@@ -1230,6 +1236,7 @@ MAPS.nagoya = {
       x: 5,
       y: 11,
       color: 0x7a5a3a,
+      object: 'niguruma',
       lines: ['堀川の荷蔵の戸口を、重い荷車がふさいでいる。びくともしない。'],
       hideFlag: 'kintaMet',
     },
@@ -1330,6 +1337,7 @@ MAPS.takoya = {
       x: 5,
       y: 4,
       color: 0xc04030,
+      object: 'oodako',
       lines: ['人がぶら下がれるほどの大凧だ。骨は竹、紙には赤い字で「金」と大きく書かれている。'],
     },
     {
@@ -1338,6 +1346,7 @@ MAPS.takoya = {
       x: 22,
       y: 7,
       color: 0x7a5a3a,
+      object: 'fuzukue',
       lines: ['文机の上に、銀次の筆の跡がある。「凧の糸は、あと二十間あれば天守に届く」'],
     },
       {
@@ -1419,6 +1428,7 @@ MAPS.horikawaKura = {
       x: 16,
       y: 1,
       color: 0xb08a3a,
+      object: 'senryobako',
       lines: ['空の千両箱だ。底に、金の粉がこびりついている。'],
     },
       {
@@ -1494,6 +1504,7 @@ MAPS.tenshu = {
       x: 16,
       y: 1,
       color: 0xb08a3a,
+      object: 'shachiDaiza',
       lines: ['大棟の上に、金の鯱の台座がある。鯱の姿はない。'],
       after: { flag: 'kinshachiDefeated', lines: ['金の鱗を取り戻した。鯱は、明日にも職人の手で元の姿に戻されるという。'] },
     },
@@ -1796,6 +1807,7 @@ MAPS.rashomon = {
       x: 17,
       y: 5,
       color: 0x8a8a8a,
+      object: 'sekihi',
       lines: ['「羅城門跡」と刻まれた古い石碑だ。むかし、この門の楼上には鬼が棲んだという。'],
     },
       {
@@ -1906,6 +1918,7 @@ MAPS.oninosu = {
       x: 16,
       y: 3,
       color: 0x8a7a5a,
+      object: 'butsuzo',
       lines: ['首の落ちた仏像だ。台座に、まだ新しい護摩の灰が積もっている。'],
       after: { flag: 'shutenDefeated', lines: ['首の落ちた仏像だ。玄道が、静かに経を唱えている。'] },
     },
@@ -2194,6 +2207,7 @@ MAPS.igaSato = {
       x: 16,
       y: 4,
       color: 0x8a7a5a,
+      object: 'kakejiku',
       lines: ['「忍」の一字が大書された掛け軸だ。刃の下に心と書く。'],
       after: { flag: 'oboroDefeated', lines: ['「忍」の一字の掛け軸だ。霞が、しばらく黙って見上げていた。'] },
     },
@@ -2268,6 +2282,7 @@ MAPS.kagiya = {
       x: 3,
       y: 10,
       color: 0x8a8a8a,
+      object: 'sekihi',
       lines: ['「鍵屋の辻」と刻まれた古い石標だ。辻の茶屋の軒先に、朝の光が差している。'],
       after: { flag: 'gonrokuDefeated', lines: ['「鍵屋の辻」の石標だ。お凛が、そっと手を合わせた。'] },
     },
@@ -2286,6 +2301,7 @@ MAPS.kagiya = {
         x: 32,
         y: 7,
         color: 0x9a9a8a,
+        object: 'jizo',
         lines: ['辻の地蔵堂だ。誰かが供えた握り飯が、まだ新しい。'],
       },
       {
@@ -2616,6 +2632,7 @@ MAPS.komeKura = {
       x: 41,
       y: 12,
       color: 0x8a7a5a,
+      object: 'komeKikai',
       lines: ['米俵をゼンマイの歯車で砕き、黒い粉に変える機械だ。粉は、からくり兵の油に混ぜるものらしい。'],
       after: { flag: 'hyakuhyoDefeated', lines: ['止まったからくりの機械だ。米俵が、手つかずのまま積まれている。'] },
     },
@@ -3105,6 +3122,7 @@ MAPS.dejima = {
       x: 26,
       y: 13,
       color: 0x8a6a4a,
+      object: 'ushi',
       lines: ['牛が草を食んでいる。オランダの人たちは、牛の乳を飲むらしい。'],
     },
     {
@@ -3166,6 +3184,7 @@ MAPS.nanbanji = {
       x: 7,
       y: 9,
       color: 0x7a6a5a,
+      object: 'shoroAto',
       lines: ['焼け落ちた鐘楼の跡だ。溶けて固まった鐘のかけらが、草の中に埋もれている。'],
     },
     {
@@ -3174,6 +3193,7 @@ MAPS.nanbanji = {
       x: 27,
       y: 7,
       color: 0x8a8a8a,
+      object: 'haka',
       lines: ['名も刻まれていない小さな墓が並んでいる。誰かが、野の花を供えていった。'],
     },
     {
@@ -3182,6 +3202,7 @@ MAPS.nanbanji = {
       x: 17,
       y: 6,
       color: 0x7a5a3a,
+      object: 'saidan',
       lines: ['焼け残りの祭壇だ。床には、歯車と油の跡が残っている。'],
     },
   ],
@@ -3247,6 +3268,7 @@ MAPS.harajo = {
       x: 8,
       y: 8,
       color: 0x8a8a7a,
+      object: 'tsuka',
       lines: ['土を盛った塚だ。乱で籠城し、討ち死にした人々を弔うものらしい。玄道が、静かに手を合わせた。'],
     },
     {
@@ -3267,6 +3289,7 @@ MAPS.harajo = {
       x: 33,
       y: 4,
       color: 0x7a7a6a,
+      object: 'ishidan',
       lines: ['本丸の奥に、新しく積み直した石段がある。地の底から、歯車の音が響いてくる。'],
     },
   ],
@@ -3322,6 +3345,7 @@ MAPS.kenkyujo = {
       x: 7,
       y: 3,
       color: 0x8a7a5a,
+      object: 'zenmaiTana',
       lines: ['棚に、大小のゼンマイがびっしりと並んでいる。ひとつひとつに、人の名を書いた札が下がっている……。'],
     },
     {
@@ -3330,6 +3354,7 @@ MAPS.kenkyujo = {
       x: 11,
       y: 11,
       color: 0x6a6a7a,
+      object: 'jikkenDai',
       lines: ['からくりの腕と、護符を貼った鉄の箱が台に縛りつけられている。外法の文字が、箱の中で青く光っている。'],
       after: { flag: 'nanbanOzutsuDefeated', lines: ['護符の光は消えている。からくりの腕は、もう動かない。'] },
     },
@@ -3339,6 +3364,7 @@ MAPS.kenkyujo = {
       x: 15,
       y: 21,
       color: 0x7a5a3a,
+      object: 'ransaiTsukue',
       lines: ['蘭斎の机だ。南蛮の書と、細かな字で埋まった帳面が積まれている。'],
     },
   ],
@@ -3377,6 +3403,8 @@ export function townAction(map: MapDef, x: number, y: number, by: 'step' | 'ok',
  * 物の画像のコマ。葛籠は開けると event の ID のフラグが立つので（events.ts の chest）、そのフラグが立っていれば開いた姿（1）にする。
  */
 export function npcObjectFrame(npc: NpcDef, flags: Record<string, boolean>): number {
+  // 姿の変わらない物（祠・石碑など）は、話しかけてフラグが立っても列 0 のまま
+  if (!npc.object || OBJECT_DEFS[npc.object].frames < 2) return 0;
   return flags[npc.event ?? npc.id] ? 1 : 0;
 }
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CHAR_FRAME, CHARACTER_SPRITES, FACINGS, heroSprite, idleFrame, oppositeFacing, personDepth, shouldStandStill, walkDepthRow, walkFrame, WALK_FRAMES } from './sprites';
+import { CHAR_FRAME, CHARACTER_SPRITES, FACINGS, heroSprite, idleFrame, objectDepth, objectDisplayOrigin, oppositeFacing, personDepth, shouldStandStill, walkDepthRow, walkFrame, WALK_FRAMES } from './sprites';
 
 describe('キャラクターのスプライトシート', () => {
   it('行は下・左・右・上、列は立ちと歩行 4 コマ', () => {
@@ -69,5 +69,22 @@ describe('シートの画像', () => {
       expect(files, id).toContain(`../../public/assets/chars/${id}.png`);
     }
     expect(CHAR_FRAME).toBe(40);
+  });
+});
+
+describe('物の置き方', () => {
+  it('16 × 16 の物はタイルの左上に、32 × 32 の物は下端の中央をタイルの下端の中央に合わせる', () => {
+    expect(objectDisplayOrigin('tsuzura')).toEqual({ x: 0, y: 0 });
+    expect(objectDisplayOrigin('hokora')).toEqual({ x: 8, y: 16 });
+  });
+
+  it('物は、上の行（奥）に立った人よりも奥、下の行の人よりも奥に描く', () => {
+    const y = 7;
+    expect(objectDepth(y)).toBeLessThan(personDepth(y - 1));
+    expect(objectDepth(y)).toBeLessThan(personDepth(y + 1));
+    // 2 行上の人（物に重ならない）より手前
+    expect(objectDepth(y)).toBeGreaterThan(personDepth(y - 2));
+    // 町の名前の表示（5）より上
+    expect(objectDepth(0)).toBeGreaterThan(5);
   });
 });

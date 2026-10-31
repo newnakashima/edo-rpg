@@ -50,12 +50,48 @@ export const CHARACTER_SPRITES = ['hero_m', 'hero_f', 'kasumi', 'gendo', 'orin',
 export type CharacterSpriteId = (typeof CHARACTER_SPRITES)[number];
 
 /**
- * マップに置く物の画像（public/assets/objects/<ID>.png）。1 コマはタイルと同じ 16px で、列 0 が閉じた姿、列 1 が開いた姿。
- * 葛籠は 16 × 16 のタイルに収めるため、PixelLab ではなく手で描いた（記録は public/assets/README.md）。
+ * マップに置く物の画像（public/assets/objects/<ID>.png）。記録は public/assets/README.md。
+ * - size: 1 コマの大きさ。16 はタイルに収まる（左上をタイルの左上に合わせる）。32 は町の人と釣り合う大きさで、
+ *   下端の中央をタイルの下端の中央に合わせる（上と左右にはみ出す。通れないのはそのタイルだけ）。
+ * - frames: 2 なら列 0 が閉じた姿、列 1 が開いた姿（葛籠）。1 なら姿は変わらない。
+ * 葛籠は 16 × 16 のタイルに収めるため、PixelLab ではなく手で描いた。ほかの物はテストプレイで「人でない物に画像がない」と
+ * 指摘されたため PixelLab で 32 × 32 に作った。
  */
-export const OBJECT_SPRITES = ['tsuzura'] as const;
-export type ObjectSpriteId = (typeof OBJECT_SPRITES)[number];
-export const OBJECT_FRAME = 16;
+export const OBJECT_DEFS = {
+  tsuzura: { size: 16, frames: 2 },
+  hokora: { size: 32, frames: 1 },
+  kibako: { size: 32, frames: 1 },
+  fuzukue: { size: 32, frames: 1 },
+  ningyo: { size: 32, frames: 1 },
+  ningyoTana: { size: 32, frames: 1 },
+  zenmaiSochi: { size: 32, frames: 1 },
+  niguruma: { size: 32, frames: 1 },
+  oodako: { size: 32, frames: 1 },
+  senryobako: { size: 32, frames: 1 },
+  shachiDaiza: { size: 32, frames: 1 },
+  sekihi: { size: 32, frames: 1 },
+  butsuzo: { size: 32, frames: 1 },
+  kakejiku: { size: 32, frames: 1 },
+  jizo: { size: 32, frames: 1 },
+  komeKikai: { size: 32, frames: 1 },
+  ushi: { size: 32, frames: 1 },
+  shoroAto: { size: 32, frames: 1 },
+  haka: { size: 32, frames: 1 },
+  saidan: { size: 32, frames: 1 },
+  tsuka: { size: 32, frames: 1 },
+  ishidan: { size: 32, frames: 1 },
+  zenmaiTana: { size: 32, frames: 1 },
+  jikkenDai: { size: 32, frames: 1 },
+  ransaiTsukue: { size: 32, frames: 1 },
+} as const satisfies Record<string, { size: 16 | 32; frames: 1 | 2 }>;
+export type ObjectSpriteId = keyof typeof OBJECT_DEFS;
+export const OBJECT_SPRITES = Object.keys(OBJECT_DEFS) as ObjectSpriteId[];
+
+/** 物の画像のどの点をタイルの左上に合わせるか（16 はそのまま、32 は下端の中央をタイルの下端の中央に）。 */
+export function objectDisplayOrigin(id: ObjectSpriteId): { x: number; y: number } {
+  const size = OBJECT_DEFS[id].size;
+  return { x: (size - 16) / 2, y: size - 16 };
+}
 
 export function objectKey(id: ObjectSpriteId): string {
   return `obj-${id}`;
@@ -72,6 +108,14 @@ export function heroSprite(gender: Gender): CharacterSpriteId {
 /** 反対の向き（話しかけられた人が、話しかけた人のほうを向く）。 */
 export function oppositeFacing(facing: Facing): Facing {
   return ({ up: 'down', down: 'up', left: 'right', right: 'left' } as const)[facing];
+}
+
+/**
+ * 物の重なり順。32 × 32 の物は上のタイルの半分まで覆うので、上の行（奥）に立った人でも物より手前に描く
+ * （そうしないと、祠や地蔵堂の真上に立った主人公が笠しか見えなくなる）。下の行の人はもちろん手前。
+ */
+export function objectDepth(tileY: number): number {
+  return personDepth(tileY - 1.5);
 }
 
 /**
