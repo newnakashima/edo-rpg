@@ -276,6 +276,7 @@ export const MAPS: Record<string, MapDef> = {
         y: 24,
         color: 0xd0a060,
         lines: ['子ども「お侍さん、渡世人ってやつかい？ 辰五郎親分の家なら、北の川向こうの大きなお屋敷だよ」'],
+        after: { flag: 'chapter3Cleared', lines: ['子ども「辰五郎親分、死んじゃったんだって……。お凛姉ちゃん、泣いてなかった？」'] },
       },
       {
         id: 'shimizuRyoshi',
@@ -284,11 +285,12 @@ export const MAPS: Record<string, MapDef> = {
         y: 28,
         color: 0x6a7a5a,
         lines: ['漁師「夜釣りの帰りに、裏山のほうで青い火がふわふわ揺れてるのを見たんだ。ありゃあ狐火だよ」'],
+        after: { flag: 'yakoDefeated', lines: ['漁師「裏山の狐火が出なくなってから、夜釣りも安心してできるようになったよ」'] },
       },
       {
         id: 'shimizuSendo',
         name: '船頭',
-        x: 38,
+        x: 36,
         y: 29,
         color: 0x4a6a8a,
         lines: ['船頭「清水の湊は、駿府へ江戸へと荷を運ぶ船でいつもにぎわってらあ」', '船頭「辰五郎親分の一家が湊をしきってるから、この辺じゃ悪さをする奴はいねえのさ」'],
@@ -306,7 +308,7 @@ export const MAPS: Record<string, MapDef> = {
     // 初めて入ったときは序章の始まり、第 3 章を終えて戻ったときは辰五郎の弔い（お凛が加わるまで）
     onEnter: { event: 'shimizuEnter', unless: 'orinJoined' },
   },
-  // 裏山: 麓から九十九折りに登る山道。西の脇道の奥に祠、東に沢、上の口が狐火の洞
+  // 裏山: 麓から九十九折りに登る山道。西の脇道の奥に祠、東に沢、山頂近くの岩場、上の口が狐火の洞
   urayama: {
     id: 'urayama',
     name: '清水湊・裏山',
@@ -316,8 +318,8 @@ export const MAPS: Record<string, MapDef> = {
       'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT,,T~~TTT',
       'TTTTTTTTTTTTTT,,,,^,,,TTTTTTTTTT,,T~~TTT',
       'TTTTTTTTTTTTTT,^,,,,,,TTTTTTTTTT,,T~~TTT',
-      'TTTTTTTTTTTTTT,,,,,,,,TT,,,,,,,,,,T~~TTT',
-      'TTTTTTTTTTTTTT,,,,,,^,TT,,,,,,,,,,T~~TTT',
+      'TTTTTTTTTTTTTT,,,,,,,,,,,,,,,,,,,,T~~TTT',
+      'TTTTTTTTTTTTTT,,,,,,^,,,,,,,,,,,,,T~~TTT',
       'TTTTTTTTTTTTTT,,^,,,,,TT,,TTTTTTTTT~~TTT',
       'TTTTTTTTTTTTTT,,,,,,,,TT,,TTTTTTTTT~~TTT',
       'TTTTTTTTTTTTTTTTTTTTTTTT,,TTTTTTTTT~~TTT',
@@ -371,6 +373,7 @@ export const MAPS: Record<string, MapDef> = {
         y: 16,
         color: 0x5a7a4a,
         lines: ['薬草取り「沢の向こうは静かでいいよ。……けど、この先の洞の近くじゃ、狐の鳴き声が人の声みたいに聞こえるんだ」'],
+        after: { flag: 'yakoDefeated', lines: ['薬草取り「洞の狐がいなくなって、山がすっかり静かになったよ。薬草もよく採れる」'] },
       },
     ],
     exits: [
@@ -654,7 +657,7 @@ MAPS.sunpu = {
       color: 0xd08a3a,
       lines: [
         '呼び込み「さあさ、お立ち会い！ 大坂は道頓堀から下ってまいりました、からくり一座の大興行！」',
-        '呼び込み「茶運び人形に文字書き人形、果ては生きた人と見まごう舞い人形まで！ ……工房？ 南東の蔵だが、見物衆は入れねえよ」',
+        '呼び込み「茶運び人形に文字書き人形、果ては生きた人と見まごう舞い人形まで！ ……工房？ この小屋の裏口の奥だが、見物衆は入れねえよ」',
       ],
       after: { flag: 'tetsubinDefeated', lines: ['呼び込み「座元が姿をくらましちまって、興行はおしまいだ。おれたちゃ何も知らなかったんだよ……」'] },
     },
@@ -714,6 +717,7 @@ MAPS.sunpu = {
         y: 12,
         color: 0x5a5a7a,
         lines: ['中間「この辺りは御城勤めのお武家の屋敷町だ。与力の黒田様の屋敷は、ほれ、あの大きな門よ」', '中間「黒田様の屋敷にゃ、夜な夜な大きな荷車が入っていくって噂だが……おっと、口がすべった」'],
+        after: { flag: 'meiboFound', lines: ['中間「黒田様はお城からお呼び出しがあったきりだ。屋敷の蔵から、とんでもねえものが出てきたって話だぜ」'] },
       },
       {
         id: 'sunpuTsuribito',
@@ -730,6 +734,7 @@ MAPS.sunpu = {
         y: 30,
         color: 0x6a9a5a,
         lines: ['茶摘みの娘「駿河のお茶は将軍様にも献上されるのよ。……この先の古いお屋敷？ 一座の人たちが夜中に出入りしてて気味が悪いわ」'],
+        after: { flag: 'tetsubinDefeated', lines: ['茶摘みの娘「南の古いお屋敷の騒ぎ、あなたたちが鎮めてくれたの？ これで安心して茶摘みができるわ」'] },
       },
   ],
   exits: [
@@ -1986,10 +1991,10 @@ MAPS.hiroshima = {
   areaLevel: 19,
   rows: [
     'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
-    'T,,,,,,,~~,~~~~~~~~~,~~,,,,,,,,,,~~,,,,,,T',
-    'TRRR,RRR~~,~.RRRRR.~,~~TTTT,=,,,,~~,,,,,,T',
-    'TWDW,WDW~~,~.RRRRR.~,~~TRRT,=,RRR~~RRRRRRT',
-    'T...,...~~,~.WWDWW.~,~~TDWT,=,WDW~~WWDWWWT',
+    'T,,,,,,,~~,~~~~~~~~~,~~,,,,,,,,,,~~TTTTTTT',
+    'TRRR,RRR~~,~^RRRRR^~,~~TTTT,=,,,,~~TTTTTTT',
+    'TWDW,WDW~~,~^RRRRR^~,~~TRRT,=,RRR~~RRRRRRT',
+    'T...,...~~,~^WWDWW^~,~~TDWT,=,WDW~~WWDWWWT',
     'T,,,,,,,~~,~T.....T~,~~T..T,=,...~~......T',
     'T,,,=,,,~~,~T.....T~,~~T,,T,=,,,,~~,,,,,,T',
     'T,,,=,,,~~,~~~~=~~~~,~~,,,,,=,,,,~~,,,,,,T',

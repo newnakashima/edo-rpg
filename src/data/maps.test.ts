@@ -820,4 +820,27 @@ describe('マップの広さと使い回し（テストプレイの指摘: ど�
       }
     }
   });
+
+  it('ほかのマップと同じ行（3 種類以上のタイルを含む行）が 3 割を超えない（大きさが違っても、写しを見つける）', () => {
+    const varied = (row: string) => new Set(row).size >= 3;
+    for (const a of maps) {
+      for (const b of maps) {
+        if (a === b || (NOT_YET_REMADE.includes(a.id) && NOT_YET_REMADE.includes(b.id))) continue;
+        const rowsB = new Set(b.rows);
+        const shared = a.rows.filter((r) => varied(r) && rowsB.has(r)).length;
+        expect(shared / a.rows.length, `${a.id} の行が ${b.id} にある`).toBeLessThanOrEqual(0.3);
+      }
+    }
+  });
+
+  it('歩けるマスはすべてつながっている（宝箱や町の人が閉じた区画にいない。古いセーブの位置で閉じ込められない）', () => {
+    for (const m of maps.filter((x) => !NOT_YET_REMADE.includes(x.id))) {
+      const open: { x: number; y: number }[] = [];
+      m.rows.forEach((row, y) => [...row].forEach((_, x) => (tileAt(m, x, y)?.blocked === false ? open.push({ x, y }) : undefined)));
+      const all = Object.fromEntries((m.gates ?? []).map((g) => [g.flag, true]));
+      const area = reachable(m, open[0]!, all);
+      const lost = open.filter((p) => !area.has(`${p.x},${p.y}`));
+      expect(lost.slice(0, 5), `${m.id}: ${lost.length} マスが離れている`).toEqual([]);
+    }
+  });
 });

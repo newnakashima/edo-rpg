@@ -1106,6 +1106,6 @@ export const EVENTS: Record<string, EventDef> = {
   yashikiChest3: chest('yashikiChest3', 'inro', '印籠'),
   yashikiChest4: chest('yashikiChest4', 'mankintan', '万金丹'),
   urayamaChest: chest('urayamaChest', 'omamori', '御守り'),
-  caveChest1: chest('caveChest1', 'dokukeshi', '毒消し'),
-  caveChest2: chest('caveChest2', 'kizugusuri', '傷薬'),
+  caveChest1: chest('caveChest1', 'kitsukegusuri', '気付け薬'),
+  caveChest2: chest('caveChest2', 'mankintan', '万金丹'),
 };
