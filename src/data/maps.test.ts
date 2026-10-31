@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ENCOUNTERS, ENEMIES } from './enemies';
+import { EVENTS } from './events';
 import { MAPS, START_POSITION, tileAt, TILES } from './maps';
 
 describe('マップのデータ', () => {
@@ -33,6 +34,15 @@ describe('マップのデータ', () => {
           expect(tileAt(dest, exit.toX, exit.toY)?.blocked).toBe(false);
           expect(dest.exits.some((e) => e.x === exit.toX && e.y === exit.toY)).toBe(false);
           expect(dest.npcs.some((n) => n.x === exit.toX && n.y === exit.toY)).toBe(false);
+        }
+      });
+
+      it('イベントの参照先があり、乗るイベントの場所は通れる', () => {
+        for (const npc of map.npcs) if (npc.event) expect(EVENTS[npc.event], npc.event).toBeDefined();
+        if (map.onEnter) expect(EVENTS[map.onEnter.event], map.onEnter.event).toBeDefined();
+        for (const t of map.triggers ?? []) {
+          expect(EVENTS[t.event], t.event).toBeDefined();
+          expect(tileAt(map, t.x, t.y)?.blocked).toBe(false);
         }
       });
 

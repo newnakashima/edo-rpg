@@ -4,7 +4,7 @@ import { COLORS, GAME_HEIGHT, GAME_WIDTH, setupCamera, textStyle } from '../ui/t
 import { Menu } from '../ui/widgets';
 import { browserStorage, listSlots } from '../systems/save';
 import { SaveSlotMenu } from '../ui/SaveSlotMenu';
-import { setState } from '../state';
+import { setPendingEvent, setState } from '../state';
 import { playBgm } from '../systems/audio';
 
 export class TitleScene extends Phaser.Scene {
@@ -16,6 +16,8 @@ export class TitleScene extends Phaser.Scene {
   }
 
   create(): void {
+    // 前のゲームの途中のイベントを持ち越さない
+    setPendingEvent(null);
     setupCamera(this);
     playBgm('bgm_title');
     this.controls = new Controls(this);
