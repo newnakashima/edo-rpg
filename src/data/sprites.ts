@@ -45,8 +45,11 @@ export const NPC_SPRITES = [
   'npc_tojin',
 ] as const;
 
+/** 敵方の人物（フィールドに立っている姿だけ。歩かないので歩行のコマにも立ち姿を置く）。 */
+export const VILLAIN_SPRITES = ['yashamaru', 'oboro', 'borei'] as const;
+
 /** シートがあるキャラクター。 */
-export const CHARACTER_SPRITES = ['hero_m', 'hero_f', 'kasumi', 'gendo', 'orin', 'tatsugoro', ...NPC_SPRITES] as const;
+export const CHARACTER_SPRITES = ['hero_m', 'hero_f', 'kasumi', 'gendo', 'orin', 'tatsugoro', ...NPC_SPRITES, ...VILLAIN_SPRITES] as const;
 export type CharacterSpriteId = (typeof CHARACTER_SPRITES)[number];
 
 /**

@@ -22,11 +22,16 @@ describe('人でない物の画像（テストプレイの指摘: 主要人物�
   // 人ではない物（祠・机など）。人は sprite、葛籠は object: 'tsuzura'
   const things = Object.values(MAPS).flatMap((m) => m.npcs.filter((n) => !n.sprite).map((n) => ({ map: m.id, npc: n })));
 
-  it('町の人でない物は、どれも物の画像を使う（色の仮表示がない）', () => {
+  it('人の画像のないものは、どれも物の画像を使う（色の仮表示がない）', () => {
     expect(things.length).toBeGreaterThan(30);
-    // 夜叉丸・朧・亡霊は人なので、歩行の画像を作るまでは除く
-    const people = ['yashamaru', 'kyoYashamaru', 'igaOboro', 'harajoBorei'];
-    for (const { map, npc } of things.filter((t) => !people.includes(t.npc.id))) expect(npc.object, `${map} ${npc.id}`).toBeDefined();
+    for (const { map, npc } of things) expect(npc.object, `${map} ${npc.id}`).toBeDefined();
+  });
+
+  it('夜叉丸・朧・亡霊（敵方の人物）にも画像がある', () => {
+    const ids = ['yashamaru', 'kyoYashamaru', 'igaOboro', 'harajoBorei'];
+    const npcs = Object.values(MAPS).flatMap((m) => m.npcs).filter((n) => ids.includes(n.id));
+    expect(npcs.map((n) => n.id).sort()).toEqual([...ids].sort());
+    for (const n of npcs) expect(n.sprite, n.id).toBeDefined();
   });
 
   it('物の画像はどれもどこかで使う', () => {
