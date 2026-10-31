@@ -409,6 +409,8 @@ export class BattleScene extends Phaser.Scene {
         return e.success ? 'うまく逃げ切った。' : '逃げられない！';
       case 'summon':
         return `${this.nameOf(e.target)}が現れた！`;
+      case 'charge':
+        return `${this.nameOf(e.actor)}は${SKILLS[e.skill]?.name ?? ''}の構えに入った！`;
     }
   }
 

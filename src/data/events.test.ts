@@ -7,7 +7,7 @@ import { isKnownItem } from './items';
 import { MAPS, tileAt } from './maps';
 import { EventRunner } from '../systems/eventScript';
 import { newGame, type GameState } from '../systems/gameState';
-import { createMember } from '../systems/party';
+import { createMember, memberLevel } from '../systems/party';
 
 /** イベントの手順を、分岐の中まで含めてすべてたどる。 */
 function* walk(steps: readonly EventStep[]): Generator<EventStep> {
@@ -440,5 +440,80 @@ describe('第 5 章の流れ', () => {
     expect(cleared.flags.chapter5Cleared).toBe(true);
     expect(cleared.party.map((m) => m.id)).toEqual(['hero', 'gendo', 'orin']);
     expect(cleared.away.map((m) => m.id)).toEqual(['kasumi']);
+  });
+});
+
+describe('第 6 章の流れ', () => {
+  const base = newGame('m', { mapId: 'hiroshima', x: 40, y: 13 });
+  const kasumi = createMember('kasumi', 17, { weapon: 'shinobiKodachi', armor: 'igaShozoku' });
+  const ch5 = {
+    ...base,
+    party: [createMember('hero', 20), createMember('gendo', 20), createMember('orin', 19)],
+    away: [kasumi],
+    flags: { intro: true, chapter4Cleared: true, kasumiAway: true, chapter5Cleared: true },
+  };
+
+  it('広島に入ると霞が戻る（kasumiRejoined）。装備はそのまま、平均レベル（Lv19）まで引き上げる', () => {
+    const back = run('hiroshimaEnter', ch5);
+    expect(back.flags.kasumiRejoined).toBe(true);
+    expect(back.party.map((m) => m.id)).toEqual(['hero', 'gendo', 'orin', 'kasumi']);
+    expect(back.away).toEqual([]);
+    expect(memberLevel(back.party[3]!)).toBe(19);
+    expect(back.party[3]!.equip).toEqual(kasumi.equip);
+  });
+
+  const back = run('hiroshimaEnter', ch5);
+
+  it('長崎に初めて入ると nagasakiArrived。2 回目からは何もしない', () => {
+    const arrived = run('nagasakiEnter', back);
+    expect(arrived.flags.nagasakiArrived).toBe(true);
+    expect(arrived.flags.chapter6Cleared).toBeFalsy();
+    expect(new EventRunner(EVENTS.nagasakiEnter!.steps).next(arrived).request.kind).toBe('done');
+  });
+
+  const arrived = run('nagasakiEnter', back);
+
+  it('出島の通詞から蘭斎のことを聞くと dejimaHeard。2 回目は短い', () => {
+    const heard = run('tsujiMeet', arrived);
+    expect(heard.flags.dejimaHeard).toBe(true);
+    const again = new EventRunner(EVENTS.tsujiMeet!.steps).next(heard);
+    expect(again.request.kind === 'say' && again.request.pages).toHaveLength(1);
+  });
+
+  const heard = run('tsujiMeet', arrived);
+
+  it('南蛮寺跡の礼拝堂の跡でからくり兵に勝つと shimabaraOpen。負けて出直すと口上を短くする', () => {
+    const runner = new EventRunner(EVENTS.nanbanjiOku!.steps);
+    const r = skipSay(runner, runner.next(heard));
+    expect(r.request).toMatchObject({ kind: 'battle', enemies: ['nanbanHei', 'gehoTsukai', 'nanbanHei'], level: 19, canEscape: false, loseOk: false });
+    expect(run('nanbanjiOku', heard).flags.shimabaraOpen).toBe(true);
+    const lost = run('nanbanjiOku', heard, 'defeat');
+    expect(lost.flags.shimabaraOpen).toBeFalsy();
+    const retry = new EventRunner(EVENTS.nanbanjiOku!.steps).next(lost);
+    expect(retry.request.kind === 'say' && retry.request.pages).toHaveLength(1);
+    expect(run('nanbanjiOku', lost).flags.shimabaraOpen).toBe(true);
+  });
+
+  const opened = run('nanbanjiOku', heard);
+
+  it('研究所で南蛮大筒からくり（Lv22）に勝つと nanbanOzutsuDefeated と noritoLearned。負けて出直すと口上を短くする', () => {
+    const runner = new EventRunner(EVENTS.nanbanOzutsu!.steps);
+    const r = skipSay(runner, runner.next(opened));
+    expect(r.request).toMatchObject({ kind: 'battle', enemies: ['nanbanOzutsu'], level: 22, canEscape: false, loseOk: false });
+    const won = run('nanbanOzutsu', opened);
+    expect(won.flags.nanbanOzutsuDefeated).toBe(true);
+    expect(won.flags.noritoLearned).toBe(true);
+    const lost = run('nanbanOzutsu', opened, 'defeat');
+    expect(lost.flags.nanbanOzutsuDefeated).toBeFalsy();
+    const retry = new EventRunner(EVENTS.nanbanOzutsu!.steps).next(lost);
+    const pages = retry.request.kind === 'say' ? retry.request.pages.join('') : '';
+    expect(pages).not.toContain('蘭斎「');
+    expect(run('nanbanOzutsu', lost).flags.nanbanOzutsuDefeated).toBe(true);
+  });
+
+  it('南蛮大筒からくりを倒して長崎に入ると第 6 章が終わる（chapter6Cleared）', () => {
+    const cleared = run('nagasakiEnter', run('nanbanOzutsu', opened));
+    expect(cleared.flags.chapter6Cleared).toBe(true);
+    expect(cleared.party).toHaveLength(4);
   });
 });

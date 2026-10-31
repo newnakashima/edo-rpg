@@ -26,5 +26,13 @@ export const SHOPS: Record<string, ShopDef> = {
   // 大坂（第 5 章）。霞は抜けているので、霞の装備は置かない（兵庫の装備は変えられない）
   osakaYorozu: { id: 'osakaYorozu', name: 'よろず屋', goods: ['kizugusuri', 'kintsuba', 'dokukeshi', 'hangontan', 'mankintan', 'kitsukegusuri'] },
   osakaKaji: { id: 'osakaKaji', name: '刀鍛冶', goods: ['sukehiro', 'kongoShakujo', 'renpatsuju', 'nanbanGusoku', 'toseiGusoku', 'hachigane', 'inro'] },
+  // 広島（第 6 章）。霞が戻る町なので、霞の装備も置く
+  hiroshimaYorozu: { id: 'hiroshimaYorozu', name: 'よろず屋', goods: ['kizugusuri', 'kintsuba', 'dokukeshi', 'hangontan', 'mankintan', 'kitsukegusuri'] },
+  hiroshimaKaji: { id: 'hiroshimaKaji', name: '刀鍛冶', goods: ['sukehiro', 'kageKodachi', 'kongoShakujo', 'renpatsuju', 'nanbanGusoku', 'kageShozoku', 'hachigane', 'inro'] },
+  hiroshimaKakibune: { id: 'hiroshimaKakibune', name: '牡蠣船', goods: ['kakimeshi', 'kizugusuri'] },
+  // 長崎・出島（第 6 章）
+  nagasakiYorozu: { id: 'nagasakiYorozu', name: 'よろず屋', goods: ['kizugusuri', 'kintsuba', 'kasutera', 'konpeito', 'dokukeshi', 'hangontan', 'mankintan', 'kitsukegusuri'] },
+  nagasakiKaji: { id: 'nagasakiKaji', name: '刀鍛冶', goods: ['tadayoshi', 'karakuriKagizume', 'rakanShakujo', 'orandaDo', 'kageShozoku', 'hachigane'] },
+  dejimaShop: { id: 'dejimaShop', name: '商館', goods: ['gewehr', 'tomegane', 'kasutera'] },
   nagoyaKaji: { id: 'nagoyaKaji', name: '刀鍛冶', goods: ['magoroku', 'kusarigama', 'kusarikatabira', 'shinobishozoku', 'hachigane', 'inro'] },
 };

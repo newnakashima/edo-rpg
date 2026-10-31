@@ -629,3 +629,89 @@ describe('第 5 章（大坂）の敵の技', () => {
     }
   });
 });
+
+describe('第 6 章（長崎・島原）の敵の技', () => {
+  const four = () => [createMember('hero', 30), createMember('kasumi', 30), createMember('gendo', 30), createMember('orin', 30)];
+  const guard = { p0: { kind: 'guard' }, p1: { kind: 'guard' }, p2: { kind: 'guard' }, p3: { kind: 'guard' } } as const;
+
+  /** 南蛮大筒からくりが装填するまでターンを進め、装填した直後の戦闘を返す（味方は防御だけ。毎ターン全回復）。 */
+  function untilCharged(seed: number): { state: BattleState; events: ReturnType<typeof resolveTurn>['events'] } {
+    let b = createBattle(four(), 'm', ['nanbanOzutsu'], 22, { canEscape: false });
+    const rng = seededRng(29 + seed);
+    for (let t = 0; t < 200; t++) {
+      const r = resolveTurn(b, guard, rng);
+      b = r.state;
+      for (const c of b.combatants) if (c.side === 'party') c.hp = c.stats.maxHp;
+      if (r.events.some((e) => e.type === 'charge')) return { state: b, events: r.events };
+    }
+    throw new Error('soten was not used');
+  }
+
+  it('装填すると構えに入り（charge のイベント）、次のターンに必ず大筒で味方 4 人全員を撃つ', () => {
+    for (let k = 0; k < 5; k++) {
+      const { state, events } = untilCharged(k);
+      expect(events.find((e) => e.type === 'charge')).toEqual({ type: 'charge', actor: 'e0', skill: 'ozutsu' });
+      expect(get(state, 'e0').charged).toBe('ozutsu');
+      const next = resolveTurn(state, guard, seededRng(100 + k));
+      expect(next.events.filter((e) => e.type === 'skill' && e.actor === 'e0').map((e) => (e.type === 'skill' ? e.skill : ''))).toEqual(['ozutsu']);
+      const hit = next.events.filter((e) => e.type === 'damage' || e.type === 'miss').map((e) => ('target' in e ? e.target : ''));
+      expect(hit.sort()).toEqual(['p0', 'p1', 'p2', 'p3']);
+      expect(get(next.state, 'e0').charged).toBeUndefined();
+    }
+  });
+
+  it('構えのあいだに眠らされても構えは解けず、起きて動けたときに大筒を撃つ', () => {
+    const { state } = untilCharged(0);
+    get(state, 'e0').status.sleep = 1;
+    const slept = resolveTurn(state, guard, seededRng(7));
+    expect(slept.events.some((e) => e.type === 'cannotAct' && e.actor === 'e0')).toBe(true);
+    expect(get(slept.state, 'e0').charged).toBe('ozutsu');
+    const woke = resolveTurn(slept.state, guard, seededRng(8));
+    expect(woke.events.some((e) => e.type === 'skill' && e.actor === 'e0' && e.skill === 'ozutsu')).toBe(true);
+  });
+
+  it('大筒は防御した味方へのダメージが、防御しないときより小さい', () => {
+    const { state } = untilCharged(1);
+    const attack = { p0: { kind: 'attack', target: 'e0' }, p1: { kind: 'attack', target: 'e0' }, p2: { kind: 'attack', target: 'e0' }, p3: { kind: 'attack', target: 'e0' } } as const;
+    const sum = (r: ReturnType<typeof resolveTurn>) =>
+      r.events.filter((e) => e.type === 'damage' && e.target.startsWith('p')).reduce((s, e) => s + (e.type === 'damage' ? e.damage : 0), 0);
+    expect(sum(resolveTurn(state, guard, seededRng(3)))).toBeLessThan(sum(resolveTurn(state, attack, seededRng(3))));
+  });
+
+  it('ぶどう弾は味方にランダムに 2〜3 回当たる', () => {
+    let b = createBattle(four(), 'm', ['nanbanOzutsu'], 22, { canEscape: false });
+    const rng = seededRng(41);
+    for (let t = 0; t < 200; t++) {
+      const r = resolveTurn(b, guard, rng);
+      const i = r.events.findIndex((e) => e.type === 'skill' && e.actor === 'e0' && e.skill === 'budodan');
+      if (i >= 0) {
+        const rest = r.events.slice(i + 1);
+        const end = rest.findIndex((e) => e.type === 'skill' || e.type === 'attack');
+        const hits = (end < 0 ? rest : rest.slice(0, end)).filter((e) => e.type === 'damage' || e.type === 'miss');
+        expect(hits.length).toBeGreaterThanOrEqual(2);
+        expect(hits.length).toBeLessThanOrEqual(3);
+        return;
+      }
+      b = r.state;
+      for (const c of b.combatants) if (c.side === 'party') c.hp = c.stats.maxHp;
+    }
+    throw new Error('budodan was not used');
+  });
+
+  it('海坊主の大波は味方 4 人全員に当たる', () => {
+    let b = createBattle(four(), 'm', ['umibozu'], 19, { canEscape: false });
+    const rng = seededRng(5);
+    for (let t = 0; t < 200; t++) {
+      const r = resolveTurn(b, guard, rng);
+      const i = r.events.findIndex((e) => e.type === 'skill' && e.actor === 'e0' && e.skill === 'onami');
+      if (i >= 0) {
+        const hit = r.events.slice(i + 1).filter((e) => e.type === 'damage' || e.type === 'miss').map((e) => ('target' in e ? e.target : ''));
+        expect(hit.slice(0, 4).sort()).toEqual(['p0', 'p1', 'p2', 'p3']);
+        return;
+      }
+      b = r.state;
+      for (const c of b.combatants) if (c.side === 'party') c.hp = c.stats.maxHp;
+    }
+    throw new Error('onami was not used');
+  });
+});

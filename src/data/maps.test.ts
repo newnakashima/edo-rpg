@@ -676,3 +676,122 @@ describe('第 5 章の大坂', () => {
     expect(respawnPoint('komeKura')).toEqual({ mapId: 'osaka', ...osaka.respawn });
   });
 });
+
+describe('第 6 章の広島・長崎・島原', () => {
+  const world = MAPS.world!;
+  const townOf = (name: string) => world.towns!.find((t) => t.name === name)!;
+  const hiroshima = MAPS.hiroshima!;
+  const nagasaki = MAPS.nagasaki!;
+  const ch5 = { chapter4Cleared: true, chapter5Cleared: true };
+
+  it('広島は第 5 章を終える（chapter5Cleared）まで、長崎は霞が戻る（kasumiRejoined）まで、島原は南蛮寺跡の手がかり（shimabaraOpen）まで入れない', () => {
+    for (const [name, flag] of [['広島', 'chapter5Cleared'], ['長崎', 'kasumiRejoined'], ['島原', 'shimabaraOpen']] as const) {
+      const t = townOf(name);
+      expect(townAction(world, t.x, t.y, 'ok', { chapter4Cleared: true }), name).toMatchObject({ kind: 'info' });
+      expect(townAction(world, t.x, t.y, 'ok', { [flag]: true }), name).toEqual({ kind: 'enter', to: t.to });
+    }
+  });
+
+  it('大坂より西の街道は、第 5 章を終えたら西国街道の敵・全滅で広島へ。長崎・島原のまわりは霞が戻ったら長崎の敵、長崎に着いたら全滅で長崎へ', () => {
+    const roadW = { x: 12, y: 11 };
+    expect(encounterAt(world, roadW.x, roadW.y, { chapter4Cleared: true })).toBeUndefined();
+    expect(encounterAt(world, roadW.x, roadW.y, ch5)).toBe('saigoku');
+    expect(respawnPoint('world', roadW.x, roadW.y, ch5)).toEqual({ mapId: 'hiroshima', ...hiroshima.respawn });
+    const nearNagasaki = { x: 5, y: 16 };
+    expect(encounterAt(world, nearNagasaki.x, nearNagasaki.y, ch5)).toBe('saigoku');
+    expect(encounterAt(world, nearNagasaki.x, nearNagasaki.y, { ...ch5, kasumiRejoined: true })).toBe('nagasaki');
+    expect(respawnPoint('world', nearNagasaki.x, nearNagasaki.y, { ...ch5, kasumiRejoined: true }).mapId).toBe('hiroshima');
+    expect(respawnPoint('world', nearNagasaki.x, nearNagasaki.y, { ...ch5, kasumiRejoined: true, nagasakiArrived: true })).toEqual({ mapId: 'nagasaki', ...nagasaki.respawn });
+    // 大坂のまわりは大坂の敵のまま
+    expect(encounterAt(world, 18, 11, ch5)).toBe('osaka');
+  });
+
+  it('広島・長崎・原城跡からワールドマップへ出ると、それぞれの印の隣に出る', () => {
+    for (const [mapId, name] of [['hiroshima', '広島'], ['nagasaki', '長崎'], ['harajo', '島原']] as const) {
+      const t = townOf(name);
+      for (const exit of MAPS[mapId]!.exits.filter((e) => e.to === 'world')) {
+        expect(Math.abs(exit.toX - t.x) + Math.abs(exit.toY - t.y), `${mapId} ${exit.x},${exit.y}`).toBe(1);
+      }
+    }
+  });
+
+  it('広島に入ると hiroshimaEnter（霞が戻る）、長崎に入ると nagasakiEnter を行い、それぞれ済んだら行わない', () => {
+    expect(hiroshima.onEnter).toEqual({ event: 'hiroshimaEnter', unless: 'kasumiRejoined' });
+    expect(nagasaki.onEnter).toEqual({ event: 'nagasakiEnter', unless: 'chapter6Cleared' });
+  });
+
+  it('広島と長崎の町の人には全員話しかけられる（広島の城の門番は堀の橋をふさぐ）', () => {
+    for (const map of [hiroshima, nagasaki]) {
+      const t = world.towns!.find((x) => x.to?.mapId === map.id)!;
+      const area = reachable(map, t.to!, {}, true);
+      for (const npc of map.npcs) expect(near(area, npc.x, npc.y), `${map.id}/${npc.id}`).toBe(true);
+    }
+    const castle = reachable(hiroshima, townOf('広島').to!, {}, true);
+    expect(castle.has('15,5')).toBe(false);
+  });
+
+  it('出島には最初から入れ、出島の人には全員話しかけられる', () => {
+    const start = townOf('長崎').to!;
+    const area = reachable(nagasaki, start, {}, true);
+    const gate = nagasaki.exits.find((e) => e.to === 'dejima')!;
+    expect(area.has(`${gate.x},${gate.y}`)).toBe(true);
+    const dejima = MAPS.dejima!;
+    const inside = reachable(dejima, { x: gate.toX, y: gate.toY }, {}, true);
+    for (const npc of dejima.npcs) expect(near(inside, npc.x, npc.y), npc.id).toBe(true);
+  });
+
+  it('南蛮寺跡の石段は、通詞の話を聞く（dejimaHeard）まで役人がふさぐ', () => {
+    const start = townOf('長崎').to!;
+    const exit = nagasaki.exits.find((e) => e.to === 'nanbanji')!;
+    expect(reachable(nagasaki, start, {}, true).has(`${exit.x},${exit.y}`)).toBe(false);
+    expect(reachable(nagasaki, start, { dejimaHeard: true }, true).has(`${exit.x},${exit.y}`)).toBe(true);
+  });
+
+  it('南蛮寺跡の入口から礼拝堂の跡の前へ行け、そこを通らなければ祭壇に近づけない。葛籠と見どころにはすべて近づける', () => {
+    const ruin = MAPS.nanbanji!;
+    const enter = nagasaki.exits.find((e) => e.to === 'nanbanji')!;
+    const landing = { x: enter.toX, y: enter.toY };
+    const area = reachable(ruin, landing, {}, true);
+    for (const t of ruin.triggers!) {
+      expect(area.has(`${t.x},${t.y}`)).toBe(true);
+      expect(t.unless).toBe('shimabaraOpen');
+    }
+    for (const npc of ruin.npcs) expect(near(area, npc.x, npc.y), npc.id).toBe(true);
+    const saidan = ruin.npcs.find((n) => n.id === 'nanbanjiSaidan')!;
+    expect(near(reachable(wallTriggers(ruin), landing, {}, true), saidan.x, saidan.y)).toBe(false);
+  });
+
+  it('原城跡の入口から本丸の奥の石段（研究所への出口）まで行け、葛籠と見どころにはすべて近づける', () => {
+    const castle = MAPS.harajo!;
+    const area = reachable(castle, townOf('島原').to!, {}, true);
+    for (const e of castle.exits) expect(area.has(`${e.x},${e.y}`), `${e.to} ${e.x},${e.y}`).toBe(true);
+    for (const npc of castle.npcs) expect(near(area, npc.x, npc.y), npc.id).toBe(true);
+  });
+
+  it('研究所の入口から南蛮大筒からくりの場所へ行け、そこを通らなければ蘭斎の机に近づけない。葛籠と見どころにはすべて近づける', () => {
+    const lab = MAPS.kenkyujo!;
+    const enter = MAPS.harajo!.exits.find((e) => e.to === 'kenkyujo')!;
+    const landing = { x: enter.toX, y: enter.toY };
+    const area = reachable(lab, landing, {}, true);
+    for (const t of lab.triggers!) {
+      expect(area.has(`${t.x},${t.y}`)).toBe(true);
+      expect(t.unless).toBe('nanbanOzutsuDefeated');
+    }
+    for (const npc of lab.npcs) expect(near(area, npc.x, npc.y), npc.id).toBe(true);
+    const desk = lab.npcs.find((n) => n.id === 'ransaiTsukue')!;
+    expect(near(reachable(wallTriggers(lab), landing, {}, true), desk.x, desk.y)).toBe(false);
+  });
+
+  it('出島・南蛮寺跡・原城跡・研究所で全滅したら長崎の旅籠の前に戻る', () => {
+    for (const id of ['dejima', 'nanbanji', 'harajo', 'kenkyujo']) expect(respawnPoint(id), id).toEqual({ mapId: 'nagasaki', ...nagasaki.respawn });
+  });
+
+  it('第 6 章の町とダンジョンは、ほかのマップと形を使い回していない', () => {
+    const ids = ['hiroshima', 'nagasaki', 'dejima', 'nanbanji', 'harajo', 'kenkyujo'];
+    const shapes = new Map(Object.values(MAPS).map((m) => [m.id, m.rows.join('\n')]));
+    for (const id of ids) {
+      const shape = shapes.get(id);
+      for (const [other, s] of shapes) if (other !== id) expect(s === shape, `${id} = ${other}`).toBe(false);
+    }
+  });
+});
