@@ -803,28 +803,38 @@ describe('第 6 章の広島・長崎・島原', () => {
 });
 
 describe('マップの広さと使い回し（テストプレイの指摘: どの町もダンジョンも同じ・狭い）', () => {
-  // まだ作り直していないマップ。作り直したら外す
-  const NOT_YET_REMADE = ['iga', 'igaSato', 'kagiya', 'osaka', 'komeKura'];
   /** 建物の中や、塀で囲まれた小さな区画（出島）。町・ダンジョンより狭くてよい。 */
   const SMALL = ['kobo', 'yoriki', 'takoya', 'dejima'];
   const maps = Object.values(MAPS).filter((m) => m.id !== 'world');
   const area = (m: MapDef) => m.rows.length * (m.rows[0]?.length ?? 0);
 
   it('町は 1100 マス以上、ダンジョン・野山は 750 マス以上、建物の中・小さな区画は 400 マス以上', () => {
-    for (const m of maps.filter((x) => !NOT_YET_REMADE.includes(x.id))) {
+    for (const m of maps) {
       const min = SMALL.includes(m.id) ? 400 : m.respawn ? 1100 : 750;
       expect(area(m), m.id).toBeGreaterThanOrEqual(min);
     }
   });
 
-  it('同じ大きさのマップどうしでも、半分以上のマスが同じものはない（形の使い回しがない）', () => {
+  it('同じ大きさのマップどうしでも、歩ける場所の半分以上が重なるものはない（形の使い回しがない）', () => {
+    // 壁や木で埋めた部分はどのダンジョンでも同じになるので、どちらかで歩けるマスだけを比べる
+    const open = (m: MapDef, x: number, y: number) => tileAt(m, x, y)?.blocked === false;
     for (const [i, a] of maps.entries()) {
       for (const b of maps.slice(i + 1)) {
-        if (NOT_YET_REMADE.includes(a.id) && NOT_YET_REMADE.includes(b.id)) continue;
         if (a.rows.length !== b.rows.length || a.rows[0]?.length !== b.rows[0]?.length) continue;
+        let either = 0;
         let same = 0;
-        a.rows.forEach((row, y) => [...row].forEach((ch, x) => (same += ch === b.rows[y]![x] ? 1 : 0)));
-        expect(same / area(a), `${a.id} と ${b.id}`).toBeLessThan(0.5);
+        a.rows.forEach((row, y) =>
+          [...row].forEach((ch, x) => {
+            if (!open(a, x, y) && !open(b, x, y)) return;
+            either += 1;
+            if (ch === b.rows[y]![x]) same += 1;
+          }),
+        );
+        expect(same / either, `${a.id} と ${b.id}`).toBeLessThan(0.5);
+        // 床の文字だけ変えた写しも見つける: 歩ける・歩けないの形が重なる割合
+        let both = 0;
+        a.rows.forEach((row, y) => [...row].forEach((_, x) => (both += open(a, x, y) && open(b, x, y) ? 1 : 0)));
+        expect(both / either, `${a.id} と ${b.id}（歩ける形）`).toBeLessThan(0.5);
       }
     }
   });
@@ -833,7 +843,7 @@ describe('マップの広さと使い回し（テストプレイの指摘: ど�
     const varied = (row: string) => new Set(row).size >= 3;
     for (const a of maps) {
       for (const b of maps) {
-        if (a === b || (NOT_YET_REMADE.includes(a.id) && NOT_YET_REMADE.includes(b.id))) continue;
+        if (a === b) continue;
         const rowsB = new Set(b.rows);
         const shared = a.rows.filter((r) => varied(r) && rowsB.has(r)).length;
         expect(shared / a.rows.length, `${a.id} の行が ${b.id} にある`).toBeLessThanOrEqual(0.3);
@@ -859,7 +869,7 @@ describe('マップの広さと使い回し（テストプレイの指摘: ど�
       MAPS.world!.towns!.find((t) => t.to?.mapId === m.id)?.to ??
       Object.values(MAPS).flatMap((o) => o.exits.filter((e) => e.to === m.id).map((e) => ({ x: e.toX, y: e.toY })))[0] ??
       warps.find((w) => w.mapId === m.id);
-    for (const m of maps.filter((x) => !NOT_YET_REMADE.includes(x.id))) {
+    for (const m of maps) {
       const start = entrance(m);
       expect(start, m.id).toBeDefined();
       if (!start) continue;
@@ -872,7 +882,7 @@ describe('マップの広さと使い回し（テストプレイの指摘: ど�
   });
 
   it('歩けるマスはすべてつながっている（宝箱や町の人が閉じた区画にいない。古いセーブの位置で閉じ込められない）', () => {
-    for (const m of maps.filter((x) => !NOT_YET_REMADE.includes(x.id))) {
+    for (const m of maps) {
       const open: { x: number; y: number }[] = [];
       m.rows.forEach((row, y) => [...row].forEach((_, x) => (tileAt(m, x, y)?.blocked === false ? open.push({ x, y }) : undefined)));
       const all = Object.fromEntries((m.gates ?? []).map((g) => [g.flag, true]));

@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { STARTING_EQUIPMENT } from '../data/equipment';
 import { newGame, STARTING_ITEMS } from './gameState';
 import { createMember } from './party';
-import { deserialize, listSlots, load, readSlot, save, serialize, SLOT_COUNT, slotKey, type KeyValueStorage } from './save';
+import { MAPS } from '../data/maps';
+import { deserialize, listSlots, load, MAPS_REBUILT_IN_V6, readSlot, save, SAVE_VERSION, serialize, SLOT_COUNT, slotKey, type KeyValueStorage } from './save';
 
 function memoryStorage(): KeyValueStorage & { data: Map<string, string> } {
   const data = new Map<string, string>();
@@ -21,7 +22,7 @@ describe('save', () => {
     const storage = memoryStorage();
     const s = { ...state(), money: 123, flags: { intro: true } };
     save(storage, 1, s, new Date('2026-10-31T00:00:00Z'));
-    expect(load(storage, 1)).toEqual({ version: 5, savedAt: '2026-10-31T00:00:00.000Z', state: s });
+    expect(load(storage, 1)).toEqual({ version: SAVE_VERSION, savedAt: '2026-10-31T00:00:00.000Z', state: s });
   });
 
   it('空きスロットは null', () => {
@@ -89,7 +90,7 @@ describe('save', () => {
     delete v1state.items;
     const text = JSON.stringify({ version: 1, savedAt: '2026-10-31T00:00:00.000Z', state: v1state });
     expect(deserialize(text)?.state.items).toEqual(STARTING_ITEMS);
-    expect(deserialize(text)?.version).toBe(5);
+    expect(deserialize(text)?.version).toBe(SAVE_VERSION);
   });
 
   it('未対応の版や、おかしな道具のデータは読まない', () => {
@@ -105,7 +106,7 @@ describe('版 3（装備）', () => {
   it('版 2 のセーブデータは加入時の装備を付けて読む', () => {
     const v2state = { ...state(), party: [{ id: 'hero', exp: 0, hp: 10, mp: 1 }] };
     const data = deserialize(JSON.stringify({ version: 2, savedAt: '2026-10-31T00:00:00.000Z', state: v2state }));
-    expect(data?.version).toBe(5);
+    expect(data?.version).toBe(SAVE_VERSION);
     expect(data?.state.party[0]?.equip).toEqual(STARTING_EQUIPMENT.hero);
   });
 
@@ -132,7 +133,7 @@ describe('版 4（預かり）', () => {
     const v3state: Record<string, unknown> = { ...state() };
     delete v3state.storage;
     const data = deserialize(JSON.stringify({ version: 3, savedAt: '2026-10-31T00:00:00.000Z', state: v3state }));
-    expect(data?.version).toBe(5);
+    expect(data?.version).toBe(SAVE_VERSION);
     expect(data?.state.storage).toEqual({});
   });
 
@@ -149,7 +150,7 @@ describe('版 5（一時離脱の仲間）', () => {
     const v4state: Record<string, unknown> = { ...state() };
     delete v4state.away;
     const data = deserialize(JSON.stringify({ version: 4, savedAt: '2026-10-31T00:00:00.000Z', state: v4state }));
-    expect(data?.version).toBe(5);
+    expect(data?.version).toBe(SAVE_VERSION);
     expect(data?.state.away).toEqual([]);
   });
 
@@ -183,5 +184,34 @@ describe('版 5（一時離脱の仲間）', () => {
 describe('newGame', () => {
   it('旅立ちの道具を持って始まる', () => {
     expect(state().items).toEqual(STARTING_ITEMS);
+  });
+});
+
+describe('版 6（序章〜第 5 章の町・ダンジョンの作り直し）', () => {
+  const v5 = (mapId: string, x: number, y: number) =>
+    deserialize(JSON.stringify({ version: 5, savedAt: '2026-10-31T00:00:00.000Z', state: { ...state(), mapId, x, y } }))?.state;
+
+  it('版 5 で作り直したマップにいたら、旅籠の前へ移す（大坂の米蔵の岸＝用心棒の向こうにいた古いセーブも）', () => {
+    expect(v5('osaka', 25, 5)).toMatchObject({ mapId: 'osaka', ...MAPS.osaka!.respawn });
+    expect(v5('shimizu', 3, 4)).toMatchObject({ mapId: 'shimizu', ...MAPS.shimizu!.respawn });
+  });
+
+  it('ダンジョンにいたら、近くの町の旅籠の前へ移す', () => {
+    expect(v5('komeKura', 10, 14)).toMatchObject({ mapId: 'osaka', ...MAPS.osaka!.respawn });
+    expect(v5('kitsunebiCave', 10, 12)).toMatchObject({ mapId: 'shimizu', ...MAPS.shimizu!.respawn });
+  });
+
+  it('ワールドマップや、作り直していない第 6 章のマップの位置はそのまま', () => {
+    expect(v5('world', 41, 10)).toMatchObject({ mapId: 'world', x: 41, y: 10 });
+    expect(v5('hiroshima', 40, 13)).toMatchObject({ mapId: 'hiroshima', x: 40, y: 13 });
+  });
+
+  it('版 6 のセーブは、作り直したマップの中でもそのままの位置で読む', () => {
+    const s = { ...state(), mapId: 'osaka', x: 26, y: 9 };
+    expect(deserialize(serialize(s))?.state).toMatchObject({ mapId: 'osaka', x: 26, y: 9 });
+  });
+
+  it('作り直したマップの一覧は、どれも実在する', () => {
+    for (const id of MAPS_REBUILT_IN_V6) expect(MAPS[id], id).toBeDefined();
   });
 });

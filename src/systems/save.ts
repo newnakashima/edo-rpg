@@ -2,6 +2,7 @@
 import { CHARACTERS, isGuest, type CharacterId } from '../data/characters';
 import { EQUIP_SLOTS, EQUIPMENT, STARTING_EQUIPMENT, type EquipSlot } from '../data/equipment';
 import { isKnownItem, MAX_ITEM_COUNT } from '../data/items';
+import { respawnPoint } from '../data/maps';
 import { STARTING_ITEMS, type GameState } from './gameState';
 import { memberStats } from './party';
 
@@ -12,8 +13,16 @@ import { memberStats } from './party';
  * - 3: 仲間の装備（party[].equip）を追加
  * - 4: 飛脚の預かり（storage）を追加
  * - 5: 一時離脱の仲間（away）を追加
+ * - 6: 序章〜第 5 章の町・ダンジョンを作り直した（古い位置は、新しい形では壁の中や見張りの向こうになりうる）
  */
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;
+
+/** 版 6 で形を作り直したマップ。版 5 までのセーブがこの中にいたら、旅籠の前（ダンジョンなら近くの町の旅籠の前）へ移す。 */
+export const MAPS_REBUILT_IN_V6: readonly string[] = [
+  'shimizu', 'urayama', 'kitsunebiCave', 'sunpu', 'kobo', 'yoriki', 'karakuriYashiki',
+  'nagoya', 'takoya', 'horikawaKura', 'tenshu', 'kyo', 'rashomon', 'oninosu',
+  'iga', 'igaSato', 'kagiya', 'osaka', 'komeKura',
+];
 export const SLOT_COUNT = 3;
 const KEY_PREFIX = 'edo-rpg/save/';
 
@@ -121,6 +130,9 @@ function migrate(version: unknown, state: unknown): unknown {
     } else if (v === 4) {
       // 版 4 には一時離脱の仲間がない（第 5 章より前なので、抜けている仲間はいない）
       s = { ...s, away: [] };
+    } else if (v === 5 && typeof s.mapId === 'string' && MAPS_REBUILT_IN_V6.includes(s.mapId)) {
+      // 版 5 までの位置は、作り直したマップでは壁の中や、見張りの向こう（大坂の米蔵の岸など）になりうる
+      s = { ...s, ...respawnPoint(s.mapId) };
     }
     v++;
   }

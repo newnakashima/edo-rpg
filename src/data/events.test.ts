@@ -398,7 +398,7 @@ describe('第 4 章の流れ', () => {
 });
 
 describe('第 5 章の流れ', () => {
-  const base = newGame('m', { mapId: 'osaka', x: 28, y: 6 });
+  const base = newGame('m', MAPS.world!.towns!.find((t) => t.name === '大坂')!.to!);
   const party = [base.party[0]!, createMember('kasumi', 17), createMember('gendo', 17), createMember('orin', 17)];
   const ch4 = { ...base, party, flags: { intro: true, chapter3Cleared: true, orinJoined: true, chapter4Cleared: true } };
 
