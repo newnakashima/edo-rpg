@@ -22,7 +22,7 @@ import { reviveAfterDefeat } from '../systems/facilities';
 import { gainExp } from '../systems/party';
 import { playBgm } from '../systems/audio';
 import { defaultRng } from '../systems/random';
-import { getState, setState } from '../state';
+import { getState, reportBattleOutcome, setState } from '../state';
 import { Controls } from '../ui/input';
 import { COLORS, GAME_HEIGHT, GAME_WIDTH, setupCamera, textStyle } from '../ui/theme';
 import { drawWindow, Menu, menuHeight, MessageWindow, type MenuItem } from '../ui/widgets';
@@ -31,6 +31,8 @@ export interface BattleData {
   enemyIds: string[];
   level: number;
   canEscape?: boolean;
+  /** 負けても全滅扱いにしない（イベントの負けてもよい戦闘）。HP 1 で起き上がり、フィールドに戻る。 */
+  loseOk?: boolean;
 }
 
 const EVENT_MS = 650;
@@ -59,6 +61,9 @@ export class BattleScene extends Phaser.Scene {
   private commands: Record<string, Command> = {};
   /** 演出中は入力を受け付けない。 */
   private busy = false;
+  private loseOk = false;
+  /** 戦闘を始めたマップ。フィールドに戻るときに渡す。 */
+  private fromMapId = '';
 
   constructor() {
     super('Battle');
@@ -71,7 +76,9 @@ export class BattleScene extends Phaser.Scene {
     this.partyTexts = new Map();
     this.menus = [];
     this.busy = false;
+    this.loseOk = data.loseOk ?? false;
     const state = getState();
+    this.fromMapId = state.mapId;
     this.battle = createBattle(state.party, state.gender, data.enemyIds, data.level, {
       canEscape: data.canEscape ?? true,
       items: state.items,
@@ -490,6 +497,7 @@ export class BattleScene extends Phaser.Scene {
         this.startCommandInput();
         return;
       case 'escaped':
+        reportBattleOutcome('escaped');
         this.finish(() => {
           const s = getState();
           setState({ ...s, party: partyAfterBattle(s.party, this.battle), items: this.battle.items });
@@ -505,6 +513,7 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private victory(): void {
+    reportBattleOutcome('victory');
     const state = getState();
     const rewards = computeRewards(this.battle);
     const party = partyAfterBattle(state.party, this.battle);
@@ -524,6 +533,18 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private defeat(): void {
+    reportBattleOutcome('defeat');
+    if (this.loseOk) {
+      this.log.setText('');
+      this.controls.flush();
+      this.message.show(['一行は力尽きた……'], () => {
+        const s = getState();
+        const party = partyAfterBattle(s.party, this.battle).map((m) => ({ ...m, hp: Math.max(1, m.hp) }));
+        setState({ ...s, party, items: this.battle.items });
+        this.finish();
+      });
+      return;
+    }
     const state = getState();
     const map = MAPS[state.mapId];
     // 全滅したら、その地域の町の旅籠の前に戻る（序章では清水湊）
@@ -543,7 +564,7 @@ export class BattleScene extends Phaser.Scene {
     before?.();
     this.busy = true;
     this.cameras.main.fadeOut(250, 0, 0, 0);
-    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Field'));
+    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Field', { fromMapId: this.fromMapId }));
   }
 
   update(): void {

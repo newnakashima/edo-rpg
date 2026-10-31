@@ -1,0 +1,52 @@
+# イベントスクリプト
+
+シナリオの会話・分岐・戦闘などは、コードを書かずにデータ（`src/data/events.ts`）として足します。
+形は `src/data/eventTypes.ts`、実行は `src/systems/eventScript.ts`（画面に依存しない）、画面への組み込みは `src/scenes/FieldScene.ts` です。
+
+## イベントを始めるきっかけ
+
+| きっかけ | 書く場所 |
+| --- | --- |
+| 人や物に話しかける | `maps.ts` の NPC に `event: 'イベントの ID'` |
+| マップに入る | マップに `onEnter: { event, unless }` |
+| 決まった場所に乗る | マップに `triggers: [{ x, y, event, unless }]` |
+
+`unless` に書いたフラグが立っていれば、そのイベントは始めません（一度きりのイベントに使う）。
+`unless` のフラグはイベントの中で `setFlag` で立てます。踏むトリガーで立て忘れると、そのマスを踏むたびに始まるので、`unless` と `setFlag` は組で書きます。
+`warp` や全滅で別のマップに移ったときは、途中のイベントが終わってから、移った先のマップの `onEnter` を行います（同じマップで戦闘から戻っただけなら行いません）。
+
+イベントが参照する道具・敵・仲間・移動先は、`src/data/events.test.ts` が確かめます。
+
+## 手順
+
+| type | 内容 |
+| --- | --- |
+| `say` | 台詞（1 要素が 1 ページ）。`{hero}` は主人公の名前。`linesF` があれば女主人公のときはそちら |
+| `setFlag` | フラグを立てる（`value: false` で下ろす） |
+| `if` | フラグが立っていれば `then`、なければ `else` |
+| `choice` | 選択肢。選んだ `steps` を行い、そのあと続きに戻る |
+| `giveItem` / `giveMoney` | 道具・装備品、お金を渡す。持ちきれない（99 個を超える）道具は渡さず、`ifFull` があればそれを行う |
+| `join` | 新しい仲間を加える（パーティーの平均レベル〈切り捨て、最低 1〉、加入時の装備）。加入済み・満員なら何もしない。一時離脱からの復帰は、必要になったときに別の手順として足す |
+| `heal` | 全員を全回復する |
+| `battle` | 戦闘。勝つか逃げれば続きへ。`canEscape` を省くと逃げられない。`ifLose` があれば負けても全滅にせず（倒れた仲間は HP 1 で起き上がる）、`ifLose` を行う。なければ通常の全滅でイベントは終わる |
+| `warp` | 場所を移す（移った先で続きを行う） |
+| `end` | ここで終える |
+
+## 例
+
+```ts
+myEvent: {
+  id: 'myEvent',
+  steps: [
+    { type: 'if', flag: 'done', then: [{ type: 'say', lines: ['もう用はない'] }], else: [
+      { type: 'say', lines: ['{hero}、頼みがある'] },
+      { type: 'choice', prompt: '引き受けるか？', options: [
+        { label: 'はい', steps: [{ type: 'battle', enemies: ['yamainu'], level: 2 }, { type: 'setFlag', flag: 'done' }] },
+        { label: 'いいえ', steps: [{ type: 'end' }] },
+      ] },
+    ] },
+  ],
+},
+```
+
+戦闘や `warp` でフィールドを離れる間、途中のイベントは `state.ts` が預かり、戻ってきたフィールドが続きを行います。途中のイベントはセーブしません（記録は旅籠・飛脚でだけ行うため、イベントの途中で記録されることはない）。

@@ -1,7 +1,6 @@
 import Phaser from 'phaser';
-import { characterName } from '../data/characters';
 import { ENCOUNTERS } from '../data/enemies';
-import { MAPS, START_POSITION, tileAt, type MapDef, type NpcDef } from '../data/maps';
+import { MAPS, START_POSITION, tileAt, type EventTrigger, type MapDef, type NpcDef } from '../data/maps';
 import { pickGroup, step } from '../systems/encounter';
 import { dangoPrice, eatDango, innPrice, stayAtInn } from '../systems/facilities';
 import { prayAtTemple, templePrice } from '../systems/shop';
@@ -11,7 +10,9 @@ import { memberLevel } from '../systems/party';
 import { defaultRng } from '../systems/random';
 import { playBgm } from '../systems/audio';
 import { browserStorage } from '../systems/save';
-import { getState, setState } from '../state';
+import { getState, setPendingEvent, setState, takePendingEvent } from '../state';
+import { EVENTS } from '../data/events';
+import { EventRunner, type EventInput } from '../systems/eventScript';
 import { Controls } from '../ui/input';
 import { FieldMenu } from '../ui/FieldMenu';
 import { TradeMenu, type TradeMode } from '../ui/TradeMenu';
@@ -38,6 +39,10 @@ export class FieldScene extends Phaser.Scene {
   private map!: MapDef;
   private player!: Phaser.GameObjects.Image;
   private moving = false;
+  /** 行っている途中のイベント。 */
+  private runner: EventRunner | null = null;
+  /** このマップに入ったときのイベントを、まだ行っていない。 */
+  private enterPending = false;
   private message!: MessageWindow;
   /** メニューなど、開いている間は移動を止める UI（後に開いたものが上）。 */
   private overlays: Overlay[] = [];
@@ -46,17 +51,20 @@ export class FieldScene extends Phaser.Scene {
     super('Field');
   }
 
-  create(): void {
+  /** fromMapId: 戦闘から戻ったとき、戦闘を始めたマップ（同じマップなら、マップに入ったときのイベントを行わない）。 */
+  create(data: { fromMapId?: string } = {}): void {
     setupCamera(this);
     this.controls = new Controls(this);
     this.moving = false;
     this.overlays = [];
+    this.runner = null;
+    this.enterPending = false;
     const state = getState();
     const map = MAPS[state.mapId];
     if (!map) {
       // セーブデータのマップが見つからない場合は、最初の場所から始め直す
       setState({ ...state, ...START_POSITION });
-      this.scene.restart();
+      this.scene.restart({});
       return;
     }
     this.map = map;
@@ -64,7 +72,7 @@ export class FieldScene extends Phaser.Scene {
     if (tileAt(map, state.x, state.y)?.blocked !== false) {
       const fallback = map.respawn ? { mapId: map.id, ...map.respawn } : START_POSITION;
       setState({ ...state, ...fallback });
-      this.scene.restart();
+      this.scene.restart({});
       return;
     }
     playBgm(map.encounter ? 'bgm_road' : 'bgm_town');
@@ -85,13 +93,87 @@ export class FieldScene extends Phaser.Scene {
     this.message = new MessageWindow(this, 8, GAME_HEIGHT - 62, GAME_WIDTH - 16, 54);
     this.showAreaName(map.name);
 
-    if (!state.flags.intro) {
-      setState({ ...state, flags: { ...state.flags, intro: true } });
-      const name = characterName('hero', state.gender);
-      this.message.show([
-        `雨の夜、駿河の清水湊。廻船問屋の荷の護衛を終えた渡世人・${name}は、この町の親分・辰五郎の一家に草鞋を脱いだ。`,
-        '（十字キーで移動、決定で話す・調べる、取消でメニュー）',
-      ]);
+    // 戦闘や移動から戻ってきたら、途中のイベントの続きを行う。なければ、マップに入ったときのイベントを行う
+    // 移動・全滅で別のマップに来たときは、途中のイベントが終わってから、このマップに入ったときのイベントを行う
+    const pending = takePendingEvent();
+    const cameFrom = pending?.fromMapId ?? data.fromMapId;
+    this.enterPending = cameFrom !== map.id;
+    if (pending) {
+      this.runner = pending.runner;
+      this.advanceEvent(pending.resume);
+    } else {
+      this.runEnterEvent();
+    }
+  }
+
+  /** マップに入ったときのイベントを、まだ行っていなければ行う。 */
+  private runEnterEvent(): void {
+    if (!this.enterPending || this.runner || this.moving) return;
+    this.enterPending = false;
+    if (this.map.onEnter) this.startTrigger(this.map.onEnter);
+  }
+
+  private startTrigger(trigger: EventTrigger): boolean {
+    if (trigger.unless && getState().flags[trigger.unless]) return false;
+    return this.startEvent(trigger.event);
+  }
+
+  private startEvent(id: string): boolean {
+    const def = EVENTS[id];
+    if (!def) return false;
+    this.runner = new EventRunner(def.steps);
+    this.advanceEvent();
+    return true;
+  }
+
+  /** イベントを次に画面に頼むことが出るまで進め、それを行う。 */
+  private advanceEvent(input?: EventInput): void {
+    const runner = this.runner;
+    if (!runner) return;
+    const fromMapId = getState().mapId;
+    const { state, request } = runner.next(getState(), input);
+    setState(state);
+    switch (request.kind) {
+      case 'say':
+        this.message.show(request.pages, () => this.advanceEvent());
+        return;
+      case 'choice': {
+        const open = () => {
+          const menu: Menu = new Menu(this, GAME_WIDTH - 150, 40, 140, request.labels.map((label) => ({ label })), (i) => {
+            this.closeOverlay(menu);
+            this.advanceEvent({ kind: 'choice', index: i });
+          });
+          this.pushOverlay(menu);
+        };
+        if (request.prompt) this.message.show([request.prompt], open);
+        else open();
+        return;
+      }
+      case 'battle':
+        // 戦闘から戻ってきたフィールドが続きを行う
+        // 既知の制限（見送り）: warp の直後に battle が続くと、このとき fromMapId が移動先のマップになり、
+        // 戦闘から戻ったときに移動先の onEnter が行われない。今のデータに warp を使うイベントはないので見送る。
+        // 本来は PendingEvent に enterPending を持たせ、ここで this.enterPending を引き継ぎ、create で復元する（フェーズ 4 で直す）。
+        setPendingEvent({ runner, fromMapId });
+        this.runner = null;
+        this.moving = true;
+        this.cameras.main.flash(250, 255, 255, 255);
+        this.time.delayedCall(260, () =>
+          this.scene.start('Battle', { enemyIds: request.enemies, level: request.level, canEscape: request.canEscape, loseOk: request.loseOk }),
+        );
+        return;
+      case 'warp':
+        setPendingEvent({ runner, fromMapId });
+        this.runner = null;
+        this.moving = true;
+        this.cameras.main.fadeOut(200, 0, 0, 0);
+        this.cameras.main.once('camerafadeoutcomplete', () => this.scene.restart({}));
+        return;
+      case 'done':
+        this.runner = null;
+        this.controls.flush();
+        this.runEnterEvent();
+        return;
     }
   }
 
@@ -132,7 +214,8 @@ export class FieldScene extends Phaser.Scene {
       top.update(this.controls);
       return;
     }
-    if (this.moving) return;
+    // イベントの途中（画面の切り替え待ちなど）は動けない
+    if (this.moving || this.runner) return;
 
     if (this.controls.okPressed()) {
       this.interact();
@@ -179,10 +262,12 @@ export class FieldScene extends Phaser.Scene {
     if (exit) {
       setState({ ...state, mapId: exit.to, x: exit.toX, y: exit.toY });
       this.cameras.main.fadeOut(200, 0, 0, 0);
-      this.cameras.main.once('camerafadeoutcomplete', () => this.scene.restart());
+      this.cameras.main.once('camerafadeoutcomplete', () => this.scene.restart({}));
       this.moving = true;
       return;
     }
+    const trigger = this.map.triggers?.find((t) => t.x === state.x && t.y === state.y);
+    if (trigger && this.startTrigger(trigger)) return;
     if (!this.map.encounter) return;
     const table = ENCOUNTERS[this.map.encounter];
     if (!table) return;
@@ -205,8 +290,12 @@ export class FieldScene extends Phaser.Scene {
     const [dx, dy] = DELTA[state.facing];
     const npc = this.npcAt(state.x + dx, state.y + dy);
     if (!npc) return;
+    if (npc.event) {
+      this.startEvent(npc.event);
+      return;
+    }
     const useAfter = npc.after && state.flags[npc.after.flag];
-    const lines = useAfter && npc.after ? npc.after.lines : npc.lines;
+    const lines = useAfter && npc.after ? npc.after.lines : (npc.lines ?? []);
     this.message.show(lines, () => {
       if (npc.setsFlag) {
         const s = getState();

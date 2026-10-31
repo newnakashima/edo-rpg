@@ -29,8 +29,8 @@ export interface NpcDef {
   x: number;
   y: number;
   color: number;
-  /** 話しかけたときの台詞。1 要素が 1 ページ。 */
-  lines: string[];
+  /** 話しかけたときの台詞。1 要素が 1 ページ。event があれば使わない。 */
+  lines?: string[];
   /** 台詞のあとに行う施設の処理。 */
   action?: NpcAction;
   /** action が 'shop' のときの店の ID（SHOPS）。 */
@@ -39,6 +39,14 @@ export interface NpcDef {
   after?: { flag: string; lines: string[] };
   /** 話し終えたら立てるフラグ。 */
   setsFlag?: string;
+  /** 話しかけたときに行うイベント（EVENTS の ID）。あれば lines などの代わりにこれを行う。 */
+  event?: string;
+}
+
+/** マップに入ったとき、または決まった場所に乗ったときに行うイベント。unless のフラグが立っていれば行わない。 */
+export interface EventTrigger {
+  event: string;
+  unless?: string;
 }
 
 export interface ExitDef {
@@ -61,6 +69,10 @@ export interface MapDef {
   areaLevel: number;
   /** 全滅したときに戻る場所（旅籠の前）。 */
   respawn?: { x: number; y: number };
+  /** マップに入ったときに行うイベント。 */
+  onEnter?: EventTrigger;
+  /** その場所に乗ったときに行うイベント。 */
+  triggers?: (EventTrigger & { x: number; y: number })[];
 }
 
 export const MAPS: Record<string, MapDef> = {
@@ -92,13 +104,7 @@ export const MAPS: Record<string, MapDef> = {
         x: 5,
         y: 10,
         color: 0x8a3b2e,
-        lines: [
-          '辰五郎「よく来なすった。一宿一飯、遠慮はいらねえ」',
-          '辰五郎「……実はな、町の者が月に一人、二人と消えていく。神隠しだと皆は言うが、どうも臭う」',
-          '辰五郎「消えた者は皆、夜に狐火を見たと言い残している。北の裏山に何かあるはずだ。調べちゃくれねえか」',
-        ],
-        after: { flag: 'talkedToTatsugoro', lines: ['辰五郎「裏山は北の街道の先だ。無理はするんじゃねえぞ」'] },
-        setsFlag: 'talkedToTatsugoro',
+        event: 'tatsugoro',
       },
       {
         id: 'innkeeper',
@@ -178,6 +184,7 @@ export const MAPS: Record<string, MapDef> = {
       { x: 15, y: 0, to: 'urayama', toX: 11, toY: 12 },
     ],
     respawn: { x: 23, y: 5 },
+    onEnter: { event: 'intro', unless: 'intro' },
   },
   urayama: {
     id: 'urayama',
@@ -199,7 +206,16 @@ export const MAPS: Record<string, MapDef> = {
       'T,,,,,,,,,,,,,,,,,,,,,,,,T',
       'TTTTTTTTTT==TTTTTTTTTTTTTT',
     ],
-    npcs: [],
+    npcs: [
+      {
+        id: 'urayamaShrine',
+        name: '祠',
+        x: 4,
+        y: 1,
+        color: 0x8c8c7a,
+        event: 'urayamaShrine',
+      },
+    ],
     exits: [
       { x: 10, y: 13, to: 'shimizu', toX: 14, toY: 1 },
       { x: 11, y: 13, to: 'shimizu', toX: 15, toY: 1 },
