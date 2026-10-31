@@ -210,7 +210,8 @@ describe('ワールドマップ', () => {
 
   it('町の印は乗っただけでは入らず、決定ボタンで入る（まだの町は案内を出す）', () => {
     expect(townAction(world, shimizu.x, shimizu.y, 'step', {})).toEqual({ kind: 'label', text: '清水湊（決定で入る）' });
-    expect(townAction(world, shimizu.x, shimizu.y, 'ok', {})).toEqual({ kind: 'enter', to: { mapId: 'shimizu', x: 26, y: 6 } });
+    expect(townAction(world, shimizu.x, shimizu.y, 'ok', {})).toEqual({ kind: 'enter', to: shimizu.to });
+    expect(shimizu.to?.mapId).toBe('shimizu');
     expect(townAction(world, 24, 10, 'step', {})).toEqual({ kind: 'label', text: '京' });
     expect(townAction(world, 24, 10, 'ok', {})).toMatchObject({ kind: 'info' });
     expect(townAction(world, landing.x, landing.y, 'ok', {})).toBeNull();
@@ -222,7 +223,8 @@ describe('ワールドマップ', () => {
     expect(townAction(world, sunpu.x, sunpu.y, 'ok', {})).toMatchObject({ kind: 'info' });
     const flags = { prologueCleared: true };
     expect(townAction(world, sunpu.x, sunpu.y, 'step', flags)).toEqual({ kind: 'label', text: '駿府（決定で入る）' });
-    expect(townAction(world, sunpu.x, sunpu.y, 'ok', flags)).toEqual({ kind: 'enter', to: { mapId: 'sunpu', x: 28, y: 8 } });
+    expect(townAction(world, sunpu.x, sunpu.y, 'ok', flags)).toEqual({ kind: 'enter', to: sunpu.to });
+    expect(sunpu.to?.mapId).toBe('sunpu');
   });
 
   it('駿府のまわりの街道では、序章を終えたら駿府の敵、それまでは序章の敵が出る。清水湊のまわりはいつも序章の敵', () => {
@@ -259,10 +261,12 @@ describe('NPC の出入りと全滅時の戻り先', () => {
   });
 
   it('町では旅籠の前、ダンジョンでは respawnMap の町、どちらもなければ清水湊に戻る', () => {
-    expect(respawnPoint('sunpu')).toEqual({ mapId: 'sunpu', x: 25, y: 8 });
-    expect(respawnPoint('karakuriYashiki')).toEqual({ mapId: 'sunpu', x: 25, y: 8 });
-    expect(respawnPoint('urayama')).toEqual({ mapId: 'shimizu', x: 23, y: 5 });
-    expect(respawnPoint('nowhere')).toEqual({ mapId: 'shimizu', x: 23, y: 5 });
+    const sunpu = { mapId: 'sunpu', ...MAPS.sunpu!.respawn };
+    const shimizu = { mapId: 'shimizu', ...MAPS.shimizu!.respawn };
+    expect(respawnPoint('sunpu')).toEqual(sunpu);
+    expect(respawnPoint('karakuriYashiki')).toEqual(sunpu);
+    expect(respawnPoint('urayama')).toEqual(shimizu);
+    expect(respawnPoint('nowhere')).toEqual(shimizu);
   });
 
   it('respawnMap・respawnZones の町には respawn がある', () => {
@@ -273,11 +277,13 @@ describe('NPC の出入りと全滅時の戻り先', () => {
   });
 
   it('ワールドマップでは、大井川の西（東海道）なら名古屋、それ以外は清水湊に戻る', () => {
-    expect(respawnPoint('world', 34, 10)).toEqual({ mapId: 'nagoya', x: 25, y: 8 });
-    expect(respawnPoint('world', 25, 9)).toEqual({ mapId: 'nagoya', x: 25, y: 8 });
-    expect(respawnPoint('world', 36, 10)).toEqual({ mapId: 'shimizu', x: 23, y: 5 });
-    expect(respawnPoint('world', 38, 10)).toEqual({ mapId: 'shimizu', x: 23, y: 5 });
-    expect(respawnPoint('world')).toEqual({ mapId: 'shimizu', x: 23, y: 5 });
+    const nagoya = { mapId: 'nagoya', ...MAPS.nagoya!.respawn };
+    const shimizu = { mapId: 'shimizu', ...MAPS.shimizu!.respawn };
+    expect(respawnPoint('world', 34, 10)).toEqual(nagoya);
+    expect(respawnPoint('world', 25, 9)).toEqual(nagoya);
+    expect(respawnPoint('world', 36, 10)).toEqual(shimizu);
+    expect(respawnPoint('world', 38, 10)).toEqual(shimizu);
+    expect(respawnPoint('world')).toEqual(shimizu);
   });
 
   it('hideFlag はどこかのイベントの setFlag で立つ', () => {
@@ -443,7 +449,7 @@ describe('第 2 章の名古屋', () => {
   });
 
   it('凧屋・荷蔵・天守で全滅したら名古屋の旅籠の前に戻る', () => {
-    for (const id of ['takoya', 'horikawaKura', 'tenshu']) expect(respawnPoint(id)).toEqual({ mapId: 'nagoya', x: 25, y: 8 });
+    for (const id of ['takoya', 'horikawaKura', 'tenshu']) expect(respawnPoint(id)).toEqual({ mapId: 'nagoya', ...MAPS.nagoya!.respawn });
   });
 });
 
@@ -786,20 +792,32 @@ describe('第 6 章の広島・長崎・島原', () => {
     for (const id of ['dejima', 'nanbanji', 'harajo', 'kenkyujo']) expect(respawnPoint(id), id).toEqual({ mapId: 'nagasaki', ...nagasaki.respawn });
   });
 
-  it('第 6 章の町とダンジョンは、第 5 章までのどの町・ダンジョンより広い（テストプレイで狭いと言われたため）', () => {
-    const area = (m: MapDef) => m.rows.length * (m.rows[0]?.length ?? 0);
-    const ids = ['hiroshima', 'nagasaki', 'dejima', 'nanbanji', 'harajo', 'kenkyujo'];
-    const before = Object.values(MAPS).filter((m) => m.id !== 'world' && !ids.includes(m.id));
-    const largest = Math.max(...before.map(area));
-    for (const id of ids) expect(area(MAPS[id]!), id).toBeGreaterThan(largest);
+});
+
+describe('マップの広さと使い回し（テストプレイの指摘: どの町もダンジョンも同じ・狭い）', () => {
+  // まだ作り直していないマップ。作り直したら外す
+  const NOT_YET_REMADE = ['nagoya', 'takoya', 'horikawaKura', 'tenshu', 'kyo', 'rashomon', 'oninosu', 'iga', 'igaSato', 'kagiya', 'osaka', 'komeKura'];
+  /** 建物の中や、塀で囲まれた小さな区画（出島）。町・ダンジョンより狭くてよい。 */
+  const SMALL = ['kobo', 'yoriki', 'takoya', 'dejima'];
+  const maps = Object.values(MAPS).filter((m) => m.id !== 'world');
+  const area = (m: MapDef) => m.rows.length * (m.rows[0]?.length ?? 0);
+
+  it('町は 1100 マス以上、ダンジョン・野山は 750 マス以上、建物の中・小さな区画は 400 マス以上', () => {
+    for (const m of maps.filter((x) => !NOT_YET_REMADE.includes(x.id))) {
+      const min = SMALL.includes(m.id) ? 400 : m.respawn ? 1100 : 750;
+      expect(area(m), m.id).toBeGreaterThanOrEqual(min);
+    }
   });
 
-  it('第 6 章の町とダンジョンは、ほかのマップと形を使い回していない', () => {
-    const ids = ['hiroshima', 'nagasaki', 'dejima', 'nanbanji', 'harajo', 'kenkyujo'];
-    const shapes = new Map(Object.values(MAPS).map((m) => [m.id, m.rows.join('\n')]));
-    for (const id of ids) {
-      const shape = shapes.get(id);
-      for (const [other, s] of shapes) if (other !== id) expect(s === shape, `${id} = ${other}`).toBe(false);
+  it('同じ大きさのマップどうしでも、半分以上のマスが同じものはない（形の使い回しがない）', () => {
+    for (const [i, a] of maps.entries()) {
+      for (const b of maps.slice(i + 1)) {
+        if (NOT_YET_REMADE.includes(a.id) && NOT_YET_REMADE.includes(b.id)) continue;
+        if (a.rows.length !== b.rows.length || a.rows[0]?.length !== b.rows[0]?.length) continue;
+        let same = 0;
+        a.rows.forEach((row, y) => [...row].forEach((ch, x) => (same += ch === b.rows[y]![x] ? 1 : 0)));
+        expect(same / area(a), `${a.id} と ${b.id}`).toBeLessThan(0.5);
+      }
     }
   });
 });
