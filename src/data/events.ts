@@ -62,10 +62,10 @@ const TATSUGORO_REPORT: EventStep[] = [
   { type: 'setFlag', flag: 'prologueCleared' },
 ];
 
-/** 葛籠（宝箱）。一度だけ道具が手に入る。持ちきれないときはフラグを立てず、また来たときに受け取れるようにする。 */
 /** 葛籠のイベントの ID（開けるとこの ID のフラグが立つ。マップの葛籠は開いた姿になる）。 */
 export const CHEST_EVENTS = new Set<string>();
 
+/** 葛籠（宝箱）。一度だけ道具が手に入る。持ちきれないときはフラグを立てず、また来たときに受け取れるようにする。 */
 function chest(id: string, item: string, itemName: string): EventDef {
   CHEST_EVENTS.add(id);
   return {

@@ -25,6 +25,8 @@ describe('葛籠の画像', () => {
   );
 
   it('葛籠のイベントはすべてどこかの葛籠で使う', () => {
+    expect(CHEST_EVENTS.size).toBeGreaterThan(0);
+    expect(chests.length).toBeGreaterThan(0);
     const used = new Set(chests.map((c) => c.npc.event));
     for (const id of CHEST_EVENTS) expect(used.has(id), id).toBe(true);
   });
