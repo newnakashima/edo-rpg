@@ -110,7 +110,7 @@ describe('序章の流れ', () => {
 });
 
 describe('第 1 章の流れ', () => {
-  const start = { ...newGame('m', { mapId: 'sunpu', x: 28, y: 8 }), flags: { prologueCleared: true } };
+  const start = { ...newGame('m', MAPS.world!.towns!.find((t) => t.name === '駿府')!.to!), flags: { prologueCleared: true } };
 
   it('駿府に初めて入ると町の紹介をし、2 回目からは何もしない', () => {
     const arrived = run('sunpuEnter', start);
@@ -187,7 +187,7 @@ function skipSay(runner: EventRunner, r: ReturnType<EventRunner['next']>): Retur
 }
 
 describe('第 2 章の流れ', () => {
-  const start = { ...newGame('m', { mapId: 'nagoya', x: 28, y: 8 }), flags: { prologueCleared: true, chapter1Cleared: true } };
+  const start = { ...newGame('m', MAPS.world!.towns!.find((t) => t.name === '名古屋')!.to!), flags: { prologueCleared: true, chapter1Cleared: true } };
 
   it('大井川の渡し場は、第 1 章を終えるまでは案内だけで、終えたら川獺に勝って渡れる（oigawaOpen）。負けたら渡れない', () => {
     const before = { ...start, flags: { prologueCleared: true } };
@@ -225,7 +225,10 @@ describe('第 2 章の流れ', () => {
     const ask = skipSay(runner, runner.next(clue));
     expect(ask.request.kind).toBe('choice');
     const flew = skipSay(runner, runner.next(ask.state, { kind: 'choice', index: 0 }));
-    expect(flew.request).toEqual({ kind: 'warp', mapId: 'tenshu', x: 8, y: 9 });
+    expect(flew.request).toMatchObject({ kind: 'warp', mapId: 'tenshu' });
+    // 大凧で着く場所は、天守の通れる場所
+    const req = flew.request as { x: number; y: number };
+    expect(tileAt(MAPS.tenshu!, req.x, req.y)?.blocked).toBe(false);
     expect(flew.state.flags.kintaFlew).toBe(true);
     // 「支度をする」なら飛ばない
     const stay = new EventRunner(EVENTS.kinta!.steps);
@@ -272,7 +275,7 @@ describe('第 2 章の流れ', () => {
 });
 
 describe('第 3 章の流れ', () => {
-  const base = newGame('m', { mapId: 'kyo', x: 28, y: 6 });
+  const base = newGame('m', MAPS.world!.towns!.find((t) => t.name === '京')!.to!);
   const start = { ...base, party: [...base.party, createMember('kasumi', 11)], flags: { prologueCleared: true, chapter1Cleared: true, kasumiJoined: true, chapter2Cleared: true } };
 
   it('京に初めて入ると町の紹介をし、2 回目からは何もしない', () => {
