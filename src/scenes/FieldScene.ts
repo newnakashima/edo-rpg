@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { ENCOUNTERS } from '../data/enemies';
-import { MAPS, START_POSITION, tileAt, type EventTrigger, type MapDef, type NpcDef } from '../data/maps';
+import { closedGateAt, encounterAt, MAPS, START_POSITION, tileAt, type EventTrigger, type MapDef, type NpcDef } from '../data/maps';
 import { pickGroup, step } from '../systems/encounter';
 import { dangoPrice, eatDango, innPrice, stayAtInn } from '../systems/facilities';
 import { prayAtTemple, templePrice } from '../systems/shop';
@@ -75,13 +75,20 @@ export class FieldScene extends Phaser.Scene {
       this.scene.restart({});
       return;
     }
-    playBgm(map.encounter ? 'bgm_road' : 'bgm_town');
+    playBgm(map.encounter || map.encounterZones ? 'bgm_road' : 'bgm_town');
 
     for (let y = 0; y < map.rows.length; y++) {
       for (let x = 0; x < (map.rows[y]?.length ?? 0); x++) {
         const tile = tileAt(map, x, y);
         if (tile) this.add.image(x * TILE, y * TILE, `tile-${tile.kind}`).setOrigin(0);
       }
+    }
+    // ワールドマップでは町の名前を印の上に出す
+    for (const town of map.towns ?? []) {
+      this.add
+        .text(town.x * TILE + TILE / 2, town.y * TILE - 1, town.name, { ...textStyle(8), stroke: '#000000', strokeThickness: 2 })
+        .setOrigin(0.5, 1)
+        .setDepth(5);
     }
     for (const npc of map.npcs) {
       this.add.image(npc.x * TILE, npc.y * TILE, 'person').setOrigin(0).setTint(npc.color);
@@ -241,6 +248,11 @@ export class FieldScene extends Phaser.Scene {
     setState({ ...state, facing: dir });
     const tile = tileAt(this.map, nx, ny);
     if (!tile || tile.blocked || this.npcAt(nx, ny)) return;
+    const gate = closedGateAt(this.map, nx, ny, getState().flags);
+    if (gate) {
+      this.message.show(gate.lines);
+      return;
+    }
 
     this.moving = true;
     this.tweens.add({
@@ -266,10 +278,23 @@ export class FieldScene extends Phaser.Scene {
       this.moving = true;
       return;
     }
+    const town = this.map.towns?.find((t) => t.x === state.x && t.y === state.y);
+    if (town?.to) {
+      setState({ ...state, mapId: town.to.mapId, x: town.to.x, y: town.to.y });
+      this.cameras.main.fadeOut(200, 0, 0, 0);
+      this.cameras.main.once('camerafadeoutcomplete', () => this.scene.restart({}));
+      this.moving = true;
+      return;
+    }
+    if (town?.lines) {
+      this.message.show(town.lines);
+      return;
+    }
     const trigger = this.map.triggers?.find((t) => t.x === state.x && t.y === state.y);
     if (trigger && this.startTrigger(trigger)) return;
-    if (!this.map.encounter) return;
-    const table = ENCOUNTERS[this.map.encounter];
+    const encounter = encounterAt(this.map, state.x, state.y);
+    if (!encounter) return;
+    const table = ENCOUNTERS[encounter];
     if (!table) return;
     const result = step(state.stepsToEncounter, defaultRng);
     setState({ ...state, stepsToEncounter: result.stepsLeft });

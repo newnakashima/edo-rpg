@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ENCOUNTERS, ENEMIES } from './enemies';
 import { EVENTS } from './events';
-import { MAPS, START_POSITION, tileAt, TILES } from './maps';
+import { closedGateAt, encounterAt, MAPS, START_POSITION, tileAt, TILES, type MapDef } from './maps';
 
 describe('マップのデータ', () => {
   for (const map of Object.values(MAPS)) {
@@ -46,6 +46,20 @@ describe('マップのデータ', () => {
         }
       });
 
+      it('町の印・関所・出現範囲が正しい', () => {
+        for (const town of map.towns ?? []) {
+          expect(tileAt(map, town.x, town.y)?.kind, town.name).toBe('town');
+          expect(town.to !== undefined || (town.lines?.length ?? 0) > 0, town.name).toBe(true);
+          if (town.to) {
+            const dest = MAPS[town.to.mapId];
+            expect(dest, town.to.mapId).toBeDefined();
+            if (dest) expect(tileAt(dest, town.to.x, town.to.y)?.blocked).toBe(false);
+          }
+        }
+        for (const gate of map.gates ?? []) expect(tileAt(map, gate.x, gate.y)?.kind).toBe('gate');
+        for (const z of map.encounterZones ?? []) expect(ENCOUNTERS[z.encounter], z.encounter).toBeDefined();
+      });
+
       it('出現表と全滅時の戻り先が正しい', () => {
         if (map.encounter) {
           const table = ENCOUNTERS[map.encounter];
@@ -60,5 +74,51 @@ describe('マップのデータ', () => {
   it('開始位置は通れる場所', () => {
     const map = MAPS[START_POSITION.mapId];
     expect(map && tileAt(map, START_POSITION.x, START_POSITION.y)?.blocked).toBe(false);
+  });
+});
+
+/** 関所を通らずに歩いて行ける場所。 */
+function reachable(map: MapDef, from: { x: number; y: number }, flags: Record<string, boolean>): Set<string> {
+  const seen = new Set<string>([`${from.x},${from.y}`]);
+  const queue = [from];
+  while (queue.length > 0) {
+    const p = queue.shift()!;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+      const x = p.x + dx;
+      const y = p.y + dy;
+      const key = `${x},${y}`;
+      if (seen.has(key) || tileAt(map, x, y)?.blocked !== false || closedGateAt(map, x, y, flags)) continue;
+      seen.add(key);
+      queue.push({ x, y });
+    }
+  }
+  return seen;
+}
+
+describe('ワールドマップ', () => {
+  const world = MAPS.world!;
+  const shimizu = world.towns!.find((t) => t.name === '清水湊')!;
+
+  it('清水湊からは、関所を越えなければ駿府までしか行けない', () => {
+    const area = reachable(world, shimizu, {});
+    const towns = world.towns!.filter((t) => area.has(`${t.x},${t.y}`)).map((t) => t.name);
+    expect(towns.sort()).toEqual(['清水湊', '駿府'].sort());
+  });
+
+  it('関所が開けば、街道ですべての町につながる', () => {
+    const flags = Object.fromEntries(world.gates!.map((g) => [g.flag, true]));
+    const area = reachable(world, shimizu, flags);
+    for (const t of world.towns!) expect(area.has(`${t.x},${t.y}`), t.name).toBe(true);
+  });
+
+  it('清水湊のまわりの街道では敵が出る', () => {
+    expect(encounterAt(world, 42, 10)).toBe('suruga');
+    expect(encounterAt(world, 24, 10)).toBeUndefined();
+  });
+
+  it('清水湊から東の街道へ出るとワールドマップの清水湊の隣に出る', () => {
+    const exit = MAPS.shimizu!.exits.find((e) => e.to === 'world')!;
+    expect(tileAt(world, exit.toX, exit.toY)?.blocked).toBe(false);
+    expect(Math.abs(exit.toX - shimizu.x) + Math.abs(exit.toY - shimizu.y)).toBe(1);
   });
 });
