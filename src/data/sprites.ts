@@ -111,6 +111,14 @@ export function oppositeFacing(facing: Facing): Facing {
 }
 
 /**
+ * 物の重なり順。32 × 32 の物は上のタイルの半分まで覆うので、上の行（奥）に立った人でも物より手前に描く
+ * （そうしないと、祠や地蔵堂の真上に立った主人公が笠しか見えなくなる）。下の行の人はもちろん手前。
+ */
+export function objectDepth(tileY: number): number {
+  return personDepth(tileY - 1.5);
+}
+
+/**
  * フィールドの人の重なり順。下（y が大きい）にいる人ほど手前に描く。
  * 頭が上のタイルにはみ出すため、上にいる人の足元に下の人の頭が重なる。町の名前の表示（5）より上にする。
  */
