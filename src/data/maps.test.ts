@@ -196,7 +196,8 @@ describe('ワールドマップ', () => {
     const nagoya = world.towns!.find((t) => t.name === '名古屋')!;
     expect(reachable(world, landing, {}).has(`${nagoya.x},${nagoya.y}`)).toBe(false);
     expect(reachable(world, landing, { oigawaOpen: true }).has(`${nagoya.x},${nagoya.y}`)).toBe(true);
-    expect(townAction(world, nagoya.x, nagoya.y, 'ok', { oigawaOpen: true })).toEqual({ kind: 'enter', to: { mapId: 'nagoya', x: 28, y: 8 } });
+    expect(townAction(world, nagoya.x, nagoya.y, 'ok', { oigawaOpen: true })).toEqual({ kind: 'enter', to: nagoya.to });
+    expect(nagoya.to?.mapId).toBe('nagoya');
   });
 
   it('関所のイベントは定義されている', () => {
@@ -434,7 +435,14 @@ describe('第 2 章の名古屋', () => {
 
   it('大凧で着く天守の場所から金鯱の場所へ行け、そこを通らなければ大棟には上がれない。葛籠と下りる出口に行ける', () => {
     const tenshu = MAPS.tenshu!;
-    const kite = { x: 8, y: 9 };
+    // 金太の大凧で天守へ飛ぶ（kinta のイベントの warp）
+    const warp = EVENTS.kinta!.steps.flatMap(function flat(st: EventStep): EventStep[] {
+      if (st.type === 'if') return [st, ...st.then.flatMap(flat), ...(st.else ?? []).flatMap(flat)];
+      if (st.type === 'choice') return [st, ...st.options.flatMap((o) => o.steps.flatMap(flat))];
+      return [st];
+    }).find((st) => st.type === 'warp' && st.mapId === 'tenshu');
+    expect(warp).toBeDefined();
+    const kite = warp?.type === 'warp' ? { x: warp.x, y: warp.y } : { x: -1, y: -1 };
     const area = reachable(tenshu, kite, {}, true);
     for (const t of tenshu.triggers!) {
       expect(area.has(`${t.x},${t.y}`)).toBe(true);
@@ -796,7 +804,7 @@ describe('第 6 章の広島・長崎・島原', () => {
 
 describe('マップの広さと使い回し（テストプレイの指摘: どの町もダンジョンも同じ・狭い）', () => {
   // まだ作り直していないマップ。作り直したら外す
-  const NOT_YET_REMADE = ['nagoya', 'takoya', 'horikawaKura', 'tenshu', 'kyo', 'rashomon', 'oninosu', 'iga', 'igaSato', 'kagiya', 'osaka', 'komeKura'];
+  const NOT_YET_REMADE = ['iga', 'igaSato', 'kagiya', 'osaka', 'komeKura'];
   /** 建物の中や、塀で囲まれた小さな区画（出島）。町・ダンジョンより狭くてよい。 */
   const SMALL = ['kobo', 'yoriki', 'takoya', 'dejima'];
   const maps = Object.values(MAPS).filter((m) => m.id !== 'world');

@@ -225,7 +225,10 @@ describe('第 2 章の流れ', () => {
     const ask = skipSay(runner, runner.next(clue));
     expect(ask.request.kind).toBe('choice');
     const flew = skipSay(runner, runner.next(ask.state, { kind: 'choice', index: 0 }));
-    expect(flew.request).toEqual({ kind: 'warp', mapId: 'tenshu', x: 8, y: 9 });
+    expect(flew.request).toMatchObject({ kind: 'warp', mapId: 'tenshu' });
+    // 大凧で着く場所は、天守の通れる場所
+    const req = flew.request as { x: number; y: number };
+    expect(tileAt(MAPS.tenshu!, req.x, req.y)?.blocked).toBe(false);
     expect(flew.state.flags.kintaFlew).toBe(true);
     // 「支度をする」なら飛ばない
     const stay = new EventRunner(EVENTS.kinta!.steps);
