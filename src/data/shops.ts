@@ -20,5 +20,8 @@ export const SHOPS: Record<string, ShopDef> = {
   // よろず屋の品ぞろえは名古屋と同じ（新しい道具は第 4 章以降で足す。町ごとに変えられるよう、まとめずに書く）
   kyoYorozu: { id: 'kyoYorozu', name: 'よろず屋', goods: ['kizugusuri', 'kintsuba', 'dokukeshi', 'hangontan', 'mankintan', 'kitsukegusuri'] },
   kyoKaji: { id: 'kyoKaji', name: '刀鍛冶', goods: ['kotetsu', 'tekkokagi', 'shakujo', 'dokko', 'nanbando', 'kusarishozoku', 'hachigane'] },
+  // 伊賀上野（第 4 章）。お凛が加入した 4 人で来るので、4 人分の装備を置く
+  igaYorozu: { id: 'igaYorozu', name: 'よろず屋', goods: ['kizugusuri', 'kintsuba', 'dokukeshi', 'hangontan', 'mankintan', 'kitsukegusuri'] },
+  igaKaji: { id: 'igaKaji', name: '刀鍛冶', goods: ['osafune', 'shinobiKodachi', 'tetsuShakujo', 'nanbanju', 'toseiGusoku', 'igaShozoku', 'nanbando', 'hachigane'] },
   nagoyaKaji: { id: 'nagoyaKaji', name: '刀鍛冶', goods: ['magoroku', 'kusarigama', 'kusarikatabira', 'shinobishozoku', 'hachigane', 'inro'] },
 };

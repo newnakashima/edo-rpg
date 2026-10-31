@@ -593,8 +593,8 @@ export class BattleScene extends Phaser.Scene {
       return;
     }
     // 全滅したら、その地域の町の旅籠の前に戻る（ダンジョンでは近くの町、東海道では名古屋、序章では清水湊）
-    const { mapId, x, y } = getState();
-    const respawn = respawnPoint(mapId, x, y);
+    const { mapId, x, y, flags } = getState();
+    const respawn = respawnPoint(mapId, x, y, flags);
     this.log.setText('');
     this.controls.flush();
     this.message.show(['一行は力尽きた……', '気がつくと、旅籠の布団の上だった。所持金が半分になっている。'], () => {
