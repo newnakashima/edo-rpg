@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { availableItemCount, createBattle, partyAfterBattle, resolveTurn, type BattleState, type Combatant } from './battle';
+import { availableItemCount, createBattle, DEF_UP_RATE, partyAfterBattle, resolveTurn, type BattleState, type Combatant } from './battle';
 import { ENEMIES } from '../data/enemies';
 import { SKILLS } from '../data/skills';
 import { createMember } from './party';
@@ -170,6 +170,10 @@ describe('状態異常', () => {
     const up = structuredClone(base);
     get(up, 'e0').status.defUp = 3;
     expect(hit(up)).toBeLessThan(hit(base));
+    // 防御↑ は防御を DEF_UP_RATE（1.5）倍にしたのと同じダメージになる
+    const raised = structuredClone(base);
+    get(raised, 'e0').stats.def *= DEF_UP_RATE;
+    expect(hit(up)).toBe(hit(raised));
     const gendo = sleepEnemies(createBattle([createMember('gendo', 10)], 'm', ['tetsubin'], 7));
     const katsu = (b: BattleState) => {
       const e = resolveTurn(b, { p0: { kind: 'skill', skill: 'katsu', target: 'e0' } }, seqRng(0.5)).events.find((x) => x.type === 'damage');
@@ -364,6 +368,13 @@ describe('敵の行動', () => {
     const scale = resolveTurn(createBattle(party(), 'm', ['kinshachi'], 10), { p0: { kind: 'guard' }, p1: { kind: 'guard' } }, seqRng(0, 0, 0.99, 0.9));
     expect(scale.events).toContainEqual({ type: 'skill', actor: 'e0', skill: 'kinUroko' });
     expect(scale.events).toContainEqual({ type: 'status', target: 'e0', status: 'defUp' });
+    // 金の鱗は自分の行動 3 回分だけ続く（かけたターンはもう動いたあとなので数えない）
+    let st = scale.state;
+    for (let turn = 1; turn <= 3; turn++) {
+      expect(get(st, 'e0').status.defUp, `turn ${turn}`).toBeGreaterThan(0);
+      st = resolveTurn(st, { p0: { kind: 'guard' }, p1: { kind: 'guard' } }, seqRng(0, 0, 0.99, 0.1, 0.5)).state;
+    }
+    expect(get(st, 'e0').status.defUp).toBeFalsy();
     const tail = resolveTurn(createBattle(party(), 'm', ['kinshachi'], 10), { p0: { kind: 'guard' }, p1: { kind: 'guard' } }, seqRng(0, 0, 0.99, 0.6, 0.5));
     expect(tail.events).toContainEqual({ type: 'skill', actor: 'e0', skill: 'obire' });
     const hurt = tail.events.filter((e) => e.type === 'damage').map((e) => e.type === 'damage' && e.target);

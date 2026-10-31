@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ENCOUNTERS, ENEMIES } from './enemies';
 import type { EventStep } from './eventTypes';
 import { EVENTS } from './events';
+import { SHOPS } from './shops';
 import { closedGateAt, encounterAt, MAPS, npcVisible, respawnPoint, START_POSITION, TILE_KINDS, tileAt, TILES, townAction, type MapDef } from './maps';
 
 describe('タイルの画像', () => {
@@ -54,8 +55,9 @@ describe('マップのデータ', () => {
         }
       });
 
-      it('イベントの参照先があり、乗るイベントの場所は通れる', () => {
+      it('イベント・店の参照先があり、乗るイベントの場所は通れる', () => {
         for (const npc of map.npcs) if (npc.event) expect(EVENTS[npc.event], npc.event).toBeDefined();
+        for (const npc of map.npcs) if (npc.action === 'shop') expect(npc.shop && SHOPS[npc.shop], `${npc.id}: ${npc.shop}`).toBeTruthy();
         if (map.onEnter) expect(EVENTS[map.onEnter.event], map.onEnter.event).toBeDefined();
         for (const t of map.triggers ?? []) {
           expect(EVENTS[t.event], t.event).toBeDefined();
@@ -141,6 +143,18 @@ function reachable(map: MapDef, from: { x: number; y: number }, flags: Record<st
 const near = (area: Set<string>, x: number, y: number) =>
   [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => area.has(`${x + dx!},${y + dy!}`));
 
+/** ボスの待つ場所（triggers）を壁にしたマップ。そこを通らなければ奥へ行けないことを確かめる。 */
+function wallTriggers(map: MapDef): MapDef {
+  return {
+    ...map,
+    rows: map.rows.map((row, y) => {
+      let r = row;
+      for (const t of (map.triggers ?? []).filter((tr) => tr.y === y)) r = r.slice(0, t.x) + 'W' + r.slice(t.x + 1);
+      return r;
+    }),
+  };
+}
+
 describe('ワールドマップ', () => {
   const world = MAPS.world!;
   const shimizu = world.towns!.find((t) => t.name === '清水湊')!;
@@ -167,8 +181,10 @@ describe('ワールドマップ', () => {
   });
 
   it('大井川の西の東海道では東海道の敵が出る', () => {
-    expect(encounterAt(world, 34, 10, {})).toBe('tokaido');
-    expect(encounterAt(world, 33, 10, {})).toBe('tokaido');
+    // 範囲は x 25〜35、y 9〜12（大井川の渡し場 x 36 からは駿府・駿河の範囲）
+    for (const [x, y] of [[25, 9], [35, 10], [25, 12], [35, 12]] as const) expect(encounterAt(world, x, y, {}), `${x},${y}`).toBe('tokaido');
+    expect(encounterAt(world, 35, 13, {})).toBeUndefined();
+    expect(encounterAt(world, 36, 10, {})).toBe('suruga');
     expect(encounterAt(world, 37, 10, { prologueCleared: true })).toBe('sunpu');
   });
 
@@ -324,16 +340,8 @@ describe('第 1 章の駿府', () => {
     }
     for (const c of yashiki.npcs.filter((n) => n.event?.startsWith('yashikiChest'))) expect(near(area, c.x, c.y), c.id).toBe(true);
     // 鉄瓶の場所を壁にすると、奥の間（装置）に届かない
-    const walled: MapDef = {
-      ...yashiki,
-      rows: yashiki.rows.map((row, y) => {
-        let r = row;
-        for (const t of yashiki.triggers!.filter((tr) => tr.y === y)) r = r.slice(0, t.x) + 'W' + r.slice(t.x + 1);
-        return r;
-      }),
-    };
     const device = yashiki.npcs.find((n) => n.id === 'zenmaiDevice')!;
-    expect(near(reachable(walled, landing, {}, true), device.x, device.y)).toBe(false);
+    expect(near(reachable(wallTriggers(yashiki), landing, {}, true), device.x, device.y)).toBe(false);
   });
 });
 
@@ -368,17 +376,6 @@ describe('序章の狐火の洞', () => {
   });
 });
 
-/** ボスの待つ場所（triggers）を壁にしたマップ。そこを通らなければ奥へ行けないことを確かめる。 */
-function wallTriggers(map: MapDef): MapDef {
-  return {
-    ...map,
-    rows: map.rows.map((row, y) => {
-      let r = row;
-      for (const t of (map.triggers ?? []).filter((tr) => tr.y === y)) r = r.slice(0, t.x) + 'W' + r.slice(t.x + 1);
-      return r;
-    }),
-  };
-}
 
 describe('第 2 章の名古屋', () => {
   const nagoya = MAPS.nagoya!;

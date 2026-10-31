@@ -178,6 +178,12 @@ describe('第 1 章の流れ', () => {
   });
 });
 
+/** 台詞を読み進め、次に画面に頼むこと（台詞以外）の手前まで進める。 */
+function skipSay(runner: EventRunner, r: ReturnType<EventRunner['next']>): ReturnType<EventRunner['next']> {
+  while (r.request.kind === 'say') r = runner.next(r.state);
+  return r;
+}
+
 describe('第 2 章の流れ', () => {
   const start = { ...newGame('m', { mapId: 'nagoya', x: 28, y: 8 }), flags: { prologueCleared: true, chapter1Cleared: true } };
 
@@ -191,8 +197,7 @@ describe('第 2 章の流れ', () => {
     expect(run('oigawa', start).flags.oigawaOpen).toBe(true);
     expect(run('oigawa', start, 'defeat').flags.oigawaOpen).toBeFalsy();
     const battle = new EventRunner(EVENTS.oigawa!.steps);
-    let r = battle.next(start);
-    while (r.request.kind === 'say') r = battle.next(r.state);
+    const r = skipSay(battle, battle.next(start));
     expect(r.request).toMatchObject({ kind: 'battle', enemies: ['kawauso', 'kawauso'], level: 7, loseOk: true });
   });
 
@@ -215,27 +220,33 @@ describe('第 2 章の流れ', () => {
     expect(clue.flags.urokoClue).toBe(true);
     // 最初の選択肢（飛ぶ）で天守へ移る
     const runner = new EventRunner(EVENTS.kinta!.steps);
-    let r = runner.next(clue);
-    while (r.request.kind === 'say') r = runner.next(r.state);
-    expect(r.request.kind).toBe('choice');
-    r = runner.next(r.state, { kind: 'choice', index: 0 });
-    while (r.request.kind === 'say') r = runner.next(r.state);
-    expect(r.request).toEqual({ kind: 'warp', mapId: 'tenshu', x: 8, y: 9 });
-    expect(r.state.flags.kintaFlew).toBe(true);
+    const ask = skipSay(runner, runner.next(clue));
+    expect(ask.request.kind).toBe('choice');
+    const flew = skipSay(runner, runner.next(ask.state, { kind: 'choice', index: 0 }));
+    expect(flew.request).toEqual({ kind: 'warp', mapId: 'tenshu', x: 8, y: 9 });
+    expect(flew.state.flags.kintaFlew).toBe(true);
     // 「支度をする」なら飛ばない
     const stay = new EventRunner(EVENTS.kinta!.steps);
-    let s = stay.next(clue);
-    while (s.request.kind === 'say') s = stay.next(s.state);
-    s = stay.next(s.state, { kind: 'choice', index: 1 });
-    while (s.request.kind === 'say') s = stay.next(s.state);
-    expect(s.request.kind).toBe('done');
-    expect(s.state.mapId).toBe('nagoya');
+    const ask2 = skipSay(stay, stay.next(clue));
+    const stayed = skipSay(stay, stay.next(ask2.state, { kind: 'choice', index: 1 }));
+    expect(stayed.request.kind).toBe('done');
+    expect(stayed.state.mapId).toBe('nagoya');
+    expect(stayed.state.flags.kintaFlew).toBeFalsy();
+  });
+
+  it('一度飛んだあと（負けて出直すとき）は、金太は短く聞いてからまた飛べる', () => {
+    const flown = { ...start, flags: { ...start.flags, kintaMet: true, urokoClue: true, kintaFlew: true } };
+    const runner = new EventRunner(EVENTS.kinta!.steps);
+    const first = runner.next(flown);
+    const pages = first.request.kind === 'say' ? first.request.pages.join('') : '';
+    expect(pages).toContain('もう一度、天守へ飛ぶかい');
+    expect(pages).not.toContain('荷蔵の奥で見つけた文');
+    expect(run('kinta', flown).mapId).toBe('tenshu');
   });
 
   it('金鯱からくりは Lv10 で逃げられず、勝つと kinshachiDefeated。負けて出直すと銀次の場面は繰り返さない', () => {
     const runner = new EventRunner(EVENTS.kinshachi!.steps);
-    let r = runner.next(start);
-    while (r.request.kind === 'say') r = runner.next(r.state);
+    const r = skipSay(runner, runner.next(start));
     expect(r.request).toMatchObject({ kind: 'battle', enemies: ['kinshachi'], level: 10, canEscape: false, loseOk: false });
     expect(r.state.flags.kinshachiMet).toBe(true);
     expect(run('kinshachi', start).flags.kinshachiDefeated).toBe(true);
