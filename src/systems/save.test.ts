@@ -237,6 +237,20 @@ describe('版 7（ワールドマップを広げた）', () => {
     }
   });
 
+  it('版 5 以前のワールドマップのセーブも、版 6 を経て版 7 で移す', () => {
+    const shimizu = town('清水湊');
+    for (const version of [1, 5]) {
+      const old = { ...state(), mapId: 'world', x: 41, y: 10 };
+      const s = deserialize(JSON.stringify({ version, savedAt: '2026-10-31T00:00:00.000Z', state: old }))?.state;
+      expect(s, `版 ${version}`).toMatchObject({ mapId: 'world', x: shimizu.x, y: shimizu.y });
+    }
+  });
+
+  it('版 7 のセーブは、ワールドマップでもそのままの位置で読む', () => {
+    const s = { ...state(), mapId: 'world', x: 110, y: 26 };
+    expect(deserialize(serialize(s))?.state).toMatchObject({ mapId: 'world', x: 110, y: 26 });
+  });
+
   it('ワールドマップ以外のマップの位置はそのまま', () => {
     expect(v6('osaka', 26, 9)).toMatchObject({ mapId: 'osaka', x: 26, y: 9 });
   });

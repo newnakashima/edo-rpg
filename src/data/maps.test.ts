@@ -362,6 +362,9 @@ describe('ワールドマップ', () => {
       expect(encounterAt(world, exit.toX, exit.toY, cleared), `${exit.toX},${exit.toY}`).toBe('sunpu');
       expect(encounterAt(world, exit.toX, exit.toY, {}), `${exit.toX},${exit.toY}`).toBe('suruga');
     }
+    // 駿府の範囲の東の端は印の東隣（x 109）まで。その東（富士の裾野への分かれ道）からは駿河
+    expect(encounterAt(world, 109, 30, cleared)).toBe('sunpu');
+    expect(encounterAt(world, 110, 30, cleared)).toBe('suruga');
     expect(encounterAt(world, landing.x, landing.y, cleared)).toBe('suruga');
   });
 
