@@ -307,13 +307,13 @@ export class FieldScene extends Phaser.Scene {
       this.message.show(['住職「皆、息災のようじゃな。道中の無事を祈っておるぞ」']);
       return;
     }
-    const price = templePrice(this.map.areaLevel) * fallen;
+    const price = templePrice(this.map.areaLevel);
     const menu: Menu = new Menu(
       this,
       GAME_WIDTH - 170,
       40,
       160,
-      [{ label: `お祓いを受ける（${price} 文）` }, { label: 'やめる' }],
+      [{ label: `お祓いを受ける（1 人 ${price} 文）` }, { label: 'やめる' }],
       (i) => {
         this.closeOverlay(menu);
         if (i !== 0) return;
@@ -323,7 +323,11 @@ export class FieldScene extends Phaser.Scene {
           return;
         }
         setState(result.state);
-        this.message.show(['住職が経を唱えると、倒れていた仲間が息を吹き返した。']);
+        const rest = fallen - result.revived;
+        this.message.show([
+          '住職が経を唱えると、倒れていた仲間が息を吹き返した。',
+          ...(rest > 0 ? [`住職「残りの ${rest} 人は、お布施が足りぬゆえ、またの折に」`] : []),
+        ]);
       },
       () => this.closeOverlay(menu),
     );

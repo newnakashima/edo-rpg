@@ -6,6 +6,11 @@ import { memberStats } from './party';
 
 export type TradeResult = { ok: true; state: GameState } | { ok: false; reason: 'money' | 'full' | 'none' | 'unknown' };
 
+/** 1 回にやり取りする個数として正しいか（1 以上の整数）。 */
+function isCount(n: number): boolean {
+  return Number.isInteger(n) && n >= 1;
+}
+
 /** 買値（文）。 */
 export function buyPrice(id: string): number {
   return ITEMS[id]?.price ?? EQUIPMENT[id]?.price ?? 0;
@@ -18,7 +23,7 @@ export function sellPrice(id: string): number {
 
 /** n 個買う。お金が足りない、持ちきれないときは買わない。 */
 export function buy(state: GameState, id: string, n = 1): TradeResult {
-  if (!isKnownItem(id) || n < 1) return { ok: false, reason: 'unknown' };
+  if (!isKnownItem(id) || !isCount(n)) return { ok: false, reason: 'unknown' };
   const cost = buyPrice(id) * n;
   if (state.money < cost) return { ok: false, reason: 'money' };
   if (itemCount(state.items, id) + n > MAX_ITEM_COUNT) return { ok: false, reason: 'full' };
@@ -27,7 +32,7 @@ export function buy(state: GameState, id: string, n = 1): TradeResult {
 
 /** 所持品から n 個売る（付けている装備は所持品に入っていないので売れない）。 */
 export function sell(state: GameState, id: string, n = 1): TradeResult {
-  if (!isKnownItem(id) || n < 1) return { ok: false, reason: 'unknown' };
+  if (!isKnownItem(id) || !isCount(n)) return { ok: false, reason: 'unknown' };
   const items = removeItem(state.items, id, n);
   if (!items) return { ok: false, reason: 'none' };
   return { ok: true, state: { ...state, money: state.money + sellPrice(id) * n, items } };
@@ -38,18 +43,27 @@ export function templePrice(areaLevel: number): number {
   return 20 + areaLevel * 10;
 }
 
-/** 寺社でお祓いを受け、倒れた仲間を全員起こす（HP・MP 満タン）。値段は倒れた人数分。 */
-export function prayAtTemple(state: GameState, areaLevel: number): TradeResult {
+/**
+ * 寺社でお祓いを受け、倒れた仲間を起こす（HP・MP 満タン）。1 人ずつ代金を取り、
+ * 全員分を払えないときは、並びの前の仲間から払える人数だけ起こす。
+ */
+export function prayAtTemple(
+  state: GameState,
+  areaLevel: number,
+): { ok: true; state: GameState; revived: number } | { ok: false; reason: 'money' | 'none' } {
   const fallen = state.party.filter((m) => m.hp <= 0).length;
   if (fallen === 0) return { ok: false, reason: 'none' };
-  const cost = templePrice(areaLevel) * fallen;
-  if (state.money < cost) return { ok: false, reason: 'money' };
+  const price = templePrice(areaLevel);
+  const affordable = Math.min(fallen, Math.floor(state.money / price));
+  if (affordable === 0) return { ok: false, reason: 'money' };
+  let left = affordable;
   const party = state.party.map((m) => {
-    if (m.hp > 0) return m;
+    if (m.hp > 0 || left === 0) return m;
+    left--;
     const s = memberStats(m);
     return { ...m, hp: s.maxHp, mp: s.maxMp };
   });
-  return { ok: true, state: { ...state, money: state.money - cost, party } };
+  return { ok: true, state: { ...state, money: state.money - price * affordable, party }, revived: affordable };
 }
 
 function move(from: Inventory, to: Inventory, id: string, n: number): { from: Inventory; to: Inventory } | null {
@@ -60,7 +74,7 @@ function move(from: Inventory, to: Inventory, id: string, n: number): { from: In
 
 /** 飛脚に預ける（所持品 → 預かり）。 */
 export function deposit(state: GameState, id: string, n = 1): TradeResult {
-  if (!isKnownItem(id)) return { ok: false, reason: 'unknown' };
+  if (!isKnownItem(id) || !isCount(n)) return { ok: false, reason: 'unknown' };
   if (itemCount(state.items, id) < n) return { ok: false, reason: 'none' };
   const r = move(state.items, state.storage, id, n);
   return r ? { ok: true, state: { ...state, items: r.from, storage: r.to } } : { ok: false, reason: 'full' };
@@ -68,7 +82,7 @@ export function deposit(state: GameState, id: string, n = 1): TradeResult {
 
 /** 飛脚から引き出す（預かり → 所持品）。 */
 export function withdraw(state: GameState, id: string, n = 1): TradeResult {
-  if (!isKnownItem(id)) return { ok: false, reason: 'unknown' };
+  if (!isKnownItem(id) || !isCount(n)) return { ok: false, reason: 'unknown' };
   if (itemCount(state.storage, id) < n) return { ok: false, reason: 'none' };
   const r = move(state.storage, state.items, id, n);
   return r ? { ok: true, state: { ...state, storage: r.from, items: r.to } } : { ok: false, reason: 'full' };

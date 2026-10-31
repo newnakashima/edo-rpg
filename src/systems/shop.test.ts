@@ -51,6 +51,28 @@ describe('寺社のお祓い', () => {
     const party = [createMember('hero', 1), { ...createMember('kasumi', 1), hp: 0 }];
     expect(prayAtTemple(game({ party, money: 29 }), 1)).toEqual({ ok: false, reason: 'money' });
   });
+
+  it('全員分を払えないときは、前の仲間から払える人数だけ起こす', () => {
+    const party = [createMember('hero', 1), { ...createMember('kasumi', 1), hp: 0 }, { ...createMember('gendo', 1), hp: 0 }];
+    const r = prayAtTemple(game({ party, money: 45 }), 1);
+    expect(r.ok && r.revived).toBe(1);
+    expect(r.ok && r.state.money).toBe(15);
+    expect(r.ok && r.state.party.map((m) => m.hp > 0)).toEqual([true, true, false]);
+    // ちょうど全員分
+    expect(prayAtTemple(game({ party, money: 60 }), 1)).toMatchObject({ ok: true, revived: 2, state: { money: 0 } });
+  });
+});
+
+describe('個数の検査', () => {
+  it('1 以上の整数でない個数は扱わない', () => {
+    const s = game({ money: 100, items: { kizugusuri: 2 }, storage: { kizugusuri: 2 } });
+    for (const n of [0, -1, 1.5]) {
+      expect(buy(s, 'kizugusuri', n)).toEqual({ ok: false, reason: 'unknown' });
+      expect(sell(s, 'kizugusuri', n)).toEqual({ ok: false, reason: 'unknown' });
+      expect(deposit(s, 'kizugusuri', n)).toEqual({ ok: false, reason: 'unknown' });
+      expect(withdraw(s, 'kizugusuri', n)).toEqual({ ok: false, reason: 'unknown' });
+    }
+  });
 });
 
 describe('飛脚の預かり', () => {

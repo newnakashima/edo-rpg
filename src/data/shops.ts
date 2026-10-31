@@ -7,6 +7,7 @@ export interface ShopDef {
   goods: string[];
 }
 
+// 清水湊（序章）は主人公の一人旅なので、仲間の武器・防具は置かない。仲間の装備は加入する町（駿府など）の店に置く。
 export const SHOPS: Record<string, ShopDef> = {
   shimizuYorozu: { id: 'shimizuYorozu', name: 'よろず屋', goods: ['kizugusuri', 'dokukeshi', 'mankintan', 'kitsukegusuri'] },
   shimizuKaji: { id: 'shimizuKaji', name: '刀鍛冶', goods: ['nagawakizashi', 'shimagappa', 'sandogasa', 'omamori'] },

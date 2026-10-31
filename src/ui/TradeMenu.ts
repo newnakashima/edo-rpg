@@ -7,7 +7,7 @@ import { buy, buyPrice, deposit, sell, sellPrice, withdraw, type TradeResult } f
 import { getState, setState } from '../state';
 import type { Controls } from './input';
 import { COLORS, GAME_HEIGHT, GAME_WIDTH, textStyle } from './theme';
-import { drawWindow, Menu, MENU_LINE_HEIGHT, menuHeight, type MenuItem } from './widgets';
+import { drawWindow, maxMenuRows, Menu, type MenuItem } from './widgets';
 
 export type TradeMode = { kind: 'shop'; name: string; goods: string[] } | { kind: 'storage' };
 
@@ -67,7 +67,7 @@ export class TradeMenu {
     this.controls.flush();
     this.menus[this.menus.length - 1]?.setActive(false);
     // 一覧が長いときは、説明の窓に重ならない行数だけ見せてずらす
-    const maxRows = Math.floor((INFO_Y - 2 - 8 - menuHeight(0)) / MENU_LINE_HEIGHT);
+    const maxRows = maxMenuRows(8, INFO_Y - 2);
     this.menus.push(new Menu(this.scene, x, 8, width, items, onSelect, onCancel ?? (() => this.pop()), onMove, maxRows));
   }
 

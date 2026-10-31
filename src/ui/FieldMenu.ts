@@ -10,7 +10,7 @@ import type { Stats } from '../systems/stats';
 import { getState, setState } from '../state';
 import type { Controls } from './input';
 import { COLORS, GAME_HEIGHT, GAME_WIDTH, textStyle } from './theme';
-import { drawWindow, Menu, MENU_LINE_HEIGHT, menuHeight, type MenuItem } from './widgets';
+import { drawWindow, maxMenuRows, Menu, menuHeight, type MenuItem } from './widgets';
 
 const MAIN_X = 8;
 const MAIN_W = 80;
@@ -57,7 +57,7 @@ export class FieldMenu {
   private push(items: MenuItem[], x: number, y: number, width: number, onSelect: (i: number) => void, onMove?: (i: number) => void, onCancel?: () => void): Menu {
     this.controls.flush();
     // 長い一覧は、説明の窓に重ならない行数だけ見せてずらす
-    const maxRows = Math.floor((INFO_Y - 2 - 4 - menuHeight(0)) / MENU_LINE_HEIGHT);
+    const maxRows = maxMenuRows(4, INFO_Y - 2);
     const top = Math.min(y, INFO_Y - 2 - menuHeight(Math.min(items.length, maxRows)));
     // 下に重なるメニューは、クリックも含めて操作できないようにする
     this.menus[this.menus.length - 1]?.setActive(false);

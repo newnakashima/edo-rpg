@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { scrollOffset, wrapIndex } from './menuScroll';
 import { COLORS, textStyle } from './theme';
 import type { Controls } from './input';
 
@@ -76,6 +77,11 @@ export const MENU_LINE_HEIGHT = 15;
 /** n 行の Menu の高さ。 */
 export function menuHeight(n: number): number {
   return n * MENU_LINE_HEIGHT + 10;
+}
+
+/** 縦 top〜bottom の間に収まる Menu の行数（長い一覧はこの行数だけ見せてずらす）。 */
+export function maxMenuRows(top: number, bottom: number): number {
+  return Math.max(1, Math.floor((bottom - top - menuHeight(0)) / MENU_LINE_HEIGHT));
 }
 
 /** 縦に並んだ選択肢。上下で選び、決定で onSelect、取消で onCancel。 */
@@ -167,14 +173,15 @@ export class Menu {
   }
 
   private moveTo(i: number): void {
-    this.cursorIndex = (i + this.items.length) % this.items.length;
-    if (this.cursorIndex < this.offset) this.offset = this.cursorIndex;
-    if (this.cursorIndex >= this.offset + this.rows) this.offset = this.cursorIndex - this.rows + 1;
+    if (this.items.length === 0) return;
+    this.cursorIndex = wrapIndex(i, this.items.length);
+    this.offset = scrollOffset(this.cursorIndex, this.offset, this.rows, this.items.length);
     this.layout();
     const label = this.labels[this.cursorIndex];
     if (label) this.cursor.setY(label.y + 1);
     this.onMove?.(this.cursorIndex);
   }
+
   private confirm(): void {
     if (this.items[this.cursorIndex]?.enabled === false) return;
     this.onSelect(this.cursorIndex);
