@@ -46,11 +46,11 @@ describe('技', () => {
 
   it('弱点の属性は 1.5 倍、耐性は 0.5 倍', () => {
     // 喝（祓）は鬼火の弱点、火薬弾（火）は鬼火の耐性
-    const gendo = createBattle([createMember('gendo', 1)], 'm', ['onibi'], 1);
+    const gendo = createBattle([createMember('gendo', 1, {})], 'm', ['onibi'], 1);
     sleepEnemies(gendo);
     const katsu = resolveTurn(gendo, { p0: { kind: 'skill', skill: 'katsu', target: 'e0' } }, seqRng(0.5)).events.find((e) => e.type === 'damage');
     expect(katsu).toMatchObject({ type: 'damage', weak: true });
-    // 喝: (10 + 9 × 1.2 − 3 / 4) × 1.0 = 20.05 → 20、× 1.5 = 30
+    // 喝（装備なし）: (10 + 9 × 1.2 − 3 / 4) × 1.0 = 20.05 → 20、× 1.5 = 30
     expect(katsu).toMatchObject({ damage: 30 });
 
     const orin = sleepEnemies(createBattle([createMember('orin', 1)], 'm', ['onibi'], 1));

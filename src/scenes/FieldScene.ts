@@ -5,15 +5,16 @@ import { MAPS, START_POSITION, tileAt, type MapDef, type NpcDef } from '../data/
 import { pickGroup, step } from '../systems/encounter';
 import { dangoPrice, eatDango, innPrice, stayAtInn } from '../systems/facilities';
 import type { Facing } from '../systems/gameState';
-import { memberLevel, memberStats } from '../systems/party';
+import { memberLevel } from '../systems/party';
 import { defaultRng } from '../systems/random';
 import { playBgm } from '../systems/audio';
 import { browserStorage } from '../systems/save';
 import { getState, setState } from '../state';
 import { Controls } from '../ui/input';
+import { FieldMenu } from '../ui/FieldMenu';
 import { SaveSlotMenu } from '../ui/SaveSlotMenu';
 import { COLORS, GAME_HEIGHT, GAME_WIDTH, setupCamera, textStyle, TILE } from '../ui/theme';
-import { drawWindow, Menu, MessageWindow } from '../ui/widgets';
+import { Menu, MessageWindow } from '../ui/widgets';
 
 const DELTA: Record<Facing, [number, number]> = {
   up: [0, -1],
@@ -304,41 +305,15 @@ export class FieldScene extends Phaser.Scene {
   }
 
   private openMenu(): void {
-    const status = this.createStatusWindow();
-    const menu: Menu = new Menu(
+    const menu: FieldMenu = new FieldMenu(
       this,
-      8,
-      8,
-      80,
-      [{ label: 'とじる' }, { label: 'タイトルへ' }],
-      (i) => {
-        if (i === 0) close();
-        else this.scene.start('Title');
+      this.controls,
+      () => {
+        this.overlays = this.overlays.filter((x) => x !== menu);
+        this.controls.flush();
       },
-      () => close(),
+      () => this.scene.start('Title'),
     );
-    const close = () => {
-      this.closeOverlay(menu);
-      status.destroy();
-    };
     this.pushOverlay(menu);
-  }
-
-  private createStatusWindow(): Phaser.GameObjects.Container {
-    const state = getState();
-    const x = 96;
-    const y = 8;
-    const w = GAME_WIDTH - x - 8;
-    const lineH = 14;
-    const h = 24 + state.party.length * lineH * 2;
-    const objs: Phaser.GameObjects.GameObject[] = [drawWindow(this, x, y, w, h)];
-    objs.push(this.add.text(x + 8, y + 6, `所持金 ${state.money} 文`, textStyle(10, COLORS.accent)));
-    state.party.forEach((m, i) => {
-      const s = memberStats(m);
-      const top = y + 22 + i * lineH * 2;
-      objs.push(this.add.text(x + 8, top, `${characterName(m.id, state.gender)}  Lv${memberLevel(m)}  体力 ${m.hp}/${s.maxHp}  気力 ${m.mp}/${s.maxMp}`, textStyle(10)));
-      objs.push(this.add.text(x + 8, top + lineH, `攻 ${s.atk}  防 ${s.def}  術 ${s.mag}  速 ${s.spd}  運 ${s.luck}`, textStyle(9, COLORS.dim)));
-    });
-    return this.add.container(0, 0, objs).setScrollFactor(0).setDepth(105);
   }
 }

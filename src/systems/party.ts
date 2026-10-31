@@ -1,4 +1,5 @@
 import { CHARACTERS, type CharacterId } from '../data/characters';
+import { equipmentBonus, STARTING_EQUIPMENT, type Equipped } from '../data/equipment';
 import { skillsLearnedBetween } from '../data/skills';
 import { levelForExp, statsAtLevel, totalExpForLevel, type Stats } from './stats';
 
@@ -8,21 +9,34 @@ export interface PartyMember {
   exp: number;
   hp: number;
   mp: number;
+  /** 付けている装備。 */
+  equip: Equipped;
 }
 
 export function memberLevel(member: PartyMember): number {
   return levelForExp(member.exp);
 }
 
+/** 装備を含めた能力値。 */
 export function memberStats(member: PartyMember): Stats {
-  return statsAtLevel(CHARACTERS[member.id].base, memberLevel(member));
+  const base = statsAtLevel(CHARACTERS[member.id].base, memberLevel(member));
+  const bonus = equipmentBonus(member.equip);
+  return {
+    maxHp: base.maxHp + bonus.maxHp,
+    maxMp: base.maxMp + bonus.maxMp,
+    atk: base.atk + bonus.atk,
+    def: base.def + bonus.def,
+    mag: base.mag + bonus.mag,
+    spd: base.spd + bonus.spd,
+    luck: base.luck + bonus.luck,
+  };
 }
 
-/** レベル L の仲間を、HP・MP 満タンで作る。 */
-export function createMember(id: CharacterId, level = 1): PartyMember {
-  const exp = totalExpForLevel(level);
-  const stats = statsAtLevel(CHARACTERS[id].base, level);
-  return { id, exp, hp: stats.maxHp, mp: stats.maxMp };
+/** レベル L の仲間を、加入時の装備を付け、HP・MP 満タンで作る。 */
+export function createMember(id: CharacterId, level = 1, equip: Equipped = STARTING_EQUIPMENT[id]): PartyMember {
+  const member: PartyMember = { id, exp: totalExpForLevel(level), hp: 0, mp: 0, equip: { ...equip } };
+  const stats = memberStats(member);
+  return { ...member, hp: stats.maxHp, mp: stats.maxMp };
 }
 
 /** 全員の HP・MP を全回復する（旅籠）。 */

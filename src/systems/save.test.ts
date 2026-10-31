@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { STARTING_EQUIPMENT } from '../data/equipment';
 import { newGame, STARTING_ITEMS } from './gameState';
 import { createMember } from './party';
 import { deserialize, listSlots, load, readSlot, save, serialize, SLOT_COUNT, slotKey, type KeyValueStorage } from './save';
@@ -20,7 +21,7 @@ describe('save', () => {
     const storage = memoryStorage();
     const s = { ...state(), money: 123, flags: { intro: true } };
     save(storage, 1, s, new Date('2026-10-31T00:00:00Z'));
-    expect(load(storage, 1)).toEqual({ version: 2, savedAt: '2026-10-31T00:00:00.000Z', state: s });
+    expect(load(storage, 1)).toEqual({ version: 3, savedAt: '2026-10-31T00:00:00.000Z', state: s });
   });
 
   it('空きスロットは null', () => {
@@ -84,11 +85,11 @@ describe('save', () => {
   });
 
   it('版 1 のセーブデータは旅立ちの道具を持たせて読む', () => {
-    const v1state: Record<string, unknown> = { ...state() };
+    const v1state: Record<string, unknown> = { ...state(), party: state().party.map((m) => ({ id: m.id, exp: m.exp, hp: m.hp, mp: m.mp })) };
     delete v1state.items;
     const text = JSON.stringify({ version: 1, savedAt: '2026-10-31T00:00:00.000Z', state: v1state });
     expect(deserialize(text)?.state.items).toEqual(STARTING_ITEMS);
-    expect(deserialize(text)?.version).toBe(2);
+    expect(deserialize(text)?.version).toBe(3);
   });
 
   it('未対応の版や、おかしな道具のデータは読まない', () => {
@@ -97,6 +98,32 @@ describe('save', () => {
     expect(deserialize(JSON.stringify({ ...ok, state: { ...ok.state, items: { nope: 1 } } }))).toBeNull();
     expect(deserialize(JSON.stringify({ ...ok, state: { ...ok.state, items: { kizugusuri: 0 } } }))).toBeNull();
     expect(deserialize(JSON.stringify({ ...ok, state: { ...ok.state, items: { kizugusuri: 100 } } }))).toBeNull();
+  });
+});
+
+describe('版 3（装備）', () => {
+  it('版 2 のセーブデータは加入時の装備を付けて読む', () => {
+    const v2state = { ...state(), party: [{ id: 'hero', exp: 0, hp: 10, mp: 1 }] };
+    const data = deserialize(JSON.stringify({ version: 2, savedAt: '2026-10-31T00:00:00.000Z', state: v2state }));
+    expect(data?.version).toBe(3);
+    expect(data?.state.party[0]?.equip).toEqual(STARTING_EQUIPMENT.hero);
+  });
+
+  it('付けられない装備や、枠の違う装備は読まない', () => {
+    const ok = JSON.parse(serialize(state())) as { state: { party: Record<string, unknown>[] } };
+    const withEquip = (equip: unknown) =>
+      deserialize(JSON.stringify({ ...ok, state: { ...ok.state, party: [{ ...ok.state.party[0], equip }] } }));
+    expect(withEquip({ weapon: 'dotanuki' })).not.toBeNull();
+    expect(withEquip({ weapon: 'kunai' })).toBeNull();
+    expect(withEquip({ armor: 'dotanuki' })).toBeNull();
+    expect(withEquip({ weapon: 'nope' })).toBeNull();
+    expect(withEquip({ hat: 'sandogasa' })).toBeNull();
+    expect(withEquip(null)).toBeNull();
+  });
+
+  it('所持品に装備品を入れられる', () => {
+    const ok = JSON.parse(serialize(state())) as { state: Record<string, unknown> };
+    expect(deserialize(JSON.stringify({ ...ok, state: { ...ok.state, items: { dotanuki: 1 } } }))).not.toBeNull();
   });
 });
 
