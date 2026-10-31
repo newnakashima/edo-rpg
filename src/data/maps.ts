@@ -1365,7 +1365,7 @@ MAPS.takoya = {
       x: 9,
       y: 4,
       color: 0xd08a3a,
-      sprite: 'npc_ninsoku',
+      sprite: 'kinta',
       event: 'kinta',
     },
     {
@@ -2468,7 +2468,7 @@ MAPS.osaka = {
       x: 12,
       y: 24,
       color: 0x3a4a6a,
-      sprite: 'npc_ronin',
+      sprite: 'hyogo',
       event: 'hyogoMeet',
       hideFlag: 'hyogoJoined',
     },
@@ -3623,7 +3623,7 @@ MAPS.kanazawa = {
       x: 8,
       y: 9,
       color: 0x5a4a3a,
-      sprite: 'npc_rojin',
+      sprite: 'sakon',
       event: 'sakonMeet',
     },
     {
@@ -3932,8 +3932,7 @@ MAPS.karakuriGura = {
       x: 37,
       y: 25,
       color: 0x8a6a9a,
-      // 殿様の専用の画像はまだない（専用の人物の画像を作るときに差し替える）。それまでは役人の類型で代える
-      sprite: 'npc_yakunin',
+      sprite: 'kagaTono',
       event: 'tonoRescue',
       hideFlag: 'tonoRescued',
     },

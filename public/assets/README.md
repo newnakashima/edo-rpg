@@ -46,6 +46,20 @@ standard の size 24 では笠と合羽が描き分けられないため、主�
 
 - borei: 1 回目（bcc58de0-6585-449d-830f-d487ee996aac。white triangular cloth headband）は額の布がただの白い鉢巻きになり、三角に見えなかった。2 回目は「a small white TRIANGLE of cloth … pointing up in the middle of the forehead」と形と位置を言い、採用
 
+### 物語の専用の人物（`chars/hyogo.png`・`kinta.png`・`sakon.png`・`kagaTono.png`）
+
+町の人の類型で代えていた主要な人物に、専用の立ち姿を作った（`src/data/sprites.ts` の `STORY_SPRITES`）。設定は敵方の人物と同じ（mode `v3`、size 28、黒の 1px 輪郭、medium detail、low top-down。歩行は作らず `scripts/pack_character.py` で立ち姿を並べる）。
+
+| ID | PixelLab のキャラクター ID | 生成プロンプト | 回数 |
+| --- | --- | --- | --- |
+| hyogo（榊兵庫） | 1c362666-f9d5-4126-83af-4946e2962ec5 | chibi Edo period Japanese former police samurai (yoriki) in his thirties, black hair in a neat topknot (chonmage), stern calm face, dark navy blue haori jacket with a small white family crest on the chest, grey striped hakama trousers, two swords (katana and wakizashi) at his left hip, white tabi socks and straw sandals | 2 |
+| kinta（金太） | 8b2e2a4f-981a-4568-9b48-e2d38dfc0f36 | chibi Edo period Japanese young acrobat performer (karuwazashi), cheerful young man with short spiky black hair and a red twisted headband (hachimaki), bright red and yellow checkered short performer jacket, black tight leggings, bare feet in straw sandals, a small diamond-shaped paper kite tied on his back | 1 |
+| sakon（長瀬左近） | be96b965-6e9d-4865-b91f-69fa21704dcd | chibi Edo period Japanese elderly loyal retainer samurai, old man with white hair in a small topknot and white eyebrows, slightly bent back, formal kamishimo: dark navy stiff winged shoulder vest over a pale grey kimono and navy hakama, a short wakizashi sword at his hip, straw sandals | 3 |
+| kagaTono（加賀の殿様） | 13d55f69-7426-433a-b527-b7024dffda52 | chibi Edo period Japanese daimyo lord, thin pale young man with black hair in a topknot, wearing luxurious deep purple formal robes with gold crest patterns and very long trailing purple hakama, white undercollar, dignified tired face, no weapons | 1 |
+
+- hyogo: 1 回目は胸の家紋が見えなかった。2 回目は Pillow で羽織の左右の胸に白い家紋を描き足して採用（計 2 回）
+- sakon: 1 回目は肩衣の張った肩がなかった。2 回目（d63c8980-ddb4-4620-9238-978ab0de9782。very wide pointed shoulder wings）は張りが大きすぎて、こうもりの羽に見えた。3 回目は 1 回目の正面と背面に、小さな紺の肩衣の張りを Pillow で描き足して採用（計 3 回）
+
 ### 町の人（`chars/npc_*.png`）
 
 テストプレイで「主要人物以外のキャラクターに画像がない」と指摘されたため、町の人を 19 の類型に分けて 1 体ずつ作った（どの町の人にどれを使うかは `src/data/maps.ts` の `sprite`）。

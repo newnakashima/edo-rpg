@@ -3,7 +3,7 @@ import { ENCOUNTERS, ENEMIES } from './enemies';
 import type { EventStep } from './eventTypes';
 import { CHEST_EVENTS, EVENTS } from './events';
 import { SHOPS } from './shops';
-import { OBJECT_DEFS, OBJECT_SPRITES } from './sprites';
+import { OBJECT_DEFS, OBJECT_SPRITES, STORY_SPRITES } from './sprites';
 import { EQUIPMENT } from './equipment';
 import { ITEMS, MAX_ITEM_COUNT } from './items';
 import { EventRunner } from '../systems/eventScript';
@@ -63,6 +63,14 @@ describe('人でない物の画像（テストプレイの指摘: 主要人物�
     const npcs = Object.values(MAPS).flatMap((m) => m.npcs).filter((n) => ids.includes(n.id));
     expect(npcs.map((n) => n.id).sort()).toEqual([...ids].sort());
     for (const n of npcs) expect(n.sprite, n.id).toBeDefined();
+  });
+
+  it('榊兵庫・金太・長瀬左近・加賀の殿様は、町の人の類型でなく専用の画像を使い、専用の画像はどれもどこかで使う', () => {
+    const want: Record<string, string> = { hyogoJuku: 'hyogo', kinta: 'kinta', sakon: 'sakon', kagaTono: 'kagaTono' };
+    const all = Object.values(MAPS).flatMap((m) => m.npcs);
+    for (const [id, sprite] of Object.entries(want)) expect(all.find((n) => n.id === id)?.sprite, id).toBe(sprite);
+    const used = new Set(all.map((n) => n.sprite));
+    for (const id of STORY_SPRITES) expect(used.has(id), id).toBe(true);
   });
 
   it('物の画像はどれもどこかで使う', () => {
