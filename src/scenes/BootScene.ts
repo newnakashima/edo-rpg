@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { ENEMIES, enemyImageKey } from '../data/enemies';
+import { FACES, faceKey } from '../data/faces';
 import { TILE_KINDS, TILESETS, tileTextureKey, type TilesetId } from '../data/maps';
 import { CHAR_FRAME, CHARACTER_SPRITES, FACINGS, OBJECT_DEFS, OBJECT_SPRITES, objectKey, spriteKey, walkAnimKey, walkFrame, WALK_FPS, WALK_FRAMES } from '../data/sprites';
 
@@ -23,6 +24,7 @@ export class BootScene extends Phaser.Scene {
     for (const id of CHARACTER_SPRITES) {
       this.load.spritesheet(spriteKey(id), `assets/chars/${id}.png`, { frameWidth: CHAR_FRAME, frameHeight: CHAR_FRAME });
     }
+    for (const id of FACES) this.load.image(faceKey(id), `assets/faces/${id}.png`);
     for (const id of OBJECT_SPRITES) {
       this.load.spritesheet(objectKey(id), `assets/objects/${id}.png`, { frameWidth: OBJECT_DEFS[id].size, frameHeight: OBJECT_DEFS[id].size });
     }

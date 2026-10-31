@@ -13,20 +13,37 @@ export function drawWindow(scene: Phaser.Scene, x: number, y: number, w: number,
   return g;
 }
 
-/** ページ送りのメッセージウィンドウ。決定ボタンで次のページへ進む。 */
+/** 顔の左右の余白（ウィンドウの縁から顔まで、顔から文字まで）。 */
+const FACE_MARGIN = 4;
+
+/**
+ * ページ送りのメッセージウィンドウ。決定ボタンで次のページへ進む。
+ * faceOf を渡すと、ページごとに顔のテクスチャのキーを引き、あれば左に顔を出して文字を右へずらす。
+ */
 export class MessageWindow {
   private readonly container: Phaser.GameObjects.Container;
   private readonly text: Phaser.GameObjects.Text;
   private readonly arrow: Phaser.GameObjects.Text;
+  private readonly face: Phaser.GameObjects.Image | null;
+  private readonly x: number;
+  private readonly w: number;
+  private readonly faceOf: ((page: string) => string | undefined) | undefined;
   private pages: string[] = [];
   private index = 0;
   private onDone: (() => void) | null = null;
 
-  constructor(scene: Phaser.Scene, x: number, y: number, w: number, h: number) {
+  constructor(scene: Phaser.Scene, x: number, y: number, w: number, h: number, faceOf?: (page: string) => string | undefined) {
+    this.x = x;
+    this.w = w;
+    this.faceOf = faceOf;
     const bg = drawWindow(scene, x, y, w, h);
     this.text = scene.add.text(x + 8, y + 6, '', { ...textStyle(11), wordWrap: { width: w - 16, useAdvancedWrap: true }, lineSpacing: 3 });
     this.arrow = scene.add.text(x + w - 14, y + h - 14, '▼', textStyle(8, COLORS.accent));
-    this.container = scene.add.container(0, 0, [bg, this.text, this.arrow]).setScrollFactor(0).setDepth(100).setVisible(false);
+    // 顔はウィンドウの縦の中央に置く（フィールドの高さ 54 なら、48 の顔の上下に 3 ずつ空く）
+    this.face = faceOf ? scene.add.image(x + FACE_MARGIN, y + Math.floor(h / 2), '__DEFAULT').setOrigin(0, 0.5).setVisible(false) : null;
+    const parts: Phaser.GameObjects.GameObject[] = [bg, this.text, this.arrow];
+    if (this.face) parts.push(this.face);
+    this.container = scene.add.container(0, 0, parts).setScrollFactor(0).setDepth(100).setVisible(false);
   }
 
   get isOpen(): boolean {
@@ -37,7 +54,7 @@ export class MessageWindow {
     this.pages = pages.length > 0 ? pages : [''];
     this.index = 0;
     this.onDone = onDone ?? null;
-    this.text.setText(this.pages[0] ?? '');
+    this.showPage(this.pages[0] ?? '');
     this.container.setVisible(true);
   }
 
@@ -46,13 +63,24 @@ export class MessageWindow {
     if (!this.isOpen) return;
     this.index++;
     if (this.index < this.pages.length) {
-      this.text.setText(this.pages[this.index] ?? '');
+      this.showPage(this.pages[this.index] ?? '');
       return;
     }
     this.container.setVisible(false);
     const done = this.onDone;
     this.onDone = null;
     done?.();
+  }
+
+  private showPage(page: string): void {
+    const key = this.faceOf?.(page);
+    const hasFace = !!this.face && key !== undefined && this.face.scene.textures.exists(key);
+    if (hasFace) this.face!.setTexture(key);
+    this.face?.setVisible(hasFace);
+    const left = hasFace ? FACE_MARGIN + this.face!.width + FACE_MARGIN : 8;
+    this.text.setX(this.x + left);
+    this.text.setWordWrapWidth(this.w - left - 8, true);
+    this.text.setText(page);
   }
 
   update(controls: Controls): void {
