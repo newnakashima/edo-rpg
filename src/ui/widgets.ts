@@ -82,8 +82,16 @@ export function menuHeight(n: number): number {
 export class Menu {
   private readonly container: Phaser.GameObjects.Container;
   private readonly labels: Phaser.GameObjects.Text[];
+  private readonly notes: (Phaser.GameObjects.Text | undefined)[];
   private readonly cursor: Phaser.GameObjects.Text;
+  private readonly moreUp: Phaser.GameObjects.Text;
+  private readonly moreDown: Phaser.GameObjects.Text;
+  /** 一度に見せる行数。項目がこれより多いときは、カーソルに合わせてずらして見せる。 */
+  private readonly rows: number;
+  private readonly top: number;
   private cursorIndex = 0;
+  /** 見せている先頭の項目。 */
+  private offset = 0;
   /** 上に別のメニューが重なっている間は false（クリックも受け付けない）。 */
   private active = true;
 
@@ -97,22 +105,29 @@ export class Menu {
     private readonly onCancel?: () => void,
     /** カーソルが動いたとき（最初の表示を含む）に呼ぶ。説明文の表示などに使う。 */
     private readonly onMove?: (index: number) => void,
+    /** 一度に見せる最大の行数（省くとすべて）。 */
+    maxRows = Infinity,
   ) {
-    const lineH = MENU_LINE_HEIGHT;
-    const bg = drawWindow(scene, x, y, width, menuHeight(items.length));
-    this.labels = items.map((item, i) =>
-      scene.add.text(x + 16, y + 5 + i * lineH, item.label, textStyle(11, item.enabled === false ? COLORS.dim : COLORS.text)),
-    );
-    const notes = items.flatMap((item, i) =>
+    this.rows = Math.max(1, Math.min(items.length, maxRows));
+    this.top = y;
+    const bg = drawWindow(scene, x, y, width, menuHeight(this.rows));
+    this.labels = items.map((item) => scene.add.text(x + 16, y, item.label, textStyle(11, item.enabled === false ? COLORS.dim : COLORS.text)));
+    this.notes = items.map((item) =>
       item.note === undefined
-        ? []
-        : [scene.add.text(x + width - 8, y + 5 + i * lineH, item.note, textStyle(11, item.enabled === false ? COLORS.dim : COLORS.text)).setOrigin(1, 0)],
+        ? undefined
+        : scene.add.text(x + width - 8, y, item.note, textStyle(11, item.enabled === false ? COLORS.dim : COLORS.text)).setOrigin(1, 0),
     );
     this.cursor = scene.add.text(x + 5, y + 5, '▶', textStyle(9, COLORS.accent));
-    this.container = scene.add.container(0, 0, [bg, ...this.labels, ...notes, this.cursor]).setScrollFactor(0).setDepth(110);
+    this.moreUp = scene.add.text(x + width / 2, y - 2, '▲', textStyle(8, COLORS.accent)).setOrigin(0.5, 0);
+    this.moreDown = scene.add.text(x + width / 2, y + menuHeight(this.rows) - 9, '▼', textStyle(8, COLORS.accent)).setOrigin(0.5, 0);
+    const notes = this.notes.filter((n): n is Phaser.GameObjects.Text => n !== undefined);
+    this.container = scene.add
+      .container(0, 0, [bg, ...this.labels, ...notes, this.cursor, this.moreUp, this.moreDown])
+      .setScrollFactor(0)
+      .setDepth(110);
     this.labels.forEach((label, i) => {
       label.setInteractive({ useHandCursor: true }).on('pointerdown', () => {
-        if (!this.active) return;
+        if (!this.active || !label.visible) return;
         this.moveTo(i);
         this.confirm();
       });
@@ -134,13 +149,32 @@ export class Menu {
     this.onMove?.(this.cursorIndex);
   }
 
+  /** カーソルを i 番目に置く（開き直したときに元の位置へ戻すなど）。 */
+  select(i: number): void {
+    this.moveTo(Math.max(0, Math.min(i, this.items.length - 1)));
+  }
+
+  private layout(): void {
+    this.labels.forEach((label, i) => {
+      const row = i - this.offset;
+      const visible = row >= 0 && row < this.rows;
+      const y = this.top + 5 + row * MENU_LINE_HEIGHT;
+      label.setVisible(visible).setY(y);
+      this.notes[i]?.setVisible(visible).setY(y);
+    });
+    this.moreUp.setVisible(this.offset > 0);
+    this.moreDown.setVisible(this.offset + this.rows < this.items.length);
+  }
+
   private moveTo(i: number): void {
     this.cursorIndex = (i + this.items.length) % this.items.length;
+    if (this.cursorIndex < this.offset) this.offset = this.cursorIndex;
+    if (this.cursorIndex >= this.offset + this.rows) this.offset = this.cursorIndex - this.rows + 1;
+    this.layout();
     const label = this.labels[this.cursorIndex];
     if (label) this.cursor.setY(label.y + 1);
     this.onMove?.(this.cursorIndex);
   }
-
   private confirm(): void {
     if (this.items[this.cursorIndex]?.enabled === false) return;
     this.onSelect(this.cursorIndex);

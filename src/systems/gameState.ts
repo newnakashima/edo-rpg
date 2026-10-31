@@ -10,8 +10,10 @@ export interface GameState {
   party: PartyMember[];
   /** 所持金（文）。 */
   money: number;
-  /** 道具（ID ごとの個数）。 */
+  /** 道具・装備品（ID ごとの個数）。 */
   items: Inventory;
+  /** 飛脚に預けている道具・装備品。 */
+  storage: Inventory;
   mapId: string;
   x: number;
   y: number;
@@ -32,6 +34,7 @@ export function newGame(gender: Gender, start: { mapId: string; x: number; y: nu
     party: [createMember('hero', 1)],
     money: 50,
     items: { ...STARTING_ITEMS },
+    storage: {},
     mapId: start.mapId,
     x: start.x,
     y: start.y,

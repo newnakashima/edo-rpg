@@ -10,8 +10,9 @@ import { memberStats } from './party';
  * - 1: フェーズ 1
  * - 2: 道具（items）を追加
  * - 3: 仲間の装備（party[].equip）を追加
+ * - 4: 飛脚の預かり（storage）を追加
  */
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 export const SLOT_COUNT = 3;
 const KEY_PREFIX = 'edo-rpg/save/';
 
@@ -63,6 +64,12 @@ function isValidEquip(memberId: string, equip: unknown): boolean {
   return true;
 }
 
+/** 道具・装備品の ID ごとの個数（1〜99）か。 */
+function isInventory(v: unknown): boolean {
+  if (!isObject(v)) return false;
+  return Object.entries(v).every(([id, n]) => isKnownItem(id) && Number.isInteger(n) && (n as number) >= 1 && (n as number) <= MAX_ITEM_COUNT);
+}
+
 /** 読み込んだ値がゲームの状態として正しい形かを確かめる。 */
 export function isGameState(v: unknown): v is GameState {
   if (!isObject(v)) return false;
@@ -76,10 +83,7 @@ export function isGameState(v: unknown): v is GameState {
   if (!isNonNegativeInteger(v.money) || typeof v.mapId !== 'string') return false;
   if (!Number.isInteger(v.x) || !Number.isInteger(v.y)) return false;
   if (typeof v.facing !== 'string' || !FACINGS.has(v.facing)) return false;
-  if (!isObject(v.items)) return false;
-  for (const [id, n] of Object.entries(v.items)) {
-    if (!isKnownItem(id) || !Number.isInteger(n) || (n as number) < 1 || (n as number) > MAX_ITEM_COUNT) return false;
-  }
+  if (!isInventory(v.items) || !isInventory(v.storage)) return false;
   if (!isObject(v.flags) || !Object.values(v.flags).every((f) => typeof f === 'boolean')) return false;
   if (!isNonNegativeInteger(v.stepsToEncounter) || !isFiniteNumber(v.playTimeSec) || v.playTimeSec < 0) return false;
   return true;
@@ -104,6 +108,9 @@ function migrate(version: unknown, state: unknown): unknown {
             : m,
         ),
       };
+    } else if (v === 3) {
+      // 版 3 には預かりがない。空で始める
+      s = { ...s, storage: {} };
     }
     v++;
   }
