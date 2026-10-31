@@ -463,6 +463,10 @@ describe('第 3 章の京', () => {
     expect(respawnPoint('world', 23, 10)).toEqual({ mapId: 'kyo', ...kyo.respawn });
   });
 
+  it('京に入ると kyoEnter を行い、第 3 章を終えたら行わない', () => {
+    expect(kyo.onEnter).toEqual({ event: 'kyoEnter', unless: 'chapter3Cleared' });
+  });
+
   it('京から街道へ出ると、京の印の隣に出る', () => {
     for (const exit of kyo.exits.filter((e) => e.to === 'world')) {
       expect(Math.abs(exit.toX - town.x) + Math.abs(exit.toY - town.y)).toBe(1);

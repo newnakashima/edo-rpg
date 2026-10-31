@@ -254,6 +254,7 @@ describe('第 2 章の流れ', () => {
     const lost = run('kinshachi', start, 'defeat');
     expect(lost.flags.kinshachiDefeated).toBeFalsy();
     const retry = new EventRunner(EVENTS.kinshachi!.steps).next(lost);
+    expect(retry.request.kind).toBe('say');
     const pages = retry.request.kind === 'say' ? retry.request.pages.join('') : '';
     expect(pages).not.toContain('銀次「');
     expect(run('kinshachi', lost).flags.kinshachiDefeated).toBe(true);
@@ -308,8 +309,10 @@ describe('第 3 章の流れ', () => {
     const lost = run('shuten', start, 'defeat');
     expect(lost.flags.shutenDefeated).toBeFalsy();
     const retry = new EventRunner(EVENTS.shuten!.steps).next(lost);
+    expect(retry.request.kind).toBe('say');
     const pages = retry.request.kind === 'say' ? retry.request.pages.join('') : '';
     expect(pages).not.toContain('夜叉丸「');
+    expect(pages).toContain('酒呑の大鬼');
     expect(run('shuten', lost).flags.shutenDefeated).toBe(true);
   });
 
