@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { newGame } from './gameState';
+import { newGame, STARTING_ITEMS } from './gameState';
 import { createMember } from './party';
 import { deserialize, listSlots, load, readSlot, save, serialize, SLOT_COUNT, slotKey, type KeyValueStorage } from './save';
 
@@ -83,11 +83,11 @@ describe('save', () => {
     expect(deserialize(JSON.stringify({ ...ok, state: { ...ok.state, party: [{ id: 'hero', exp: 0, hp: -1, mp: 1 }] } }))).toBeNull();
   });
 
-  it('版 1 のセーブデータは道具を空にして読む', () => {
+  it('版 1 のセーブデータは旅立ちの道具を持たせて読む', () => {
     const v1state: Record<string, unknown> = { ...state() };
     delete v1state.items;
     const text = JSON.stringify({ version: 1, savedAt: '2026-10-31T00:00:00.000Z', state: v1state });
-    expect(deserialize(text)?.state.items).toEqual({});
+    expect(deserialize(text)?.state.items).toEqual(STARTING_ITEMS);
     expect(deserialize(text)?.version).toBe(2);
   });
 
@@ -97,5 +97,11 @@ describe('save', () => {
     expect(deserialize(JSON.stringify({ ...ok, state: { ...ok.state, items: { nope: 1 } } }))).toBeNull();
     expect(deserialize(JSON.stringify({ ...ok, state: { ...ok.state, items: { kizugusuri: 0 } } }))).toBeNull();
     expect(deserialize(JSON.stringify({ ...ok, state: { ...ok.state, items: { kizugusuri: 100 } } }))).toBeNull();
+  });
+});
+
+describe('newGame', () => {
+  it('旅立ちの道具を持って始まる', () => {
+    expect(state().items).toEqual(STARTING_ITEMS);
   });
 });

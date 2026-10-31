@@ -35,14 +35,13 @@ export interface BattleData {
 
 const EVENT_MS = 650;
 
-/** 状態異常の短い表示（味方の欄に出す）。 */
-const AILMENT_MARKS: Partial<Record<StatusId, string>> = {
-  poison: '毒',
-  paralysis: '麻',
-  sleep: '眠',
-  confusion: '混',
-  bind: '縫',
-};
+/** 状態異常の短い表示（味方の欄に出す）。状態の名前の 1 文字目。 */
+function ailmentMarks(status: Iterable<StatusId>): string {
+  return [...status]
+    .filter(isAilment)
+    .map((id) => STATUS_NAMES[id].slice(0, 1))
+    .join('');
+}
 
 /** 戦闘の下の窓の位置。 */
 const PANEL_Y = 128;
@@ -124,24 +123,21 @@ export class BattleScene extends Phaser.Scene {
     this.log.setText(text);
   }
 
-  private partyLine(c: Combatant, hp = c.hp, mp = c.mp): string {
-    const marks = Object.keys(c.status)
-      .map((s) => AILMENT_MARKS[s as StatusId])
-      .filter(Boolean)
-      .join('');
+  private partyLine(c: Combatant, hp: number, mp: number, status: Iterable<StatusId>): string {
+    const marks = ailmentMarks(status);
     return `${c.name}${marks ? `[${marks}]` : ''} 体${hp} 気${mp}`;
   }
 
   private refreshParty(): void {
     for (const c of this.battle.combatants.filter((x) => x.side === 'party')) {
-      this.setPartyText(c, c.hp, c.mp);
+      this.setPartyText(c, c.hp, c.mp, Object.keys(c.status) as StatusId[]);
     }
   }
 
-  private setPartyText(c: Combatant, hp: number, mp: number): void {
+  private setPartyText(c: Combatant, hp: number, mp: number, status: Iterable<StatusId>): void {
     const t = this.partyTexts.get(c.key);
     const color = hp <= 0 ? COLORS.danger : hp < c.stats.maxHp / 4 ? COLORS.accent : COLORS.text;
-    t?.setText(this.partyLine(c, hp, mp)).setColor(color);
+    t?.setText(this.partyLine(c, hp, mp, status)).setColor(color);
   }
 
   /** 生きている味方に順にコマンドを選ばせる。 */
@@ -408,17 +404,23 @@ export class BattleScene extends Phaser.Scene {
 
   private runTurn(): void {
     const { state, events } = resolveTurn(this.battle, this.commands, defaultRng);
-    // 演出のため、HP・気力の表示はイベントごとに更新する
+    // 演出のため、HP・気力・状態異常の表示はイベントごとに更新する
     const before = this.battle;
     this.battle = state;
     this.busy = true;
     const hp = new Map(before.combatants.map((c) => [c.key, c.hp]));
     const mp = new Map(before.combatants.map((c) => [c.key, c.mp]));
+    const status = new Map(before.combatants.map((c) => [c.key, new Set(Object.keys(c.status) as StatusId[])]));
     const update = (key: string, delta: number) => {
       const c = this.battle.combatants.find((x) => x.key === key);
       if (!c) return;
       hp.set(key, Math.max(0, Math.min(c.stats.maxHp, (hp.get(key) ?? 0) + delta)));
-      if (c.side === 'party') this.setPartyText(c, hp.get(key) ?? 0, mp.get(key) ?? 0);
+      if (c.side === 'party') this.setPartyText(c, hp.get(key) ?? 0, mp.get(key) ?? 0, status.get(key) ?? []);
+    };
+    const setStatus = (key: string, change: (s: Set<StatusId>) => void) => {
+      const s = status.get(key);
+      if (s) change(s);
+      update(key, 0);
     };
     const play = (i: number) => {
       const e = events[i];
@@ -456,7 +458,24 @@ export class BattleScene extends Phaser.Scene {
           mp.set(e.target, (mp.get(e.target) ?? 0) + e.amount);
           update(e.target, 0);
           break;
+        case 'status':
+          setStatus(e.target, (s) => s.add(e.status));
+          break;
+        case 'statusEnd':
+          setStatus(e.target, (s) => s.delete(e.status));
+          break;
+        case 'cure':
+          // 毒消しは毒だけを治すので、ターンの後にも残っている状態異常は消さない
+          setStatus(e.target, (s) => {
+            const after = this.battle.combatants.find((c) => c.key === e.target)?.status ?? {};
+            for (const id of [...s]) if (isAilment(id) && !after[id]) s.delete(id);
+          });
+          break;
+        case 'cannotAct':
+          if (e.reason === 'bind') setStatus(e.actor, (s) => s.delete('bind'));
+          break;
         case 'defeated': {
+          setStatus(e.target, (s) => s.clear());
           const sprite = this.enemySprites.get(e.target);
           if (sprite) this.tweens.add({ targets: sprite, alpha: 0, duration: 300 });
           break;

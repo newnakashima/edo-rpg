@@ -1,8 +1,8 @@
 // 戦闘の進行（画面に依存しない純粋なロジック）。
 // コマンドは「たたかう・技・道具・防御・逃げる」。技・道具・状態異常・属性は docs/balance.md、docs/characters.md に従う。
-import { characterName, type CharacterId, type Gender } from '../data/characters';
+import { characterName, type Gender } from '../data/characters';
 import { ENEMIES } from '../data/enemies';
-import { ITEMS, itemCount, removeItem, type Inventory } from '../data/items';
+import { ITEMS, itemCount, removeItem, type Inventory, type ItemEffect } from '../data/items';
 import { SKILLS, isAilment, skillsAtLevel, type Ailment, type Element, type SkillDef, type StatusId } from '../data/skills';
 import {
   ailmentChance,
@@ -31,7 +31,7 @@ export interface Combatant {
   hp: number;
   mp: number;
   guarding: boolean;
-  /** 使える技の ID。 */
+  /** 使える技の ID（味方だけ。敵の行動は ENEMIES の actions から選ぶ）。 */
   skills: string[];
   weak: Element[];
   resist: Element[];
@@ -43,8 +43,6 @@ export interface Combatant {
   coveredBy?: string;
   /** 敵の場合の種族 ID。 */
   enemyId?: string;
-  /** 味方の場合の人物 ID。 */
-  memberId?: CharacterId;
 }
 
 export type Command =
@@ -133,7 +131,6 @@ export function createBattle(
       weak: [],
       resist: [],
       status: {},
-      memberId: m.id,
     };
   });
   const counts = new Map<string, number>();
@@ -155,7 +152,7 @@ export function createBattle(
       hp: stats.maxHp,
       mp: 0,
       guarding: false,
-      skills: (def.actions ?? []).map((a) => a.skill).filter((s) => s !== 'attack'),
+      skills: [],
       weak: def.weak ?? [],
       resist: def.resist ?? [],
       status: {},
@@ -212,6 +209,13 @@ export function needsTarget(skill: SkillDef): 'enemy' | 'ally' | null {
 
 class TurnContext {
   readonly byKey: Map<string, Combatant>;
+  /** このターンにすでに行動した者。 */
+  readonly acted = new Set<string>();
+  /**
+   * このターンに付いた効果のうち、ターンの終わりに残りを減らさないもの。
+   * 対象がこのターンにもう行動していたら、付けたターンは数えない（効く行動の回数をちょうど N 回にする）。
+   */
+  readonly fresh = new Set<string>();
 
   constructor(
     readonly state: BattleState,
@@ -251,12 +255,11 @@ class TurnContext {
     return target ? this.coverRedirect(target) : undefined;
   }
 
-  /** 味方の単体の対象。選んだ相手が倒れていたら、生きている別の相手にする。 */
-  partyTarget(actor: Combatant, key: string | undefined, side: Side): Combatant | undefined {
+  /** 味方が狙う敵の単体。選んだ敵が倒れていたら、生きている別の敵にする。 */
+  partyEnemyTarget(key: string | undefined): Combatant | undefined {
     const chosen = key ? this.byKey.get(key) : undefined;
-    if (chosen && chosen.side === side && isAlive(chosen)) return chosen;
-    if (side === actor.side) return actor;
-    return pick(this.alive(side), this.rng);
+    if (chosen && chosen.side === 'enemy' && isAlive(chosen)) return chosen;
+    return pick(this.alive('enemy'), this.rng);
   }
 
   coverRedirect(target: Combatant): Combatant {
@@ -306,6 +309,7 @@ class TurnContext {
       }
     }
     target.status[status] = Math.max(target.status[status] ?? 0, turns);
+    if (this.acted.has(target.key)) this.fresh.add(`${target.key}:${status}`);
     this.events.push({ type: 'status', target: target.key, status });
   }
 
@@ -334,11 +338,12 @@ class TurnContext {
           const t = pick(this.alive(actor.side), this.rng);
           return t ? [t] : [];
         }
-        const t = this.partyTarget(actor, targetKey, actor.side);
-        return t ? [t] : [];
+        // 選んだ味方は、倒れていても対象のまま（技の効果の側で「効かなかった」にする）
+        const chosen = targetKey ? this.byKey.get(targetKey) : undefined;
+        return [chosen && chosen.side === actor.side ? chosen : actor];
       }
       case 'enemy': {
-        const t = actor.side === 'enemy' ? this.enemyTarget(actor) : this.partyTarget(actor, targetKey, foes);
+        const t = actor.side === 'enemy' ? this.enemyTarget(actor) : this.partyEnemyTarget(targetKey);
         return t ? [t] : [];
       }
     }
@@ -366,6 +371,11 @@ class TurnContext {
     }
 
     for (const target of this.skillTargets(actor, skill, targetKey)) {
+      // 選んだ味方が先に倒れていたら効かない
+      if (!isAlive(target)) {
+        this.events.push({ type: 'noEffect', target: target.key });
+        continue;
+      }
       switch (effect.kind) {
         case 'physical': {
           if (effect.gamble && this.rng() < 0.5) {
@@ -385,7 +395,6 @@ class TurnContext {
           break;
         }
         case 'heal': {
-          if (!isAlive(target)) break;
           const amount = Math.min(target.stats.maxHp - target.hp, healAmount(effect.power * growthFactor(actor.level), actor.stats.mag));
           target.hp += amount;
           this.events.push({ type: 'heal', target: target.key, amount });
@@ -399,6 +408,7 @@ class TurnContext {
           break;
         case 'taunt':
           target.taunt = { by: actor.key, turns: effect.turns };
+          if (this.acted.has(target.key)) this.fresh.add(`${target.key}:taunt`);
           this.events.push({ type: 'taunt', actor: actor.key, target: target.key });
           break;
         case 'cover':
@@ -433,6 +443,7 @@ class TurnContext {
     this.hurt(target, hit.damage);
   }
 
+  /** 道具を使う。効かない相手（倒れた味方に傷薬、満タンの味方に傷薬など）には使わず、減らさない。 */
   useItem(actor: Combatant, itemId: string, targetKey: string): void {
     const item = ITEMS[itemId];
     const rest = item ? removeItem(this.state.items, itemId) : null;
@@ -440,25 +451,20 @@ class TurnContext {
       this.events.push({ type: 'noItem', actor: actor.key, item: itemId });
       return;
     }
-    this.state.items = rest;
     this.events.push({ type: 'item', actor: actor.key, item: itemId });
     const chosen = this.byKey.get(targetKey);
     const target = chosen && chosen.side === actor.side ? chosen : actor;
     const effect = item.effect;
-    if (effect.kind === 'revive') {
-      if (isAlive(target)) {
-        this.events.push({ type: 'noEffect', target: target.key });
-        return;
-      }
-      target.hp = Math.max(1, Math.floor(target.stats.maxHp * effect.rate));
-      this.events.push({ type: 'revive', target: target.key, hp: target.hp });
-      return;
-    }
-    if (!isAlive(target)) {
+    if (!itemWorks(effect, target)) {
       this.events.push({ type: 'noEffect', target: target.key });
       return;
     }
+    this.state.items = rest;
     switch (effect.kind) {
+      case 'revive':
+        target.hp = Math.max(1, Math.floor(target.stats.maxHp * effect.rate));
+        this.events.push({ type: 'revive', target: target.key, hp: target.hp });
+        return;
       case 'healHp': {
         const amount = Math.min(target.stats.maxHp - target.hp, effect.amount);
         target.hp += amount;
@@ -493,6 +499,7 @@ class TurnContext {
 
   /** 1 人分の行動。 */
   act(actor: Combatant, command: Command | undefined): void {
+    this.acted.add(actor.key);
     // 動けない状態異常
     for (const reason of ['sleep', 'paralysis', 'bind'] as const) {
       if (actor.status[reason]) {
@@ -525,7 +532,7 @@ class TurnContext {
 
     switch (command?.kind) {
       case 'attack': {
-        const target = this.partyTarget(actor, command.target, 'enemy');
+        const target = this.partyEnemyTarget(command.target);
         if (target) this.attack(actor, target);
         return;
       }
@@ -554,7 +561,7 @@ class TurnContext {
       }
       for (const id of Object.keys(c.status) as StatusId[]) {
         // 影縫いは次の行動を止めるまで残す
-        if (id === 'bind') continue;
+        if (id === 'bind' || this.fresh.has(`${c.key}:${id}`)) continue;
         const left = (c.status[id] ?? 0) - 1;
         if (left > 0) {
           c.status[id] = left;
@@ -563,10 +570,24 @@ class TurnContext {
           this.events.push({ type: 'statusEnd', target: c.key, status: id });
         }
       }
-      if (c.taunt) {
+      if (c.taunt && !this.fresh.has(`${c.key}:taunt`)) {
         c.taunt = c.taunt.turns > 1 ? { ...c.taunt, turns: c.taunt.turns - 1 } : undefined;
       }
     }
+  }
+}
+
+/** 道具がその相手に効くか。 */
+export function itemWorks(effect: ItemEffect, target: Combatant): boolean {
+  if (effect.kind === 'revive') return !isAlive(target);
+  if (!isAlive(target)) return false;
+  switch (effect.kind) {
+    case 'healHp':
+      return target.hp < target.stats.maxHp;
+    case 'healMp':
+      return target.mp < target.stats.maxMp;
+    case 'cure':
+      return Object.keys(target.status).some((id) => isAilment(id as StatusId) && (!effect.ailment || id === effect.ailment));
   }
 }
 

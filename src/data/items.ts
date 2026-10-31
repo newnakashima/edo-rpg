@@ -13,12 +13,12 @@ export type ItemEffect =
 export interface ItemDef {
   id: string;
   name: string;
-  /** 買値（文）。売値は半額。 */
+  /** 買値（文）。売値は半額。店（フェーズ 2 の町の施設）で使う。 */
   price: number;
   effect: ItemEffect;
   /** 対象。今は味方単体の道具だけ。 */
   target: 'ally';
-  /** 戦闘の外（メニュー）でも使える。 */
+  /** 戦闘の外（メニュー）でも使える。メニュー画面（フェーズ 2）で使う。 */
   field: boolean;
   description: string;
 }
@@ -42,7 +42,7 @@ export function itemCount(inv: Inventory, id: string): number {
   return inv[id] ?? 0;
 }
 
-/** 道具を加える（上限で止める）。新しいオブジェクトを返す。 */
+/** 道具を加える（上限で止める）。新しいオブジェクトを返す。店・宝箱で使う。 */
 export function addItem(inv: Inventory, id: string, n = 1): Inventory {
   if (!Object.hasOwn(ITEMS, id)) throw new Error(`unknown item: ${id}`);
   return { ...inv, [id]: Math.min(MAX_ITEM_COUNT, itemCount(inv, id) + n) };

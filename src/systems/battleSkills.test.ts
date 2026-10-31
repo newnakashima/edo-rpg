@@ -77,8 +77,11 @@ describe('技', () => {
 
   it('手裏剣は 2〜3 回当てる', () => {
     const b = sleepEnemies(createBattle([createMember('kasumi', 1)], 'm', ['ogaeru', 'ogaeru'], 1));
-    const { events } = resolveTurn(b, { p0: { kind: 'skill', skill: 'shuriken' } }, seqRng(0.5, 0.5, 0.99));
-    expect(events.filter((e) => e.type === 'damage')).toHaveLength(3);
+    // 行動順の乱数 3 つの次が回数の乱数
+    const three = resolveTurn(b, { p0: { kind: 'skill', skill: 'shuriken' } }, seqRng(0.5, 0.5, 0.5, 0.99, 0.5));
+    expect(three.events.filter((e) => e.type === 'damage')).toHaveLength(3);
+    const two = resolveTurn(b, { p0: { kind: 'skill', skill: 'shuriken' } }, seqRng(0.5, 0.5, 0.5, 0, 0.5));
+    expect(two.events.filter((e) => e.type === 'damage')).toHaveLength(2);
   });
 });
 
@@ -116,7 +119,7 @@ describe('状態異常', () => {
     expect(events).toContainEqual({ type: 'poison', target: 'p0', damage: 3 });
   });
 
-  it('状態異常のかかりやすさは運の差で変わり、かからないこともある', () => {
+  it('状態異常は確率でかかり、かからないこともある', () => {
     const b = sleepEnemies(createBattle([createMember('kasumi', 9)], 'm', ['ogaeru'], 1));
     const ok = resolveTurn(b, { p0: { kind: 'skill', skill: 'shibire', target: 'e0' } }, seqRng(0.5, 0.5, 0.1));
     expect(ok.events).toContainEqual({ type: 'status', target: 'e0', status: 'paralysis' });
@@ -124,12 +127,46 @@ describe('状態異常', () => {
     expect(ng.events).toContainEqual({ type: 'statusFailed', target: 'e0', status: 'paralysis' });
   });
 
-  it('命中を下げられた敵の攻撃は外れることがある', () => {
+  it('命中を下げられた敵の攻撃は 35% で外れる', () => {
     const b = createBattle([createMember('hero', 1)], 'm', ['yamainu'], 1);
     get(b, 'e0').status.accDown = 3;
-    // 行動順、敵の行動（攻撃）、狙い、命中の判定（0.1 で外れ）
-    const { events } = resolveTurn(b, { p0: { kind: 'guard' } }, seqRng(0.5, 0.5, 0.1, 0.1));
+    // 行動順、敵の行動（攻撃）、狙い、命中の判定
+    const miss = resolveTurn(b, { p0: { kind: 'guard' } }, seqRng(0.5, 0.5, 0.1, 0, 0.34, 0.5));
+    expect(miss.events).toContainEqual({ type: 'miss', target: 'p0' });
+    const hit = resolveTurn(b, { p0: { kind: 'guard' } }, seqRng(0.5, 0.5, 0.1, 0, 0.36, 0.5));
+    expect(hit.events.some((e) => e.type === 'attack' && e.actor === 'e0')).toBe(true);
+  });
+
+  it('回避を上げた味方には、敵の攻撃が外れることがある', () => {
+    const b = createBattle([createMember('hero', 1)], 'm', ['yamainu'], 1);
+    get(b, 'p0').status.evade = 3;
+    const { events } = resolveTurn(b, { p0: { kind: 'guard' } }, seqRng(0.5, 0.5, 0.1, 0, 0.34, 0.5));
     expect(events).toContainEqual({ type: 'miss', target: 'p0' });
+  });
+
+  it('攻撃↑ でダメージが増え、攻撃↓ で減る', () => {
+    const base = sleepEnemies(createBattle([createMember('hero', 10)], 'm', ['ogaeru'], 1));
+    const hit = (b: BattleState) => {
+      const e = resolveTurn(b, { p0: { kind: 'attack', target: 'e0' } }, seqRng(0.5, 0.5, 0.99, 0.5)).events.find((x) => x.type === 'attack');
+      return e?.type === 'attack' ? e.damage : 0;
+    };
+    const normal = hit(base);
+    const up = structuredClone(base);
+    get(up, 'p0').status.atkUp = 3;
+    const down = structuredClone(base);
+    get(down, 'p0').status.atkDown = 3;
+    expect(hit(up)).toBeGreaterThan(normal);
+    expect(hit(down)).toBeLessThan(normal);
+  });
+
+  it('混乱すると、敵味方を問わずランダムな相手を攻撃する', () => {
+    const party = [createMember('hero', 1), createMember('kasumi', 1)];
+    const b = sleepEnemies(createBattle(party, 'm', ['ogaeru'], 1));
+    get(b, 'p0').status.confusion = 3;
+    // 行動順で主人公を先にし、狙いの乱数 0（生きている者のうち先頭 = 霞）
+    const { events } = resolveTurn(b, { p0: { kind: 'attack', target: 'e0' }, p1: { kind: 'guard' } }, seqRng(0.99, 0, 0, 0, 0.99, 0.5));
+    expect(events).toContainEqual({ type: 'confused', actor: 'p0' });
+    expect(events.find((e) => e.type === 'attack' && e.actor === 'p0')).toMatchObject({ target: 'p1' });
   });
 
   it('倒れると状態異常は消える', () => {
@@ -204,5 +241,126 @@ describe('道具', () => {
     const b = createBattle(party, 'm', ['ogaeru'], 1);
     get(b, 'p0').mp = 1;
     expect(partyAfterBattle(party, b)[0]?.mp).toBe(1);
+  });
+});
+
+describe('効果の持続', () => {
+  it.each([
+    ['敵より先に', 9, 1],
+    ['敵が動いた後に', 9, 12],
+  ])('%s当てた麻痺は、ちょうど 3 回分の行動を止める', (_label, kasumiLevel, enemyLevel) => {
+    const b = createBattle([createMember('kasumi', kasumiLevel)], 'm', ['yamainu'], enemyLevel);
+    // 1 ターン目: 霞の行動順の乱数 0、敵 0.99。痺れ薬は 0.01 で成功させる
+    let r = resolveTurn(b, { p0: { kind: 'skill', skill: 'shibire', target: 'e0' } }, seqRng(0, 0.99, 0, 0, 0.99, 0.5, 0.01));
+    expect(r.events).toContainEqual({ type: 'status', target: 'e0', status: 'paralysis' });
+    let state = r.state;
+    let blocked = r.events.filter((e) => e.type === 'cannotAct').length;
+    for (let t = 0; t < 4; t++) {
+      r = resolveTurn(state, { p0: { kind: 'guard' } }, seqRng(0.5, 0.5, 0, 0, 0.99, 0.5));
+      if (r.events.some((e) => e.type === 'cannotAct' && e.actor === 'e0')) blocked++;
+      state = r.state;
+    }
+    expect(blocked).toBe(3);
+  });
+
+  it('自分にかけた分身の術は、次のターンから 3 ターン続く', () => {
+    const b = sleepEnemies(createBattle([createMember('kasumi', 18)], 'm', ['ogaeru'], 1));
+    let { state } = resolveTurn(b, { p0: { kind: 'skill', skill: 'bunshin' } }, seqRng(0.5));
+    for (let t = 0; t < 3; t++) {
+      expect(get(state, 'p0').status.evade).toBeGreaterThan(0);
+      state = resolveTurn(state, { p0: { kind: 'guard' } }, seqRng(0.5)).state;
+    }
+    expect(get(state, 'p0').status.evade).toBeUndefined();
+  });
+
+  it('仁義を切られた敵は、3 回の行動のあいだ引きつけられる', () => {
+    const party = [createMember('hero', 3), createMember('kasumi', 3)];
+    const b = createBattle(party, 'm', ['ogaeru'], 1);
+    // 主人公（0.99）が先に仁義を切る
+    let r = resolveTurn(b, { p0: { kind: 'skill', skill: 'jingi', target: 'e0' }, p1: { kind: 'guard' } }, seqRng(0.99, 0.5, 0, 0, 0.99, 0.5));
+    let turns = 0;
+    while (get(r.state, 'e0').taunt && turns < 10) {
+      r = resolveTurn(r.state, { p0: { kind: 'guard' }, p1: { kind: 'guard' } }, seqRng(0.5));
+      turns++;
+    }
+    // 仁義を切ったターン + 次の 2 ターン = 3 回
+    expect(turns).toBe(2);
+  });
+});
+
+describe('敵の行動', () => {
+  it('重みに従って技を選ぶ（大蛙は 攻撃 4 : 毒液 1）', () => {
+    const b = createBattle([createMember('hero', 1)], 'm', ['ogaeru'], 1);
+    // 行動順（敵が先）、行動の選択 0.79 は攻撃、0.81 は毒液
+    const attack = resolveTurn(b, { p0: { kind: 'guard' } }, seqRng(0, 0.99, 0.79, 0, 0.99, 0.5));
+    expect(attack.events.some((e) => e.type === 'attack' && e.actor === 'e0')).toBe(true);
+    const poison = resolveTurn(b, { p0: { kind: 'guard' } }, seqRng(0, 0.99, 0.81, 0, 0.1));
+    expect(poison.events).toContainEqual({ type: 'skill', actor: 'e0', skill: 'dokueki' });
+    expect(poison.events).toContainEqual({ type: 'status', target: 'p0', status: 'poison' });
+  });
+
+  it('鬼火の狐火は術のダメージを与える', () => {
+    const b = createBattle([createMember('hero', 1)], 'm', ['onibi'], 1);
+    const { events } = resolveTurn(b, { p0: { kind: 'guard' } }, seqRng(0, 0.99, 0.9, 0, 0.5));
+    expect(events).toContainEqual({ type: 'skill', actor: 'e0', skill: 'kitsunebi' });
+    expect(events.find((e) => e.type === 'damage')).toMatchObject({ target: 'p0' });
+  });
+});
+
+describe('範囲・回復・お祓い', () => {
+  it('一宿一飯の恩は味方全体を回復し、威力はレベルで伸びる', () => {
+    const party = [{ ...createMember('hero', 12), hp: 1 }, { ...createMember('kasumi', 12), hp: 1 }];
+    const b = sleepEnemies(createBattle(party, 'm', ['ogaeru'], 1));
+    const { events } = resolveTurn(b, { p0: { kind: 'skill', skill: 'ichishuku' }, p1: { kind: 'guard' } }, seqRng(0.5));
+    const heals = events.filter((e) => e.type === 'heal');
+    expect(heals.map((e) => e.type === 'heal' && e.target)).toEqual(['p0', 'p1']);
+    // 威力 8 × 1.075^11 + 術力 × 1.5
+    const mag = get(b, 'p0').stats.mag;
+    expect(heals[0]).toMatchObject({ amount: Math.floor(8 * 1.075 ** 11 + mag * 1.5) });
+  });
+
+  it('お祓いで状態異常を治す。倒れた味方を選んでいたら効かない', () => {
+    const party = [createMember('gendo', 1), createMember('hero', 1)];
+    const b = sleepEnemies(createBattle(party, 'm', ['ogaeru'], 1));
+    get(b, 'p1').status.poison = 99;
+    const cured = resolveTurn(b, { p0: { kind: 'skill', skill: 'oharai', target: 'p1' }, p1: { kind: 'guard' } }, seqRng(0.5));
+    expect(cured.events).toContainEqual({ type: 'cure', target: 'p1' });
+    get(b, 'p1').hp = 0;
+    const fallen = resolveTurn(b, { p0: { kind: 'skill', skill: 'yakushi', target: 'p1' } }, seqRng(0.5));
+    expect(fallen.events).toContainEqual({ type: 'noEffect', target: 'p1' });
+    expect(get(fallen.state, 'p0').hp).toBe(get(b, 'p0').hp);
+  });
+
+  it('影縫いは技で当てると、その後の 1 回の行動を止める', () => {
+    const b = createBattle([createMember('kasumi', 14)], 'm', ['ogaeru'], 1);
+    // 霞が先に動くので、そのターンの敵の行動を止める
+    const r = resolveTurn(b, { p0: { kind: 'skill', skill: 'kagenui', target: 'e0' } }, seqRng(0.99, 0, 0.1, 0.5));
+    expect(r.events).toContainEqual({ type: 'status', target: 'e0', status: 'bind' });
+    expect(r.events).toContainEqual({ type: 'cannotAct', actor: 'e0', reason: 'bind' });
+    expect(get(r.state, 'e0').status.bind).toBeUndefined();
+  });
+});
+
+describe('道具の消費', () => {
+  it('効かない相手には使わず、減らさない', () => {
+    const party = [createMember('hero', 1), { ...createMember('kasumi', 1), hp: 0 }];
+    const b = sleepEnemies(createBattle(party, 'm', ['ogaeru'], 1, { items: { kizugusuri: 1, kitsukegusuri: 1 } }));
+    // 満タンの味方に傷薬、倒れた味方に傷薬、生きている味方に気付け薬
+    for (const [item, target] of [['kizugusuri', 'p0'], ['kizugusuri', 'p1'], ['kitsukegusuri', 'p0']] as const) {
+      const r = resolveTurn(b, { p0: { kind: 'item', item, target } }, seqRng(0.5));
+      expect(r.events).toContainEqual({ type: 'noEffect', target });
+      expect(r.state.items).toEqual(b.items);
+    }
+  });
+
+  it('逃走に失敗したターンは、選んだ道具・技を使わない', () => {
+    const party = [createMember('hero', 5), { ...createMember('kasumi', 1), hp: 1 }];
+    const b = createBattle(party, 'm', ['ogaeru'], 1, { items: { kizugusuri: 1 } });
+    const { state } = resolveTurn(
+      b,
+      { p0: { kind: 'escape' }, p1: { kind: 'item', item: 'kizugusuri', target: 'p1' } },
+      seqRng(0.999, 0.5),
+    );
+    expect(state.items).toEqual({ kizugusuri: 1 });
   });
 });

@@ -4,13 +4,6 @@ import type { CharacterId } from './characters';
 /** 属性。祓は妖怪、機はからくりに効く。 */
 export type Element = 'fire' | 'thunder' | 'holy' | 'mech';
 
-export const ELEMENT_NAMES: Record<Element, string> = {
-  fire: '火',
-  thunder: '雷',
-  holy: '祓',
-  mech: '機',
-};
-
 /** 状態異常（悪い効果）。 */
 export type Ailment = 'poison' | 'paralysis' | 'sleep' | 'confusion' | 'bind';
 
@@ -74,7 +67,7 @@ export interface SkillDef {
   elements?: Element[];
   /** 行動順に関係なく先に動く（居合・かばう）。 */
   priority?: boolean;
-  /** 戦闘の外（メニュー）でも使える。 */
+  /** 戦闘の外（メニュー）でも使える。メニュー画面（フェーズ 2）で使う。 */
   field?: boolean;
   /** 説明（メニューに出す）。 */
   description: string;

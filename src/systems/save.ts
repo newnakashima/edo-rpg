@@ -1,7 +1,7 @@
 // セーブ/ロード。localStorage にスロットごとにバージョン付きの JSON で保存する。
 import { CHARACTERS } from '../data/characters';
 import { ITEMS, MAX_ITEM_COUNT } from '../data/items';
-import type { GameState } from './gameState';
+import { STARTING_ITEMS, type GameState } from './gameState';
 import { memberStats } from './party';
 
 /**
@@ -74,8 +74,8 @@ export function isGameState(v: unknown): v is GameState {
 /** 古い版のセーブデータの状態を今の形に直す。未対応の版なら null。 */
 function migrate(version: unknown, state: unknown): unknown {
   if (version === SAVE_VERSION) return state;
-  // 版 1 には道具がない。旅立ちの道具は持たせず、空にする（旅籠や店で手に入る）
-  if (version === 1 && isObject(state)) return { ...state, items: {} };
+  // 版 1 には道具がない。新しく始めた場合と同じく、旅立ちの道具を持たせる
+  if (version === 1 && isObject(state)) return { ...state, items: { ...STARTING_ITEMS } };
   return null;
 }
 
