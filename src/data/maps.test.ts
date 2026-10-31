@@ -86,6 +86,58 @@ describe('葛籠の画像', () => {
   });
 });
 
+describe('町の人の画像', () => {
+  // 画像のない（色の仮表示の）ものは、人でない物（祠・机など）と、まだ専用の画像のない人物だけ
+  const PLACEHOLDER_OK = new Set([
+    'からくりの機械', 'ゼンマイの棚', '人形の頭', '作りかけの人形', '千両箱', '塚', '墓', '大凧', '実験の台', '座元の文机', '掛け軸', '文机',
+    '木箱', '朽ちた本尊', '焼け残りの祭壇', '牛', '石標', '石段', '石碑', '祠', '荷車', '蘭斎の机', '装置', '辻の地蔵', '鐘楼の跡', '鯱の台座',
+    // 専用の画像を作る予定の人物（第 7 章の夜叉丸、伊賀の朧、原城跡の亡霊）
+    '夜叉丸', '朧', '亡霊',
+  ]);
+
+  it('名前から分かる役割と、画像の類型が合う', () => {
+    // 名前に含まれる語 → 類型（先に書いたものから当てる）
+    const RULES: [RegExp, string][] = [
+      [/カピタン/, 'npc_oranda'],
+      [/唐人/, 'npc_tojin'],
+      [/旅籠の主人/, 'npc_innkeeper'],
+      [/刀鍛冶/, 'npc_smith'],
+      [/飛脚/, 'npc_hikyaku'],
+      [/神主/, 'npc_kannushi'],
+      [/舞妓/, 'npc_maiko'],
+      [/老婆|婆$/, 'npc_roba'],
+      [/おかみ|母|女将|女中/, 'npc_okami'],
+      [/娘|織子|売り子/, 'npc_musume'],
+      [/子ども|町の子|小僧/, 'npc_kodomo'],
+      [/船頭|漁師|釣り人/, 'npc_sendo'],
+      [/門番|番人/, 'npc_monban'],
+      [/役人|同心|辻番/, 'npc_yakunin'],
+      [/よろず屋|商人|番頭|米仲買/, 'npc_merchant'],
+      [/浪人|用心棒/, 'npc_ronin'],
+    ];
+    let checked = 0;
+    for (const m of Object.values(MAPS)) {
+      for (const n of m.npcs) {
+        if (!n.sprite?.startsWith('npc_')) continue;
+        const rule = RULES.find(([re]) => re.test(n.name));
+        if (!rule) continue;
+        expect(n.sprite, `${m.id} ${n.id} ${n.name}`).toBe(rule[1]);
+        checked++;
+      }
+    }
+    expect(checked).toBeGreaterThan(80);
+  });
+
+  it('人には画像があり、色の仮表示は物とまだの人物だけ', () => {
+    for (const m of Object.values(MAPS)) {
+      for (const n of m.npcs) {
+        if (n.sprite || n.object) continue;
+        expect(PLACEHOLDER_OK.has(n.name), `${m.id} ${n.id} ${n.name}`).toBe(true);
+      }
+    }
+  });
+});
+
 describe('マップのデータ', () => {
   for (const map of Object.values(MAPS)) {
     describe(map.id, () => {

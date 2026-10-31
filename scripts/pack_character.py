@@ -6,7 +6,8 @@
 シートの並び:
 - 行: 下・左・右・上（src/data/sprites.ts の FACINGS と同じ順）
 - 列: 0 = 立ち、1〜4 = 歩行（名前に walk を含むアニメーションのコマ）
-- 1 コマの大きさは、立ち姿と歩行のうち大きいキャンバスに合わせる（今は 40 × 40）。
+- 1 コマの大きさは、立ち姿と歩行のうち大きいキャンバスに合わせる（今は 40 × 40）。それより小さいキャンバス（町の人の 36 × 36 など）は FRAME に広げる。
+- 歩行のアニメーションがないキャラクター（その場に立っている町の人）は、歩行の 4 コマにも立ち姿を置く。
 - 左右はコマの中央に置く。上下は、どの行も足元がそろうように置く。足元の境目を FOOT_Y とし、
   行の中でいちばん下の不透明ピクセルが FOOT_Y - 1 の行に来る（FOOT_Y の行から下は透明）。
   src/data/sprites.ts の CHAR_DISPLAY_ORIGIN.y は、この FOOT_Y - 1 の行をタイルのいちばん下の行に合わせる値にしている。
@@ -21,6 +22,8 @@ ROWS = ["south", "west", "east", "north"]
 WALK_FRAMES = 4
 # 足元の境目（コマの上端からのピクセル。足のいちばん下の行は FOOT_Y - 1。40 × 40 のコマで、下に 7px の余白を残す）
 FOOT_Y = 33
+# 1 コマの最小の大きさ（src/data/sprites.ts の CHAR_FRAME と同じ）
+FRAME = 40
 
 
 def fail(message: str) -> None:
@@ -45,10 +48,15 @@ def main(src: str, out: str) -> None:
         fail("metadata.json に states がありません")
     frames = states[0].get("frames", {})
     rotations = frames.get("rotations", {})
-    walks = [k for k in frames.get("animations", {}) if "walk" in k]
-    if len(walks) != 1:
+    animations = frames.get("animations", {})
+    walks = [k for k in animations if "walk" in k]
+    if not animations:
+        # 歩かない町の人: 歩行のコマにも立ち姿を置く
+        walk = {d: [rotations[d]] * WALK_FRAMES for d in rotations}
+    elif len(walks) != 1:
         fail(f"名前に walk を含むアニメーションがちょうど 1 つ必要です（見つかったもの: {walks}）")
-    walk = frames["animations"][walks[0]]
+    else:
+        walk = animations[walks[0]]
 
     grid: list[list[Image.Image]] = []
     for d in ROWS:
@@ -59,8 +67,8 @@ def main(src: str, out: str) -> None:
             fail(f"{d} の歩行のコマ数が {0 if paths is None else len(paths)} です（{WALK_FRAMES} を想定）")
         grid.append([load(root, p) for p in [rotations[d], *paths]])
 
-    w = max(im.width for row in grid for im in row)
-    h = max(im.height for row in grid for im in row)
+    w = max(FRAME, *(im.width for row in grid for im in row))
+    h = max(FRAME, *(im.height for row in grid for im in row))
     if FOOT_Y >= h:
         fail(f"コマの高さ {h} が足元の高さ FOOT_Y = {FOOT_Y} に足りません")
     sheet = Image.new("RGBA", (w * (1 + WALK_FRAMES), h * len(ROWS)), (0, 0, 0, 0))
