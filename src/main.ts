@@ -6,7 +6,12 @@ import { FieldScene } from './scenes/FieldScene';
 import { TitleScene } from './scenes/TitleScene';
 import { getState } from './state';
 import { bindVirtualPad } from './ui/input';
+import { preventZoomGestures, resetZoomWhenScaled } from './ui/preventZoom';
 import { GAME_HEIGHT, GAME_WIDTH, RENDER_SCALE } from './ui/theme';
+
+// スマートフォンで画面が拡大されて操作できなくなるのを防ぐ
+preventZoomGestures(document);
+resetZoomWhenScaled();
 
 const padRoot = document.getElementById('pad');
 if (padRoot) bindVirtualPad(padRoot);
