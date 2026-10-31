@@ -44,8 +44,8 @@ export const EQUIPMENT: Record<string, EquipDef> = {
   shakujo: { id: 'shakujo', name: '錫杖', slot: 'weapon', price: 300, bonus: { atk: 6, mag: 4 }, wearers: ['gendo'], description: '鳴らすと魔を祓う杖' },
   dokko: { id: 'dokko', name: '独鈷杵', slot: 'weapon', price: 820, bonus: { atk: 9, mag: 6 }, wearers: ['gendo'], description: '煩悩を打ち砕く法具' },
   tetsuShakujo: { id: 'tetsuShakujo', name: '鉄錫杖', slot: 'weapon', price: 1200, bonus: { atk: 11, mag: 9 }, wearers: ['gendo'], description: '修験者の鉄の錫杖' },
-  // 第 4 章でお凛の初期装備をからくり銃に変えたので、今は手に入らない（定義を消すと、持っているセーブが読めなくなるので残す）。
-  // 安い銃として店に置くかは、寄り道の町を作るときに決める
+  // 第 4 章でお凛の初期装備をからくり銃に変えたので、今はどこからも手に入らない。
+  // 寄り道の町の店に安い銃として置く候補なので、定義は残す（置くかは寄り道の町を作るときに決める）
   hinawaju: { id: 'hinawaju', name: '火縄銃', slot: 'weapon', price: 60, bonus: { atk: 4 }, wearers: ['orin'], description: '使い込んだ火縄銃' },
   karakuriju: { id: 'karakuriju', name: 'からくり銃', slot: 'weapon', price: 380, bonus: { atk: 9 }, wearers: ['orin'], description: 'ゼンマイで弾を込める銃' },
   nanbanju: { id: 'nanbanju', name: '南蛮銃', slot: 'weapon', price: 1300, bonus: { atk: 15 }, wearers: ['orin'], description: '南蛮渡りの燧石の銃' },
