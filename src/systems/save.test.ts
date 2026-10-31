@@ -20,7 +20,7 @@ describe('save', () => {
     const storage = memoryStorage();
     const s = { ...state(), money: 123, flags: { intro: true } };
     save(storage, 1, s, new Date('2026-10-31T00:00:00Z'));
-    expect(load(storage, 1)).toEqual({ version: 1, savedAt: '2026-10-31T00:00:00.000Z', state: s });
+    expect(load(storage, 1)).toEqual({ version: 2, savedAt: '2026-10-31T00:00:00.000Z', state: s });
   });
 
   it('空きスロットは null', () => {
@@ -81,5 +81,21 @@ describe('save', () => {
     expect(deserialize(JSON.stringify({ ...ok, state: { ...ok.state, money: 1.5 } }))).toBeNull();
     expect(deserialize(JSON.stringify({ ...ok, state: { ...ok.state, playTimeSec: -1 } }))).toBeNull();
     expect(deserialize(JSON.stringify({ ...ok, state: { ...ok.state, party: [{ id: 'hero', exp: 0, hp: -1, mp: 1 }] } }))).toBeNull();
+  });
+
+  it('版 1 のセーブデータは道具を空にして読む', () => {
+    const v1state: Record<string, unknown> = { ...state() };
+    delete v1state.items;
+    const text = JSON.stringify({ version: 1, savedAt: '2026-10-31T00:00:00.000Z', state: v1state });
+    expect(deserialize(text)?.state.items).toEqual({});
+    expect(deserialize(text)?.version).toBe(2);
+  });
+
+  it('未対応の版や、おかしな道具のデータは読まない', () => {
+    const ok = JSON.parse(serialize(state())) as { state: Record<string, unknown> };
+    expect(deserialize(JSON.stringify({ ...ok, version: 99 }))).toBeNull();
+    expect(deserialize(JSON.stringify({ ...ok, state: { ...ok.state, items: { nope: 1 } } }))).toBeNull();
+    expect(deserialize(JSON.stringify({ ...ok, state: { ...ok.state, items: { kizugusuri: 0 } } }))).toBeNull();
+    expect(deserialize(JSON.stringify({ ...ok, state: { ...ok.state, items: { kizugusuri: 100 } } }))).toBeNull();
   });
 });

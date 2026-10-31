@@ -65,7 +65,17 @@ export class MessageWindow {
 
 export interface MenuItem {
   label: string;
+  /** 右寄せで出す補足（消費 MP、個数など）。 */
+  note?: string;
   enabled?: boolean;
+}
+
+/** Menu の 1 行の高さ。 */
+export const MENU_LINE_HEIGHT = 15;
+
+/** n 行の Menu の高さ。 */
+export function menuHeight(n: number): number {
+  return n * MENU_LINE_HEIGHT + 10;
 }
 
 /** 縦に並んだ選択肢。上下で選び、決定で onSelect、取消で onCancel。 */
@@ -83,14 +93,21 @@ export class Menu {
     private readonly items: MenuItem[],
     private readonly onSelect: (index: number) => void,
     private readonly onCancel?: () => void,
+    /** カーソルが動いたとき（最初の表示を含む）に呼ぶ。説明文の表示などに使う。 */
+    private readonly onMove?: (index: number) => void,
   ) {
-    const lineH = 15;
-    const bg = drawWindow(scene, x, y, width, items.length * lineH + 10);
+    const lineH = MENU_LINE_HEIGHT;
+    const bg = drawWindow(scene, x, y, width, menuHeight(items.length));
     this.labels = items.map((item, i) =>
       scene.add.text(x + 16, y + 5 + i * lineH, item.label, textStyle(11, item.enabled === false ? COLORS.dim : COLORS.text)),
     );
+    const notes = items.flatMap((item, i) =>
+      item.note === undefined
+        ? []
+        : [scene.add.text(x + width - 8, y + 5 + i * lineH, item.note, textStyle(11, item.enabled === false ? COLORS.dim : COLORS.text)).setOrigin(1, 0)],
+    );
     this.cursor = scene.add.text(x + 5, y + 5, '▶', textStyle(9, COLORS.accent));
-    this.container = scene.add.container(0, 0, [bg, ...this.labels, this.cursor]).setScrollFactor(0).setDepth(110);
+    this.container = scene.add.container(0, 0, [bg, ...this.labels, ...notes, this.cursor]).setScrollFactor(0).setDepth(110);
     this.labels.forEach((label, i) => {
       label.setInteractive({ useHandCursor: true }).on('pointerdown', () => {
         this.moveTo(i);
@@ -108,6 +125,7 @@ export class Menu {
     this.cursorIndex = (i + this.items.length) % this.items.length;
     const label = this.labels[this.cursorIndex];
     if (label) this.cursor.setY(label.y + 1);
+    this.onMove?.(this.cursorIndex);
   }
 
   private confirm(): void {
