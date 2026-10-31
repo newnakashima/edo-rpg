@@ -473,6 +473,121 @@ export const ENEMIES: Record<string, EnemyDef> = {
       { skill: 'hinowa', weight: 1 },
     ],
   },
+  // 伊賀〜原城に足した敵（テストプレイのフィードバック）
+  /** 伊賀の山に棲む烏天狗。 */
+  karasuTengu: {
+    id: 'karasuTengu',
+    name: '烏天狗',
+    color: 0x2a2a3a,
+    image: true,
+    factors: { hp: 1.0, atk: 1.2, def: 1.0, spd: 1.3 },
+    weak: ['thunder'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'kyukoka', weight: 1 },
+    ],
+  },
+  /** 伊賀者の里のくノ一。 */
+  igaKunoichi: {
+    id: 'igaKunoichi',
+    name: '伊賀のくノ一',
+    color: 0x6a3a7a,
+    image: true,
+    factors: { hp: 0.9, atk: 1.1, def: 0.9, spd: 1.4 },
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'igaShuriken', weight: 1 },
+    ],
+  },
+  /** 大坂の蔵に棲みついた猫又。 */
+  nekomata: {
+    id: 'nekomata',
+    name: '猫又',
+    color: 0x3a3a4a,
+    image: true,
+    factors: { hp: 1.0, atk: 1.2, def: 0.9, spd: 1.3 },
+    weak: ['holy'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'kaibyoBi', weight: 1 },
+    ],
+  },
+  /** 大坂の賭場の博徒。 */
+  bakuto: {
+    id: 'bakuto',
+    name: '博徒',
+    color: 0x8a5a4a,
+    image: true,
+    factors: { hp: 1.1, atk: 1.2, def: 1.0, spd: 1.0 },
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'saikoro', weight: 1 },
+    ],
+  },
+  /** 西国街道の磯に出る磯女。長い髪で巻きつく。 */
+  isoonna: {
+    id: 'isoonna',
+    name: '磯女',
+    color: 0xb0c0d0,
+    image: true,
+    factors: { hp: 1.0, atk: 1.1, def: 0.9, spd: 1.1 },
+    weak: ['holy'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'makitsuki', weight: 1 },
+    ],
+  },
+  /** 瀬戸内の浜に出る牛鬼。 */
+  ushioni: {
+    id: 'ushioni',
+    name: '牛鬼',
+    color: 0x2a2a2a,
+    image: true,
+    factors: { hp: 1.4, atk: 1.3, def: 1.1, spd: 0.9 },
+    weak: ['holy'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'dokueki', weight: 1 },
+    ],
+  },
+  /** 長崎の沖の海賊。 */
+  kaizoku: {
+    id: 'kaizoku',
+    name: '海賊',
+    color: 0x8a6a4a,
+    image: true,
+    factors: { hp: 1.1, atk: 1.2, def: 1.0, spd: 1.1 },
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'kesagiri', weight: 1 },
+    ],
+  },
+  /** 原城跡で討ち死にした者の骨が集まった大骸骨。 */
+  gashadokuro: {
+    id: 'gashadokuro',
+    name: 'がしゃどくろ',
+    color: 0xd0c0e0,
+    image: true,
+    factors: { hp: 1.5, atk: 1.3, def: 1.2, spd: 0.7 },
+    weak: ['holy'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'nigiritsubushi', weight: 1 },
+    ],
+  },
+  /** 原城跡をさまよう怨霊。 */
+  onryo: {
+    id: 'onryo',
+    name: '怨霊',
+    color: 0xe0e0e0,
+    image: true,
+    factors: { hp: 0.9, atk: 1.1, def: 0.8, spd: 1.2 },
+    weak: ['holy'],
+    actions: [
+      { skill: 'attack', weight: 2 },
+      { skill: 'urami', weight: 1 },
+    ],
+  },
   // ボス（rewardScale あり）。イベントの battle で出し、出現表には入れない
   /** 序章のボス。妖狐だが、実はからくりで操られていた。序章は一人旅なので化かし（混乱）は控えめにする。 */
   yako: {
@@ -708,6 +823,10 @@ const IGA: EncounterTable = {
     { members: ['iganin', 'karakuriTaka', 'dokugumo'], weight: 2 },
     { members: ['iganin', 'iganin', 'iganin'], weight: 1 },
     { members: ['iganin', 'iganin', 'karakuriTaka', 'dokugumo'], weight: 1 },
+    { members: ['karasuTengu', 'karasuTengu'], weight: 2 },
+    { members: ['igaKunoichi', 'iganin'], weight: 2 },
+    { members: ['karasuTengu', 'igaKunoichi', 'dokugumo'], weight: 1 },
+    { members: ['igaKunoichi', 'igaKunoichi', 'iganin', 'karakuriTaka'], weight: 1 },
   ],
 };
 
@@ -721,6 +840,10 @@ const OSAKA: EncounterTable = {
     { members: ['karakuriTawara', 'bakeNezumi', 'bakeNezumi'], weight: 2 },
     { members: ['karakuriTawara', 'teppoAshigaru', 'yojinbo'], weight: 1 },
     { members: ['yojinbo', 'teppoAshigaru', 'teppoAshigaru', 'bakeNezumi'], weight: 1 },
+    { members: ['nekomata', 'nekomata'], weight: 2 },
+    { members: ['bakuto', 'yojinbo'], weight: 2 },
+    { members: ['bakuto', 'bakuto', 'bakeNezumi'], weight: 1 },
+    { members: ['nekomata', 'bakeNezumi', 'bakeNezumi', 'bakuto'], weight: 1 },
   ],
 };
 
@@ -733,6 +856,10 @@ const SAIGOKU: EncounterTable = {
     { members: ['gehoTsukai', 'heikegani'], weight: 2 },
     { members: ['umibozu', 'heikegani', 'heikegani'], weight: 1 },
     { members: ['gehoTsukai', 'gehoTsukai', 'umibozu'], weight: 1 },
+    { members: ['isoonna', 'isoonna'], weight: 2 },
+    { members: ['ushioni'], weight: 2 },
+    { members: ['ushioni', 'heikegani'], weight: 1 },
+    { members: ['isoonna', 'umibozu', 'heikegani'], weight: 1 },
   ],
 };
 
@@ -746,6 +873,9 @@ const NAGASAKI: EncounterTable = {
     { members: ['umibozu', 'heikegani', 'gehoTsukai'], weight: 2 },
     { members: ['nanbanHei', 'nanbanHei', 'gehoTsukai'], weight: 1 },
     { members: ['gehoTsukai', 'gehoTsukai', 'heikegani', 'heikegani'], weight: 1 },
+    { members: ['kaizoku', 'kaizoku'], weight: 2 },
+    { members: ['kaizoku', 'nanbanHei'], weight: 1 },
+    { members: ['kaizoku', 'kaizoku', 'gehoTsukai', 'umibozu'], weight: 1 },
   ],
 };
 
@@ -759,6 +889,10 @@ const HARAJO: EncounterTable = {
     { members: ['nanbanHei', 'nanbanHei'], weight: 1 },
     { members: ['boreiMusha', 'boreiMusha', 'boreiMusha'], weight: 1 },
     { members: ['nanbanHei', 'gehoTsukai', 'boreiMusha', 'boreiMusha'], weight: 1 },
+    { members: ['gashadokuro'], weight: 2 },
+    { members: ['onryo', 'onryo'], weight: 2 },
+    { members: ['gashadokuro', 'boreiMusha'], weight: 1 },
+    { members: ['onryo', 'onryo', 'boreiMusha', 'gehoTsukai'], weight: 1 },
   ],
 };
 
