@@ -1268,7 +1268,8 @@ export const EVENTS: Record<string, EventDef> = {
       {
         type: 'if',
         flag: 'tonoRescued',
-        then: KANAZAWA_CHAPTER_END,
+        // 褒美は一度だけ（onEnter の unless に加え、イベントの側でも chapter7Cleared を見る）
+        then: [{ type: 'if', flag: 'chapter7Cleared', then: [], else: KANAZAWA_CHAPTER_END }],
         else: [{ type: 'if', flag: 'kanazawaIntro', then: [], else: KANAZAWA_ARRIVE }],
       },
     ],

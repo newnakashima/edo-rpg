@@ -86,6 +86,7 @@ export const OBJECT_DEFS = {
   zenmaiTana: { size: 32, frames: 1 },
   jikkenDai: { size: 32, frames: 1 },
   ransaiTsukue: { size: 32, frames: 1 },
+  toro: { size: 32, frames: 1 },
 } as const satisfies Record<string, { size: 16 | 32; frames: 1 | 2 }>;
 export type ObjectSpriteId = keyof typeof OBJECT_DEFS;
 export const OBJECT_SPRITES = Object.keys(OBJECT_DEFS) as ObjectSpriteId[];

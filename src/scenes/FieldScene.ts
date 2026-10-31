@@ -193,7 +193,7 @@ export class FieldScene extends Phaser.Scene {
       case 'battle':
         // 戦闘から戻ってきたフィールドが続きを行う
         // 既知の制限（見送り）: warp の直後に battle が続くと、このとき fromMapId が移動先のマップになり、
-        // 戦闘から戻ったときに移動先の onEnter が行われない。今の warp は金太の大凧（kinta）だけで、その直後に battle は続かないので見送る（warp の直後に battle を置かないこと）。
+        // 戦闘から戻ったときに移動先の onEnter が行われない。今の warp（金太の大凧、第 7 章の北前船・殿様の救出など）は、どれも直後に battle が続かないので見送る（warp の直後に battle を置かないこと。events.test.ts で確かめている）。
         // 本来は PendingEvent に enterPending を持たせ、ここで this.enterPending を引き継ぎ、create で復元する（フェーズ 4 で直す）。
         setPendingEvent({ runner, fromMapId });
         this.runner = null;

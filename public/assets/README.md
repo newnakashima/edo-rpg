@@ -262,3 +262,5 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 
 - 3 回目（89dcac26-52b0-4ab4-8b12-4806560bdbbc）で ishidan を採用。description の終わりを small isolated object with empty transparent space around it にし、説明を small square opening in the ground with a low grey stone rim, inside it grey stone steps go down into darkness, only 20 pixels wide, transparent background around の言い方で 4 通り作り、透過の余白があり段の見えるものを選んだ
 - 判定の観点（全物共通）: 説明の主な特徴が見える、背景が透過、見下ろし気味でタイルと矛盾しない、濃い輪郭、落ち着いた配色（出島・研究所の洋物を除く）、32 × 32 に収まり下端が地面、ほかの物と見分けがつく。ゲーム画面で工房・鍵屋の辻・鬼の巣・研究所・原城跡・出島を確かめた
+
+- toro（第 7 章の兼六園の徽軫灯籠）: `create_image_pixflux`（32 × 32、`no_background: true`、黒の 1px 輪郭、low top-down、medium detail）。1 回目（d043095d-010f-4c31-af44-35b4876048e4。Japanese kotoji-toro stone lantern of Kenroku-en garden, grey granite lantern with a wide flat umbrella-shaped roof (kasa) and a square fire box with a window, standing on TWO separate stone legs of different lengths …、text_guidance_scale 11）は脚が 1 本の台座で、火袋の赤い光が目に見えた。2 回目（fb8c0764-5ae6-415b-8ffc-cc3031042408。脚を「TWO thin straight stone legs standing apart」と言い直し、text_guidance_scale 13）も台座で、窓が目に見えた。3 回目は 1 回目の笠と火袋を使い、Pillow で窓を 1 つの黄色い灯りに、脚を長い左脚と石に乗った短い右脚に描き直して採用（計 3 回）

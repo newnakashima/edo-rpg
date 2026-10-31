@@ -142,4 +142,18 @@ describe('広島・長崎の店（第 6 章）', () => {
     }
   });
 });
+describe('金沢の店（第 7 章）', () => {
+  it('金沢の刀鍛冶には 4 人それぞれの武器と防具があり、3 つの店の品はすべて定義されている', () => {
+    for (const id of ['hero', 'kasumi', 'gendo', 'orin'] as const) {
+      for (const slot of ['weapon', 'armor'] as const) {
+        expect(SHOPS.kanazawaKaji!.goods.some((g) => EQUIPMENT[g]?.slot === slot && canEquip(id, g)), `${id} ${slot}`).toBe(true);
+      }
+    }
+    for (const shop of ['kanazawaYorozu', 'kanazawaKaji', 'kanazawaKinpaku']) {
+      for (const g of SHOPS[shop]!.goods) expect(isKnownItem(g), `${shop}/${g}`).toBe(true);
+    }
+    expect(SHOPS.kanazawaYorozu!.goods).toEqual(expect.arrayContaining(['shibafune', 'bocha']));
+  });
+});
+
 

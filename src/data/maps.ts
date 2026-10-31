@@ -3740,7 +3740,7 @@ MAPS.kenrokuen = {
       x: 18,
       y: 8,
       color: 0x8a8a8a,
-      object: 'sekihi',
+      object: 'toro',
       event: 'kotojiToro',
     },
     {
@@ -3885,6 +3885,7 @@ MAPS.karakuriGura = {
       x: 37,
       y: 25,
       color: 0x8a6a9a,
+      // 殿様の専用の画像はまだない（専用の人物の画像を作るときに差し替える）。それまでは役人の類型で代える
       sprite: 'npc_yakunin',
       event: 'tonoRescue',
       hideFlag: 'tonoRescued',
