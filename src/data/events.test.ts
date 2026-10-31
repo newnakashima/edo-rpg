@@ -41,6 +41,7 @@ describe('イベントのデータ', () => {
             for (const id of step.enemies) expect(ENEMIES[id], id).toBeDefined();
             break;
           case 'join':
+          case 'leave':
             expect(CHARACTERS[step.member], step.member).toBeDefined();
             break;
           case 'warp': {

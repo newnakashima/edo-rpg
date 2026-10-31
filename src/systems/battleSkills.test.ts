@@ -491,10 +491,10 @@ describe('野狐（序章のボス）の技', () => {
 
 describe('第 4 章（伊賀）の敵の技', () => {
   /** enemy が skill を使うまでターンを進め、そのターン、技を使ったあとのイベントを返す（味方は防御だけ）。 */
-  function untilSkill(enemy: string, level: number, skill: string, setup: (b: BattleState) => void = () => {}) {
+  function untilSkill(enemy: string, level: number, skill: string, setup: (b: BattleState) => void = () => {}, seed = 0) {
     let b = createBattle([createMember('hero', 30), createMember('kasumi', 30), createMember('gendo', 30), createMember('orin', 30)], 'm', [enemy], level, { canEscape: false });
     setup(b);
-    const rng = seededRng(11);
+    const rng = seededRng(11 + seed);
     const guard = { p0: { kind: 'guard' }, p1: { kind: 'guard' }, p2: { kind: 'guard' }, p3: { kind: 'guard' } } as const;
     for (let t = 0; t < 200; t++) {
       const r = resolveTurn(b, guard, rng);
@@ -514,8 +514,8 @@ describe('第 4 章（伊賀）の敵の技', () => {
   const hits = (events: { type: string }[]) => events.filter((e) => e.type === 'damage' || e.type === 'miss').length;
 
   it('朧の手裏剣の雨は味方に 3〜4 回当たる', () => {
-    for (let k = 0; k < 3; k++) {
-      const n = hits(untilSkill('oboro', 15, 'shurikenAme').events);
+    for (let k = 0; k < 5; k++) {
+      const n = hits(untilSkill('oboro', 15, 'shurikenAme', undefined, k).events);
       expect(n).toBeGreaterThanOrEqual(3);
       expect(n).toBeLessThanOrEqual(4);
     }
@@ -546,5 +546,86 @@ describe('第 4 章（伊賀）の敵の技', () => {
 
   it('伊賀者の手裏剣は 2 回投げる', () => {
     expect(hits(untilSkill('iganin', 13, 'igaShuriken').events)).toBe(2);
+  });
+});
+
+describe('榊兵庫（侍、ゲスト）の技', () => {
+  it('Lv18 で加わったときから 3 つの技を覚えている', () => {
+    const b = createBattle([createMember('hyogo', 18)], 'm', ['ogaeru'], 1);
+    expect(get(b, 'p0').skills).toEqual(['hyogoKesagiri', 'tsubamegaeshi', 'munenmuso']);
+  });
+
+  it('袈裟斬りは気力 3 で、通常攻撃の 1.5 倍', () => {
+    const b = sleepEnemies(createBattle([createMember('hyogo', 18)], 'm', ['karakuriTawara'], 16));
+    const mp = get(b, 'p0').mp;
+    // 乱数 0.5 は会心なし・ダメージの揺れが同じになる
+    const atk = resolveTurn(b, { p0: { kind: 'attack', target: 'e0' } }, seqRng(0.5)).events.find((e) => e.type === 'attack');
+    const r = resolveTurn(b, { p0: { kind: 'skill', skill: 'hyogoKesagiri', target: 'e0' } }, seqRng(0.5));
+    const hit = r.events.find((e) => e.type === 'damage');
+    expect(get(r.state, 'p0').mp).toBe(mp - 3);
+    const base = atk?.type === 'attack' ? atk.damage : 0;
+    expect(hit?.type === 'damage' && hit.damage).toBeGreaterThanOrEqual(Math.floor(base * 1.5) - 1);
+    expect(hit?.type === 'damage' && hit.damage).toBeLessThanOrEqual(Math.ceil(base * 1.5) + 1);
+  });
+
+  it('燕返しは気力 6 で、同じ敵に 2 回斬る', () => {
+    const b = sleepEnemies(createBattle([createMember('hyogo', 18)], 'm', ['karakuriTawara'], 16));
+    const r = resolveTurn(b, { p0: { kind: 'skill', skill: 'tsubamegaeshi', target: 'e0' } }, seqRng(0.5));
+    expect(r.events.filter((e) => (e.type === 'damage' || e.type === 'miss') && e.target === 'e0')).toHaveLength(2);
+    expect(get(r.state, 'p0').mp).toBe(get(b, 'p0').mp - 6);
+  });
+
+  it('無念無想は気力 5 で、自分の会心↑ を 3 ターン付ける', () => {
+    const b = sleepEnemies(createBattle([createMember('hyogo', 18)], 'm', ['karakuriTawara'], 16));
+    const r = resolveTurn(b, { p0: { kind: 'skill', skill: 'munenmuso' } }, seqRng(0.5));
+    expect(r.events).toContainEqual({ type: 'status', target: 'p0', status: 'critUp' });
+    expect(get(r.state, 'p0').status.critUp).toBeGreaterThan(0);
+    expect(get(r.state, 'p0').mp).toBe(get(b, 'p0').mp - 5);
+  });
+});
+
+describe('第 5 章（大坂）の敵の技', () => {
+  /** enemy が skill を使うまでターンを進め、そのターン、技を使ったあとのイベントを返す（味方は防御だけ）。 */
+  function untilSkill(enemy: string, level: number, skill: string, setup: (b: BattleState) => void = () => {}, seed = 0) {
+    let b = createBattle([createMember('hero', 30), createMember('gendo', 30), createMember('orin', 30), createMember('hyogo', 18)], 'm', [enemy], level, { canEscape: false });
+    setup(b);
+    const rng = seededRng(13 + seed);
+    const guard = { p0: { kind: 'guard' }, p1: { kind: 'guard' }, p2: { kind: 'guard' }, p3: { kind: 'guard' } } as const;
+    for (let t = 0; t < 200; t++) {
+      const r = resolveTurn(b, guard, rng);
+      const i = r.events.findIndex((e) => e.type === 'skill' && e.actor === 'e0' && e.skill === skill);
+      if (i >= 0) return r.events.slice(i + 1);
+      b = r.state;
+      for (const c of b.combatants) {
+        if (c.side === 'party') {
+          c.status = {};
+          c.hp = c.stats.maxHp;
+        }
+      }
+      setup(b);
+    }
+    throw new Error(`${skill} was not used`);
+  }
+
+  it('百俵からくりの俵落としは味方 4 人全員に当たる', () => {
+    const hit = untilSkill('hyakuhyo', 19, 'tawaraOtoshi').filter((e) => e.type === 'damage' || e.type === 'miss').map((e) => ('target' in e ? e.target : ''));
+    expect(hit.sort()).toEqual(['p0', 'p1', 'p2', 'p3']);
+  });
+
+  it('百俵からくりの米ぬかの煙は味方全員に命中↓ をかけようとする', () => {
+    const after = untilSkill('hyakuhyo', 19, 'komenuka').filter((e) => e.type === 'status' || e.type === 'statusFailed');
+    expect(after.map((e) => ('target' in e ? e.target : '')).sort()).toEqual(['p0', 'p1', 'p2', 'p3']);
+    for (const e of after) expect(e).toMatchObject({ status: 'accDown' });
+  });
+
+  it('鉄砲足軽の鉄砲は必ず当たる（回避↑ の味方にも。回避↑ では 1 回に 35% 外れるので、10 回試す）', () => {
+    for (let k = 0; k < 10; k++) {
+      const evade = (b: BattleState) => {
+        for (const c of b.combatants) if (c.side === 'party') c.status.evade = 9;
+      };
+      const after = untilSkill('teppoAshigaru', 16, 'teppo', evade, k);
+      expect(after.some((e) => e.type === 'damage')).toBe(true);
+      expect(after.some((e) => e.type === 'miss')).toBe(false);
+    }
   });
 });

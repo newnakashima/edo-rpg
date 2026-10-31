@@ -23,9 +23,12 @@ interface Frame {
   index: number;
 }
 
-/** 仲間に加える。加入済み・満員なら何もしない。レベルはその時点のパーティーの平均（切り捨て、最低 1）。ゲストは guestLevel。 */
+/**
+ * 仲間に加える。加入済み・満員なら何もしない。レベルはその時点のパーティーの平均（切り捨て、最低 1）。ゲストは guestLevel。
+ * 一時離脱中（away にいる）の仲間も何もしない（新しく作ると二重になるため。away から戻す手順は第 6 章で足す）。
+ */
 export function joinParty(state: GameState, member: GameState['party'][number]['id']): GameState {
-  if (state.party.some((m) => m.id === member) || state.party.length >= MAX_PARTY) return state;
+  if (state.party.some((m) => m.id === member) || state.away.some((m) => m.id === member) || state.party.length >= MAX_PARTY) return state;
   const avg = Math.max(1, Math.floor(state.party.reduce((s, m) => s + memberLevel(m), 0) / Math.max(1, state.party.length)));
   return { ...state, party: [...state.party, createMember(member, CHARACTERS[member].guestLevel ?? avg)] };
 }

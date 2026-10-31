@@ -183,6 +183,11 @@ describe('一時加入と一時離脱（第 5 章）', () => {
     expect(gone.away.map((m) => m.id)).toEqual(['kasumi']);
   });
 
+  it('一時離脱中（away にいる）の仲間を join しても、新しく作らない（二重にしない）', () => {
+    const left = leaveParty(four(), 'kasumi');
+    expect(joinParty(left, 'kasumi')).toBe(left);
+  });
+
   it('イベントの leave 手順で抜ける', () => {
     const r = play([{ type: 'leave', member: 'kasumi' }], four());
     expect(r.state.party.map((m) => m.id)).not.toContain('kasumi');

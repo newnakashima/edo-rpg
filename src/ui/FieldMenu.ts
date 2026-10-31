@@ -213,6 +213,7 @@ export class FieldMenu {
     const state = getState();
     const member = state.party[index];
     if (!member) return;
+    // ゲストは装備の枠を開かずに断る。画面にはテストがないが、開いても changeEquipment が 'guest' で断る（fieldMenu.test.ts で確かめる）
     if (isGuest(member.id)) {
       this.setInfo(FAIL_MESSAGES.guest);
       return;

@@ -161,6 +161,23 @@ describe('版 5（一時離脱の仲間）', () => {
     expect(deserialize(JSON.stringify({ ...ok, state: { ...ok.state, away: [{ id: 'nope', exp: 0, hp: 1, mp: 1, equip: {} }] } }))).toBeNull();
     expect(deserialize(JSON.stringify({ ...ok, state: { ...ok.state, away: [{ ...createMember('kasumi', 1), equip: { weapon: 'dotanuki' } }] } }))).toBeNull();
   });
+
+  it('同じ人物の二重、一時離脱の主人公・ゲストは読まない。一時離脱の仲間の HP・MP も最大値に収める', () => {
+    const ok = JSON.parse(serialize(state())) as { state: Record<string, unknown> & { party: unknown[] } };
+    const withAway = (away: unknown[], party: unknown[] = ok.state.party) => deserialize(JSON.stringify({ ...ok, state: { ...ok.state, party, away } }));
+    const kasumi = createMember('kasumi', 10);
+    expect(withAway([kasumi])).not.toBeNull();
+    expect(withAway([kasumi], [...ok.state.party, kasumi])).toBeNull();
+    expect(withAway([kasumi, kasumi])).toBeNull();
+    expect(withAway([createMember('hero', 1)])).toBeNull();
+    expect(withAway([createMember('hyogo', 18)])).toBeNull();
+    expect(withAway([{ ...kasumi, hp: 9999, mp: 9999 }])?.state.away[0]).toEqual(kasumi);
+  });
+
+  it('ゲスト（兵庫）がパーティーにいるセーブを読み戻せる', () => {
+    const s = { ...state(), party: [...state().party, createMember('hyogo', 18)] };
+    expect(deserialize(serialize(s))?.state).toEqual(s);
+  });
 });
 
 describe('newGame', () => {
