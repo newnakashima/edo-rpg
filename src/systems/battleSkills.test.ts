@@ -745,7 +745,7 @@ describe('第 6 章（長崎・島原）の敵の技', () => {
     expect(hit?.type === 'damage' && hit.damage).toBeGreaterThan(10);
   });
 
-  it('外法使いの外法の炎は火の術で、火に弱い相手には効果が大きい', () => {
+  it('外法使いの外法の炎は火の術で、味方にダメージを与える', () => {
     expect(SKILLS.gehoHomura?.effect.kind).toBe('magic');
     expect(SKILLS.gehoHomura?.elements).toEqual(['fire']);
     expect(untilSkill('gehoTsukai', 'gehoHomura').some((e) => e.type === 'damage')).toBe(true);
