@@ -3,13 +3,48 @@ import { ENCOUNTERS, ENEMIES } from './enemies';
 import type { EventStep } from './eventTypes';
 import { EVENTS } from './events';
 import { SHOPS } from './shops';
-import { closedGateAt, encounterAt, MAPS, npcVisible, respawnPoint, START_POSITION, TILE_KINDS, tileAt, TILES, townAction, type MapDef } from './maps';
+import { OBJECT_SPRITES } from './sprites';
+import { EventRunner } from '../systems/eventScript';
+import { newGame } from '../systems/gameState';
+import { closedGateAt, encounterAt, MAPS, npcObjectFrame, npcVisible, respawnPoint, START_POSITION, TILE_KINDS, tileAt, TILES, townAction, type MapDef } from './maps';
 
 describe('タイルの画像', () => {
   it('全ての種類の画像が public/assets/tiles/ にあり、全ての種類が使われている', () => {
     const files = Object.keys(import.meta.glob('../../public/assets/tiles/*.png'));
     for (const kind of TILE_KINDS) expect(files, kind).toContain(`../../public/assets/tiles/${kind}.png`);
     expect(new Set(Object.values(TILES).map((t) => t.kind))).toEqual(new Set(TILE_KINDS));
+  });
+});
+
+describe('葛籠の画像', () => {
+  const chests = Object.values(MAPS).flatMap((m) => m.npcs.filter((n) => n.name === '葛籠').map((n) => ({ map: m.id, npc: n })));
+
+  it('物の画像が public/assets/objects/ にある', () => {
+    const files = Object.keys(import.meta.glob('../../public/assets/objects/*.png'));
+    for (const id of OBJECT_SPRITES) expect(files, id).toContain(`../../public/assets/objects/${id}.png`);
+  });
+
+  it('葛籠はすべて葛籠の画像を使う', () => {
+    expect(chests.length).toBeGreaterThan(0);
+    for (const { map, npc } of chests) expect(npc.object, `${map} ${npc.id}`).toBe('tsuzura');
+  });
+
+  it('葛籠を開けると開いた姿になり、開ける前は閉じた姿', () => {
+    for (const { map, npc } of chests) {
+      const def = npc.event ? EVENTS[npc.event] : undefined;
+      expect(def, `${map} ${npc.id}`).toBeDefined();
+      const before = newGame('m', START_POSITION);
+      expect(npcObjectFrame(npc, before.flags), `${map} ${npc.id}`).toBe(0);
+      // 葛籠のイベントを最後まで進めたあとのフラグで判定する
+      const runner = new EventRunner(def!.steps);
+      let state = before;
+      for (let i = 0; i < 20; i++) {
+        const r = runner.next(state);
+        state = r.state;
+        if (r.request.kind === 'done') break;
+      }
+      expect(npcObjectFrame(npc, state.flags), `${map} ${npc.id}`).toBe(1);
+    }
   });
 });
 

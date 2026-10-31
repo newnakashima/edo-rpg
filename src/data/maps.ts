@@ -1,7 +1,7 @@
 // フィールドのマップ。序章〜第 6 章の町・ダンジョンと、ワールドマップを用意する。
 // タイルの文字の意味は TILES を参照。
 import type { Facing } from '../systems/gameState';
-import type { CharacterSpriteId } from './sprites';
+import type { CharacterSpriteId, ObjectSpriteId } from './sprites';
 
 /** タイルの種類。画像は public/assets/tiles/<種類>.png（PixelLab で生成。記録は public/assets/README.md）。 */
 export const TILE_KINDS = ['ground', 'grass', 'road', 'tree', 'water', 'wall', 'roof', 'door', 'floor', 'rock', 'plain', 'town', 'gate'] as const;
@@ -40,6 +40,8 @@ export interface NpcDef {
   color: number;
   /** 画像のある人はそのシート（src/data/sprites.ts）。 */
   sprite?: CharacterSpriteId;
+  /** 人ではなく物（葛籠など）の画像（src/data/sprites.ts の OBJECT_SPRITES）。sprite より後に見る。 */
+  object?: ObjectSpriteId;
   /** 最初の向き（sprite があるときだけ。既定は下）。 */
   facing?: Facing;
   /** 話しかけたときの台詞。1 要素が 1 ページ。event があれば使わない。 */
@@ -364,6 +366,7 @@ export const MAPS: Record<string, MapDef> = {
         x: 19,
         y: 4,
         color: 0x8a6a3a,
+        object: 'tsuzura',
         event: 'urayamaChest',
       },
       {
@@ -438,6 +441,7 @@ export const MAPS: Record<string, MapDef> = {
         x: 4,
         y: 3,
         color: 0x8a6a3a,
+        object: 'tsuzura',
         event: 'caveChest1',
       },
       {
@@ -446,6 +450,7 @@ export const MAPS: Record<string, MapDef> = {
         x: 31,
         y: 3,
         color: 0x8a6a3a,
+        object: 'tsuzura',
         event: 'caveChest2',
       },
     ],
@@ -936,6 +941,7 @@ MAPS.karakuriYashiki = {
       x: 3,
       y: 14,
       color: 0x8a6a3a,
+      object: 'tsuzura',
       event: 'yashikiChest1',
     },
     {
@@ -944,6 +950,7 @@ MAPS.karakuriYashiki = {
       x: 36,
       y: 4,
       color: 0x8a6a3a,
+      object: 'tsuzura',
       event: 'yashikiChest2',
     },
     {
@@ -952,6 +959,7 @@ MAPS.karakuriYashiki = {
       x: 5,
       y: 5,
       color: 0x8a6a3a,
+      object: 'tsuzura',
       event: 'yashikiChest3',
     },
     {
@@ -978,6 +986,7 @@ MAPS.karakuriYashiki = {
         x: 32,
         y: 21,
         color: 0x8a6a3a,
+        object: 'tsuzura',
         event: 'yashikiChest4',
       },
   ],
@@ -1293,6 +1302,7 @@ MAPS.horikawaKura = {
       x: 37,
       y: 7,
       color: 0x8a6a3a,
+      object: 'tsuzura',
       event: 'horikawaChest1',
     },
     {
@@ -1301,6 +1311,7 @@ MAPS.horikawaKura = {
       x: 2,
       y: 7,
       color: 0x8a6a3a,
+      object: 'tsuzura',
       event: 'horikawaChest2',
     },
     {
@@ -1317,6 +1328,7 @@ MAPS.horikawaKura = {
         x: 36,
         y: 16,
         color: 0x8a6a3a,
+        object: 'tsuzura',
         event: 'horikawaChest3',
       },
       {
@@ -1391,6 +1403,7 @@ MAPS.tenshu = {
       x: 4,
       y: 16,
       color: 0x8a6a3a,
+      object: 'tsuzura',
       event: 'tenshuChest',
     },
       {
@@ -1399,6 +1412,7 @@ MAPS.tenshu = {
         x: 29,
         y: 8,
         color: 0x8a6a3a,
+        object: 'tsuzura',
         event: 'tenshuChest2',
       },
   ],
@@ -1685,6 +1699,7 @@ MAPS.rashomon = {
         x: 4,
         y: 5,
         color: 0x8a6a3a,
+        object: 'tsuzura',
         event: 'rashomonChest',
       },
   ],
@@ -1749,6 +1764,7 @@ MAPS.oninosu = {
       x: 5,
       y: 16,
       color: 0x8a6a3a,
+      object: 'tsuzura',
       event: 'oninosuChest1',
     },
     {
@@ -1757,6 +1773,7 @@ MAPS.oninosu = {
       x: 34,
       y: 16,
       color: 0x8a6a3a,
+      object: 'tsuzura',
       event: 'oninosuChest2',
     },
     {
@@ -1783,6 +1800,7 @@ MAPS.oninosu = {
         x: 31,
         y: 3,
         color: 0x8a6a3a,
+        object: 'tsuzura',
         event: 'oninosuChest3',
       },
   ],
@@ -2022,6 +2040,7 @@ MAPS.igaSato = {
       x: 3,
       y: 9,
       color: 0x8a6a3a,
+      object: 'tsuzura',
       event: 'igaSatoChest1',
     },
     {
@@ -2030,6 +2049,7 @@ MAPS.igaSato = {
       x: 36,
       y: 4,
       color: 0x8a6a3a,
+      object: 'tsuzura',
       event: 'igaSatoChest2',
     },
     {
@@ -2065,6 +2085,7 @@ MAPS.igaSato = {
         x: 34,
         y: 19,
         color: 0x8a6a3a,
+        object: 'tsuzura',
         event: 'igaSatoChest3',
       },
   ],
@@ -2361,6 +2382,7 @@ MAPS.osaka = {
         x: 5,
         y: 33,
         color: 0x8a6a3a,
+        object: 'tsuzura',
         event: 'osakaChest',
       },
       {
@@ -2429,6 +2451,7 @@ MAPS.komeKura = {
       x: 2,
       y: 4,
       color: 0x8a6a3a,
+      object: 'tsuzura',
       event: 'komeKuraChest1',
     },
     {
@@ -2437,6 +2460,7 @@ MAPS.komeKura = {
       x: 31,
       y: 24,
       color: 0x8a6a3a,
+      object: 'tsuzura',
       event: 'komeKuraChest2',
     },
     {
@@ -2454,6 +2478,7 @@ MAPS.komeKura = {
         x: 27,
         y: 15,
         color: 0x8a6a3a,
+        object: 'tsuzura',
         event: 'komeKuraChest3',
       },
       {
@@ -2952,9 +2977,9 @@ MAPS.nanbanji = {
     '^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
   ],
   npcs: [
-    { id: 'nanbanjiChest1', name: '葛籠', x: 14, y: 2, color: 0x8a6a3a, event: 'nanbanjiChest1' },
-    { id: 'nanbanjiChest2', name: '葛籠', x: 29, y: 20, color: 0x8a6a3a, event: 'nanbanjiChest2' },
-    { id: 'nanbanjiChest3', name: '葛籠', x: 6, y: 5, color: 0x8a6a3a, event: 'nanbanjiChest3' },
+    { id: 'nanbanjiChest1', name: '葛籠', x: 14, y: 2, color: 0x8a6a3a, object: 'tsuzura', event: 'nanbanjiChest1' },
+    { id: 'nanbanjiChest2', name: '葛籠', x: 29, y: 20, color: 0x8a6a3a, object: 'tsuzura', event: 'nanbanjiChest2' },
+    { id: 'nanbanjiChest3', name: '葛籠', x: 6, y: 5, color: 0x8a6a3a, object: 'tsuzura', event: 'nanbanjiChest3' },
     {
       id: 'shoroAto',
       name: '鐘楼の跡',
@@ -3033,9 +3058,9 @@ MAPS.harajo = {
     'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
   ],
   npcs: [
-    { id: 'harajoChest1', name: '葛籠', x: 5, y: 24, color: 0x8a6a3a, event: 'harajoChest1' },
-    { id: 'harajoChest2', name: '葛籠', x: 25, y: 24, color: 0x8a6a3a, event: 'harajoChest2' },
-    { id: 'harajoChest3', name: '葛籠', x: 35, y: 24, color: 0x8a6a3a, event: 'harajoChest3' },
+    { id: 'harajoChest1', name: '葛籠', x: 5, y: 24, color: 0x8a6a3a, object: 'tsuzura', event: 'harajoChest1' },
+    { id: 'harajoChest2', name: '葛籠', x: 25, y: 24, color: 0x8a6a3a, object: 'tsuzura', event: 'harajoChest2' },
+    { id: 'harajoChest3', name: '葛籠', x: 35, y: 24, color: 0x8a6a3a, object: 'tsuzura', event: 'harajoChest3' },
     {
       id: 'harajoTsuka',
       name: '塚',
@@ -3109,8 +3134,8 @@ MAPS.kenkyujo = {
     'WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW',
   ],
   npcs: [
-    { id: 'kenkyujoChest1', name: '葛籠', x: 3, y: 3, color: 0x8a6a3a, event: 'kenkyujoChest1' },
-    { id: 'kenkyujoChest2', name: '葛籠', x: 28, y: 17, color: 0x8a6a3a, event: 'kenkyujoChest2' },
+    { id: 'kenkyujoChest1', name: '葛籠', x: 3, y: 3, color: 0x8a6a3a, object: 'tsuzura', event: 'kenkyujoChest1' },
+    { id: 'kenkyujoChest2', name: '葛籠', x: 28, y: 17, color: 0x8a6a3a, object: 'tsuzura', event: 'kenkyujoChest2' },
     {
       id: 'zenmaiKura',
       name: 'ゼンマイの棚',
@@ -3169,6 +3194,13 @@ export function townAction(map: MapDef, x: number, y: number, by: 'step' | 'ok',
 }
 
 /** その NPC が今いるか（hideFlag が立つと姿を消す）。 */
+/**
+ * 物の画像のコマ。葛籠は開けると event の ID のフラグが立つので（events.ts の chest）、そのフラグが立っていれば開いた姿（1）にする。
+ */
+export function npcObjectFrame(npc: NpcDef, flags: Record<string, boolean>): number {
+  return flags[npc.event ?? npc.id] ? 1 : 0;
+}
+
 export function npcVisible(npc: NpcDef, flags: Record<string, boolean>): boolean {
   return !npc.hideFlag || !flags[npc.hideFlag];
 }

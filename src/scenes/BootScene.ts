@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { ENEMIES, enemyImageKey } from '../data/enemies';
 import { TILE_KINDS } from '../data/maps';
-import { CHAR_FRAME, CHARACTER_SPRITES, FACINGS, spriteKey, walkAnimKey, walkFrame, WALK_FPS, WALK_FRAMES } from '../data/sprites';
+import { CHAR_FRAME, CHARACTER_SPRITES, FACINGS, OBJECT_FRAME, OBJECT_SPRITES, objectKey, spriteKey, walkAnimKey, walkFrame, WALK_FPS, WALK_FRAMES } from '../data/sprites';
 
 /**
  * 画像を読み込み、まだ画像のないもの（仮の NPC・画像のない敵）は仮の画像をコードで描いてテクスチャにする。
@@ -19,6 +19,9 @@ export class BootScene extends Phaser.Scene {
     }
     for (const id of CHARACTER_SPRITES) {
       this.load.spritesheet(spriteKey(id), `assets/chars/${id}.png`, { frameWidth: CHAR_FRAME, frameHeight: CHAR_FRAME });
+    }
+    for (const id of OBJECT_SPRITES) {
+      this.load.spritesheet(objectKey(id), `assets/objects/${id}.png`, { frameWidth: OBJECT_FRAME, frameHeight: OBJECT_FRAME });
     }
   }
 

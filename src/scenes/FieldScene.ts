@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { ENCOUNTERS } from '../data/enemies';
-import { closedGateAt, encounterAt, MAPS, npcVisible, respawnPoint, START_POSITION, tileAt, townAction, type EventTrigger, type MapDef, type NpcDef } from '../data/maps';
+import { closedGateAt, encounterAt, MAPS, npcObjectFrame, npcVisible, respawnPoint, START_POSITION, tileAt, townAction, type EventTrigger, type MapDef, type NpcDef } from '../data/maps';
 import { pickGroup, step } from '../systems/encounter';
 import { dangoPrice, eatDango, innPrice, stayAtInn } from '../systems/facilities';
 import { prayAtTemple, templePrice } from '../systems/shop';
@@ -12,7 +12,7 @@ import { playBgm } from '../systems/audio';
 import { browserStorage } from '../systems/save';
 import { getState, setPendingEvent, setState, takePendingEvent } from '../state';
 import { EVENTS } from '../data/events';
-import { CHAR_DISPLAY_ORIGIN, heroSprite, idleFrame, oppositeFacing, personDepth, shouldStandStill, spriteKey, walkAnimKey, walkDepthRow, type CharacterSpriteId } from '../data/sprites';
+import { CHAR_DISPLAY_ORIGIN, heroSprite, idleFrame, objectKey, oppositeFacing, personDepth, shouldStandStill, spriteKey, walkAnimKey, walkDepthRow, type CharacterSpriteId } from '../data/sprites';
 import { EventRunner, type EventInput } from '../systems/eventScript';
 import { Controls } from '../ui/input';
 import { FieldMenu } from '../ui/FieldMenu';
@@ -113,6 +113,9 @@ export class FieldScene extends Phaser.Scene {
           .setDepth(personDepth(npc.y));
         this.npcSprites.set(npc.id, sprite);
         this.npcObjects.set(npc.id, sprite);
+      } else if (npc.object) {
+        // 葛籠などの物。開いたかどうかは refreshNpcs でコマを切り替える
+        this.npcObjects.set(npc.id, this.add.image(npc.x * TILE, npc.y * TILE, objectKey(npc.object), 0).setOrigin(0));
       } else {
         this.npcObjects.set(npc.id, this.add.image(npc.x * TILE, npc.y * TILE, 'person').setOrigin(0).setTint(npc.color));
       }
@@ -299,10 +302,14 @@ export class FieldScene extends Phaser.Scene {
     return this.map.npcs.find((n) => n.x === x && n.y === y && npcVisible(n, flags));
   }
 
-  /** hideFlag の立った NPC を隠す。 */
+  /** hideFlag の立った NPC を隠し、開けた葛籠を開いた姿にする。 */
   private refreshNpcs(): void {
     const flags = getState().flags;
-    for (const npc of this.map.npcs) this.npcObjects.get(npc.id)?.setVisible(npcVisible(npc, flags));
+    for (const npc of this.map.npcs) {
+      const obj = this.npcObjects.get(npc.id);
+      obj?.setVisible(npcVisible(npc, flags));
+      if (npc.object) obj?.setFrame(npcObjectFrame(npc, flags));
+    }
   }
 
   private tryMove(dir: Facing): void {
