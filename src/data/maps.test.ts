@@ -86,6 +86,29 @@ describe('葛籠の画像', () => {
   });
 });
 
+describe('町の人の画像', () => {
+  // 画像のない（色の仮表示の）ものは、人でない物（祠・机など）と、まだ専用の画像のない人物だけ
+  const PLACEHOLDER_OK = new Set([
+    'からくりの機械', 'ゼンマイの棚', '人形の頭', '作りかけの人形', '千両箱', '塚', '墓', '大凧', '実験の台', '座元の文机', '掛け軸', '文机',
+    '木箱', '朽ちた本尊', '焼け残りの祭壇', '牛', '石標', '石段', '石碑', '祠', '荷車', '蘭斎の机', '装置', '辻の地蔵', '鐘楼の跡', '鯱の台座',
+    // 専用の画像を作る予定の人物（第 7 章の夜叉丸、伊賀の朧、原城跡の亡霊）
+    '夜叉丸', '朧', '亡霊',
+  ]);
+
+  it('施設の人（旅籠・茶屋・店・寺社・飛脚）には画像がある', () => {
+    for (const m of Object.values(MAPS)) for (const n of m.npcs) if (n.action) expect(n.sprite, `${m.id} ${n.id}`).toBeDefined();
+  });
+
+  it('人には画像があり、色の仮表示は物とまだの人物だけ', () => {
+    for (const m of Object.values(MAPS)) {
+      for (const n of m.npcs) {
+        if (n.sprite || n.object) continue;
+        expect(PLACEHOLDER_OK.has(n.name), `${m.id} ${n.id} ${n.name}`).toBe(true);
+      }
+    }
+  });
+});
+
 describe('マップのデータ', () => {
   for (const map of Object.values(MAPS)) {
     describe(map.id, () => {

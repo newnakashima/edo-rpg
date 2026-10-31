@@ -19,6 +19,41 @@ PixelLab MCP で生成した画像の記録です。作り直すときは、こ�
 
 霞・玄道はまだマップに登場しないため、シートだけを置いている（フェーズ 4 で NPC の `sprite` に指定する）。
 
+### 町の人（`chars/npc_*.png`）
+
+テストプレイで「主要人物以外のキャラクターに画像がない」と指摘されたため、町の人を 19 の類型に分けて 1 体ずつ作った（どの町の人にどれを使うかは `src/data/maps.ts` の `sprite`）。
+設定は上のキャラクターと同じ（`create_character`、mode `standard`、4 方向、size 24、chibi、low top-down）。町の人は歩かないので歩行は作らず、`scripts/pack_character.py` が歩行のコマにも立ち姿を置く（キャンバスの 36 × 36 は 40 × 40 に広げる）。
+
+| ID | PixelLab のキャラクター ID | 使う人 | 生成プロンプト | 回数 |
+| --- | --- | --- | --- | --- |
+| npc_innkeeper | 01c927b1-2ccd-4adc-ae73-daff86bb2f54 | 旅籠の主人 | Edo period Japanese innkeeper, middle-aged man with topknot, brown kimono with a dark blue apron, friendly face | 1 |
+| npc_merchant | 4a762ba2-0ab8-46ad-9a1e-037b1537d701 | よろず屋・商人・番頭・通詞など | Edo period Japanese merchant, man with topknot, olive green kimono with black haori jacket, holding a wooden abacus (soroban) | 1 |
+| npc_smith | 4afe997b-8d60-43df-b25b-0907d115246c | 刀鍛冶・職人 | Edo period Japanese swordsmith, muscular man with white headband (hachimaki), grey work clothes with sleeves tied back by a cord, holding a blacksmith hammer | 1 |
+| npc_hikyaku | c3c76e41-8380-4234-857e-1e46936ae927 | 飛脚 | Japanese messenger runner carrying a long thin wooden stick diagonally across his shoulder like a fishing rod, with a small black box tied to the far end of the stick, white headband, short blue coat, white loincloth, bare legs（text_guidance_scale 13。棒の先の文箱を Pillow で描き足した） | 5 |
+| npc_yakunin | 34c7b563-140b-48f0-a52f-d3048f648a01 | 奉行所の役人・同心・辻番・用人 | Edo period Japanese police officer (doshin), samurai with topknot, black haori jacket, holding up a short silver iron jitte truncheon with a hook and a red tassel in his right hand, sword at the waist（text_guidance_scale 10） | 2 |
+| npc_okami | 2b5c8fb9-ece0-4861-aa66-564f270bb7fa | おかみ・母親・女中・女将 | Edo period Japanese townswoman (okami), middle-aged woman with black hair tied up in a bun, plain brown striped kimono with a white apron | 1 |
+| npc_kodomo | 1f82a14a-c621-4193-bc99-d2dee69c496f | 子ども・寺の小僧 | small Edo period Japanese child, short boy with a tiny topknot tuft of hair, short red and yellow checkered kimono, bare feet, playful（size 18） | 1 |
+| npc_sendo | f7a6efb4-5c2d-4e6a-8d87-9666647f94eb | 船頭・漁師・釣り人 | Edo period Japanese boatman (sendo), tanned man wearing a wide conical sedge hat (sugegasa), short indigo work coat, holding a long wooden boat pole | 1 |
+| npc_monban | 2b83d956-5b23-4007-bb8e-10ec16abc8c2 | 門番・番人・中間 | Edo period Japanese gate guard foot soldier (ashigaru), flat black conical jingasa hat, dark blue armor vest, holding a tall spear (yari) upright | 1 |
+| npc_musume | f5a330cd-56f3-460e-af40-37ea9dedd3b9 | 茶屋の娘・織子・売り子 | Edo period Japanese young town girl, black hair in a traditional shimada bun with a red ribbon, bright pink kimono with a yellow obi sash | 1 |
+| npc_so | bfd3055e-766a-45cd-af0f-97c12e39595d | 寺の僧・住職・巡礼 | Edo period Japanese Buddhist monk, shaved bald head, black monk robe with a brown kesa stole over one shoulder, holding prayer beads (juzu) | 1 |
+| npc_kannushi | 9d915362-3869-454a-bcb2-2dbaba31f46d | 神主 | Shinto priest in white robes wearing a tall narrow black hat shaped like a tall rounded cone pointing straight up from the top of his head (eboshi), the hat is taller than his face, white wide-sleeved robe, pale purple hakama（text_guidance_scale 13） | 3 |
+| npc_ronin | 85aecc62-76e3-4db4-9188-db5790314e8a | 浪人・用心棒・見張り | Edo period Japanese ronin, masterless samurai with messy grown-out hair tied back, stubble, faded dark grey kimono worn loosely, katana at his waist, arms folded | 1 |
+| npc_roba | 93ebc391-a447-4623-9666-b045d475be1b | 老婆 | old Japanese grandmother, white hair in a small bun, hunched back, plain grey-purple kimono, leaning on a wooden walking stick（size 22） | 1 |
+| npc_rojin | 3a7ec008-8d6c-4d8c-89b6-a52e7e62c6f3 | 隠居・薬草取り | old Japanese man, bald on top with white hair on the sides, long white beard, beige kimono with a dark brown sleeveless vest, holding a wooden walking stick（size 23） | 1 |
+| npc_ninsoku | 8aa11a08-f15b-49fb-9916-e12d5155b2a8 | 人足・木こり・農夫・木戸番など | Edo period Japanese laborer (ninsoku), burly tanned man with a twisted rope headband, short red-brown hanten work coat, tight black work pants, straw sandals | 1 |
+| npc_maiko | a47b22eb-883b-4f81-a4f4-465a4819ab3a | 舞妓 | Kyoto maiko girl, white painted face, red lips, black hair in an elaborate bun with colorful flower kanzashi hairpins, bright red and orange patterned kimono, long hanging darari obi sash at the back | 1 |
+| npc_oranda | 87355f1f-b899-4cea-83a4-86800bd01819 | カピタン・商館の医者 | 17th century Dutch merchant man, blond hair, wide black hat, black coat with a big white collar, knee breeches and stockings, buckled shoes | 1 |
+| npc_tojin | 88c641f1-2ac4-4acd-a590-58088020b48d | 唐人の商人 | Qing dynasty Chinese trader, front of head shaved bald, one very long black braided pigtail queue hanging down his back to his waist, small round black skullcap, long dark blue silk robe, thin long mustache（text_guidance_scale 11） | 2 |
+
+作り直しの記録:
+
+- 役人: 1 回目は十手が見えなかった。2 回目で「silver iron jitte with a hook and a red tassel」で採用（計 2 回）。
+- 神主: 1 回目・2 回目は烏帽子が山高帽や笠になった。3 回目で「tall narrow black hat ... taller than his face」で採用（計 3 回）。
+- 唐人: 1 回目は弁髪が見えなかった。2 回目で「very long braided pigtail queue hanging down his back」で採用（計 2 回）。
+- 飛脚: 1 回目は現代風の帽子で棒がなく、2 回目は文箱を手に提げ、3 回目も棒を担がなかった。4 回目で棒を肩に担いだが先の文箱が出なかった。5 回目は 4 回目の 4 方向に Pillow で文箱（と横向きの棒）を描き足して採用（計 5 回）。上限で採用したため、小さく見ると文箱が棒の先の旗のようにも見える点が残る。
+- ほかの 15 類型は 1 回目で採用。
+
 ## タイル（`tiles/`）
 
 `create_tiles_pro`（tile_type `square_topdown`、tile_view `top-down`、tile_size 16、outline_mode `segmentation`）で、1 回に番号付きで複数のタイルを作り、種類ごとに 1 枚を選んで `tiles/<種類>.png` に置く（種類は `src/data/maps.ts` の `TILE_KINDS`）。

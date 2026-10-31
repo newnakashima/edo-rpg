@@ -19,8 +19,34 @@ export const WALK_FPS = 14;
 /** シートの行の並び（scripts/pack_character.py の ROWS と同じ順）。 */
 export const FACINGS: readonly Facing[] = ['down', 'left', 'right', 'up'];
 
+/**
+ * 町の人の類型ごとのシート（テストプレイで「主要人物以外に画像がない」と指摘されたため足した）。
+ * 歩かないので、歩行のコマにも立ち姿を置いている（scripts/pack_character.py）。どの町の人にどれを使うかは maps.ts の sprite。
+ */
+export const NPC_SPRITES = [
+  'npc_innkeeper',
+  'npc_merchant',
+  'npc_smith',
+  'npc_hikyaku',
+  'npc_yakunin',
+  'npc_okami',
+  'npc_kodomo',
+  'npc_sendo',
+  'npc_monban',
+  'npc_musume',
+  'npc_so',
+  'npc_kannushi',
+  'npc_ronin',
+  'npc_roba',
+  'npc_rojin',
+  'npc_ninsoku',
+  'npc_maiko',
+  'npc_oranda',
+  'npc_tojin',
+] as const;
+
 /** シートがあるキャラクター。 */
-export const CHARACTER_SPRITES = ['hero_m', 'hero_f', 'kasumi', 'gendo', 'orin', 'tatsugoro'] as const;
+export const CHARACTER_SPRITES = ['hero_m', 'hero_f', 'kasumi', 'gendo', 'orin', 'tatsugoro', ...NPC_SPRITES] as const;
 export type CharacterSpriteId = (typeof CHARACTER_SPRITES)[number];
 
 /**
