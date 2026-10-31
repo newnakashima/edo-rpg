@@ -146,6 +146,15 @@ export const SKILLS: Record<string, SkillDef> = {
   totsugeki: { id: 'totsugeki', name: '突進', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.4 }, description: '' },
   sakeNoIki: { id: 'sakeNoIki', name: '酒の息', mp: 0, target: 'allEnemies', effect: { kind: 'status', status: 'sleep', turns: 2, chance: 0.4 }, description: '' },
   ikari: { id: 'ikari', name: '怒り', mp: 0, target: 'self', effect: { kind: 'status', status: 'atkUp', turns: 3 }, description: '' },
+  // 伊賀（第 4 章）
+  igaShuriken: { id: 'igaShuriken', name: '手裏剣', mp: 0, target: 'randomEnemies', effect: { kind: 'physical', multiplier: 0.6, hits: 2 }, description: '' },
+  kumoNoIto: { id: 'kumoNoIto', name: '蜘蛛の糸', mp: 0, target: 'enemy', effect: { kind: 'status', status: 'paralysis', turns: 2, chance: 0.4 }, description: '' },
+  kyukoka: { id: 'kyukoka', name: '急降下', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.3 }, description: '' },
+  shurikenAme: { id: 'shurikenAme', name: '手裏剣の雨', mp: 0, target: 'randomEnemies', effect: { kind: 'physical', multiplier: 0.6, hits: 3, maxHits: 4 }, description: '' },
+  utsusemi: { id: 'utsusemi', name: '空蝉', mp: 0, target: 'self', effect: { kind: 'status', status: 'evade', turns: 3 }, description: '' },
+  nirengeki: { id: 'nirengeki', name: '二連撃', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 0.75, hits: 2 }, description: '' },
+  shikomibari: { id: 'shikomibari', name: '毒の仕込み針', mp: 0, target: 'enemy', effect: { kind: 'status', status: 'poison', turns: 99, chance: 0.6 }, description: '' },
+  gishu: { id: 'gishu', name: 'からくり義手', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.0, ignoreDefense: true }, description: '' },
   kinUroko: { id: 'kinUroko', name: '金の鱗', mp: 0, target: 'self', effect: { kind: 'status', status: 'defUp', turns: 3 }, description: '' },
 };
 

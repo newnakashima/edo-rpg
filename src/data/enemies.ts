@@ -1,4 +1,4 @@
-// docs/balance.md の「敵とボスの一覧」。章を実装するごとに、その地域の敵を足す（今は序章〜第 3 章）。
+// docs/balance.md の「敵とボスの一覧」。章を実装するごとに、その地域の敵を足す（今は序章〜第 4 章）。
 import type { EnemyFactors } from '../systems/stats';
 import type { Element } from './skills';
 
@@ -196,6 +196,43 @@ export const ENEMIES: Record<string, EnemyDef> = {
       { skill: 'totsugeki', weight: 1 },
     ],
   },
+  // 伊賀（第 4 章）
+  iganin: {
+    id: 'iganin',
+    name: '伊賀者',
+    color: 0x3a3a4a,
+    image: true,
+    factors: { hp: 0.9, atk: 1.2, def: 0.9, spd: 1.4 },
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'igaShuriken', weight: 2 },
+    ],
+  },
+  dokugumo: {
+    id: 'dokugumo',
+    name: '毒蜘蛛',
+    color: 0x5a3a6a,
+    image: true,
+    factors: { hp: 0.9, atk: 1.0, def: 0.9, spd: 1.1 },
+    weak: ['fire'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'dokueki', weight: 1 },
+      { skill: 'kumoNoIto', weight: 1 },
+    ],
+  },
+  karakuriTaka: {
+    id: 'karakuriTaka',
+    name: 'からくり鷹',
+    color: 0x8a7a5a,
+    image: true,
+    factors: { hp: 0.8, atk: 1.1, def: 1.0, spd: 1.4 },
+    weak: ['mech', 'thunder'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'kyukoka', weight: 1 },
+    ],
+  },
   // ボス（rewardScale あり）。イベントの battle で出し、出現表には入れない
   /** 序章のボス。妖狐だが、実はからくりで操られていた。序章は一人旅なので化かし（混乱）は控えめにする。 */
   yako: {
@@ -256,6 +293,36 @@ export const ENEMIES: Record<string, EnemyDef> = {
       { skill: 'kanabo', weight: 2 },
       { skill: 'sakeNoIki', weight: 1 },
       { skill: 'ikari', weight: 1 },
+    ],
+    rewardScale: 6,
+  },
+  /** 第 4 章の中ボス。伊賀者の里の上忍で、霞のかつての師。手裏剣の雨と空蝉（回避↑）。 */
+  oboro: {
+    id: 'oboro',
+    name: '上忍 朧',
+    color: 0x6a6a6a,
+    image: true,
+    factors: { hp: 10, atk: 1.25, def: 1.0, spd: 1.5 },
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'shurikenAme', weight: 2 },
+      { skill: 'utsusemi', weight: 1 },
+    ],
+    rewardScale: 3,
+  },
+  /** 第 4 章のボス。辰五郎の仇。からくりの義手で二連撃・防御無視の一撃、毒の仕込み針。 */
+  gonroku: {
+    id: 'gonroku',
+    name: '蛇骨の権六',
+    color: 0x4a5a3a,
+    image: true,
+    factors: { hp: 13, atk: 1.3, def: 1.0, spd: 1.4 },
+    weak: ['fire'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'nirengeki', weight: 2 },
+      { skill: 'shikomibari', weight: 1 },
+      { skill: 'gishu', weight: 1 },
     ],
     rewardScale: 6,
   },
@@ -340,6 +407,19 @@ const KYOTO: EncounterTable = {
   ],
 };
 
+/** 伊賀のまわりの街道と伊賀者の里の敵の組（お凛が加わった 4 人で来る）。 */
+const IGA: EncounterTable = {
+  level: 13,
+  groups: [
+    { members: ['iganin', 'iganin'], weight: 2 },
+    { members: ['dokugumo', 'dokugumo', 'iganin'], weight: 2 },
+    { members: ['karakuriTaka', 'karakuriTaka'], weight: 2 },
+    { members: ['iganin', 'karakuriTaka', 'dokugumo'], weight: 2 },
+    { members: ['iganin', 'iganin', 'iganin'], weight: 1 },
+    { members: ['iganin', 'iganin', 'karakuriTaka', 'dokugumo'], weight: 1 },
+  ],
+};
+
 export const ENCOUNTERS: Record<string, EncounterTable> = {
   /** 清水湊の裏山。 */
   urayama: PROLOGUE,
@@ -353,4 +433,6 @@ export const ENCOUNTERS: Record<string, EncounterTable> = {
   nagoya: NAGOYA,
   /** 京のまわりの街道と、羅生門跡・鬼の巣。 */
   kyoto: KYOTO,
+  /** 伊賀のまわりの街道と、伊賀者の里。 */
+  iga: IGA,
 };

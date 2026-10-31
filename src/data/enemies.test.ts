@@ -32,6 +32,10 @@ describe('敵の画像', () => {
     for (const id of ['akaoni', 'ittanmomen', 'namagusaBozu', 'karakuriGissha', 'shuten']) expect(ENEMIES[id]?.image, id).toBe(true);
   });
 
+  it('第 4 章（伊賀）の敵と朧・権六にも画像がある', () => {
+    for (const id of ['iganin', 'dokugumo', 'karakuriTaka', 'oboro', 'gonroku']) expect(ENEMIES[id]?.image, id).toBe(true);
+  });
+
   it('テクスチャのキー', () => {
     expect(enemyImageKey('onibi')).toBe('enemy-onibi');
   });
@@ -73,5 +77,16 @@ describe('京の敵の組', () => {
     const sizes = (size: number) => Array.from({ length: 300 }, () => pickGroup(table, { size, maxLevel: 10 }, rng)?.length ?? 0);
     expect(Math.max(...sizes(2))).toBe(3);
     expect(Math.max(...sizes(3))).toBe(4);
+  });
+});
+
+describe('伊賀の敵の組', () => {
+  it('お凛が加わった 4 人で来るので、4 体の組がある', () => {
+    const table = ENCOUNTERS.iga!;
+    expect(table.level).toBe(13);
+    const rng = seededRng(4);
+    const sizes = Array.from({ length: 300 }, () => pickGroup(table, { size: 4, maxLevel: 13 }, rng)?.length ?? 0);
+    expect(Math.max(...sizes)).toBe(4);
+    expect(Math.min(...sizes)).toBe(2);
   });
 });

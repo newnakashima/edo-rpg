@@ -321,3 +321,74 @@ describe('第 3 章の流れ', () => {
     expect(cleared.flags.chapter3Cleared).toBe(true);
   });
 });
+
+describe('第 4 章の流れ', () => {
+  const base = newGame('m', { mapId: 'shimizu', x: 26, y: 6 });
+  const party = [...base.party, createMember('kasumi', 14), createMember('gendo', 14)];
+  const ch3 = { ...base, party, flags: { intro: true, prologueCleared: true, chapter1Cleared: true, kasumiJoined: true, chapter2Cleared: true, gendoJoined: true, chapter3Cleared: true } };
+
+  it('清水湊に初めて入ると序章が始まり（intro）、第 3 章を終えるまでは 2 回目から何もしない', () => {
+    const fresh = newGame('m', { mapId: 'shimizu', x: 14, y: 7 });
+    const started = run('shimizuEnter', fresh);
+    expect(started.flags.intro).toBe(true);
+    expect(started.party).toHaveLength(1);
+    expect(new EventRunner(EVENTS.shimizuEnter!.steps).next(started).request.kind).toBe('done');
+    const ch2 = { ...ch3, flags: { ...ch3.flags, chapter3Cleared: false } };
+    expect(new EventRunner(EVENTS.shimizuEnter!.steps).next(ch2).request.kind).toBe('done');
+  });
+
+  it('第 3 章を終えて清水湊に入ると弔いの場面で、お凛が加わり（orinJoined）、形見のからくり銃を持っている。もう一度起きても増えない', () => {
+    const runner = new EventRunner(EVENTS.shimizuEnter!.steps);
+    const first = runner.next(ch3);
+    expect(first.request.kind).toBe('say');
+    expect(first.request.kind === 'say' ? first.request.pages.join('') : '').toContain('弔い');
+    const joined = run('shimizuEnter', ch3);
+    expect(joined.flags.orinJoined).toBe(true);
+    expect(joined.party.map((m) => m.id)).toEqual(['hero', 'kasumi', 'gendo', 'orin']);
+    expect(joined.party[3]?.equip.weapon).toBe('karakuriju');
+    expect(run('shimizuEnter', joined).party).toHaveLength(4);
+  });
+
+  const withOrin = run('shimizuEnter', ch3);
+
+  it('伊賀上野に初めて入ると仇討免状が届き（igaArrived）、2 回目からは何もしない', () => {
+    const arrived = run('igaEnter', withOrin);
+    expect(arrived.flags.igaArrived).toBe(true);
+    expect(new EventRunner(EVENTS.igaEnter!.steps).next(arrived).request.kind).toBe('done');
+  });
+
+  it('伊賀者の里で朧（Lv15）に勝つと oboroDefeated。負けて出直すと口上を繰り返さない', () => {
+    const runner = new EventRunner(EVENTS.oboro!.steps);
+    const r = skipSay(runner, runner.next(withOrin));
+    expect(r.request).toMatchObject({ kind: 'battle', enemies: ['oboro'], level: 15, canEscape: false, loseOk: false });
+    expect(r.state.flags.oboroMet).toBe(true);
+    expect(run('oboro', withOrin).flags.oboroDefeated).toBe(true);
+    const lost = run('oboro', withOrin, 'defeat');
+    expect(lost.flags.oboroDefeated).toBeFalsy();
+    const retry = new EventRunner(EVENTS.oboro!.steps).next(lost);
+    expect(retry.request.kind).toBe('say');
+    const pages = retry.request.kind === 'say' ? retry.request.pages.join('') : '';
+    expect(pages).not.toContain('お師匠');
+    expect(pages).toContain('朧「');
+    expect(run('oboro', lost).flags.oboroDefeated).toBe(true);
+  });
+
+  it('鍵屋の辻で権六（Lv16）に勝つと第 4 章が終わる（gonrokuDefeated・chapter4Cleared）。負けたら立たず、出直すと口上を短くする', () => {
+    const start = run('oboro', run('igaEnter', withOrin));
+    const runner = new EventRunner(EVENTS.gonroku!.steps);
+    const r = skipSay(runner, runner.next(start));
+    expect(r.request).toMatchObject({ kind: 'battle', enemies: ['gonroku'], level: 16, canEscape: false, loseOk: false });
+    const won = run('gonroku', start);
+    expect(won.flags.gonrokuDefeated).toBe(true);
+    expect(won.flags.chapter4Cleared).toBe(true);
+    const lost = run('gonroku', start, 'defeat');
+    expect(lost.flags.gonrokuDefeated).toBeFalsy();
+    expect(lost.flags.chapter4Cleared).toBeFalsy();
+    const retry = new EventRunner(EVENTS.gonroku!.steps).next(lost);
+    expect(retry.request.kind).toBe('say');
+    const pages = retry.request.kind === 'say' ? retry.request.pages.join('') : '';
+    expect(pages).not.toContain('凛だ');
+    expect(pages).toContain('権六「');
+    expect(run('gonroku', lost).flags.chapter4Cleared).toBe(true);
+  });
+});

@@ -488,3 +488,63 @@ describe('野狐（序章のボス）の技', () => {
     if (next && 'target' in next) expect(next.target).toMatch(/^p/);
   });
 });
+
+describe('第 4 章（伊賀）の敵の技', () => {
+  /** enemy が skill を使うまでターンを進め、そのターン、技を使ったあとのイベントを返す（味方は防御だけ）。 */
+  function untilSkill(enemy: string, level: number, skill: string, setup: (b: BattleState) => void = () => {}) {
+    let b = createBattle([createMember('hero', 30), createMember('kasumi', 30), createMember('gendo', 30), createMember('orin', 30)], 'm', [enemy], level, { canEscape: false });
+    setup(b);
+    const rng = seededRng(11);
+    const guard = { p0: { kind: 'guard' }, p1: { kind: 'guard' }, p2: { kind: 'guard' }, p3: { kind: 'guard' } } as const;
+    for (let t = 0; t < 200; t++) {
+      const r = resolveTurn(b, guard, rng);
+      const i = r.events.findIndex((e) => e.type === 'skill' && e.actor === 'e0' && e.skill === skill);
+      if (i >= 0) return { events: r.events.slice(i + 1), state: r.state };
+      b = r.state;
+      for (const c of b.combatants) {
+        if (c.side === 'party') {
+          c.status = {};
+          c.hp = c.stats.maxHp;
+        } else delete c.status.evade;
+      }
+      setup(b);
+    }
+    throw new Error(`${skill} was not used`);
+  }
+  const hits = (events: { type: string }[]) => events.filter((e) => e.type === 'damage' || e.type === 'miss').length;
+
+  it('朧の手裏剣の雨は味方に 3〜4 回当たる', () => {
+    for (let k = 0; k < 3; k++) {
+      const n = hits(untilSkill('oboro', 15, 'shurikenAme').events);
+      expect(n).toBeGreaterThanOrEqual(3);
+      expect(n).toBeLessThanOrEqual(4);
+    }
+  });
+
+  it('朧の空蝉は自分の回避を上げる', () => {
+    const { events, state } = untilSkill('oboro', 15, 'utsusemi');
+    expect(events[0]).toEqual({ type: 'status', target: 'e0', status: 'evade' });
+    expect(get(state, 'e0').status.evade).toBeGreaterThan(0);
+  });
+
+  it('権六の二連撃は同じ味方に 2 回当たる', () => {
+    const { events } = untilSkill('gonroku', 16, 'nirengeki');
+    const targets = events.filter((e) => e.type === 'damage' || e.type === 'miss').map((e) => ('target' in e ? e.target : ''));
+    expect(targets).toHaveLength(2);
+    expect(new Set(targets).size).toBe(1);
+  });
+
+  it('権六のからくり義手は防御を無視する（防御がとても高い味方にも、ふつうに当たる）', () => {
+    const tough = (b: BattleState) => {
+      for (const c of b.combatants) if (c.side === 'party') c.stats = { ...c.stats, def: 9999 };
+    };
+    const { events } = untilSkill('gonroku', 16, 'gishu', tough);
+    const hit = events.find((e) => e.type === 'damage');
+    // 防御 9999 なら通常の攻撃はほとんど通らない。防御を無視すれば、防御（半減）していても 10 を超える
+    expect(hit?.type === 'damage' && hit.damage).toBeGreaterThan(10);
+  });
+
+  it('伊賀者の手裏剣は 2 回投げる', () => {
+    expect(hits(untilSkill('iganin', 13, 'igaShuriken').events)).toBe(2);
+  });
+});

@@ -525,3 +525,88 @@ describe('第 3 章の京', () => {
     expect(npcVisible(tatsugoro, { chapter3Cleared: true })).toBe(false);
   });
 });
+
+describe('第 4 章の清水湊と伊賀上野', () => {
+  const iga = MAPS.iga!;
+  const world = MAPS.world!;
+  const town = world.towns!.find((t) => t.name === '伊賀')!;
+  const start = town.to!;
+  const exitTo = (mapId: string) => iga.exits.filter((e) => e.to === mapId).map((e) => `${e.x},${e.y}`);
+
+  it('清水湊に入ると shimizuEnter を行い（序章の始まりと辰五郎の弔い）、お凛が加わったら行わない。お凛は加わると清水湊から消える', () => {
+    const shimizu = MAPS.shimizu!;
+    expect(shimizu.onEnter).toEqual({ event: 'shimizuEnter', unless: 'orinJoined' });
+    const orin = shimizu.npcs.find((n) => n.id === 'orin')!;
+    expect(npcVisible(orin, { chapter3Cleared: true })).toBe(true);
+    expect(npcVisible(orin, { orinJoined: true })).toBe(false);
+  });
+
+  it('伊賀はお凛が加わる（orinJoined）まで入れず、まわりの街道もそれまでは東海道の敵・名古屋に戻る', () => {
+    expect(townAction(world, town.x, town.y, 'ok', { chapter3Cleared: true })).toMatchObject({ kind: 'info' });
+    expect(townAction(world, town.x, town.y, 'ok', { orinJoined: true })).toEqual({ kind: 'enter', to: start });
+    for (const [x, y] of [[26, 10], [27, 10], [28, 10]] as const) {
+      expect(encounterAt(world, x, y, { chapter3Cleared: true }), `${x},${y}`).toBe('tokaido');
+      expect(encounterAt(world, x, y, { orinJoined: true }), `${x},${y}`).toBe('iga');
+      expect(respawnPoint('world', x, y, { chapter3Cleared: true }).mapId).toBe('nagoya');
+      expect(respawnPoint('world', x, y, { orinJoined: true })).toEqual({ mapId: 'iga', ...iga.respawn });
+    }
+    expect(encounterAt(world, 25, 10, { orinJoined: true })).toBe('tokaido');
+    expect(encounterAt(world, 29, 10, { orinJoined: true })).toBe('tokaido');
+  });
+
+  it('伊賀上野に入ると igaEnter を行い、着いたあとは行わない', () => {
+    expect(iga.onEnter).toEqual({ event: 'igaEnter', unless: 'igaArrived' });
+  });
+
+  it('伊賀上野から街道へ出ると、伊賀の印の隣に出る', () => {
+    for (const exit of iga.exits.filter((e) => e.to === 'world')) {
+      expect(Math.abs(exit.toX - town.x) + Math.abs(exit.toY - town.y)).toBe(1);
+    }
+  });
+
+  it('伊賀者の里には最初から行け、鍵屋の辻は朧を倒す（oboroDefeated）まで辻番がふさぐ', () => {
+    const before = reachable(iga, start, {}, true);
+    expect(exitTo('igaSato').every((k) => before.has(k))).toBe(true);
+    expect(exitTo('kagiya').some((k) => before.has(k))).toBe(false);
+    const after = reachable(iga, start, { oboroDefeated: true }, true);
+    expect(exitTo('kagiya').every((k) => after.has(k))).toBe(true);
+  });
+
+  it('町の人には全員話しかけられる', () => {
+    const area = reachable(iga, start, {}, true);
+    for (const npc of iga.npcs) expect(near(area, npc.x, npc.y), npc.id).toBe(true);
+  });
+
+  it('伊賀者の里の入口から朧の場所へ行け、そこを通らなければ広間には入れない。葛籠にはすべて近づける', () => {
+    const sato = MAPS.igaSato!;
+    const enter = iga.exits.find((e) => e.to === 'igaSato')!;
+    const landing = { x: enter.toX, y: enter.toY };
+    const area = reachable(sato, landing, {}, true);
+    for (const t of sato.triggers!) {
+      expect(area.has(`${t.x},${t.y}`)).toBe(true);
+      expect(t.unless).toBe('oboroDefeated');
+    }
+    for (const c of sato.npcs.filter((n) => n.event?.startsWith('igaSatoChest'))) expect(near(area, c.x, c.y), c.id).toBe(true);
+    const kakejiku = sato.npcs.find((n) => n.id === 'igaKakejiku')!;
+    expect(near(area, kakejiku.x, kakejiku.y)).toBe(true);
+    expect(near(reachable(wallTriggers(sato), landing, {}, true), kakejiku.x, kakejiku.y)).toBe(false);
+  });
+
+  it('鍵屋の辻の権六の場所は、通らなければ石標に近づけない', () => {
+    const kagiya = MAPS.kagiya!;
+    const enter = iga.exits.find((e) => e.to === 'kagiya')!;
+    const landing = { x: enter.toX, y: enter.toY };
+    const area = reachable(kagiya, landing, {}, true);
+    for (const t of kagiya.triggers!) {
+      expect(area.has(`${t.x},${t.y}`)).toBe(true);
+      expect(t.unless).toBe('gonrokuDefeated');
+    }
+    const ishi = kagiya.npcs.find((n) => n.id === 'kagiyaIshi')!;
+    expect(near(area, ishi.x, ishi.y)).toBe(true);
+    expect(near(reachable(wallTriggers(kagiya), landing, {}, true), ishi.x, ishi.y)).toBe(false);
+  });
+
+  it('伊賀者の里・鍵屋の辻で全滅したら伊賀上野の旅籠の前に戻る', () => {
+    for (const id of ['igaSato', 'kagiya']) expect(respawnPoint(id)).toEqual({ mapId: 'iga', ...iga.respawn });
+  });
+});

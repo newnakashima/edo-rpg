@@ -1,4 +1,4 @@
-// フィールドのマップ。序章〜第 3 章の町・ダンジョンと、ワールドマップを用意する。
+// フィールドのマップ。序章〜第 4 章の町・ダンジョンと、ワールドマップを用意する。
 // タイルの文字の意味は TILES を参照。
 import type { Facing } from '../systems/gameState';
 import type { CharacterSpriteId } from './sprites';
@@ -106,8 +106,8 @@ export interface MapDef {
   respawn?: { x: number; y: number };
   /** respawn のないマップ（ダンジョンなど）で全滅したときに戻る町のマップ。省くと最初の町（清水湊）。 */
   respawnMap?: string;
-  /** 範囲ごとの全滅時の戻り先の町（respawnMap より優先する。ワールドマップの地域ごとに近くの町へ戻す）。 */
-  respawnZones?: { x: number; y: number; w: number; h: number; mapId: string }[];
+  /** 範囲ごとの全滅時の戻り先の町（respawnMap より優先する。ワールドマップの地域ごとに近くの町へ戻す）。flag があれば、そのフラグが立っているときだけ使う。 */
+  respawnZones?: { x: number; y: number; w: number; h: number; mapId: string; flag?: string }[];
   /** ワールドマップの町の印。印の上で決定ボタンを押すと to の場所へ入る（to がなければ lines を出す）。乗っただけでは入らない。 */
   towns?: TownDef[];
   /** 関所。flag が立つまで通れず、lines を出す。 */
@@ -151,7 +151,7 @@ export const MAPS: Record<string, MapDef> = {
         color: 0x8a3b2e,
         sprite: 'tatsugoro',
         event: 'tatsugoro',
-        // 第 3 章の終わりに、鷲尾の配下の刺客に殺される（弔いの場面は第 4 章で足す）
+        // 第 3 章の終わりに、鷲尾の配下の刺客に殺される（弔いの場面は第 4 章の始まり。shimizuEnter）
         hideFlag: 'chapter3Cleared',
       },
       {
@@ -240,6 +240,8 @@ export const MAPS: Record<string, MapDef> = {
         sprite: 'orin',
         lines: ['お凛「おとっつぁんもおとっつぁんだよ。よそ者なんかに頼るなんて」'],
         after: { flag: 'yakoDefeated', lines: ['お凛「……狐を退治したんだってね。礼は言っとくよ。けど、まだ認めたわけじゃないからね」'] },
+        // 第 4 章の始まり（辰五郎の弔い）で仲間になる
+        hideFlag: 'orinJoined',
       },
     ],
     exits: [
@@ -249,7 +251,8 @@ export const MAPS: Record<string, MapDef> = {
       { x: 27, y: 6, to: 'world', toX: 41, toY: 10 },
     ],
     respawn: { x: 23, y: 5 },
-    onEnter: { event: 'intro', unless: 'intro' },
+    // 初めて入ったときは序章の始まり、第 3 章を終えて戻ったときは辰五郎の弔い（お凛が加わるまで）
+    onEnter: { event: 'shimizuEnter', unless: 'orinJoined' },
   },
   urayama: {
     id: 'urayama',
@@ -364,7 +367,7 @@ MAPS.world = {
     { x: 39, y: 10, name: '駿府', to: { mapId: 'sunpu', x: 28, y: 8 }, openFlag: 'prologueCleared', lines: ['駿府城下。（清水湊の辰五郎の頼みを片づけてから訪れる）'] },
     // 名古屋は大井川の西。大井川の渡し場（oigawaOpen）を越えなければ着かない
     { x: 32, y: 10, name: '名古屋', to: { mapId: 'nagoya', x: 28, y: 8 } },
-    { x: 27, y: 11, name: '伊賀', lines: NOT_YET('伊賀上野', '第 4 章') },
+    { x: 27, y: 11, name: '伊賀', to: { mapId: 'iga', x: 28, y: 6 }, openFlag: 'orinJoined', lines: ['伊賀上野。（清水湊の一家のことが気にかかる。まずは清水湊へ）'] },
     { x: 24, y: 10, name: '京', to: { mapId: 'kyo', x: 28, y: 6 }, openFlag: 'chapter2Cleared', lines: ['京。（尾張名古屋の一件を片づけてから訪れる）'] },
     { x: 21, y: 11, name: '大坂', lines: NOT_YET('大坂', '第 5 章') },
     { x: 14, y: 11, name: '広島', lines: NOT_YET('広島', '第 6 章') },
@@ -379,18 +382,20 @@ MAPS.world = {
     { x: 36, y: 10, flag: 'oigawaOpen', lines: ['大井川の渡し場だ。川越し人足「水かさが増えて、今は渡せねえよ」'], event: 'oigawa' },
     { x: 45, y: 10, flag: 'hakoneTegata', lines: ['箱根の関所だ。役人「通行手形なき者は、通すわけにはいかぬ」'] },
   ],
-  // 出現範囲は今は駿河、大井川の西の東海道、京のまわり。ほかの地域の範囲は、その地域の敵を作るとき（フェーズ 4 の各章）に足す
+  // 出現範囲は今は駿河、大井川の西の東海道、京のまわり、伊賀のまわり。ほかの地域の範囲は、その地域の敵を作るとき（フェーズ 4 の各章）に足す
   // 先に書いた範囲が優先。駿府のまわり（大井川の渡し場から駿府まで）は、序章を終えたら駿府の敵（それまでは序章の敵）
-  // 大井川の西（名古屋・伊賀のまわり）は東海道の敵。伊賀の範囲は第 4 章で、この範囲より前に足す
-  // 大井川の西（東海道）で全滅したら名古屋に戻る（ほかは最初の町の清水湊）
+  // 大井川の西（名古屋のまわり）は東海道の敵。伊賀のまわり（x 26〜28、伊賀の印の北の東海道）は、お凛が加わったら伊賀の敵（それまでは東海道の敵）
+  // 大井川の西（東海道）で全滅したら名古屋に戻る（ほかは最初の町の清水湊）。伊賀のまわりは、お凛が加わったあとは伊賀上野に戻る
   // 京のまわり（大坂寄りの街道を含む）で全滅したら京に戻る
   respawnZones: [
     { x: 21, y: 9, w: 4, h: 4, mapId: 'kyo' },
+    { x: 26, y: 9, w: 3, h: 4, mapId: 'iga', flag: 'orinJoined' },
     { x: 25, y: 9, w: 11, h: 4, mapId: 'nagoya' },
   ],
   // 京のまわり（x 21〜24）は、第 2 章を終えたら京の敵（それまでは敵が出ない）
   encounterZones: [
     { x: 21, y: 9, w: 4, h: 4, encounter: 'kyoto', flag: 'chapter2Cleared' },
+    { x: 26, y: 9, w: 3, h: 4, encounter: 'iga', flag: 'orinJoined' },
     { x: 25, y: 9, w: 11, h: 4, encounter: 'tokaido' },
     { x: 36, y: 9, w: 4, h: 4, encounter: 'sunpu', flag: 'prologueCleared' },
     { x: 36, y: 9, w: 10, h: 4, encounter: 'suruga' },
@@ -1282,6 +1287,238 @@ MAPS.oninosu = {
   ],
 };
 
+/** 第 4 章の伊賀上野と、伊賀者の里（忍者屋敷）・鍵屋の辻。 */
+MAPS.iga = {
+  id: 'iga',
+  name: '伊賀上野',
+  areaLevel: 13,
+  rows: [
+    'TTTTTTTTTTTTTT==TTTTTTTTTTTTTT',
+    'T,,,,,,,,,,,,,==,,,,,,,,,,,,,T',
+    'T,RRRRR,RRRRR,==,RRRRR,RRRRR,T',
+    'T,WWDWW,WWDWW,==,WWDWW,WWDWW,T',
+    'T,.....,.....,==,.....,.....,T',
+    'T,,,,,,,,,,,,,==,,,,,,,,,,,,,T',
+    '==============================',
+    'T,,,,,,,,,,,,,==,,,,,,,,,,,,,T',
+    'T,RRRRRRR,RRR,==,RRRRRRRRRR,,T',
+    'T,WWWDWWW,WDW,==,WWWWWDWWWW,,T',
+    'T,.......,...,==,..........,,T',
+    'T,,,,,,,,,,,,,,,,,,,,,,,,,,,,T',
+    'T,,TT,,,,,,,,,,,,,,,,,,,,TT,,T',
+    'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
+  ],
+  npcs: [
+    {
+      id: 'igaTeahouse',
+      name: '茶屋の娘',
+      x: 4,
+      y: 4,
+      color: 0xc76b8f,
+      lines: [
+        '茶屋の娘「いらっしゃいまし。……お客さん、山の上の里には近づかないほうがいいですよ」',
+        '茶屋の娘「このごろ、からくりの鷹が里の上を飛び回ってるんです。よそ者を見ると、襲ってくるとか」',
+        '茶屋の娘「お団子はいかが？」',
+      ],
+      after: { flag: 'heardIgaRumor', lines: ['茶屋の娘「いらっしゃいまし。お団子はいかが？」'] },
+      setsFlag: 'heardIgaRumor',
+      action: 'teahouse',
+    },
+    {
+      id: 'igaYorozu',
+      name: 'よろず屋',
+      x: 10,
+      y: 4,
+      color: 0x6b8c5a,
+      lines: ['よろず屋「山の里へ行くなら、毒消しは忘れずに。あそこの蜘蛛は質が悪い」'],
+      action: 'shop',
+      shop: 'igaYorozu',
+    },
+    {
+      id: 'igaTenjin',
+      name: '天神の神主',
+      x: 19,
+      y: 4,
+      color: 0xb0b0a0,
+      lines: ['神主「上野の天神さまのご加護を。倒れた者があれば、お祓いをして進ぜよう」'],
+      action: 'temple',
+    },
+    {
+      id: 'igaInn',
+      name: '旅籠の主人',
+      x: 25,
+      y: 4,
+      color: 0x5a6b8c,
+      lines: ['旅籠の主人「お泊まりですかい。伊賀の山の夜は冷えますよ」'],
+      action: 'inn',
+    },
+    {
+      id: 'kagiyaRojin',
+      name: '鍵屋の隠居',
+      x: 5,
+      y: 10,
+      color: 0x8a7a6a,
+      lines: [
+        '隠居「西の外れの辻は、鍵屋の辻というてな。むかし、あそこで名高い仇討ちがあった」',
+        '隠居「弟の仇を、義兄の剣客が助太刀して討った。朝から昼まで斬り合うたそうな」',
+        '隠居「仇討ちというのは、討つほうも討たれるほうも、命がけよ」',
+      ],
+      after: { flag: 'gonrokuDefeated', lines: ['隠居「鍵屋の辻で、また仇討ちがあったと聞いた。……娘さん、本懐を遂げなすったか」'] },
+    },
+    {
+      id: 'igaKaji',
+      name: '刀鍛冶',
+      x: 11,
+      y: 10,
+      color: 0x5a5a6b,
+      lines: ['刀鍛冶「伊賀の鍛冶は忍びの得物も打つ。小太刀でも錫杖でも、なんでも言いなせえ」'],
+      action: 'shop',
+      shop: 'igaKaji',
+    },
+    {
+      id: 'igaHikyaku',
+      name: '飛脚',
+      x: 22,
+      y: 10,
+      color: 0x3e7cb0,
+      lines: ['飛脚「へい、まいど！ 伊賀の飛脚問屋でございやす」'],
+      action: 'hikyaku',
+    },
+    {
+      id: 'igaKodomo',
+      name: '町の子',
+      x: 20,
+      y: 12,
+      color: 0xb08a5a,
+      lines: ['子ども「北の山道をずっと登ると、忍者の里があるんだって。おっかあは、行っちゃだめだって言うんだ」'],
+      after: { flag: 'oboroDefeated', lines: ['子ども「里の忍者が、鷹を山に放さなくなったんだって。なんでだろう？」'] },
+    },
+    {
+      id: 'tsujiban',
+      name: '辻番',
+      x: 1,
+      y: 6,
+      color: 0x4a4a6b,
+      lines: ['辻番「この先は鍵屋の辻だ。物騒な噂があってな、日の出までは誰も通さんことにしておる」'],
+      // 朧から、権六が夜明けに鍵屋の辻を通ると聞くまではふさぐ
+      hideFlag: 'oboroDefeated',
+    },
+  ],
+  exits: [
+    // 東の通りからワールドマップへ（伊賀の印の北の街道）
+    { x: 29, y: 6, to: 'world', toX: 27, toY: 10 },
+    // 北の山道から伊賀者の里へ
+    { x: 14, y: 0, to: 'igaSato', toX: 10, toY: 14 },
+    { x: 15, y: 0, to: 'igaSato', toX: 11, toY: 14 },
+    // 西の外れの鍵屋の辻へ（朧を倒すまでは辻番がふさぐ）
+    { x: 0, y: 6, to: 'kagiya', toX: 10, toY: 5 },
+  ],
+  respawn: { x: 25, y: 5 },
+  onEnter: { event: 'igaEnter', unless: 'igaArrived' },
+};
+
+MAPS.igaSato = {
+  id: 'igaSato',
+  name: '伊賀者の里',
+  areaLevel: 13,
+  rows: [
+    'WWWWWWWWWWWWWWWWWWWWWW',
+    'WWWWWWW________WWWWWWW',
+    'WWWWWWW________WWWWWWW',
+    'WWWWWWWWWW__WWWWWWWWWW',
+    'W_______W____W_______W',
+    'W_WWWWW_W_WW_W_WWWWW_W',
+    'W_W___W___W____W___W_W',
+    'W_W_W_WWWWW_WWWW_W_W_W',
+    'W___W_______W____W___W',
+    'WWWWW_WWWWW_W_WWWWWW_W',
+    'W_____W_____W______W_W',
+    'W_WWWWW_WWWWWWWWWW_W_W',
+    'W_______W__________W_W',
+    'WWWWWWWWWW__WWWWWWWW_W',
+    'W____________________W',
+    'WWWWWWWWWW__WWWWWWWWWW',
+  ],
+  npcs: [
+    {
+      id: 'igaSatoChest1',
+      name: '葛籠',
+      x: 3,
+      y: 6,
+      color: 0x8a6a3a,
+      event: 'igaSatoChest1',
+    },
+    {
+      id: 'igaSatoChest2',
+      name: '葛籠',
+      x: 1,
+      y: 14,
+      color: 0x8a6a3a,
+      event: 'igaSatoChest2',
+    },
+    {
+      id: 'igaOboro',
+      name: '朧',
+      x: 11,
+      y: 1,
+      color: 0x6a6a6a,
+      lines: ['……'],
+      hideFlag: 'oboroDefeated',
+    },
+    {
+      id: 'igaKakejiku',
+      name: '掛け軸',
+      x: 8,
+      y: 1,
+      color: 0x8a7a5a,
+      lines: ['「忍」の一字が大書された掛け軸だ。刃の下に心と書く。'],
+      after: { flag: 'oboroDefeated', lines: ['「忍」の一字の掛け軸だ。霞が、しばらく黙って見上げていた。'] },
+    },
+  ],
+  exits: [
+    { x: 10, y: 15, to: 'iga', toX: 14, toY: 1 },
+    { x: 11, y: 15, to: 'iga', toX: 15, toY: 1 },
+  ],
+  encounter: 'iga',
+  respawnMap: 'iga',
+  // 広間へ上がる細い段で、朧が待ち構える
+  triggers: [
+    { x: 10, y: 3, event: 'oboro', unless: 'oboroDefeated' },
+    { x: 11, y: 3, event: 'oboro', unless: 'oboroDefeated' },
+  ],
+};
+
+MAPS.kagiya = {
+  id: 'kagiya',
+  name: '鍵屋の辻',
+  areaLevel: 13,
+  rows: [
+    'TTTTTTTTTTTT',
+    'TRRRRRTRRRRT',
+    'TWWDWWTWWDWT',
+    'T,,,,,,,,,,T',
+    'T,,,,,,,,,,T',
+    'T,,,,,,,,,,=',
+    'T,,,,,,,,,,T',
+    'TTTTTTTTTTTT',
+  ],
+  npcs: [
+    {
+      id: 'kagiyaIshi',
+      name: '石標',
+      x: 2,
+      y: 4,
+      color: 0x8a8a8a,
+      lines: ['「鍵屋の辻」と刻まれた古い石標だ。辻の茶屋の軒先に、朝の光が差している。'],
+      after: { flag: 'gonrokuDefeated', lines: ['「鍵屋の辻」の石標だ。お凛が、そっと手を合わせた。'] },
+    },
+  ],
+  exits: [{ x: 11, y: 5, to: 'iga', toX: 2, toY: 6 }],
+  respawnMap: 'iga',
+  // 辻の真ん中で、権六が待ち構える
+  triggers: [3, 4, 5, 6].map((y) => ({ x: 8, y, event: 'gonroku', unless: 'gonrokuDefeated' })),
+};
+
 export type TownAction =
   | { kind: 'enter'; to: { mapId: string; x: number; y: number } }
   | { kind: 'info'; lines: string[] }
@@ -1306,13 +1543,15 @@ export function npcVisible(npc: NpcDef, flags: Record<string, boolean>): boolean
 }
 
 /**
- * そのマップで全滅したときに戻る場所。マップに respawn がなければ、(x, y) を含む respawnZones の町、
+ * そのマップで全滅したときに戻る場所。マップに respawn がなければ、(x, y) を含む respawnZones の町（flag の立っていない範囲は飛ばす）、
  * なければ respawnMap の町、それもなければ最初の町。
  */
-export function respawnPoint(mapId: string, x?: number, y?: number): { mapId: string; x: number; y: number } {
+export function respawnPoint(mapId: string, x?: number, y?: number, flags: Record<string, boolean> = {}): { mapId: string; x: number; y: number } {
   const map = MAPS[mapId];
   const zone =
-    x === undefined || y === undefined ? undefined : map?.respawnZones?.find((z) => x >= z.x && x < z.x + z.w && y >= z.y && y < z.y + z.h);
+    x === undefined || y === undefined
+      ? undefined
+      : map?.respawnZones?.find((z) => x >= z.x && x < z.x + z.w && y >= z.y && y < z.y + z.h && (!z.flag || flags[z.flag]));
   const town = map?.respawn ? map : MAPS[zone?.mapId ?? map?.respawnMap ?? START_POSITION.mapId];
   return town?.respawn ? { mapId: town.id, ...town.respawn } : START_POSITION;
 }
