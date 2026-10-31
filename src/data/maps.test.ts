@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ENCOUNTERS, ENEMIES } from './enemies';
+import type { EventStep } from './eventTypes';
 import { EVENTS } from './events';
 import { closedGateAt, encounterAt, MAPS, START_POSITION, TILE_KINDS, tileAt, TILES, townAction, type MapDef } from './maps';
 
@@ -86,6 +87,30 @@ describe('マップのデータ', () => {
       });
     });
   }
+
+  it('NPC の after のフラグは、どこかの setsFlag かイベントの setFlag で立つ', () => {
+    const set = new Set<string>();
+    for (const map of Object.values(MAPS)) for (const npc of map.npcs) if (npc.setsFlag) set.add(npc.setsFlag);
+    const walk = (steps: readonly EventStep[]): void => {
+      for (const st of steps) {
+        if (st.type === 'setFlag' && st.value !== false) set.add(st.flag);
+        if (st.type === 'if') {
+          walk(st.then);
+          walk(st.else ?? []);
+        }
+        if (st.type === 'choice') for (const o of st.options) walk(o.steps);
+        if (st.type === 'battle') walk(st.ifLose ?? []);
+        if (st.type === 'giveItem') walk(st.ifFull ?? []);
+      }
+    };
+    for (const ev of Object.values(EVENTS)) walk(ev.steps);
+    for (const map of Object.values(MAPS)) {
+      for (const npc of map.npcs) if (npc.after) expect(set.has(npc.after.flag), `${map.id}/${npc.id}: ${npc.after.flag}`).toBe(true);
+      for (const t of [...(map.triggers ?? []), ...(map.onEnter ? [map.onEnter] : [])]) {
+        if (t.unless) expect(set.has(t.unless), `${map.id}/${t.event}: ${t.unless}`).toBe(true);
+      }
+    }
+  });
 
   it('開始位置は通れる場所', () => {
     const map = MAPS[START_POSITION.mapId];
@@ -176,6 +201,9 @@ describe('序章の狐火の洞', () => {
       ...cave,
       rows: cave.rows.map((row, y) => (y === trigger.y ? row.slice(0, trigger.x) + '^' + row.slice(trigger.x + 1) : row)),
     };
-    expect(near(reachable(walled, landing, {}), crate.x, crate.y)).toBe(false);
+    expect(tileAt(walled, trigger.x, trigger.y)?.blocked).toBe(true);
+    const blocked = reachable(walled, landing, {});
+    expect(blocked.has(`${trigger.x},${trigger.y}`)).toBe(false);
+    expect(near(blocked, crate.x, crate.y)).toBe(false);
   });
 });

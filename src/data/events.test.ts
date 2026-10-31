@@ -62,13 +62,13 @@ describe('イベントのデータ', () => {
   }
 });
 
-/** イベントを最後まで進める（選択肢は最初のもの、戦闘は勝ち）。 */
-function run(id: string, state: GameState): GameState {
+/** イベントを最後まで進める（選択肢は最初のもの、戦闘の結果は outcome）。 */
+function run(id: string, state: GameState, outcome: 'victory' | 'defeat' = 'victory'): GameState {
   const runner = new EventRunner(EVENTS[id]!.steps);
   let r = runner.next(state);
   for (let guard = 0; guard < 50 && r.request.kind !== 'done'; guard++) {
     if (r.request.kind === 'choice') r = runner.next(r.state, { kind: 'choice', index: 0 });
-    else if (r.request.kind === 'battle') r = runner.next(r.state, { kind: 'battle', outcome: 'victory' });
+    else if (r.request.kind === 'battle') r = runner.next(r.state, { kind: 'battle', outcome });
     else r = runner.next(r.state);
   }
   return r.state;
@@ -90,6 +90,14 @@ describe('序章の流れ', () => {
     expect(reported.money).toBe(defeated.money + 300);
     // 礼は一度だけ
     expect(run('tatsugoro', reported).money).toBe(reported.money);
+  });
+
+  it('野狐の戦闘は逃げられず、負けたら yakoDefeated は立たない', () => {
+    const battle = EVENTS.yako!.steps.find((st) => st.type === 'battle');
+    expect(battle).toMatchObject({ type: 'battle', enemies: ['yako'], level: 4 });
+    expect(battle?.type === 'battle' && battle.canEscape).toBeFalsy();
+    expect(battle?.type === 'battle' && battle.ifLose).toBeFalsy();
+    expect(run('yako', start, 'defeat').flags.yakoDefeated).toBeFalsy();
   });
 
   it('頼みを聞く前に野狐を倒していても、報告で序章が終わる', () => {
