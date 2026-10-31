@@ -228,3 +228,5 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 - 2 回目（b11c522e-253c-4b13-8a4c-be8854904f04）で fuzukue（very low Japanese floor writing desk … short stubby legs）・ningyo（chest panel open revealing a bright golden brass coiled spring）・butsuzo（NO HEAD … the head lies on the ground beside it）・jikkenDai（iron box … glowing bright blue symbols）を採用。各 3 通りの言い方で作り、要件を満たすものを選んだ
 - ishidan: 2 回目は段が描けたが 32 × 32 を埋めて透過の余白がなく、まわりのタイルを覆うため作り直した
 
+- 3 回目（89dcac26-52b0-4ab4-8b12-4806560bdbbc）で ishidan を採用。description の終わりを small isolated object with empty transparent space around it にし、説明を small square opening in the ground with a low grey stone rim, inside it grey stone steps go down into darkness, only 20 pixels wide, transparent background around の言い方で 4 通り作り、透過の余白があり段の見えるものを選んだ
+- 判定の観点（全物共通）: 説明の主な特徴が見える、背景が透過、見下ろし気味でタイルと矛盾しない、濃い輪郭、落ち着いた配色（出島・研究所の洋物を除く）、32 × 32 に収まり下端が地面、ほかの物と見分けがつく。ゲーム画面で工房・鍵屋の辻・鬼の巣・研究所・原城跡・出島を確かめた
