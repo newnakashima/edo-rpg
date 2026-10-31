@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { availableItemCount, createBattle, partyAfterBattle, resolveTurn, type BattleState, type Combatant } from './battle';
+import { ENEMIES } from '../data/enemies';
+import { SKILLS } from '../data/skills';
 import { createMember } from './party';
 import { seqRng } from './testUtils';
 
@@ -227,7 +229,7 @@ describe('道具', () => {
     const b = sleepEnemies(createBattle([createMember('hero', 1)], 'm', ['ogaeru'], 1, { items: { dokukeshi: 1 } }));
     get(b, 'p0').status.poison = 99;
     const { state, events } = resolveTurn(b, { p0: { kind: 'item', item: 'dokukeshi', target: 'p0' } }, seqRng(0.5));
-    expect(events).toContainEqual({ type: 'cure', target: 'p0' });
+    expect(events).toContainEqual({ type: 'cure', target: 'p0', ailments: ['poison'] });
     expect(get(state, 'p0').status.poison).toBeUndefined();
   });
 
@@ -288,6 +290,44 @@ describe('効果の持続', () => {
   });
 });
 
+describe('効果の持続（続き）', () => {
+  it('敵が動いた後に仁義を切っても、3 回の行動のあいだ引きつける', () => {
+    const party = [createMember('hero', 6), createMember('kasumi', 6)];
+    // 敵（Lv10、0.99）が主人公（0）より先に動き、主人公が後で仁義を切る
+    const b = createBattle(party, 'm', ['ogaeru'], 10);
+    let r = resolveTurn(b, { p0: { kind: 'skill', skill: 'jingi', target: 'e0' }, p1: { kind: 'guard' } }, seqRng(0, 0, 0.99, 0, 0, 0.99, 0.5));
+    expect(r.events).toContainEqual({ type: 'taunt', actor: 'p0', target: 'e0' });
+    let turns = 0;
+    while (get(r.state, 'e0').taunt && turns < 10) {
+      r = resolveTurn(r.state, { p0: { kind: 'guard' }, p1: { kind: 'guard' } }, seqRng(0.5));
+      turns++;
+    }
+    expect(turns).toBe(3);
+  });
+
+  it('逃走に失敗したターンにかかった眠りは、次のターンから数える', () => {
+    // 眠らせる技だけを使う試験用の敵
+    SKILLS.testSleep = { id: 'testSleep', name: '子守唄', mp: 0, target: 'enemy', effect: { kind: 'status', status: 'sleep', turns: 2, chance: 0.95 }, description: '' };
+    ENEMIES.testSleeper = { id: 'testSleeper', name: '試験', color: 0, factors: { hp: 1, atk: 1, def: 1, spd: 1 }, actions: [{ skill: 'testSleep', weight: 1 }] };
+    try {
+      const b = createBattle([createMember('hero', 1)], 'm', ['testSleeper'], 1);
+      // 逃走の判定（失敗）、行動順、敵の行動の選択、狙い、眠りの判定
+      let r = resolveTurn(b, { p0: { kind: 'escape' } }, seqRng(0.999, 0.5, 0, 0, 0));
+      expect(r.events).toContainEqual({ type: 'status', target: 'p0', status: 'sleep' });
+      let blocked = 0;
+      for (let t = 0; t < 3; t++) {
+        // 敵には眠りの技を使わせない（判定を外す）
+        r = resolveTurn(r.state, { p0: { kind: 'guard' } }, seqRng(0.5, 0.5, 0, 0, 0.999));
+        if (r.events.some((e) => e.type === 'cannotAct' && e.actor === 'p0')) blocked++;
+      }
+      expect(blocked).toBe(2);
+    } finally {
+      delete SKILLS.testSleep;
+      delete ENEMIES.testSleeper;
+    }
+  });
+});
+
 describe('敵の行動', () => {
   it('重みに従って技を選ぶ（大蛙は 攻撃 4 : 毒液 1）', () => {
     const b = createBattle([createMember('hero', 1)], 'm', ['ogaeru'], 1);
@@ -324,11 +364,15 @@ describe('範囲・回復・お祓い', () => {
     const b = sleepEnemies(createBattle(party, 'm', ['ogaeru'], 1));
     get(b, 'p1').status.poison = 99;
     const cured = resolveTurn(b, { p0: { kind: 'skill', skill: 'oharai', target: 'p1' }, p1: { kind: 'guard' } }, seqRng(0.5));
-    expect(cured.events).toContainEqual({ type: 'cure', target: 'p1' });
+    expect(cured.events).toContainEqual({ type: 'cure', target: 'p1', ailments: ['poison'] });
     get(b, 'p1').hp = 0;
-    const fallen = resolveTurn(b, { p0: { kind: 'skill', skill: 'yakushi', target: 'p1' } }, seqRng(0.5));
-    expect(fallen.events).toContainEqual({ type: 'noEffect', target: 'p1' });
-    expect(get(fallen.state, 'p0').hp).toBe(get(b, 'p0').hp);
+    for (const skill of ['yakushi', 'oharai']) {
+      const fallen = resolveTurn(b, { p0: { kind: 'skill', skill, target: 'p1' } }, seqRng(0.5));
+      expect(fallen.events).toContainEqual({ type: 'noEffect', target: 'p1' });
+      // 術者には掛からず、気力は使う
+      expect(get(fallen.state, 'p0').hp).toBe(get(b, 'p0').hp);
+      expect(get(fallen.state, 'p0').mp).toBe(get(b, 'p0').mp - 3);
+    }
   });
 
   it('影縫いは技で当てると、その後の 1 回の行動を止める', () => {
@@ -345,10 +389,18 @@ describe('道具の消費', () => {
   it('効かない相手には使わず、減らさない', () => {
     const party = [createMember('hero', 1), { ...createMember('kasumi', 1), hp: 0 }];
     const b = sleepEnemies(createBattle(party, 'm', ['ogaeru'], 1, { items: { kizugusuri: 1, kitsukegusuri: 1 } }));
-    // 満タンの味方に傷薬、倒れた味方に傷薬、生きている味方に気付け薬
-    for (const [item, target] of [['kizugusuri', 'p0'], ['kizugusuri', 'p1'], ['kitsukegusuri', 'p0']] as const) {
+    // 満タンの味方に傷薬、倒れた味方に傷薬、生きている味方に気付け薬、気力が満タンの味方に万金丹、毒でない味方に毒消し
+    const cases = [
+      ['kizugusuri', 'p0'],
+      ['kizugusuri', 'p1'],
+      ['kitsukegusuri', 'p0'],
+      ['mankintan', 'p0'],
+      ['dokukeshi', 'p0'],
+    ] as const;
+    b.items = { kizugusuri: 1, kitsukegusuri: 1, mankintan: 1, dokukeshi: 1 };
+    for (const [item, target] of cases) {
       const r = resolveTurn(b, { p0: { kind: 'item', item, target } }, seqRng(0.5));
-      expect(r.events).toContainEqual({ type: 'noEffect', target });
+      expect(r.events).toContainEqual({ type: 'itemUnused', actor: 'p0', item, target });
       expect(r.state.items).toEqual(b.items);
     }
   });

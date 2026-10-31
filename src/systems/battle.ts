@@ -69,11 +69,13 @@ export type BattleEvent =
   | { type: 'status'; target: string; status: StatusId }
   /** 状態異常がかからなかった。 */
   | { type: 'statusFailed'; target: string; status: StatusId }
-  | { type: 'cure'; target: string }
+  | { type: 'cure'; target: string; ailments: Ailment[] }
   /** 効果がなかった（戦闘不能の味方に傷薬など）。 */
   | { type: 'noEffect'; target: string }
   | { type: 'noMp'; actor: string; skill: string }
   | { type: 'noItem'; actor: string; item: string }
+  /** 効き目がないので道具を使わなかった（減らない）。 */
+  | { type: 'itemUnused'; actor: string; item: string; target: string }
   /** 眠り・麻痺・影縫いで動けなかった。 */
   | { type: 'cannotAct'; actor: string; reason: Ailment }
   | { type: 'confused'; actor: string }
@@ -314,11 +316,9 @@ class TurnContext {
   }
 
   cure(target: Combatant, only?: Ailment): void {
-    const before = Object.keys(target.status).length;
-    for (const id of Object.keys(target.status) as StatusId[]) {
-      if (isAilment(id) && (!only || id === only)) delete target.status[id];
-    }
-    this.events.push(Object.keys(target.status).length < before ? { type: 'cure', target: target.key } : { type: 'noEffect', target: target.key });
+    const ailments = (Object.keys(target.status) as StatusId[]).filter((id): id is Ailment => isAilment(id) && (!only || id === only));
+    for (const id of ailments) delete target.status[id];
+    this.events.push(ailments.length > 0 ? { type: 'cure', target: target.key, ailments } : { type: 'noEffect', target: target.key });
   }
 
   /** 技の対象を決める。 */
@@ -451,15 +451,15 @@ class TurnContext {
       this.events.push({ type: 'noItem', actor: actor.key, item: itemId });
       return;
     }
-    this.events.push({ type: 'item', actor: actor.key, item: itemId });
     const chosen = this.byKey.get(targetKey);
     const target = chosen && chosen.side === actor.side ? chosen : actor;
     const effect = item.effect;
     if (!itemWorks(effect, target)) {
-      this.events.push({ type: 'noEffect', target: target.key });
+      this.events.push({ type: 'itemUnused', actor: actor.key, item: itemId, target: target.key });
       return;
     }
     this.state.items = rest;
+    this.events.push({ type: 'item', actor: actor.key, item: itemId });
     switch (effect.kind) {
       case 'revive':
         target.hp = Math.max(1, Math.floor(target.stats.maxHp * effect.rate));
@@ -635,6 +635,8 @@ export function resolveTurn(
       return { state, events };
     }
     partyActs = false;
+    // 逃げようとしてこのターンの行動を使ったものとして扱う（このターンにかかった効果は、次のターンから数える）
+    for (const c of aliveOf(state, 'party')) ctx.acted.add(c.key);
   }
 
   // 防御は行動順より先に効く（逃走に失敗したターンも有効）

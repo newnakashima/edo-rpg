@@ -31,6 +31,14 @@ export function isAilment(id: StatusId): id is Ailment {
   return (AILMENTS as readonly string[]).includes(id);
 }
 
+/** 状態異常の短い表示（戦闘の味方の欄に出す）。状態の名前の 1 文字目を AILMENTS の順に並べる。 */
+export function ailmentMarks(status: Iterable<StatusId>): string {
+  const set = new Set(status);
+  return AILMENTS.filter((id) => set.has(id))
+    .map((id) => STATUS_NAMES[id].slice(0, 1))
+    .join('');
+}
+
 /**
  * 技の対象。
  * - enemy / ally: 単体を選ぶ（ally は戦闘不能の味方は選べない）

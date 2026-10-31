@@ -3,7 +3,7 @@ import { characterName } from '../data/characters';
 import { ENEMIES } from '../data/enemies';
 import { ITEMS, ownedItems } from '../data/items';
 import { MAPS, START_POSITION } from '../data/maps';
-import { isAilment, SKILLS, STATUS_NAMES, type StatusId } from '../data/skills';
+import { ailmentMarks, isAilment, SKILLS, STATUS_NAMES, type StatusId } from '../data/skills';
 import {
   aliveOf,
   availableItemCount,
@@ -35,13 +35,6 @@ export interface BattleData {
 
 const EVENT_MS = 650;
 
-/** 状態異常の短い表示（味方の欄に出す）。状態の名前の 1 文字目。 */
-function ailmentMarks(status: Iterable<StatusId>): string {
-  return [...status]
-    .filter(isAilment)
-    .map((id) => STATUS_NAMES[id].slice(0, 1))
-    .join('');
-}
 
 /** 戦闘の下の窓の位置。 */
 const PANEL_Y = 128;
@@ -338,6 +331,8 @@ export class BattleScene extends Phaser.Scene {
         return `${this.nameOf(e.target)}の体が軽くなった。`;
       case 'noEffect':
         return 'しかし、何も起こらなかった。';
+      case 'itemUnused':
+        return `${this.nameOf(e.actor)}は${ITEMS[e.item]?.name ?? ''}を${this.nameOf(e.target)}に使おうとしたが、効き目がなさそうなのでやめた。`;
       case 'noMp':
         return `${this.nameOf(e.actor)}は${SKILLS[e.skill]?.name ?? '技'}を使おうとしたが、気力が足りない！`;
       case 'noItem':
@@ -465,10 +460,8 @@ export class BattleScene extends Phaser.Scene {
           setStatus(e.target, (s) => s.delete(e.status));
           break;
         case 'cure':
-          // 毒消しは毒だけを治すので、ターンの後にも残っている状態異常は消さない
           setStatus(e.target, (s) => {
-            const after = this.battle.combatants.find((c) => c.key === e.target)?.status ?? {};
-            for (const id of [...s]) if (isAilment(id) && !after[id]) s.delete(id);
+            for (const id of e.ailments) s.delete(id);
           });
           break;
         case 'cannotAct':
