@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import type { TileKind } from '../data/maps';
+import { CHAR_FRAME, CHARACTER_SPRITES, FACINGS, spriteKey, walkAnimKey, walkFrame, WALK_FPS, WALK_FRAMES } from '../data/sprites';
 import { TILE } from '../ui/theme';
 
 /** 画像ができるまでの仮のタイルの色（docs/assets.md の配色）。 */
@@ -19,13 +20,35 @@ const TILE_COLORS: Record<TileKind, [number, number]> = {
   gate: [0xd8c08e, 0x5a3a1e],
 };
 
-/** 仮の画像をコードで描いてテクスチャにする。フェーズ 3 で PixelLab の画像に差し替える。 */
+/**
+ * 画像を読み込み、まだ画像のないもの（タイル・NPC・敵）は仮の画像をコードで描いてテクスチャにする。
+ * 読み込みに失敗したときの代わりの画像は用意していない（画像はビルドに同梱する静的なファイルで、CI の build で配置を確かめるため）。
+ */
 export class BootScene extends Phaser.Scene {
   constructor() {
     super('Boot');
   }
 
+  preload(): void {
+    for (const id of CHARACTER_SPRITES) {
+      this.load.spritesheet(spriteKey(id), `assets/chars/${id}.png`, { frameWidth: CHAR_FRAME, frameHeight: CHAR_FRAME });
+    }
+  }
+
   create(): void {
+    for (const id of CHARACTER_SPRITES) {
+      for (const facing of FACINGS) {
+        this.anims.create({
+          key: walkAnimKey(id, facing),
+          frames: this.anims.generateFrameNumbers(spriteKey(id), {
+            frames: Array.from({ length: WALK_FRAMES }, (_, i) => walkFrame(facing, i)),
+          }),
+          frameRate: WALK_FPS,
+          repeat: -1,
+        });
+      }
+    }
+
     const g = this.add.graphics();
     for (const [kind, [base, accent]] of Object.entries(TILE_COLORS)) {
       g.clear();
@@ -71,23 +94,6 @@ export class BootScene extends Phaser.Scene {
     g.fillStyle(0x000000, 0.35);
     g.fillRect(4, 14, 8, 1);
     g.generateTexture('person', 16, 16);
-
-    // 主人公（三度笠と合羽）
-    for (const [key, cloak] of [
-      ['hero-m', 0x4a5a7a],
-      ['hero-f', 0x7a4a6a],
-    ] as const) {
-      g.clear();
-      g.fillStyle(cloak, 1);
-      g.fillRect(4, 6, 8, 9);
-      g.fillStyle(0xf0d0a8, 1);
-      g.fillCircle(8, 5, 3);
-      g.fillStyle(0xc8a050, 1);
-      g.fillTriangle(1, 4, 15, 4, 8, -1);
-      g.fillStyle(0xe8e0cc, 1);
-      g.fillRect(4, 9, 8, 1);
-      g.generateTexture(key, 16, 16);
-    }
 
     // 敵（白い塊をティントで色分けする）
     g.clear();

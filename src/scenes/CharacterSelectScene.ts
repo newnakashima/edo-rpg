@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { characterName, type Gender } from '../data/characters';
+import { heroSprite, idleFrame, spriteKey } from '../data/sprites';
 import { START_POSITION } from '../data/maps';
 import { newGame } from '../systems/gameState';
 import { setState } from '../state';
@@ -31,7 +32,7 @@ export class CharacterSelectScene extends Phaser.Scene {
     this.cursor = this.add.rectangle(0, 100, 120, 120).setStrokeStyle(1, 0xe8b04a);
     for (const o of options) {
       drawWindow(this, o.x - 56, 44, 112, 112);
-      this.add.image(o.x, 78, `hero-${o.gender}`).setScale(3);
+      this.add.image(o.x, 76, spriteKey(heroSprite(o.gender)), idleFrame('down')).setScale(2);
       this.add.text(o.x, 110, characterName('hero', o.gender), textStyle(13, COLORS.accent)).setOrigin(0.5);
       this.add.text(o.x, 134, o.desc, { ...textStyle(9), align: 'center' }).setOrigin(0.5);
       const zone = this.add.zone(o.x, 100, 112, 112).setInteractive({ useHandCursor: true });
