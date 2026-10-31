@@ -831,6 +831,10 @@ describe('マップの広さと使い回し（テストプレイの指摘: ど�
           }),
         );
         expect(same / either, `${a.id} と ${b.id}`).toBeLessThan(0.5);
+        // 床の文字だけ変えた写しも見つける: 歩ける・歩けないの形が重なる割合
+        let both = 0;
+        a.rows.forEach((row, y) => [...row].forEach((_, x) => (both += open(a, x, y) && open(b, x, y) ? 1 : 0)));
+        expect(both / either, `${a.id} と ${b.id}（歩ける形）`).toBeLessThan(0.5);
       }
     }
   });

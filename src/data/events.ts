@@ -1098,6 +1098,7 @@ export const EVENTS: Record<string, EventDef> = {
   igaSatoChest2: chest('igaSatoChest2', 'igaShozoku', '伊賀装束'),
   igaSatoChest3: chest('igaSatoChest3', 'kitsukegusuri', '気付け薬'),
   komeKuraChest3: chest('komeKuraChest3', 'kintsuba', '金創膏'),
+  osakaChest: chest('osakaChest', 'mankintan', '万金丹'),
   oninosuChest1: chest('oninosuChest1', 'kintsuba', '金創膏'),
   oninosuChest2: chest('oninosuChest2', 'dokko', '独鈷杵'),
   horikawaChest1: chest('horikawaChest1', 'kintsuba', '金創膏'),
