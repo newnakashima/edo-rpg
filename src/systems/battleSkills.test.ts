@@ -3,7 +3,7 @@ import { availableItemCount, createBattle, partyAfterBattle, resolveTurn, type B
 import { ENEMIES } from '../data/enemies';
 import { SKILLS } from '../data/skills';
 import { createMember } from './party';
-import { seqRng } from './testUtils';
+import { seededRng, seqRng } from './testUtils';
 
 function get(state: BattleState, key: string): Combatant {
   const c = state.combatants.find((x) => x.key === key);
@@ -414,5 +414,35 @@ describe('道具の消費', () => {
       seqRng(0.999, 0.5),
     );
     expect(state.items).toEqual({ kizugusuri: 1 });
+  });
+});
+
+describe('野狐（序章のボス）の技', () => {
+  /** 野狐が skill を使うまでターンを進め、そのターンのイベントを返す（味方は防御だけ）。 */
+  function untilSkill(skill: string) {
+    let b = createBattle([createMember('hero', 20), createMember('kasumi', 20)], 'm', ['yako'], 4, { canEscape: false });
+    const rng = seededRng(7);
+    for (let t = 0; t < 100; t++) {
+      const r = resolveTurn(b, { p0: { kind: 'guard' }, p1: { kind: 'guard' } }, rng);
+      const i = r.events.findIndex((e) => e.type === 'skill' && e.actor === 'e0' && e.skill === skill);
+      if (i >= 0) return r.events.slice(i + 1);
+      b = r.state;
+      // 状態異常で味方の防御が崩れないよう、毎ターン治しておく
+      for (const c of b.combatants) if (c.side === 'party') c.status = {};
+    }
+    throw new Error(`${skill} was not used`);
+  }
+
+  it('狐火の渦は味方全員に当たる', () => {
+    const after = untilSkill('kitsunebiUzu');
+    const hit = after.filter((e) => e.type === 'damage').map((e) => (e.type === 'damage' ? e.target : ''));
+    expect(hit.sort()).toEqual(['p0', 'p1']);
+  });
+
+  it('化かしは味方 1 人に混乱をかけようとする', () => {
+    const next = untilSkill('bakashi')[0];
+    expect(next).toMatchObject({ status: 'confusion' });
+    expect(next?.type === 'status' || next?.type === 'statusFailed').toBe(true);
+    if (next && 'target' in next) expect(next.target).toMatch(/^p/);
   });
 });

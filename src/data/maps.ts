@@ -1,4 +1,4 @@
-// フィールドのマップ。序章の清水湊と裏山、ワールドマップを用意する。
+// フィールドのマップ。序章の清水湊・裏山・狐火の洞と、ワールドマップを用意する。
 // タイルの文字の意味は TILES を参照。
 import type { Facing } from '../systems/gameState';
 import type { CharacterSpriteId } from './sprites';
@@ -157,7 +157,13 @@ export const MAPS: Record<string, MapDef> = {
         x: 4,
         y: 4,
         color: 0xc76b8f,
-        lines: ['茶屋の娘「いらっしゃいまし。お団子はいかが？」'],
+        lines: [
+          '茶屋の娘「いらっしゃいまし。……お客さん、裏山の話を聞きに来たの？」',
+          '茶屋の娘「このごろ夜になると、裏山のずっと上のほうで青白い狐火が揺れるんです。いなくなった人は、みんなそれを見たって」',
+          '茶屋の娘「お団子はいかが？」',
+        ],
+        after: { flag: 'heardKitsunebi', lines: ['茶屋の娘「いらっしゃいまし。お団子はいかが？」'] },
+        setsFlag: 'heardKitsunebi',
         action: 'teahouse',
       },
       {
@@ -186,7 +192,13 @@ export const MAPS: Record<string, MapDef> = {
         x: 11,
         y: 10,
         color: 0xb08a3e,
-        lines: ['住職「迷える者よ、倒れた者があればお祓いをして進ぜよう」'],
+        lines: [
+          '住職「消えた者たちのことか。……江戸では、天狗にさらわれて山で暮らし、何年も経って帰ってきた少年の聞き書きが評判になっておる」',
+          '住職「神隠しに遭うた者も、どこかで生きておるやもしれぬ。望みを捨てなさるな」',
+          '住職「迷える者よ、倒れた者があればお祓いをして進ぜよう」',
+        ],
+        after: { flag: 'heardTengu', lines: ['住職「迷える者よ、倒れた者があればお祓いをして進ぜよう」'] },
+        setsFlag: 'heardTengu',
         action: 'temple',
       },
       {
@@ -205,6 +217,7 @@ export const MAPS: Record<string, MapDef> = {
         y: 10,
         color: 0x9c8a5a,
         lines: ['長屋のおかみ「隣の与吉さんも、狐火を見たって言った晩にいなくなったんだよ。おお、こわい」'],
+        after: { flag: 'yakoDefeated', lines: ['長屋のおかみ「裏山の狐を退治してくれたんだって？ 与吉さんも、どこかで生きてりゃいいんだけどねえ」'] },
       },
       {
         id: 'orin',
@@ -214,6 +227,7 @@ export const MAPS: Record<string, MapDef> = {
         color: 0xd04a4a,
         sprite: 'orin',
         lines: ['お凛「おとっつぁんもおとっつぁんだよ。よそ者なんかに頼るなんて」'],
+        after: { flag: 'yakoDefeated', lines: ['お凛「……狐を退治したんだってね。礼は言っとくよ。けど、まだ認めたわけじゃないからね」'] },
       },
     ],
     exits: [
@@ -230,7 +244,7 @@ export const MAPS: Record<string, MapDef> = {
     name: '清水湊・裏山',
     areaLevel: 1,
     rows: [
-      'TTTTTTTTTTTTTTTTTTTTTTTTTT',
+      'TTTTTTTTTTTTTTTTTTTT.TTTTT',
       'T,,,,,TTT,,,,,,^^^,,,,,,,T',
       'T,,T,,,,,,,,T,,,^,,,,,,,,T',
       'T,,TT,,,^^,,,,,,,,T,,,,,,T',
@@ -258,8 +272,45 @@ export const MAPS: Record<string, MapDef> = {
     exits: [
       { x: 10, y: 13, to: 'shimizu', toX: 14, toY: 1 },
       { x: 11, y: 13, to: 'shimizu', toX: 15, toY: 1 },
+      // 上端の口から狐火の洞へ
+      { x: 20, y: 0, to: 'kitsunebiCave', toX: 10, toY: 12 },
     ],
     encounter: 'urayama',
+  },
+  kitsunebiCave: {
+    id: 'kitsunebiCave',
+    name: '狐火の洞',
+    areaLevel: 1,
+    rows: [
+      '^^^^^^^^^^^^^^^^^^',
+      '^^^^^^.....^^^^^^^',
+      '^^^^^.......^^^^^^',
+      '^^^^^^.....^^^^^^^',
+      '^^^^^^^^.^^^^^^^^^',
+      '^^^^^^^^.^^^^^^^^^',
+      '^^^.......^^^^^^^^',
+      '^^^.^^^^^......^^^',
+      '^^^.^^^^^^^^^.^^^^',
+      '^^^......^^^^.^^^^',
+      '^^^^^^^^.^^^^.^^^^',
+      '^^^^^^^^.......^^^',
+      '^^^^^^^^^^.^^^^^^^',
+      '^^^^^^^^^^.^^^^^^^',
+    ],
+    npcs: [
+      {
+        id: 'cavecrate',
+        name: '木箱',
+        x: 8,
+        y: 1,
+        color: 0x7a5a3a,
+        lines: ['木箱には駿府の工房の焼き印。中には、ゼンマイ仕掛けが埋め込まれた人形の残骸が入っている。'],
+      },
+    ],
+    exits: [{ x: 10, y: 13, to: 'urayama', toX: 20, toY: 1 }],
+    encounter: 'urayama',
+    // 奥の間へ続く細い道で野狐が待ち構える
+    triggers: [{ x: 8, y: 5, event: 'yako', unless: 'yakoDefeated' }],
   },
 };
 

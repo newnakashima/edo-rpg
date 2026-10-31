@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ENCOUNTERS, ENEMIES } from './enemies';
+import type { EventStep } from './eventTypes';
 import { EVENTS } from './events';
 import { closedGateAt, encounterAt, MAPS, START_POSITION, TILE_KINDS, tileAt, TILES, townAction, type MapDef } from './maps';
 
@@ -87,6 +88,30 @@ describe('マップのデータ', () => {
     });
   }
 
+  it('NPC の after のフラグは、どこかの setsFlag かイベントの setFlag で立つ', () => {
+    const set = new Set<string>();
+    for (const map of Object.values(MAPS)) for (const npc of map.npcs) if (npc.setsFlag) set.add(npc.setsFlag);
+    const walk = (steps: readonly EventStep[]): void => {
+      for (const st of steps) {
+        if (st.type === 'setFlag' && st.value !== false) set.add(st.flag);
+        if (st.type === 'if') {
+          walk(st.then);
+          walk(st.else ?? []);
+        }
+        if (st.type === 'choice') for (const o of st.options) walk(o.steps);
+        if (st.type === 'battle') walk(st.ifLose ?? []);
+        if (st.type === 'giveItem') walk(st.ifFull ?? []);
+      }
+    };
+    for (const ev of Object.values(EVENTS)) walk(ev.steps);
+    for (const map of Object.values(MAPS)) {
+      for (const npc of map.npcs) if (npc.after) expect(set.has(npc.after.flag), `${map.id}/${npc.id}: ${npc.after.flag}`).toBe(true);
+      for (const t of [...(map.triggers ?? []), ...(map.onEnter ? [map.onEnter] : [])]) {
+        if (t.unless) expect(set.has(t.unless), `${map.id}/${t.event}: ${t.unless}`).toBe(true);
+      }
+    }
+  });
+
   it('開始位置は通れる場所', () => {
     const map = MAPS[START_POSITION.mapId];
     expect(map && tileAt(map, START_POSITION.x, START_POSITION.y)?.blocked).toBe(false);
@@ -147,5 +172,38 @@ describe('ワールドマップ', () => {
     expect(townAction(world, 39, 10, 'step')).toEqual({ kind: 'label', text: '駿府' });
     expect(townAction(world, 39, 10, 'ok')).toMatchObject({ kind: 'info' });
     expect(townAction(world, landing.x, landing.y, 'ok')).toBeNull();
+  });
+});
+
+describe('序章の狐火の洞', () => {
+  const urayama = MAPS.urayama!;
+  const cave = MAPS.kitsunebiCave!;
+  const entrance = urayama.exits.find((e) => e.to === 'kitsunebiCave')!;
+  const landing = { x: entrance.toX, y: entrance.toY };
+  const trigger = cave.triggers!.find((t) => t.event === 'yako')!;
+  const crate = cave.npcs.find((n) => n.id === 'cavecrate')!;
+  const near = (area: Set<string>, x: number, y: number) =>
+    [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => area.has(`${x + dx!},${y + dy!}`));
+
+  it('清水湊から裏山を通って洞へ行ける', () => {
+    const shimizu = MAPS.shimizu!;
+    const toUrayama = shimizu.exits.find((e) => e.to === 'urayama')!;
+    expect(reachable(urayama, { x: toUrayama.toX, y: toUrayama.toY }, {}).has(`${entrance.x},${entrance.y}`)).toBe(true);
+  });
+
+  it('洞の入口から野狐の待つ場所へ行け、そこを通らなければ奥の木箱には近づけない', () => {
+    const area = reachable(cave, landing, {});
+    expect(area.has(`${trigger.x},${trigger.y}`)).toBe(true);
+    expect(trigger.unless).toBe('yakoDefeated');
+    expect(near(area, crate.x, crate.y)).toBe(true);
+    // 野狐の場所を壁にすると、木箱のまわりに届かない
+    const walled: MapDef = {
+      ...cave,
+      rows: cave.rows.map((row, y) => (y === trigger.y ? row.slice(0, trigger.x) + '^' + row.slice(trigger.x + 1) : row)),
+    };
+    expect(tileAt(walled, trigger.x, trigger.y)?.blocked).toBe(true);
+    const blocked = reachable(walled, landing, {});
+    expect(blocked.has(`${trigger.x},${trigger.y}`)).toBe(false);
+    expect(near(blocked, crate.x, crate.y)).toBe(false);
   });
 });
