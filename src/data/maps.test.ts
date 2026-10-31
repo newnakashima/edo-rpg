@@ -8,13 +8,44 @@ import { EQUIPMENT } from './equipment';
 import { ITEMS, MAX_ITEM_COUNT } from './items';
 import { EventRunner } from '../systems/eventScript';
 import { newGame } from '../systems/gameState';
-import { closedGateAt, encounterAt, MAPS, npcObjectFrame, npcVisible, respawnPoint, START_POSITION, TILE_KINDS, tileAt, TILES, townAction, type MapDef } from './maps';
+import { closedGateAt, encounterAt, MAPS, npcObjectFrame, npcVisible, respawnPoint, START_POSITION, TILE_KINDS, tileAt, TILES, TILESETS, tileTextureKey, townAction, type MapDef } from './maps';
 
 describe('タイルの画像', () => {
   it('全ての種類の画像が public/assets/tiles/ にあり、全ての種類が使われている', () => {
     const files = Object.keys(import.meta.glob('../../public/assets/tiles/*.png'));
     for (const kind of TILE_KINDS) expect(files, kind).toContain(`../../public/assets/tiles/${kind}.png`);
     expect(new Set(Object.values(TILES).map((t) => t.kind))).toEqual(new Set(TILE_KINDS));
+  });
+
+  it('地域ごとのタイルセットの画像がそろい、どのタイルセットもどこかのマップで使われ、差し替える種類はそのマップに出てくる', () => {
+    const files = Object.keys(import.meta.glob('../../public/assets/tiles/*/*.png'));
+    for (const [set, kinds] of Object.entries(TILESETS)) {
+      for (const kind of kinds) expect(files, `${set}/${kind}`).toContain(`../../public/assets/tiles/${set}/${kind}.png`);
+      const maps = Object.values(MAPS).filter((m) => m.tileset === set);
+      expect(maps.length, set).toBeGreaterThan(0);
+      const used = new Set(maps.flatMap((m) => m.rows.flatMap((r) => [...r].map((ch) => TILES[ch]!.kind))));
+      for (const kind of kinds) expect(used.has(kind), `${set}/${kind}`).toBe(true);
+    }
+  });
+
+  it('タイルセットが差し替える種類だけ、そのタイルセットの画像を使う', () => {
+    expect(tileTextureKey('snow', 'roof')).toBe('tile-snow-roof');
+    expect(tileTextureKey('snow', 'wall')).toBe('tile-wall');
+    expect(tileTextureKey(undefined, 'roof')).toBe('tile-roof');
+  });
+
+  it('タイルセットの割り当ては決めたとおり（ダンジョン・屋内・船は地域の見た目、町は金沢のほかは共通の見た目）', () => {
+    const expected: Record<string, string> = {
+      kanazawa: 'snow', kenrokuen: 'snow', kitsunebiCave: 'cave',
+      karakuriYashiki: 'karakuri', komeKura: 'karakuri', kenkyujo: 'karakuri', karakuriGura: 'karakuri',
+      kobo: 'interior', takoya: 'interior', tenshu: 'castle', rashomon: 'ruins', oninosu: 'ruins', nanbanji: 'ruins',
+      kitamaebune: 'ship', horikawaKura: 'kura',
+    };
+    const actual = Object.fromEntries(Object.values(MAPS).filter((m) => m.tileset).map((m) => [m.id, m.tileset]));
+    expect(actual).toEqual(expected);
+    // 町と外の野山・ワールドマップのほかに、共通の見た目のままのマップを増やさない
+    const outdoor = ['world', 'urayama', 'yoriki', 'igaSato', 'kagiya', 'harajo', 'dejima'];
+    for (const m of Object.values(MAPS)) if (!m.respawn && !outdoor.includes(m.id)) expect(m.tileset, m.id).toBeDefined();
   });
 });
 

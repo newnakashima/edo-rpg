@@ -7,6 +7,36 @@ import { OBJECT_DEFS, type CharacterSpriteId, type ObjectSpriteId } from './spri
 export const TILE_KINDS = ['ground', 'grass', 'road', 'tree', 'water', 'wall', 'roof', 'door', 'floor', 'rock', 'plain', 'town', 'gate'] as const;
 export type TileKind = (typeof TILE_KINDS)[number];
 
+/**
+ * 地域ごとのタイルの見た目（テストプレイで「町もダンジョンも同じ見た目」と指摘されたため足した）。
+ * マップの tileset で選び、ここに挙げた種類だけを public/assets/tiles/<タイルセット>/<種類>.png に差し替える（ほかの種類は共通の画像）。
+ * 通れるかどうか（TILES の blocked）は変えない。
+ */
+export const TILESETS = {
+  /** 雪の町と庭（金沢・兼六園）。 */
+  snow: ['ground', 'grass', 'road', 'tree', 'roof', 'rock'],
+  /** 洞窟（狐火の洞）。岩は洞窟の壁、地面は洞窟の床。 */
+  cave: ['rock', 'ground', 'water'],
+  /** からくりの工場（からくり屋敷・米蔵の地下・研究所・からくり蔵）。屋根の文字は機械に使う。 */
+  karakuri: ['wall', 'floor', 'roof'],
+  /** 屋内（工房・凧屋）。障子の壁と畳の床。 */
+  interior: ['wall', 'floor'],
+  /** 城の中（天守）。石垣と板の間。 */
+  castle: ['wall', 'floor'],
+  /** 廃墟（羅生門跡・鬼の巣・南蛮寺跡）。崩れた石の塀と石畳、岩はがれきの山。木は外の木なので共通のまま。 */
+  ruins: ['wall', 'floor', 'rock'],
+  /** 船の上（北前船）。甲板、船べり、積み荷の俵。 */
+  ship: ['floor', 'wall', 'roof'],
+  /** 蔵（堀川の荷蔵）。板の壁と土間。 */
+  kura: ['wall', 'floor'],
+} as const satisfies Record<string, readonly TileKind[]>;
+export type TilesetId = keyof typeof TILESETS;
+
+/** そのマップでその種類のタイルに使うテクスチャのキー（タイルセットが差し替える種類なら、そちらの画像）。 */
+export function tileTextureKey(tileset: TilesetId | undefined, kind: TileKind): string {
+  return tileset && (TILESETS[tileset] as readonly TileKind[]).includes(kind) ? `tile-${tileset}-${kind}` : `tile-${kind}`;
+}
+
 export interface TileDef {
   kind: TileKind;
   blocked: boolean;
@@ -100,6 +130,8 @@ export interface MapDef {
   rows: string[];
   npcs: NpcDef[];
   exits: ExitDef[];
+  /** 地域ごとのタイルの見た目（TILESETS）。省くと共通の見た目。 */
+  tileset?: TilesetId;
   /** エンカウントの出現表の ID。町など戦闘のない場所は省略する。 */
   encounter?: string;
   /** 地域の敵レベル。宿代・茶屋の値段にも使う（docs/balance.md の「経済」）。 */
@@ -405,6 +437,7 @@ export const MAPS: Record<string, MapDef> = {
   // 狐火の洞: 入口の広間から西の迷い道・東の地底の水たまりへ分かれ、1 マス幅の細い道の先が奥の間
   kitsunebiCave: {
     id: 'kitsunebiCave',
+    tileset: 'cave',
     name: '狐火の洞',
     areaLevel: 1,
     rows: [
@@ -847,6 +880,7 @@ MAPS.sunpu = {
 
 MAPS.kobo = {
   id: 'kobo',
+  tileset: 'interior',
   name: '一座の工房',
   areaLevel: 4,
   rows: [
@@ -988,6 +1022,7 @@ MAPS.yoriki = {
 
 MAPS.karakuriYashiki = {
   id: 'karakuriYashiki',
+  tileset: 'karakuri',
   name: 'からくり屋敷',
   areaLevel: 4,
   rows: [
@@ -1302,6 +1337,7 @@ MAPS.nagoya = {
 // 凧屋: 凧を干す竿の並ぶ板の間、土間、奥の作業場（銀次の文机）
 MAPS.takoya = {
   id: 'takoya',
+  tileset: 'interior',
   name: '金太の凧屋',
   areaLevel: 7,
   rows: [
@@ -1370,6 +1406,7 @@ MAPS.takoya = {
 // 堀川の荷蔵: 荷さばき場から水路を渡り、西の米蔵・東の材木置き場の迷路・中の帳場へ。帳場の北の細い廊下の先が奥の間
 MAPS.horikawaKura = {
   id: 'horikawaKura',
+  tileset: 'kura',
   name: '堀川の荷蔵',
   areaLevel: 7,
   rows: [
@@ -1468,6 +1505,7 @@ MAPS.horikawaKura = {
 // 天守: 大凧で南西の欄干に着き、五重目の板の間から東西の梯子で屋根の上の道へ。細い道の先が大棟（鯱の台座）
 MAPS.tenshu = {
   id: 'tenshu',
+  tileset: 'castle',
   name: '名古屋城 天守',
   areaLevel: 7,
   rows: [
@@ -1771,6 +1809,7 @@ MAPS.kyo = {
 // 羅生門跡: 朱雀大路の跡を北へ。崩れた築地塀の先に門の跡の基壇、西に荒れ寺、東に無縁塚
 MAPS.rashomon = {
   id: 'rashomon',
+  tileset: 'ruins',
   name: '羅生門跡',
   areaLevel: 10,
   rows: [
@@ -1849,6 +1888,7 @@ MAPS.rashomon = {
 // 鬼の巣: 山の石段から西の杉林・東の崖へ分かれ、塀に囲まれた古寺の境内へ。本堂の前の細い段で大鬼が待つ
 MAPS.oninosu = {
   id: 'oninosu',
+  tileset: 'ruins',
   name: '鬼の巣',
   areaLevel: 10,
   rows: [
@@ -2578,6 +2618,7 @@ MAPS.osaka = {
 // 米蔵の地下: 石段を下りた地下の広間から、西の地下水路・東の俵を運ぶからくりの流れ・中の歯車の間へ。奥へ上がる細い段で百俵からくりが待つ
 MAPS.komeKura = {
   id: 'komeKura',
+  tileset: 'karakuri',
   name: '米蔵の地下',
   areaLevel: 16,
   rows: [
@@ -3145,6 +3186,7 @@ MAPS.dejima = {
 /** 長崎の東の山の南蛮寺跡（第 6 章のダンジョン）。焼け落ちた塀が迷路のように残る。奥の礼拝堂の跡で、蘭斎の書き付けを見つける。 */
 MAPS.nanbanji = {
   id: 'nanbanji',
+  tileset: 'ruins',
   name: '南蛮寺跡',
   areaLevel: 19,
   rows: [
@@ -3312,6 +3354,7 @@ MAPS.harajo = {
 /** 原城跡の地下の研究所。蘭斎がからくりと外法を合わせる研究をしていた。奥の研究室の手前で南蛮大筒からくりが待つ。 */
 MAPS.kenkyujo = {
   id: 'kenkyujo',
+  tileset: 'karakuri',
   name: '地下の研究所',
   areaLevel: 19,
   rows: [
@@ -3388,6 +3431,7 @@ MAPS.kenkyujo = {
 /** 北前船の甲板（第 7 章）。長崎から金沢へ、日本海を北へ渡る。船尾の屋形から船首へ歩き、船首のくびれで船幽霊が出る。 */
 MAPS.kitamaebune = {
   id: 'kitamaebune',
+  tileset: 'ship',
   name: '北前船',
   areaLevel: 22,
   rows: [
@@ -3453,6 +3497,7 @@ MAPS.kitamaebune = {
  */
 MAPS.kanazawa = {
   id: 'kanazawa',
+  tileset: 'snow',
   name: '加賀金沢',
   areaLevel: 22,
   rows: [
@@ -3695,6 +3740,7 @@ MAPS.kanazawa = {
 /** 兼六園（第 7 章）。雪吊りの松と霞ヶ池の庭。池の北の岸の徽軫灯籠の奥に、城の地下へ通じる抜け穴がある。 */
 MAPS.kenrokuen = {
   id: 'kenrokuen',
+  tileset: 'snow',
   name: '兼六園',
   areaLevel: 22,
   rows: [
@@ -3799,6 +3845,7 @@ MAPS.kenrokuen = {
 /** 金沢城の地下のからくり蔵（第 7 章）。影武者を作る工房、棚の迷路、地下水路、影武者の間、奥の座敷牢。 */
 MAPS.karakuriGura = {
   id: 'karakuriGura',
+  tileset: 'karakuri',
   name: 'からくり蔵',
   areaLevel: 22,
   rows: [
