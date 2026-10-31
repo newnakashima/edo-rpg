@@ -190,6 +190,18 @@ export const SKILLS: Record<string, SkillDef> = {
   nigiritsubushi: { id: 'nigiritsubushi', name: '握り潰し', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.4 }, description: '' },
   urami: { id: 'urami', name: '怨み', mp: 0, target: 'enemy', effect: { kind: 'magic', power: 11 }, description: '' },
   kinUroko: { id: 'kinUroko', name: '金の鱗', mp: 0, target: 'self', effect: { kind: 'status', status: 'defUp', turns: 3 }, description: '' },
+  // 北前船・金沢（第 7 章）
+  hishaku: { id: 'hishaku', name: '柄杓沈め', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.2 }, description: '' },
+  yariTsuki: { id: 'yariTsuki', name: '槍突き', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.3 }, description: '' },
+  fubuki: { id: 'fubuki', name: '吹雪', mp: 0, target: 'allEnemies', effect: { kind: 'magic', power: 8 }, description: '' },
+  kogoe: { id: 'kogoe', name: '凍える息', mp: 0, target: 'enemy', effect: { kind: 'status', status: 'paralysis', turns: 2, chance: 0.35 }, description: '' },
+  nadare: { id: 'nadare', name: '雪崩', mp: 0, target: 'allEnemies', effect: { kind: 'physical', multiplier: 0.7 }, description: '' },
+  kinpakuMai: { id: 'kinpakuMai', name: '金箔の舞', mp: 0, target: 'allEnemies', effect: { kind: 'status', status: 'accDown', turns: 3, chance: 0.5 }, description: '' },
+  kageTachi: { id: 'kageTachi', name: '影の太刀', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.3 }, description: '' },
+  goji: { id: 'goji', name: '御下知', mp: 0, target: 'self', effect: { kind: 'summon', enemy: 'karakuriHanshi', max: 2, level: 22 }, description: '' },
+  yojutsu: { id: 'yojutsu', name: '妖術・鬼火車', mp: 0, target: 'allEnemies', effect: { kind: 'physical', multiplier: 0.8 }, elements: ['fire'], description: '' },
+  noroi: { id: 'noroi', name: '呪い', mp: 0, target: 'allEnemies', effect: { kind: 'status', status: 'atkDown', turns: 3, chance: 0.6 }, description: '' },
+  yashaBunshin: { id: 'yashaBunshin', name: '分身', mp: 0, target: 'self', effect: { kind: 'status', status: 'evade', turns: 3 }, description: '' },
 };
 
 /** 仲間ごとに覚える技と習得レベル（docs/characters.md）。 */

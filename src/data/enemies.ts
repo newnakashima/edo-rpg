@@ -1,4 +1,4 @@
-// docs/balance.md の「敵とボスの一覧」。章を実装するごとに、その地域の敵を足す（今は序章〜第 6 章）。
+// docs/balance.md の「敵とボスの一覧」。章を実装するごとに、その地域の敵を足す（今は序章〜第 7 章）。
 import type { EnemyFactors } from '../systems/stats';
 import type { Element } from './skills';
 
@@ -711,6 +711,112 @@ export const ENEMIES: Record<string, EnemyDef> = {
     ],
     rewardScale: 6,
   },
+  // 北前船・金沢（第 7 章）。船幽霊は北前船の甲板に出る
+  funayurei: {
+    id: 'funayurei',
+    name: '船幽霊',
+    color: 0x8aa0b0,
+    image: true,
+    factors: { hp: 1.0, atk: 1.1, def: 0.9, spd: 1.1 },
+    weak: ['holy'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'hishaku', weight: 1 },
+    ],
+  },
+  karakuriHanshi: {
+    id: 'karakuriHanshi',
+    name: 'からくり藩士',
+    color: 0x5a5a7a,
+    image: true,
+    factors: { hp: 1.2, atk: 1.3, def: 1.3, spd: 1.0 },
+    weak: ['mech'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'yariTsuki', weight: 1 },
+    ],
+  },
+  yukiOnna: {
+    id: 'yukiOnna',
+    name: '雪女',
+    color: 0xd0e0f0,
+    image: true,
+    factors: { hp: 0.9, atk: 1.2, def: 0.9, spd: 1.2 },
+    weak: ['fire'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'fubuki', weight: 1 },
+      { skill: 'kogoe', weight: 1 },
+    ],
+  },
+  kagaShinobi: {
+    id: 'kagaShinobi',
+    name: '加賀の忍び',
+    color: 0x3a3a4a,
+    image: true,
+    factors: { hp: 0.9, atk: 1.2, def: 0.9, spd: 1.4 },
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'nirengeki', weight: 1 },
+    ],
+  },
+  /** 表にない追加（どの出現表も 5 種類以上にするため）。雪の夜に現れる大入道。 */
+  yukiNyudo: {
+    id: 'yukiNyudo',
+    name: '雪入道',
+    color: 0xe0e8f0,
+    image: true,
+    factors: { hp: 1.5, atk: 1.2, def: 1.0, spd: 0.7 },
+    weak: ['fire', 'holy'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'nadare', weight: 1 },
+    ],
+  },
+  /** 表にない追加。金沢の金箔を貼ったからくり人形。 */
+  kinpakuNingyo: {
+    id: 'kinpakuNingyo',
+    name: '金箔からくり',
+    color: 0xd0b040,
+    image: true,
+    factors: { hp: 1.0, atk: 1.0, def: 1.4, spd: 1.1 },
+    weak: ['mech', 'thunder'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'kinpakuMai', weight: 1 },
+    ],
+  },
+  /** 第 7 章の中ボス。加賀の殿様に化けていたからくりの影武者。からくり藩士を呼び、影の太刀で斬る。 */
+  kagemusha: {
+    id: 'kagemusha',
+    name: 'からくり影武者',
+    color: 0x7a5a8a,
+    image: true,
+    factors: { hp: 9, atk: 1.2, def: 1.3, spd: 1.0 },
+    weak: ['mech', 'thunder'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'kageTachi', weight: 2 },
+      { skill: 'goji', weight: 1 },
+    ],
+    rewardScale: 3,
+  },
+  /** 第 7 章のボス。鷲尾の配下の妖術師。妖術（全体・火）、呪い（全体・攻撃↓）、分身（回避↑）。 */
+  yashamaru: {
+    id: 'yashamaru',
+    name: '夜叉丸',
+    color: 0x3a2a3a,
+    image: true,
+    factors: { hp: 11, atk: 1.1, def: 1.0, spd: 1.3 },
+    weak: ['holy'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'yojutsu', weight: 2 },
+      { skill: 'noroi', weight: 1 },
+      { skill: 'yashaBunshin', weight: 1 },
+    ],
+    rewardScale: 6,
+  },
 };
 
 export interface EnemyGroup {
@@ -896,6 +1002,46 @@ const HARAJO: EncounterTable = {
   ],
 };
 
+/** 北前船の甲板の敵の組（長崎から金沢への船旅）。日本海の妖怪と海賊。 */
+const KITAMAE: EncounterTable = {
+  level: 22,
+  groups: [
+    { members: ['funayurei', 'funayurei'], weight: 2 },
+    { members: ['umibozu', 'funayurei'], weight: 2 },
+    { members: ['isoonna', 'funayurei', 'funayurei'], weight: 2 },
+    { members: ['kaizoku', 'kaizoku', 'funayurei'], weight: 1 },
+    { members: ['heikegani', 'heikegani', 'umibozu'], weight: 1 },
+    { members: ['funayurei', 'funayurei', 'funayurei', 'isoonna'], weight: 1 },
+  ],
+};
+
+/** 金沢の兼六園の敵の組。雪の庭に出る妖怪と、家老の配下のからくり藩士・加賀の忍び。 */
+const KENROKUEN: EncounterTable = {
+  level: 22,
+  groups: [
+    { members: ['yukiOnna', 'yukiOnna'], weight: 2 },
+    { members: ['karakuriHanshi', 'kagaShinobi'], weight: 2 },
+    { members: ['yukiNyudo'], weight: 2 },
+    { members: ['kagaShinobi', 'kagaShinobi', 'yukiOnna'], weight: 2 },
+    { members: ['kinpakuNingyo', 'kinpakuNingyo'], weight: 1 },
+    { members: ['yukiNyudo', 'yukiOnna', 'yukiOnna'], weight: 1 },
+    { members: ['karakuriHanshi', 'kagaShinobi', 'kagaShinobi', 'yukiOnna'], weight: 1 },
+  ],
+};
+
+/** 金沢城の地下のからくり蔵の敵の組。蔵で作られたからくりと、魂を抜かれた者の怨霊。 */
+const KARAKURI_GURA: EncounterTable = {
+  level: 22,
+  groups: [
+    { members: ['karakuriHanshi', 'karakuriHanshi'], weight: 2 },
+    { members: ['kinpakuNingyo', 'karakuriHanshi'], weight: 2 },
+    { members: ['kagaShinobi', 'kagaShinobi', 'kinpakuNingyo'], weight: 2 },
+    { members: ['onryo', 'onryo', 'karakuriHanshi'], weight: 2 },
+    { members: ['boreiMusha', 'kinpakuNingyo'], weight: 1 },
+    { members: ['karakuriHanshi', 'kinpakuNingyo', 'kinpakuNingyo', 'kagaShinobi'], weight: 1 },
+  ],
+};
+
 export const ENCOUNTERS: Record<string, EncounterTable> = {
   /** 清水湊の裏山。 */
   urayama: PROLOGUE,
@@ -919,4 +1065,10 @@ export const ENCOUNTERS: Record<string, EncounterTable> = {
   nagasaki: NAGASAKI,
   /** 島原の原城跡と、地下の研究所。 */
   harajo: HARAJO,
+  /** 北前船の甲板（長崎から金沢へ）。 */
+  kitamae: KITAMAE,
+  /** 金沢の兼六園。 */
+  kenrokuen: KENROKUEN,
+  /** 金沢城の地下のからくり蔵。 */
+  karakuriGura: KARAKURI_GURA,
 };
