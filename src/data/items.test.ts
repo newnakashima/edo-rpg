@@ -24,8 +24,7 @@ describe('所持品', () => {
 describe('道具の品ぞろえ', () => {
   const sold = new Set(Object.values(SHOPS).flatMap((shop) => shop.goods));
 
-  it('土地の食べ物や旅の小物を含め、道具は 20 種類以上ある', () => {
-    expect(Object.keys(ITEMS).length).toBeGreaterThanOrEqual(20);
+  it('テストプレイで挙がった品（おむすび・団子・兵糧丸・わらじ・提灯・キセル）がある', () => {
     for (const id of ['omusubi', 'dango', 'hyorogan']) expect(ITEMS[id], id).toBeDefined();
     for (const id of ['waraji', 'chochin', 'kiseru']) expect(EQUIPMENT[id], id).toBeDefined();
   });

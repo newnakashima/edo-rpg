@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { availableItemCount, createBattle, DEF_UP_RATE, partyAfterBattle, resolveTurn, type BattleState, type Combatant } from './battle';
+import { availableItemCount, createBattle, DEF_UP_RATE, itemWorks, partyAfterBattle, resolveTurn, type BattleState, type Combatant } from './battle';
 import { ENEMIES } from '../data/enemies';
+import { ITEMS } from '../data/items';
 import { SKILLS } from '../data/skills';
 import { createMember, memberStats } from './party';
 import { seededRng, seqRng } from './testUtils';
@@ -460,6 +461,39 @@ describe('道具の消費', () => {
     const full = sleepEnemies(createBattle([createMember('hero', 10)], 'm', ['ogaeru'], 1, { items: { hyorogan: 1 } }));
     const r2 = resolveTurn(full, { p0: { kind: 'item', item: 'hyorogan', target: 'p0' } }, seqRng(0.5));
     expect(r2.events).toContainEqual({ type: 'itemUnused', actor: 'p0', item: 'hyorogan', target: 'p0' });
+  });
+
+  it('梅干し・熊の胆・薄荷は、それぞれ眠り・痺れ・混乱だけに効く', () => {
+    const b = createBattle([createMember('hero', 5)], 'm', ['ogaeru'], 1);
+    const p0 = b.combatants.find((c) => c.key === 'p0')!;
+    const cases = [
+      ['umeboshi', 'sleep'],
+      ['kumanoi', 'paralysis'],
+      ['hakka', 'confusion'],
+    ] as const;
+    for (const [item, ailment] of cases) {
+      for (const other of ['poison', 'sleep', 'paralysis', 'confusion'] as const) {
+        p0.status = { [other]: 3 };
+        expect(itemWorks(ITEMS[item]!.effect, p0), `${item} ${other}`).toBe(other === ailment);
+      }
+    }
+  });
+
+  it('薄荷で混乱が治る', () => {
+    // 混乱した主人公に、霞が薄荷を使う
+    const b = sleepEnemies(createBattle([createMember('hero', 5), createMember('kasumi', 5)], 'm', ['ogaeru'], 1, { items: { hakka: 1 } }));
+    b.combatants.find((c) => c.key === 'p0')!.status.confusion = 3;
+    const r = resolveTurn(b, { p0: { kind: 'guard' }, p1: { kind: 'item', item: 'hakka', target: 'p0' } }, seqRng(0.5));
+    expect(r.state.combatants.find((c) => c.key === 'p0')!.status.confusion).toBeUndefined();
+    expect(r.state.items).toEqual({});
+  });
+
+  it('朝鮮人参は体力の半分で起こす', () => {
+    const party = [createMember('hero', 10), { ...createMember('kasumi', 10), hp: 0 }];
+    const b = sleepEnemies(createBattle(party, 'm', ['ogaeru'], 1, { items: { ninjin: 1 } }));
+    const r = resolveTurn(b, { p0: { kind: 'item', item: 'ninjin', target: 'p1' } }, seqRng(0.5));
+    const p1 = r.state.combatants.find((c) => c.key === 'p1')!;
+    expect(p1.hp).toBe(Math.floor(p1.stats.maxHp * 0.5));
   });
 
   it('逃走に失敗したターンは、選んだ道具・技を使わない', () => {
