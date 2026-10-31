@@ -151,6 +151,9 @@ export class FieldScene extends Phaser.Scene {
       }
       case 'battle':
         // 戦闘から戻ってきたフィールドが続きを行う
+        // 既知の制限（見送り）: warp の直後に battle が続くと、このとき fromMapId が移動先のマップになり、
+        // 戦闘から戻ったときに移動先の onEnter が行われない。今のデータに warp を使うイベントはないので見送る。
+        // 本来は PendingEvent に enterPending を持たせ、ここで this.enterPending を引き継ぎ、create で復元する（フェーズ 4 で直す）。
         setPendingEvent({ runner, fromMapId });
         this.runner = null;
         this.moving = true;
