@@ -84,6 +84,8 @@ export class Menu {
   private readonly labels: Phaser.GameObjects.Text[];
   private readonly cursor: Phaser.GameObjects.Text;
   private cursorIndex = 0;
+  /** 上に別のメニューが重なっている間は false（クリックも受け付けない）。 */
+  private active = true;
 
   constructor(
     scene: Phaser.Scene,
@@ -110,6 +112,7 @@ export class Menu {
     this.container = scene.add.container(0, 0, [bg, ...this.labels, ...notes, this.cursor]).setScrollFactor(0).setDepth(110);
     this.labels.forEach((label, i) => {
       label.setInteractive({ useHandCursor: true }).on('pointerdown', () => {
+        if (!this.active) return;
         this.moveTo(i);
         this.confirm();
       });
@@ -119,6 +122,16 @@ export class Menu {
 
   get selected(): number {
     return this.cursorIndex;
+  }
+
+  /** 上に別のメニューを重ねるときは false、戻ってきたら true にする。 */
+  setActive(active: boolean): void {
+    this.active = active;
+  }
+
+  /** 今のカーソル位置で onMove を呼び直す（戻ってきたときに説明を出し直す）。 */
+  refresh(): void {
+    this.onMove?.(this.cursorIndex);
   }
 
   private moveTo(i: number): void {
@@ -134,6 +147,7 @@ export class Menu {
   }
 
   update(controls: Controls): void {
+    if (!this.active) return;
     const dir = controls.pressedDirection();
     if (dir === 'up') this.moveTo(this.cursorIndex - 1);
     if (dir === 'down') this.moveTo(this.cursorIndex + 1);

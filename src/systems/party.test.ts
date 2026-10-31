@@ -38,4 +38,14 @@ describe('party', () => {
     expect(r?.hp).toBe(memberStats(m).maxHp);
     expect(r?.mp).toBe(memberStats(m).maxMp);
   });
+
+  it('加入時の装備を付け、装備込みの HP・MP で満タンにする', () => {
+    const m = createMember('hero', 1);
+    expect(m.equip).toEqual({ weapon: 'nagawakizashi', armor: 'shimagappa', accessory: 'sandogasa' });
+    // 主人公 Lv1: 攻撃 10 + 長脇差 2、防御 8 + 合羽 1 + 笠 1、運 6 + 笠 1
+    expect(memberStats(m)).toMatchObject({ atk: 12, def: 10, luck: 7 });
+    const withInro = createMember('kasumi', 1, { accessory: 'inro' });
+    expect(withInro.hp).toBe(24 + 10);
+    expect(createMember('hero', 1, {}).equip).toEqual({});
+  });
 });

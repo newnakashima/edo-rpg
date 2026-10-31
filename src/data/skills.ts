@@ -75,7 +75,7 @@ export interface SkillDef {
   elements?: Element[];
   /** 行動順に関係なく先に動く（居合・かばう）。 */
   priority?: boolean;
-  /** 戦闘の外（メニュー）でも使える。メニュー画面（フェーズ 2）で使う。 */
+  /** 戦闘の外（メニュー）でも使える（回復の技だけ）。 */
   field?: boolean;
   /** 説明（メニューに出す）。 */
   description: string;
@@ -104,7 +104,7 @@ export const SKILLS: Record<string, SkillDef> = {
   katon: { id: 'katon', name: '火遁の術', mp: 9, target: 'allEnemies', effect: { kind: 'magic', power: 14 }, elements: ['fire'], description: '敵全体に火の術' },
   // 玄道（破戒僧）
   yakushi: { id: 'yakushi', name: '薬師の真言', mp: 3, target: 'ally', effect: { kind: 'heal', power: 10 }, field: true, description: '味方 1 人を回復する' },
-  oharai: { id: 'oharai', name: 'お祓い', mp: 3, target: 'ally', effect: { kind: 'cure' }, field: true, description: '状態異常を治す' },
+  oharai: { id: 'oharai', name: 'お祓い', mp: 3, target: 'ally', effect: { kind: 'cure' }, description: '状態異常を治す' },
   katsu: { id: 'katsu', name: '喝', mp: 4, target: 'enemy', effect: { kind: 'magic', power: 10 }, elements: ['holy'], description: '妖怪・からくりに効く祓いの一喝' },
   kongoriki: { id: 'kongoriki', name: '金剛力', mp: 5, target: 'ally', effect: { kind: 'status', status: 'atkUp', turns: 3 }, description: '3 ターン攻撃を上げる' },
   hannya: { id: 'hannya', name: '般若心経', mp: 10, target: 'allAllies', effect: { kind: 'heal', power: 9 }, field: true, description: '味方全体を回復する' },
