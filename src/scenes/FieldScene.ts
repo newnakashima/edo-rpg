@@ -12,6 +12,7 @@ import { playBgm } from '../systems/audio';
 import { browserStorage } from '../systems/save';
 import { getState, setPendingEvent, setState, takePendingEvent } from '../state';
 import { EVENTS } from '../data/events';
+import { CHAR_DISPLAY_ORIGIN, heroSprite, idleFrame, spriteKey, walkAnimKey, type CharacterSpriteId } from '../data/sprites';
 import { EventRunner, type EventInput } from '../systems/eventScript';
 import { Controls } from '../ui/input';
 import { FieldMenu } from '../ui/FieldMenu';
@@ -37,7 +38,9 @@ interface Overlay {
 export class FieldScene extends Phaser.Scene {
   private controls!: Controls;
   private map!: MapDef;
-  private player!: Phaser.GameObjects.Image;
+  /** 主人公。位置は今いるタイルの左上（コマの表示の基準点で、足元をタイルに合わせる）。 */
+  private player!: Phaser.GameObjects.Sprite;
+  private playerSprite!: CharacterSpriteId;
   private moving = false;
   /** 行っている途中のイベント。 */
   private runner: EventRunner | null = null;
@@ -96,7 +99,11 @@ export class FieldScene extends Phaser.Scene {
     for (const npc of map.npcs) {
       this.add.image(npc.x * TILE, npc.y * TILE, 'person').setOrigin(0).setTint(npc.color);
     }
-    this.player = this.add.image(state.x * TILE, state.y * TILE, `hero-${state.gender}`).setOrigin(0).setDepth(10);
+    this.playerSprite = heroSprite(state.gender);
+    this.player = this.add
+      .sprite(state.x * TILE, state.y * TILE, spriteKey(this.playerSprite), idleFrame(state.facing))
+      .setDisplayOrigin(CHAR_DISPLAY_ORIGIN.x, CHAR_DISPLAY_ORIGIN.y)
+      .setDepth(10);
 
     this.followPlayer();
 
@@ -231,10 +238,13 @@ export class FieldScene extends Phaser.Scene {
     this.followPlayer();
 
     if (this.message.isOpen) {
+      if (!this.moving) this.standStill();
       this.message.update(this.controls);
       return;
     }
     const top = this.overlays[this.overlays.length - 1];
+    // 歩いていないとき（止まった、メニューや会話を開いた、イベントが始まった）は立ち姿に戻す
+    if (!this.moving && (top || this.runner || !this.controls.heldDirection())) this.standStill();
     if (top) {
       top.update(this.controls);
       return;
@@ -254,6 +264,14 @@ export class FieldScene extends Phaser.Scene {
     if (dir) this.tryMove(dir);
   }
 
+  /** 歩行アニメーションを止め、今の向きの立ち姿にする。 */
+  private standStill(): void {
+    const frame = idleFrame(getState().facing);
+    if (!this.player.anims.isPlaying && String(this.player.frame.name) === String(frame)) return;
+    this.player.stop();
+    this.player.setFrame(frame);
+  }
+
   private npcAt(x: number, y: number): NpcDef | undefined {
     return this.map.npcs.find((n) => n.x === x && n.y === y);
   }
@@ -265,14 +283,19 @@ export class FieldScene extends Phaser.Scene {
     const ny = state.y + dy;
     setState({ ...state, facing: dir });
     const tile = tileAt(this.map, nx, ny);
-    if (!tile || tile.blocked || this.npcAt(nx, ny)) return;
+    if (!tile || tile.blocked || this.npcAt(nx, ny)) {
+      this.standStill();
+      return;
+    }
     const gate = closedGateAt(this.map, nx, ny, getState().flags);
     if (gate) {
+      this.standStill();
       this.message.show(gate.lines);
       return;
     }
 
     this.moving = true;
+    this.player.play(walkAnimKey(this.playerSprite, dir), true);
     this.tweens.add({
       targets: this.player,
       x: nx * TILE,
