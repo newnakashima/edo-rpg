@@ -149,6 +149,18 @@ describe('第 1 章の流れ', () => {
     expect(run('tetsubin', start, 'defeat').flags.tetsubinDefeated).toBeFalsy();
   });
 
+  it('鉄瓶に負けて出直すと、夜叉丸の場面は繰り返さず鉄瓶とだけ戦う', () => {
+    const lost = run('tetsubin', start, 'defeat');
+    expect(lost.flags.yashamaruFled).toBe(true);
+    const runner = new EventRunner(EVENTS.tetsubin!.steps);
+    const first = runner.next(lost);
+    expect(first.request.kind).toBe('say');
+    const pages = first.request.kind === 'say' ? first.request.pages.join('') : '';
+    expect(pages).not.toContain('夜叉丸');
+    expect(runner.next(first.state).request).toMatchObject({ kind: 'battle', enemies: ['tetsubin'] });
+    expect(run('tetsubin', lost).flags.tetsubinDefeated).toBe(true);
+  });
+
   it('鉄瓶を倒して駿府に入ると第 1 章が終わる', () => {
     const cleared = run('sunpuEnter', run('tetsubin', run('sunpuEnter', start)));
     expect(cleared.flags.chapter1Cleared).toBe(true);
