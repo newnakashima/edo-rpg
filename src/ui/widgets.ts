@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { FACE_MARGIN, messageTextLayout, TEXT_PADDING } from './messageLayout';
 import { scrollOffset, wrapIndex } from './menuScroll';
 import { COLORS, textStyle } from './theme';
 import type { Controls } from './input';
@@ -12,9 +13,6 @@ export function drawWindow(scene: Phaser.Scene, x: number, y: number, w: number,
   g.strokeRect(x + 1.5, y + 1.5, w - 3, h - 3);
   return g;
 }
-
-/** 顔の左右の余白（ウィンドウの縁から顔まで、顔から文字まで）。 */
-const FACE_MARGIN = 4;
 
 /**
  * ページ送りのメッセージウィンドウ。決定ボタンで次のページへ進む。
@@ -37,7 +35,7 @@ export class MessageWindow {
     this.w = w;
     this.faceOf = faceOf;
     const bg = drawWindow(scene, x, y, w, h);
-    this.text = scene.add.text(x + 8, y + 6, '', { ...textStyle(11), wordWrap: { width: w - 16, useAdvancedWrap: true }, lineSpacing: 3 });
+    this.text = scene.add.text(x + TEXT_PADDING, y + 6, '', { ...textStyle(11), wordWrap: { width: w - TEXT_PADDING * 2, useAdvancedWrap: true }, lineSpacing: 3 });
     this.arrow = scene.add.text(x + w - 14, y + h - 14, '▼', textStyle(8, COLORS.accent));
     // 顔はウィンドウの縦の中央に置く（フィールドの高さ 54 なら、48 の顔の上下に 3 ずつ空く）
     this.face = faceOf ? scene.add.image(x + FACE_MARGIN, y + Math.floor(h / 2), '__DEFAULT').setOrigin(0, 0.5).setVisible(false) : null;
@@ -77,9 +75,9 @@ export class MessageWindow {
     const hasFace = !!this.face && key !== undefined && this.face.scene.textures.exists(key);
     if (hasFace) this.face!.setTexture(key);
     this.face?.setVisible(hasFace);
-    const left = hasFace ? FACE_MARGIN + this.face!.width + FACE_MARGIN : 8;
+    const { left, wrapWidth } = messageTextLayout(this.w, hasFace ? this.face!.width : undefined);
     this.text.setX(this.x + left);
-    this.text.setWordWrapWidth(this.w - left - 8, true);
+    this.text.setWordWrapWidth(wrapWidth, true);
     this.text.setText(page);
   }
 

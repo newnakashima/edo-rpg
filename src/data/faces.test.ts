@@ -44,6 +44,18 @@ describe('顔グラフィック', () => {
   });
 });
 
+describe('顔のある台詞の長さ', () => {
+  it('顔の右の文字幅（1 行およそ 27 字）で 3 行に収まり、右下の ▼ に重ならない長さ', () => {
+    // フィールドの窓（高さ 54、11px）は 3 行まで。顔があると 1 行がおよそ 27 字になる（ui/messageLayout.ts）。
+    // 折り返しの禁則と ▼ の分を見て、3 行の 81 字より少し短い 76 字までにする
+    const source = Object.values(import.meta.glob<string>('./{events,maps}.ts', { eager: true, query: '?raw', import: 'default' })).join('\n');
+    const names = [...Object.keys(SPEAKER_FACES), '{hero}'];
+    const lines = [...source.matchAll(/'((?:[^'\\]|\\.)*)'/g)].map((m) => m[1]!).filter((l) => names.includes(speakerOf(l) ?? ''));
+    expect(lines.length).toBeGreaterThan(100);
+    for (const line of lines) expect(line.length, line).toBeLessThanOrEqual(76);
+  });
+});
+
 describe('話し手の名前', () => {
   it('ページの先頭の「名前「」から取り出す', () => {
     expect(speakerOf('霞「行こう」')).toBe('霞');
@@ -62,5 +74,6 @@ describe('話し手の名前', () => {
     expect(faceForPage('お志乃「……親分が」')).toBe('hero_f');
     expect(faceForPage('船頭「乗っていくかい」')).toBeUndefined();
     expect(faceForPage('静かな夜だ。')).toBeUndefined();
+    expect(faceForPage('constructor「……」')).toBeUndefined();
   });
 });

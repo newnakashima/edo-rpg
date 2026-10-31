@@ -1,6 +1,6 @@
 // 会話の顔グラフィック（PixelLab で生成した 48 × 48。public/assets/faces/<ID>.png）。記録は public/assets/README.md。
 // 台詞は「名前「……」」の形でそろっているので、ページの先頭の名前から顔を引く（events.ts などの台詞を書き換えなくてよい）。
-/** 顔の画像の大きさ。 */
+/** 顔の画像の大きさ（テストで画像を確かめる。窓は読み込んだ画像の幅から文字の位置を決めるので、ここの値は使わない）。 */
 export const FACE_SIZE = 48;
 
 /** 顔の画像がある人物。 */
@@ -57,5 +57,6 @@ export function speakerOf(page: string): string | undefined {
 /** ページの話し手の顔。顔のない人や地の文なら undefined。 */
 export function faceForPage(page: string): FaceId | undefined {
   const speaker = speakerOf(page);
-  return speaker === undefined ? undefined : SPEAKER_FACES[speaker];
+  // Object.hasOwn: 「constructor「」のような名前でオブジェクトの継承したものを引かないため
+  return speaker !== undefined && Object.hasOwn(SPEAKER_FACES, speaker) ? SPEAKER_FACES[speaker] : undefined;
 }
