@@ -36,7 +36,7 @@ export interface NpcDef {
   name: string;
   x: number;
   y: number;
-  /** 画像ができるまでの仮の人の色（sprite がなければ使う）。 */
+  /** 画像ができるまでの仮の人の色（sprite も object もなければ使う）。 */
   color: number;
   /** 画像のある人はそのシート（src/data/sprites.ts）。 */
   sprite?: CharacterSpriteId;
@@ -3193,7 +3193,6 @@ export function townAction(map: MapDef, x: number, y: number, by: 'step' | 'ok',
   return { kind: 'info', lines: town.lines ?? [town.name] };
 }
 
-/** その NPC が今いるか（hideFlag が立つと姿を消す）。 */
 /**
  * 物の画像のコマ。葛籠は開けると event の ID のフラグが立つので（events.ts の chest）、そのフラグが立っていれば開いた姿（1）にする。
  */
@@ -3201,6 +3200,7 @@ export function npcObjectFrame(npc: NpcDef, flags: Record<string, boolean>): num
   return flags[npc.event ?? npc.id] ? 1 : 0;
 }
 
+/** その NPC が今いるか（hideFlag が立つと姿を消す）。 */
 export function npcVisible(npc: NpcDef, flags: Record<string, boolean>): boolean {
   return !npc.hideFlag || !flags[npc.hideFlag];
 }
