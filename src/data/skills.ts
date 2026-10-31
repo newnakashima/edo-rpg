@@ -180,6 +180,11 @@ export const SKILLS: Record<string, SkillDef> = {
   soten: { id: 'soten', name: '装填', mp: 0, target: 'self', effect: { kind: 'charge', next: 'ozutsu' }, description: '' },
   ozutsu: { id: 'ozutsu', name: '大筒', mp: 0, target: 'allEnemies', effect: { kind: 'physical', multiplier: 1.3 }, description: '' },
   budodan: { id: 'budodan', name: 'ぶどう弾', mp: 0, target: 'randomEnemies', effect: { kind: 'physical', multiplier: 0.6, hits: 2, maxHits: 3 }, description: '' },
+  // テストプレイのフィードバックで足した雑魚敵の技
+  kamakaze: { id: 'kamakaze', name: '鎌風', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.2 }, description: '' },
+  atsuiCha: { id: 'atsuiCha', name: '熱い茶', mp: 0, target: 'enemy', effect: { kind: 'magic', power: 4 }, elements: ['fire'], description: '' },
+  kappaZumo: { id: 'kappaZumo', name: '河童相撲', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.3 }, description: '' },
+  hinowa: { id: 'hinowa', name: '火の輪', mp: 0, target: 'enemy', effect: { kind: 'magic', power: 6 }, elements: ['fire'], description: '' },
   kinUroko: { id: 'kinUroko', name: '金の鱗', mp: 0, target: 'self', effect: { kind: 'status', status: 'defUp', turns: 3 }, description: '' },
 };
 

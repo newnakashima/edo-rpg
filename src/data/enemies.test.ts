@@ -44,8 +44,61 @@ describe('敵の画像', () => {
     for (const id of ['nanbanHei', 'umibozu', 'boreiMusha', 'gehoTsukai', 'heikegani', 'nanbanOzutsu']) expect(ENEMIES[id]?.image, id).toBe(true);
   });
 
+  it('テストプレイのフィードバックで足した序章〜京の敵にも画像がある', () => {
+    for (const id of ['kamaitachi', 'mujina', 'inoshishi', 'karakasa', 'gomanohai', 'hitotsumeKozo', 'chahakobi', 'kappa', 'aooni', 'wanyudo']) {
+      expect(ENEMIES[id]?.image, id).toBe(true);
+    }
+  });
+
   it('テクスチャのキー', () => {
     expect(enemyImageKey('onibi')).toBe('enemy-onibi');
+  });
+});
+
+describe('雑魚敵の種類', () => {
+  // テストプレイで「雑魚敵のバリエーションが少ない」と指摘されたため、地域ごとに 5 種類以上にする（伊賀より先は次の PR で足す）
+  const kinds = (id: string) => new Set(ENCOUNTERS[id]!.groups.flatMap((g) => g.members)).size;
+
+  it('序章〜京の出現表は 5 種類以上の敵が出る', () => {
+    for (const id of ['urayama', 'suruga', 'sunpu', 'tokaido', 'nagoya', 'kyoto']) expect(kinds(id), id).toBeGreaterThanOrEqual(5);
+  });
+
+  it('出現表に入っていない雑魚敵はいない（呼ばれて出る敵を除く）', () => {
+    const inTables = new Set(Object.values(ENCOUNTERS).flatMap((t) => t.groups.flatMap((g) => g.members)));
+    const summoned = new Set(Object.values(SKILLS).flatMap((s) => (s.effect.kind === 'summon' ? [s.effect.enemy] : [])));
+    for (const e of Object.values(ENEMIES)) {
+      if (e.rewardScale !== undefined || summoned.has(e.id)) continue;
+      expect(inTables.has(e.id), e.id).toBe(true);
+    }
+  });
+
+  it('一人旅では 2 体まで、2 人では 3 体まで（駿府・東海道・名古屋）', () => {
+    const rng = seededRng(8);
+    const sizes = (id: string, size: number) => Array.from({ length: 400 }, () => pickGroup(ENCOUNTERS[id]!, { size, maxLevel: 10 }, rng)?.length ?? 0);
+    expect(Math.max(...sizes('sunpu', 1))).toBe(2);
+    for (const id of ['sunpu', 'tokaido', 'nagoya']) expect(Math.max(...sizes(id, 2)), id).toBe(3);
+  });
+
+  it('一人旅の駿府で、猪とごろつきの 2 体だけの組は出ない', () => {
+    const rng = seededRng(9);
+    for (let i = 0; i < 400; i++) {
+      const g = pickGroup(ENCOUNTERS.sunpu!, { size: 1, maxLevel: 4 }, rng)!;
+      expect(g.includes('inoshishi') && g.includes('gorotsuki')).toBe(false);
+    }
+  });
+
+  it('一人旅の序章でも、足した敵（鎌鼬・狢）が出る', () => {
+    const rng = seededRng(10);
+    const seen = new Set(Array.from({ length: 400 }, () => pickGroup(ENCOUNTERS.urayama!, { size: 1, maxLevel: 1 }, rng)!).flat());
+    expect(seen.has('kamaitachi')).toBe(true);
+    expect(seen.has('mujina')).toBe(true);
+  });
+
+  it('序章は主人公 1 人なので、2 体の組は Lv2 から', () => {
+    for (const g of ENCOUNTERS.urayama!.groups) {
+      expect(g.members.length).toBeLessThanOrEqual(2);
+      if (g.members.length === 2) expect(g.minPartyLevel, g.members.join('+')).toBeGreaterThanOrEqual(2);
+    }
   });
 });
 

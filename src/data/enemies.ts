@@ -343,6 +343,136 @@ export const ENEMIES: Record<string, EnemyDef> = {
       { skill: 'awa', weight: 1 },
     ],
   },
+  // テストプレイのフィードバック（雑魚敵が少ない）で足した敵。序章〜京に 2 体ずつ
+  /** 序章。つむじ風に乗って鎌で切りつけるイタチ。 */
+  kamaitachi: {
+    id: 'kamaitachi',
+    name: '鎌鼬',
+    color: 0xb0703a,
+    image: true,
+    factors: { hp: 0.7, atk: 1.0, def: 0.7, spd: 1.4 },
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'kamakaze', weight: 1 },
+    ],
+  },
+  /** 序章。人を化かす狢。 */
+  mujina: {
+    id: 'mujina',
+    name: '狢',
+    color: 0x8a7a6a,
+    image: true,
+    factors: { hp: 1.1, atk: 0.8, def: 1.0, spd: 0.9 },
+    weak: ['holy'],
+    actions: [
+      { skill: 'attack', weight: 4 },
+      { skill: 'bakashi', weight: 1 },
+    ],
+  },
+  /** 駿府のまわりの山の猪。 */
+  inoshishi: {
+    id: 'inoshishi',
+    name: '猪',
+    color: 0x6a4a3a,
+    image: true,
+    factors: { hp: 1.2, atk: 1.2, def: 0.9, spd: 0.8 },
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'totsugeki', weight: 1 },
+    ],
+  },
+  /** 駿府。古い唐傘の付喪神。 */
+  karakasa: {
+    id: 'karakasa',
+    name: '傘お化け',
+    color: 0xc04a3a,
+    image: true,
+    factors: { hp: 0.8, atk: 1.0, def: 0.8, spd: 1.2 },
+    weak: ['holy', 'fire'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'odoshi', weight: 1 },
+    ],
+  },
+  /** 東海道。旅人のふりをして旅人を狙う盗人。 */
+  gomanohai: {
+    id: 'gomanohai',
+    name: '護摩の灰',
+    color: 0x8a8a7a,
+    image: true,
+    factors: { hp: 0.9, atk: 1.1, def: 0.9, spd: 1.3 },
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'aikuchi', weight: 1 },
+    ],
+  },
+  /** 東海道。夜道に出る一つ目の小坊主。 */
+  hitotsumeKozo: {
+    id: 'hitotsumeKozo',
+    name: '一つ目小僧',
+    color: 0x6a7a9a,
+    image: true,
+    factors: { hp: 0.8, atk: 0.9, def: 0.8, spd: 1.1 },
+    weak: ['holy'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'bakashi', weight: 1 },
+    ],
+  },
+  /** 名古屋。鷲尾の配下が改造した茶運びのからくり人形。 */
+  chahakobi: {
+    id: 'chahakobi',
+    name: '茶運び人形',
+    color: 0xa0503a,
+    image: true,
+    factors: { hp: 1.0, atk: 1.0, def: 1.3, spd: 0.9 },
+    weak: ['mech', 'thunder'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'atsuiCha', weight: 1 },
+    ],
+  },
+  /** 名古屋の堀川に棲む河童。 */
+  kappa: {
+    id: 'kappa',
+    name: '河童',
+    color: 0x5a9a4a,
+    image: true,
+    factors: { hp: 1.1, atk: 1.1, def: 1.0, spd: 1.0 },
+    weak: ['thunder'],
+    resist: ['fire'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'kappaZumo', weight: 1 },
+    ],
+  },
+  /** 京。赤鬼の相方の青鬼。 */
+  aooni: {
+    id: 'aooni',
+    name: '青鬼',
+    color: 0x4a6ab0,
+    image: true,
+    factors: { hp: 1.3, atk: 1.2, def: 1.1, spd: 0.9 },
+    weak: ['holy'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'kanabo', weight: 1 },
+    ],
+  },
+  /** 京の夜の都大路を走る、燃える車輪の妖怪。 */
+  wanyudo: {
+    id: 'wanyudo',
+    name: '輪入道',
+    color: 0xd06a2a,
+    image: true,
+    factors: { hp: 1.1, atk: 1.2, def: 1.0, spd: 1.1 },
+    weak: ['holy'],
+    resist: ['fire'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'hinowa', weight: 1 },
+    ],
+  },
   // ボス（rewardScale あり）。イベントの battle で出し、出現表には入れない
   /** 序章のボス。妖狐だが、実はからくりで操られていた。序章は一人旅なので化かし（混乱）は控えめにする。 */
   yako: {
@@ -482,7 +612,7 @@ export interface EncounterTable {
   groups: EnemyGroup[];
 }
 
-/** 序章の敵の組。主人公 1 人なので 1〜2 体にし、2 体の組は鬼火＋鬼火・鬼火＋大蛙だけを Lv2 から出す。 */
+/** 序章の敵の組。主人公 1 人なので 1〜2 体にし、2 体の組（鬼火＋鬼火・鬼火＋大蛙・鎌鼬＋鬼火）は Lv2 から出す。 */
 const PROLOGUE: EncounterTable = {
   level: 1,
   groups: [
@@ -491,6 +621,9 @@ const PROLOGUE: EncounterTable = {
     { members: ['ogaeru'], weight: 2 },
     { members: ['onibi', 'onibi'], weight: 1, minPartyLevel: 2 },
     { members: ['onibi', 'ogaeru'], weight: 1, minPartyLevel: 2 },
+    { members: ['kamaitachi'], weight: 2 },
+    { members: ['mujina'], weight: 2 },
+    { members: ['kamaitachi', 'onibi'], weight: 1, minPartyLevel: 2 },
   ],
 };
 
@@ -504,6 +637,11 @@ const SUNPU: EncounterTable = {
     { members: ['karakuriNingyo', 'gorotsuki'], weight: 2 },
     { members: ['karakuriNingyo', 'bakeChochin', 'bakeChochin'], weight: 1 },
     { members: ['gorotsuki', 'gorotsuki', 'bakeChochin'], weight: 1 },
+    { members: ['inoshishi'], weight: 2 },
+    { members: ['karakasa', 'karakasa'], weight: 2 },
+    // 猪＋ごろつきは一人旅には重い（主人公 Lv3 で勝率 6%）ので、化け提灯を足した 3 体の組にして霞が加わってから出す
+    { members: ['inoshishi', 'gorotsuki', 'bakeChochin'], weight: 1 },
+    { members: ['karakasa', 'bakeChochin', 'bakeChochin'], weight: 1 },
   ],
 };
 
@@ -517,6 +655,10 @@ const TOKAIDO: EncounterTable = {
     { members: ['oihagiRonin', 'kumosuke'], weight: 2 },
     { members: ['kawauso', 'kawauso', 'kawauso'], weight: 1 },
     { members: ['kumosuke', 'kawauso', 'kawauso'], weight: 1 },
+    { members: ['gomanohai', 'gomanohai'], weight: 2 },
+    { members: ['hitotsumeKozo', 'kawauso'], weight: 2 },
+    { members: ['gomanohai', 'oihagiRonin'], weight: 1 },
+    { members: ['hitotsumeKozo', 'hitotsumeKozo', 'hitotsumeKozo'], weight: 1 },
   ],
 };
 
@@ -530,6 +672,10 @@ const NAGOYA: EncounterTable = {
     { members: ['oihagiRonin', 'oihagiRonin'], weight: 1 },
     { members: ['zenmaiInu', 'zenmaiInu', 'zenmaiInu'], weight: 1 },
     { members: ['kumosuke', 'zenmaiInu', 'zenmaiInu'], weight: 1 },
+    { members: ['chahakobi', 'chahakobi'], weight: 2 },
+    { members: ['kappa'], weight: 2 },
+    { members: ['kappa', 'zenmaiInu'], weight: 1 },
+    { members: ['chahakobi', 'zenmaiInu', 'zenmaiInu'], weight: 1 },
   ],
 };
 
@@ -544,6 +690,11 @@ const KYOTO: EncounterTable = {
     { members: ['ittanmomen', 'ittanmomen', 'ittanmomen'], weight: 1 },
     { members: ['akaoni', 'ittanmomen', 'ittanmomen'], weight: 1 },
     { members: ['akaoni', 'namagusaBozu', 'ittanmomen', 'ittanmomen'], weight: 1 },
+    { members: ['aooni'], weight: 2 },
+    { members: ['wanyudo', 'wanyudo'], weight: 2 },
+    { members: ['aooni', 'akaoni'], weight: 1 },
+    { members: ['wanyudo', 'ittanmomen', 'ittanmomen'], weight: 1 },
+    { members: ['aooni', 'wanyudo', 'namagusaBozu', 'ittanmomen'], weight: 1 },
   ],
 };
 
