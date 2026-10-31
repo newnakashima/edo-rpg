@@ -23,6 +23,18 @@ export const FACINGS: readonly Facing[] = ['down', 'left', 'right', 'up'];
 export const CHARACTER_SPRITES = ['hero_m', 'hero_f', 'kasumi', 'gendo', 'orin', 'tatsugoro'] as const;
 export type CharacterSpriteId = (typeof CHARACTER_SPRITES)[number];
 
+/**
+ * マップに置く物の画像（public/assets/objects/<ID>.png）。1 コマはタイルと同じ 16px で、列 0 が閉じた姿、列 1 が開いた姿。
+ * 葛籠は 16 × 16 のタイルに収めるため、PixelLab ではなく手で描いた（記録は public/assets/README.md）。
+ */
+export const OBJECT_SPRITES = ['tsuzura'] as const;
+export type ObjectSpriteId = (typeof OBJECT_SPRITES)[number];
+export const OBJECT_FRAME = 16;
+
+export function objectKey(id: ObjectSpriteId): string {
+  return `obj-${id}`;
+}
+
 export function spriteKey(id: CharacterSpriteId): string {
   return `char-${id}`;
 }

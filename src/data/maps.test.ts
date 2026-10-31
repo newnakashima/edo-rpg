@@ -1,15 +1,88 @@
 import { describe, expect, it } from 'vitest';
 import { ENCOUNTERS, ENEMIES } from './enemies';
 import type { EventStep } from './eventTypes';
-import { EVENTS } from './events';
+import { CHEST_EVENTS, EVENTS } from './events';
 import { SHOPS } from './shops';
-import { closedGateAt, encounterAt, MAPS, npcVisible, respawnPoint, START_POSITION, TILE_KINDS, tileAt, TILES, townAction, type MapDef } from './maps';
+import { OBJECT_FRAME, OBJECT_SPRITES } from './sprites';
+import { EQUIPMENT } from './equipment';
+import { ITEMS, MAX_ITEM_COUNT } from './items';
+import { EventRunner } from '../systems/eventScript';
+import { newGame } from '../systems/gameState';
+import { closedGateAt, encounterAt, MAPS, npcObjectFrame, npcVisible, respawnPoint, START_POSITION, TILE_KINDS, tileAt, TILES, townAction, type MapDef } from './maps';
 
 describe('タイルの画像', () => {
   it('全ての種類の画像が public/assets/tiles/ にあり、全ての種類が使われている', () => {
     const files = Object.keys(import.meta.glob('../../public/assets/tiles/*.png'));
     for (const kind of TILE_KINDS) expect(files, kind).toContain(`../../public/assets/tiles/${kind}.png`);
     expect(new Set(Object.values(TILES).map((t) => t.kind))).toEqual(new Set(TILE_KINDS));
+  });
+});
+
+describe('葛籠の画像', () => {
+  // 名前が葛籠の人と、葛籠のイベント（events.ts の chest）を行う人
+  const chests = Object.values(MAPS).flatMap((m) =>
+    m.npcs.filter((n) => n.name === '葛籠' || (n.event && CHEST_EVENTS.has(n.event))).map((n) => ({ map: m.id, npc: n })),
+  );
+
+  it('葛籠のイベントはすべてどこかの葛籠で使う', () => {
+    expect(CHEST_EVENTS.size).toBeGreaterThan(0);
+    expect(chests.length).toBeGreaterThan(0);
+    const used = new Set(chests.map((c) => c.npc.event));
+    for (const id of CHEST_EVENTS) expect(used.has(id), id).toBe(true);
+  });
+
+  it('物の画像が public/assets/objects/ にある', () => {
+    const inlined = import.meta.glob<string>('../../public/assets/objects/*.png', { eager: true, query: '?inline', import: 'default' });
+    const files = Object.keys(inlined);
+    for (const id of OBJECT_SPRITES) {
+      expect(files, id).toContain(`../../public/assets/objects/${id}.png`);
+      // 閉じた姿・開いた姿の 2 コマ（PNG の IHDR の幅・高さ）
+      const png = atob(inlined[`../../public/assets/objects/${id}.png`]!.split(',')[1]!);
+      const u32 = (at: number) => [0, 1, 2, 3].reduce((v, i) => v * 256 + png.charCodeAt(at + i), 0);
+      expect([u32(16), u32(20)], id).toEqual([OBJECT_FRAME * 2, OBJECT_FRAME]);
+    }
+  });
+
+  it('葛籠はすべて葛籠の画像を使う', () => {
+    expect(chests.length).toBeGreaterThan(0);
+    for (const { map, npc } of chests) expect(npc.object, `${map} ${npc.id}`).toBe('tsuzura');
+  });
+
+  it('葛籠を開けると開いた姿になり、開ける前は閉じた姿', () => {
+    for (const { map, npc } of chests) {
+      const def = npc.event ? EVENTS[npc.event] : undefined;
+      expect(def, `${map} ${npc.id}`).toBeDefined();
+      const before = newGame('m', START_POSITION);
+      expect(npcObjectFrame(npc, before.flags), `${map} ${npc.id}`).toBe(0);
+      // 葛籠のイベントを最後まで進めたあとのフラグで判定する
+      const runner = new EventRunner(def!.steps);
+      let state = before;
+      let done = false;
+      for (let i = 0; i < 20 && !done; i++) {
+        const r = runner.next(state);
+        state = r.state;
+        done = r.request.kind === 'done';
+      }
+      expect(done, `${map} ${npc.id}`).toBe(true);
+      expect(npcObjectFrame(npc, state.flags), `${map} ${npc.id}`).toBe(1);
+    }
+  });
+
+  it('持ちきれずに中身を取れなかった葛籠は閉じたまま', () => {
+    for (const { map, npc } of chests) {
+      const runner = new EventRunner(EVENTS[npc.event!]!.steps);
+      // どの道具も上限まで持っている
+      const base = newGame('m', START_POSITION);
+      let state = { ...base, items: Object.fromEntries([...Object.keys(ITEMS), ...Object.keys(EQUIPMENT)].map((id) => [id, MAX_ITEM_COUNT])) };
+      let done = false;
+      for (let i = 0; i < 20 && !done; i++) {
+        const r = runner.next(state);
+        state = r.state;
+        done = r.request.kind === 'done';
+      }
+      expect(done, `${map} ${npc.id}`).toBe(true);
+      expect(npcObjectFrame(npc, state.flags), `${map} ${npc.id}`).toBe(0);
+    }
   });
 });
 
