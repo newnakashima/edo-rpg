@@ -43,6 +43,8 @@ export interface Combatant {
   coveredBy?: string;
   /** 敵の場合の種族 ID。 */
   enemyId?: string;
+  /** 戦闘の途中で呼ばれた敵（倒しても経験値・お金にならない）。 */
+  summoned?: boolean;
 }
 
 export type Command =
@@ -87,6 +89,8 @@ export type BattleEvent =
   | { type: 'covered'; actor: string; target: string }
   | { type: 'guard'; actor: string }
   | { type: 'defeated'; target: string }
+  /** 敵が仲間を呼んだ（target は新しく加わった敵の key）。 */
+  | { type: 'summon'; actor: string; target: string }
   | { type: 'escape'; success: boolean };
 
 export type Outcome = 'ongoing' | 'victory' | 'defeat' | 'escaped';
@@ -144,22 +148,7 @@ export function createBattle(
     const n = seen.get(id) ?? 0;
     seen.set(id, n + 1);
     const name = (counts.get(id) ?? 0) > 1 ? `${def.name} ${SUFFIXES[n] ?? n + 1}` : def.name;
-    const stats = enemyStats(def.factors, enemyLevel);
-    return {
-      key: `e${i}`,
-      side: 'enemy',
-      name,
-      level: enemyLevel,
-      stats,
-      hp: stats.maxHp,
-      mp: 0,
-      guarding: false,
-      skills: [],
-      weak: def.weak ?? [],
-      resist: def.resist ?? [],
-      status: {},
-      enemyId: id,
-    };
+    return makeEnemy(id, enemyLevel, `e${i}`, name);
   });
   return {
     combatants: [...partyCombatants, ...enemyCombatants],
@@ -167,6 +156,27 @@ export function createBattle(
     canEscape: options.canEscape ?? true,
     outcome: 'ongoing',
     turn: 0,
+  };
+}
+
+function makeEnemy(id: string, level: number, key: string, name: string): Combatant {
+  const def = ENEMIES[id];
+  if (!def) throw new Error(`unknown enemy: ${id}`);
+  const stats = enemyStats(def.factors, level);
+  return {
+    key,
+    side: 'enemy',
+    name,
+    level,
+    stats,
+    hp: stats.maxHp,
+    mp: 0,
+    guarding: false,
+    skills: [],
+    weak: def.weak ?? [],
+    resist: def.resist ?? [],
+    status: {},
+    enemyId: id,
   };
 }
 
@@ -359,6 +369,11 @@ class TurnContext {
     const effect = skill.effect;
     const elements = skill.elements ?? [];
 
+    if (effect.kind === 'summon') {
+      this.summon(actor, effect.enemy, effect.level ?? actor.level);
+      return;
+    }
+
     if (skill.target === 'randomEnemies' && effect.kind === 'physical') {
       const hits = randInt(this.rng, effect.hits ?? 1, effect.maxHits ?? effect.hits ?? 1);
       for (let i = 0; i < hits; i++) {
@@ -421,6 +436,26 @@ class TurnContext {
           break;
       }
     }
+  }
+
+  /** 呼べる数に達しているか（呼んだ同じ種族の敵が max 体生きている）。 */
+  summonFull(actor: Combatant, effect: { enemy: string; max: number }): boolean {
+    return this.alive(actor.side).filter((c) => c.summoned && c.enemyId === effect.enemy).length >= effect.max;
+  }
+
+  /** 敵を 1 体呼ぶ。名前は同じ種族の数で「甲」「乙」……と呼び分ける。 */
+  summon(actor: Combatant, enemyId: string, level: number): void {
+    const def = ENEMIES[enemyId];
+    if (!def) return;
+    const enemies = this.state.combatants.filter((c) => c.side === 'enemy');
+    const n = enemies.filter((c) => c.enemyId === enemyId).length;
+    const key = `e${enemies.length}`;
+    const added = { ...makeEnemy(enemyId, level, key, `${def.name} ${SUFFIXES[n] ?? n + 1}`), summoned: true };
+    this.state.combatants.push(added);
+    this.byKey.set(key, added);
+    // 呼ばれたターンには動かない
+    this.acted.add(key);
+    this.events.push({ type: 'summon', actor: actor.key, target: key });
   }
 
   private physicalSkillHit(
@@ -521,7 +556,9 @@ class TurnContext {
     if (actor.side === 'enemy') {
       const action = this.enemyAction(actor);
       const skill = SKILLS[action];
-      if (action === 'attack' || !skill) {
+      // 呼べる数に達していたら、呼ぶ代わりに通常攻撃をする
+      const full = skill?.effect.kind === 'summon' && this.summonFull(actor, skill.effect);
+      if (action === 'attack' || !skill || full) {
         const target = this.enemyTarget(actor);
         if (target) this.attack(actor, target);
       } else {
@@ -675,9 +712,9 @@ export interface Rewards {
   money: number;
 }
 
-/** 勝利したときの経験値とお金。経験値は生き残った味方それぞれが全額を得る。ボスは rewardScale 倍。 */
+/** 勝利したときの経験値とお金。経験値は生き残った味方それぞれが全額を得る。ボスは rewardScale 倍。呼ばれた敵は数えない。 */
 export function computeRewards(state: BattleState): Rewards {
-  const enemies = state.combatants.filter((c) => c.side === 'enemy');
+  const enemies = state.combatants.filter((c) => c.side === 'enemy' && !c.summoned);
   const scale = (e: Combatant): number => (e.enemyId ? (ENEMIES[e.enemyId]?.rewardScale ?? 1) : 1);
   const money = enemies.reduce((sum, e) => sum + enemyMoney(e.level) * scale(e), 0);
   const exp: Record<string, number> = {};

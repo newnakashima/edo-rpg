@@ -63,7 +63,12 @@ export type SkillEffect =
   /** 敵 1 体の攻撃を自分に引きつける。 */
   | { kind: 'taunt'; turns: number }
   /** そのターン、味方 1 人の代わりに攻撃を受ける。 */
-  | { kind: 'cover' };
+  | { kind: 'cover' }
+  /**
+   * 敵だけが使う。enemy の敵を level（省くと使い手のレベル）で 1 体呼ぶ。呼んだ敵が max 体生きていれば呼ばずに通常攻撃をする。
+   * 呼んだ敵は倒しても経験値・お金にならない（呼ばせ続けて稼げないようにする）。
+   */
+  | { kind: 'summon'; enemy: string; max: number; level?: number };
 
 export interface SkillDef {
   id: string;
@@ -121,6 +126,12 @@ export const SKILLS: Record<string, SkillDef> = {
   dokueki: { id: 'dokueki', name: '毒液', mp: 0, target: 'enemy', effect: { kind: 'status', status: 'poison', turns: 99, chance: 0.6 }, description: '' },
   kitsunebiUzu: { id: 'kitsunebiUzu', name: '狐火の渦', mp: 0, target: 'allEnemies', effect: { kind: 'magic', power: 5 }, elements: ['fire'], description: '' },
   bakashi: { id: 'bakashi', name: '化かし', mp: 0, target: 'enemy', effect: { kind: 'status', status: 'confusion', turns: 2, chance: 0.35 }, description: '' },
+  tekken: { id: 'tekken', name: '鉄拳', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.2 }, description: '' },
+  joki: { id: 'joki', name: '蒸気', mp: 0, target: 'allEnemies', effect: { kind: 'magic', power: 4 }, description: '' },
+  karakuriYobi: { id: 'karakuriYobi', name: 'からくり兵を呼ぶ', mp: 0, target: 'self', effect: { kind: 'summon', enemy: 'karakuriNingyo', max: 2, level: 4 }, description: '' },
+  aikuchi: { id: 'aikuchi', name: '匕首', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.2 }, description: '' },
+  aobi: { id: 'aobi', name: '青い火', mp: 0, target: 'enemy', effect: { kind: 'magic', power: 5 }, elements: ['fire'], description: '' },
+  odoshi: { id: 'odoshi', name: 'すごむ', mp: 0, target: 'enemy', effect: { kind: 'status', status: 'atkDown', turns: 3, chance: 0.6 }, description: '' },
   toboe: { id: 'toboe', name: '遠吠え', mp: 0, target: 'self', effect: { kind: 'status', status: 'atkUp', turns: 3 }, description: '' },
 };
 

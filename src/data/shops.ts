@@ -11,4 +11,7 @@ export interface ShopDef {
 export const SHOPS: Record<string, ShopDef> = {
   shimizuYorozu: { id: 'shimizuYorozu', name: 'よろず屋', goods: ['kizugusuri', 'dokukeshi', 'mankintan', 'kitsukegusuri'] },
   shimizuKaji: { id: 'shimizuKaji', name: '刀鍛冶', goods: ['nagawakizashi', 'shimagappa', 'sandogasa', 'omamori'] },
+  // 駿府（第 1 章）。霞が加入する町なので、霞の装備も置く
+  sunpuYorozu: { id: 'sunpuYorozu', name: 'よろず屋', goods: ['kizugusuri', 'dokukeshi', 'hangontan', 'mankintan', 'kitsukegusuri'] },
+  sunpuKaji: { id: 'sunpuKaji', name: '刀鍛冶', goods: ['dotanuki', 'ninjato', 'kusarikatabira', 'shinobishozoku', 'inro', 'omamori'] },
 };

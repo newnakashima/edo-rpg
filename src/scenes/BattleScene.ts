@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { characterName } from '../data/characters';
 import { ENEMIES, enemyImageKey } from '../data/enemies';
 import { ITEMS, ownedItems } from '../data/items';
-import { MAPS, START_POSITION } from '../data/maps';
+import { respawnPoint } from '../data/maps';
 import { ailmentMarks, isAilment, SKILLS, STATUS_NAMES, type StatusId } from '../data/skills';
 import {
   aliveOf,
@@ -37,6 +37,11 @@ export interface BattleData {
 
 const EVENT_MS = 650;
 
+/** n 体の敵の i 番目の x（画面の幅を n + 1 等分する）。 */
+function enemyX(i: number, n: number): number {
+  return (GAME_WIDTH / (n + 1)) * (i + 1);
+}
+
 
 /** 戦闘の下の窓の位置。 */
 const PANEL_Y = 128;
@@ -53,6 +58,9 @@ export class BattleScene extends Phaser.Scene {
   private controls!: Controls;
   private battle!: BattleState;
   private enemySprites = new Map<string, Phaser.GameObjects.Image>();
+  private enemyLabels = new Map<string, Phaser.GameObjects.Text>();
+  /** 画面に出ている（演出の上でまだ倒れていない）敵の key。呼ばれた敵が加わったら並べ直す。 */
+  private shownEnemies: string[] = [];
   private partyTexts = new Map<string, Phaser.GameObjects.Text>();
   private log!: Phaser.GameObjects.Text;
   private message!: MessageWindow;
@@ -73,6 +81,8 @@ export class BattleScene extends Phaser.Scene {
     setupCamera(this);
     this.controls = new Controls(this);
     this.enemySprites = new Map();
+    this.enemyLabels = new Map();
+    this.shownEnemies = [];
     this.partyTexts = new Map();
     this.menus = [];
     this.busy = false;
@@ -91,18 +101,7 @@ export class BattleScene extends Phaser.Scene {
     g.fillRect(0, 100, GAME_WIDTH, 40);
 
     const enemies = this.battle.combatants.filter((c) => c.side === 'enemy');
-    const spacing = GAME_WIDTH / (enemies.length + 1);
-    enemies.forEach((e, i) => {
-      const def = e.enemyId ? ENEMIES[e.enemyId] : undefined;
-      const x = spacing * (i + 1);
-      // 画像のある敵は画像の下端を y = 106 に置く。画像（雑魚 64 × 64、ボス 96 × 96）の下には 5px ほどの透明な余白があるので、
-      // 足元（いちばん下の不透明な行、画像の y = 58 付近）が地面の 1 行目（y = 100）に乗る。ない敵は仮の塊をティントで色分けする
-      const sprite = def?.image
-        ? this.add.image(x, 106, enemyImageKey(def.id)).setOrigin(0.5, 1)
-        : this.add.image(x, 82, 'enemy').setTint(def?.color ?? 0xffffff);
-      this.add.text(x, 112, e.name, textStyle(9)).setOrigin(0.5);
-      this.enemySprites.set(e.key, sprite);
-    });
+    enemies.forEach((e, i) => this.addEnemySprite(e, enemyX(i, enemies.length)));
 
     drawWindow(this, 4, PANEL_Y, GAME_WIDTH - 8, PANEL_H);
     this.battle.combatants
@@ -120,6 +119,39 @@ export class BattleScene extends Phaser.Scene {
     this.time.delayedCall(EVENT_MS, () => {
       this.busy = false;
       this.startCommandInput();
+    });
+  }
+
+  /**
+   * 敵の画像と名前を置く。画像のある敵は画像の下端を y = 106 に置く。画像（雑魚 64 × 64、ボス 96 × 96）の下には 5px ほどの透明な余白があるので、
+   * 足元（いちばん下の不透明な行、画像の y = 58 付近）が地面の 1 行目（y = 100）に乗る。ない敵は仮の塊をティントで色分けする。
+   */
+  private addEnemySprite(e: Combatant, x: number): void {
+    const def = e.enemyId ? ENEMIES[e.enemyId] : undefined;
+    const sprite = def?.image
+      ? this.add.image(x, 106, enemyImageKey(def.id)).setOrigin(0.5, 1)
+      : this.add.image(x, 82, 'enemy').setTint(def?.color ?? 0xffffff);
+    this.enemySprites.set(e.key, sprite);
+    this.enemyLabels.set(e.key, this.add.text(x, 112, e.name, textStyle(9)).setOrigin(0.5));
+    this.shownEnemies.push(e.key);
+  }
+
+  /** 呼ばれた敵を加え、画面に出ている敵を等間隔に並べ直す。 */
+  private showSummoned(key: string): void {
+    const e = this.battle.combatants.find((c) => c.key === key);
+    if (!e) return;
+    this.addEnemySprite(e, GAME_WIDTH + 40);
+    this.enemySprites.get(key)?.setAlpha(0);
+    this.enemyLabels.get(key)?.setAlpha(0);
+    this.shownEnemies.forEach((k, i) => {
+      const x = enemyX(i, this.shownEnemies.length);
+      const targets = [this.enemySprites.get(k), this.enemyLabels.get(k)].filter((o) => o !== undefined);
+      if (k === key) {
+        targets.forEach((o) => o.setX(x));
+        this.tweens.add({ targets, alpha: 1, duration: 300 });
+      } else {
+        this.tweens.add({ targets, x, duration: 300 });
+      }
     });
   }
 
@@ -375,6 +407,8 @@ export class BattleScene extends Phaser.Scene {
         return e.target.startsWith('e') ? `${this.nameOf(e.target)}を倒した！` : `${this.nameOf(e.target)}は倒れた……`;
       case 'escape':
         return e.success ? 'うまく逃げ切った。' : '逃げられない！';
+      case 'summon':
+        return `${this.nameOf(e.target)}が現れた！`;
     }
   }
 
@@ -484,9 +518,16 @@ export class BattleScene extends Phaser.Scene {
         case 'defeated': {
           setStatus(e.target, (s) => s.clear());
           const sprite = this.enemySprites.get(e.target);
-          if (sprite) this.tweens.add({ targets: sprite, alpha: 0, duration: 300 });
+          if (sprite) {
+            // 倒れた敵は名前も消し、呼ばれた敵が加わったときの並べ直しから外す
+            this.tweens.add({ targets: [sprite, this.enemyLabels.get(e.target)].filter((o) => o !== undefined), alpha: 0, duration: 300 });
+            this.shownEnemies = this.shownEnemies.filter((k) => k !== e.target);
+          }
           break;
         }
+        case 'summon':
+          this.showSummoned(e.target);
+          break;
         default:
           break;
       }
@@ -549,13 +590,8 @@ export class BattleScene extends Phaser.Scene {
       });
       return;
     }
-    const state = getState();
-    const map = MAPS[state.mapId];
-    // 全滅したら、その地域の町の旅籠の前に戻る（序章では清水湊）
-    const respawnMap = map?.respawn ? map : MAPS[START_POSITION.mapId];
-    const respawn = respawnMap?.respawn
-      ? { mapId: respawnMap.id, ...respawnMap.respawn }
-      : START_POSITION;
+    // 全滅したら、その地域の町の旅籠の前に戻る（ダンジョンでは近くの町、序章では清水湊）
+    const respawn = respawnPoint(getState().mapId);
     this.log.setText('');
     this.controls.flush();
     this.message.show(['一行は力尽きた……', '気がつくと、旅籠の布団の上だった。所持金が半分になっている。'], () => {
