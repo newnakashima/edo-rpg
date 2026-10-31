@@ -62,6 +62,8 @@ export class BattleScene extends Phaser.Scene {
   /** 演出中は入力を受け付けない。 */
   private busy = false;
   private loseOk = false;
+  /** 戦闘を始めたマップ。フィールドに戻るときに渡す。 */
+  private fromMapId = '';
 
   constructor() {
     super('Battle');
@@ -76,6 +78,7 @@ export class BattleScene extends Phaser.Scene {
     this.busy = false;
     this.loseOk = data.loseOk ?? false;
     const state = getState();
+    this.fromMapId = state.mapId;
     this.battle = createBattle(state.party, state.gender, data.enemyIds, data.level, {
       canEscape: data.canEscape ?? true,
       items: state.items,
@@ -561,7 +564,7 @@ export class BattleScene extends Phaser.Scene {
     before?.();
     this.busy = true;
     this.cameras.main.fadeOut(250, 0, 0, 0);
-    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Field'));
+    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Field', { fromMapId: this.fromMapId }));
   }
 
   update(): void {

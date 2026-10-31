@@ -41,6 +41,8 @@ export class FieldScene extends Phaser.Scene {
   private moving = false;
   /** 行っている途中のイベント。 */
   private runner: EventRunner | null = null;
+  /** このマップに入ったときのイベントを、まだ行っていない。 */
+  private enterPending = false;
   private message!: MessageWindow;
   /** メニューなど、開いている間は移動を止める UI（後に開いたものが上）。 */
   private overlays: Overlay[] = [];
@@ -49,18 +51,20 @@ export class FieldScene extends Phaser.Scene {
     super('Field');
   }
 
-  create(): void {
+  /** fromMapId: 戦闘から戻ったとき、戦闘を始めたマップ（同じマップなら、マップに入ったときのイベントを行わない）。 */
+  create(data: { fromMapId?: string } = {}): void {
     setupCamera(this);
     this.controls = new Controls(this);
     this.moving = false;
     this.overlays = [];
     this.runner = null;
+    this.enterPending = false;
     const state = getState();
     const map = MAPS[state.mapId];
     if (!map) {
       // セーブデータのマップが見つからない場合は、最初の場所から始め直す
       setState({ ...state, ...START_POSITION });
-      this.scene.restart();
+      this.scene.restart({});
       return;
     }
     this.map = map;
@@ -68,7 +72,7 @@ export class FieldScene extends Phaser.Scene {
     if (tileAt(map, state.x, state.y)?.blocked !== false) {
       const fallback = map.respawn ? { mapId: map.id, ...map.respawn } : START_POSITION;
       setState({ ...state, ...fallback });
-      this.scene.restart();
+      this.scene.restart({});
       return;
     }
     playBgm(map.encounter ? 'bgm_road' : 'bgm_town');
@@ -90,13 +94,23 @@ export class FieldScene extends Phaser.Scene {
     this.showAreaName(map.name);
 
     // 戦闘や移動から戻ってきたら、途中のイベントの続きを行う。なければ、マップに入ったときのイベントを行う
-    // （移動・全滅の後に途中のイベントが終われば、移った先のマップに入ったときのイベントも行う）
+    // 移動・全滅で別のマップに来たときは、途中のイベントが終わってから、このマップに入ったときのイベントを行う
     const pending = takePendingEvent();
+    const cameFrom = pending?.fromMapId ?? data.fromMapId;
+    this.enterPending = cameFrom !== map.id;
     if (pending) {
       this.runner = pending.runner;
       this.advanceEvent(pending.resume);
+    } else {
+      this.runEnterEvent();
     }
-    if (!this.runner && !this.moving && map.onEnter) this.startTrigger(map.onEnter);
+  }
+
+  /** マップに入ったときのイベントを、まだ行っていなければ行う。 */
+  private runEnterEvent(): void {
+    if (!this.enterPending || this.runner || this.moving) return;
+    this.enterPending = false;
+    if (this.map.onEnter) this.startTrigger(this.map.onEnter);
   }
 
   private startTrigger(trigger: EventTrigger): boolean {
@@ -116,6 +130,7 @@ export class FieldScene extends Phaser.Scene {
   private advanceEvent(input?: EventInput): void {
     const runner = this.runner;
     if (!runner) return;
+    const fromMapId = getState().mapId;
     const { state, request } = runner.next(getState(), input);
     setState(state);
     switch (request.kind) {
@@ -136,7 +151,7 @@ export class FieldScene extends Phaser.Scene {
       }
       case 'battle':
         // 戦闘から戻ってきたフィールドが続きを行う
-        setPendingEvent({ runner });
+        setPendingEvent({ runner, fromMapId });
         this.runner = null;
         this.moving = true;
         this.cameras.main.flash(250, 255, 255, 255);
@@ -145,15 +160,16 @@ export class FieldScene extends Phaser.Scene {
         );
         return;
       case 'warp':
-        setPendingEvent({ runner });
+        setPendingEvent({ runner, fromMapId });
         this.runner = null;
         this.moving = true;
         this.cameras.main.fadeOut(200, 0, 0, 0);
-        this.cameras.main.once('camerafadeoutcomplete', () => this.scene.restart());
+        this.cameras.main.once('camerafadeoutcomplete', () => this.scene.restart({}));
         return;
       case 'done':
         this.runner = null;
         this.controls.flush();
+        this.runEnterEvent();
         return;
     }
   }
@@ -243,7 +259,7 @@ export class FieldScene extends Phaser.Scene {
     if (exit) {
       setState({ ...state, mapId: exit.to, x: exit.toX, y: exit.toY });
       this.cameras.main.fadeOut(200, 0, 0, 0);
-      this.cameras.main.once('camerafadeoutcomplete', () => this.scene.restart());
+      this.cameras.main.once('camerafadeoutcomplete', () => this.scene.restart({}));
       this.moving = true;
       return;
     }

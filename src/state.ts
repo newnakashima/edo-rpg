@@ -19,6 +19,8 @@ export function setState(state: GameState): void {
  */
 export interface PendingEvent {
   runner: EventRunner;
+  /** フィールドを離れたときのマップ。戻ったときに別のマップなら（移動・全滅）、そのマップに入ったときのイベントも行う。 */
+  fromMapId: string;
   resume?: EventInput;
 }
 
