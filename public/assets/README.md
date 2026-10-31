@@ -51,6 +51,11 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 | zenmaiInu | ec827e5b-93f1-4ccb-b88c-bfb04a623d23 | south-west | Japanese karakuri clockwork mechanical robot dog, body made of riveted brass and dark iron plates, exposed brass gears and cogs on its side, big brass wind-up key sticking up from its back, glowing red eyes, metal jointed legs, full body standing, JRPG enemy battle sprite, three-quarter front view |
 | kumosuke | e1adbf05-beb6-4588-ba9e-aaa7235212b8 | south-west | Edo period Japanese palanquin bearer thug (kumosuke), burly muscular bald-ish man bare-chested, white twisted headband, white fundoshi loincloth, short open happi coat, carrying a thick long wooden palanquin pole over his shoulder as a club, angry face, full body standing, JRPG enemy battle sprite, three-quarter front view |
 | kinshachi | 19d09485-1ef5-4c21-80e0-23de3d42bdc9 | south-west | giant golden clockwork shachihoko (kinshachi) from Nagoya castle roof, fierce tiger head with fangs on a carp fish body, gleaming gold scales, tail curled upward high above its head, brass gears visible at its fin joints, menacing, full body, JRPG boss battle sprite, three-quarter front view（96 × 96） |
+| akaoni | 269af503-ee54-42f6-8c27-d9feeb2293f7 | south-west | Japanese red oni (akaoni), bright red skin, two horns, wild black hair, orange tiger-skin loincloth with black stripes, carrying a black iron kanabo club studded with silver studs on his shoulder, angry face with fangs, full body standing, JRPG enemy battle sprite, three-quarter front view（2 回目の ced723e7-5fb8-494f-9308-3a12c2bbfa88 の金棒に銀の鋲、腰布に黒の縞を Pillow で描き足したものを init_image に、init_image_strength 300。生成後、薄くなった角を Pillow で生成りに塗り、黒の輪郭を付けた） |
+| ittanmomen | 58657291-f263-4f49-bd44-430bdcc55ab5 | south | ittan-momen yokai, a long flying strip of white cotton cloth with two small black eyes on its upper end, black outline, fluttering in the air, JRPG enemy battle sprite（2 回目の 6d429772-54bd-4b9f-86e1-1c9b69fad485 の灰色の輪郭を黒にし、両端の茶色の棒を消し、上の端に目を 2 つ描き足したものを init_image に、init_image_strength 300） |
+| namagusaBozu | da4cb792-2dcc-4499-a925-0b140e66a3ae | south-west | corrupt drunken fat Buddhist monk (namagusa bozu), shaved bald head, big round belly, dirty stained brown monk robes, a string of brown prayer beads (juzu) around his neck, holding an orange sake gourd, sly greedy grin, full body standing, JRPG enemy battle sprite, three-quarter front view（3 回目の 76e406a1-7ae2-450f-b5af-76b0e489a219 の首に数珠を Pillow で描き足したものを init_image に、init_image_strength 300） |
+| karakuriGissha | df3a19e0-e57f-45b0-a6f2-913375e0cc57 | south-west | Japanese karakuri clockwork ox-cart (gissha), black lacquered Heian ox carriage cabin with curved roof and red and gold trim, large wheel with a brass gear hub, pulled by a mechanical clockwork ox made of riveted iron and brass plates, big round brass gears and cogs clearly visible on the ox's side and shoulder, glowing red eyes, JRPG enemy battle sprite, three-quarter front view（1 回目の 2d8ced43-0a53-4227-af38-359eb402c4d6 を 1px 下げたものを init_image に、init_image_strength 150） |
+| shuten | 17955c61-ab86-4217-a568-40835c99f899 | south-west | giant oni king Shuten-doji, huge dark crimson-skinned oni with two big curved golden horns, long wild white hair flowing, ornate purple and gold embroidered kimono robe draped open over a muscular chest, holding a giant red lacquered sake cup (sakazuki), fierce furious glaring eyes, angry frowning brows, bared fangs, menacing imposing stance, full body, JRPG boss battle sprite, three-quarter front view（96 × 96。1 回目の c85d091c-c732-4f6f-8575-c613b43a519d を 90% に縮めて足元を y = 90 に置いたものを init_image に、init_image_strength 200） |
 
 第 1 章の 4 体の作り直しの記録:
 
@@ -65,3 +70,13 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 - 川獺: 1 回目はにこやかな顔で、いたずらっぽく見えなかった（手の物も魚でなく器）。2 回目で「sly」「sneaky smirk with narrowed eyes」「holding a fish」を前に出して採用（計 2 回）。
 - ゼンマイ犬・雲助・金鯱からくり: 1 回目で採用（各 1 回）。
 - 足元をそろえるため、ゼンマイ犬・雲助・金鯱からくりは 1px 上へずらした（追い剥ぎ浪人と川獺はそのまま）。
+
+第 3 章の 5 体の作り直しの記録:
+
+- 赤鬼: 1 回目は金棒が槌（ハンマー）の形になった。2 回目は金棒を肩に担いだ形はよかったが、先が丸い棍棒で鋲がなく、腰布の虎縞も見えなかった。3 回目は虎縞が出たが、金棒が両端に玉の付いた鉄アレイの形になった。4 回目（2 回目を init_image に、strength 130）も鋲と縞が出なかった。5 回目は 2 回目に銀の鋲と黒の縞を Pillow で描き足して init_image（strength 300）にし、鋲と縞は出たが角が薄い灰色になって髪に埋もれた。上限の 5 回に達したので 5 回目を採用し、角を Pillow で生成りに塗って黒の輪郭を付けた（計 5 回）。どの回も尻尾が付いた（要件外なのでそのまま）。
+- 一反木綿: 1 回目は鯨かおたまじゃくしのような塊になった。2 回目は長い布の帯になったが、目がなく、輪郭が灰色で、両端に茶色の棒が付いた。3 回目は西洋のおばけのような形になった。4 回目（2 回目を init_image に、strength 150）は目が崩れ、輪郭が消えた。5 回目は 2 回目の輪郭を黒にし、棒を消し、目を描き足して init_image（strength 300）にして採用（計 5 回）。
+- 生臭坊主: 1 回目は数珠が金の鎖と飾りに見え、衣が汚れていない黒で、上下の余白もなかった。2 回目は瓢箪が腹の袋に見え、顔もにやけていなかった。3 回目で瓢箪とにやけ顔が出たが、手の数珠が棒に見えた。4 回目（3 回目を init_image に、strength 200）も棒に見えた。5 回目は 3 回目の首に数珠を描き足して init_image（strength 300）にして採用（計 5 回）。
+- からくり牛車: 1 回目は牛に歯車が見えず、からくりと分からなかった。2 回目は 1 回目を init_image（strength 150）に「big round brass gears」を足して、牛の脇と車輪の軸に歯車が出たので採用（計 2 回）。
+- 酒呑の大鬼: 1 回目は顔がにこやかで、足元が y = 94 で上の余白がなく、足元をそろえると頭が切れた。2 回目は 1 回目を 90% に縮めて足元を y = 90 に置いたものを init_image（strength 200）に「fierce furious glaring eyes, angry frowning brows」を足して採用（計 2 回）。
+- 足元をそろえるため、一反木綿は 5px 下へずらした（ほかの 4 体はそのまま）。
+- init_image は base64 で渡すと途中で切れて失敗したので、`get_upload_url` でアップロードし、`init_image_url` に `upload:<ID>` を渡した。
