@@ -711,7 +711,8 @@ export const EVENTS: Record<string, EventDef> = {
       {
         type: 'if',
         flag: 'intro',
-        then: [{ type: 'if', flag: 'chapter3Cleared', then: [{ type: 'if', flag: 'orinJoined', then: [], else: SHIMIZU_FUNERAL }], else: [] }],
+        // お凛が加わったあと（orinJoined）は、マップの onEnter の unless で呼ばれない
+        then: [{ type: 'if', flag: 'chapter3Cleared', then: SHIMIZU_FUNERAL, else: [] }],
         else: INTRO,
       },
     ],

@@ -593,6 +593,8 @@ export class BattleScene extends Phaser.Scene {
       return;
     }
     // 全滅したら、その地域の町の旅籠の前に戻る（ダンジョンでは近くの町、東海道では名古屋、序章では清水湊）
+    // flags を渡さないと、フラグ付きの戻り先（伊賀のまわりはお凛が加わってから伊賀上野）が使われない。
+    // シーンには単体テストがないので、ここで flags を渡していることはテストしていない（respawnPoint 自体は maps.test.ts で確かめる）
     const { mapId, x, y, flags } = getState();
     const respawn = respawnPoint(mapId, x, y, flags);
     this.log.setText('');

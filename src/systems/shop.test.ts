@@ -4,6 +4,7 @@ import { newGame, type GameState } from './gameState';
 import { createMember, memberStats } from './party';
 import { buy, buyPrice, deposit, prayAtTemple, sell, sellPrice, templePrice, withdraw } from './shop';
 import { isKnownItem } from '../data/items';
+import { canEquip, EQUIPMENT } from '../data/equipment';
 
 function game(over: Partial<GameState> = {}): GameState {
   return { ...newGame('m', { mapId: 'shimizu', x: 1, y: 1 }), items: {}, ...over };
@@ -89,5 +90,17 @@ describe('飛脚の預かり', () => {
     expect(withdraw(game(), 'kizugusuri')).toEqual({ ok: false, reason: 'none' });
     expect(withdraw(game({ items: { kizugusuri: 99 }, storage: { kizugusuri: 1 } }), 'kizugusuri')).toEqual({ ok: false, reason: 'full' });
     expect(deposit(game({ items: { kizugusuri: 1 }, storage: { kizugusuri: 99 } }), 'kizugusuri')).toEqual({ ok: false, reason: 'full' });
+  });
+});
+
+describe('伊賀上野の店（第 4 章）', () => {
+  it('刀鍛冶には 4 人それぞれの武器と防具があり、誰も付けられない品はない', () => {
+    const goods = SHOPS.igaKaji!.goods;
+    for (const id of ['hero', 'kasumi', 'gendo', 'orin'] as const) {
+      for (const slot of ['weapon', 'armor'] as const) {
+        expect(goods.some((g) => EQUIPMENT[g]?.slot === slot && canEquip(id, g)), `${id} ${slot}`).toBe(true);
+      }
+    }
+    for (const g of goods) expect(EQUIPMENT[g]?.wearers.length, g).toBeGreaterThan(0);
   });
 });
