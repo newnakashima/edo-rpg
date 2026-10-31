@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ENCOUNTERS, ENEMIES } from './enemies';
 import type { EventStep } from './eventTypes';
 import { EVENTS } from './events';
+import { SHOPS } from './shops';
 import { closedGateAt, encounterAt, MAPS, npcVisible, respawnPoint, START_POSITION, TILE_KINDS, tileAt, TILES, townAction, type MapDef } from './maps';
 
 describe('タイルの画像', () => {
@@ -54,8 +55,9 @@ describe('マップのデータ', () => {
         }
       });
 
-      it('イベントの参照先があり、乗るイベントの場所は通れる', () => {
+      it('イベント・店の参照先があり、乗るイベントの場所は通れる', () => {
         for (const npc of map.npcs) if (npc.event) expect(EVENTS[npc.event], npc.event).toBeDefined();
+        for (const npc of map.npcs) if (npc.action === 'shop') expect(npc.shop && SHOPS[npc.shop], `${npc.id}: ${npc.shop}`).toBeTruthy();
         if (map.onEnter) expect(EVENTS[map.onEnter.event], map.onEnter.event).toBeDefined();
         for (const t of map.triggers ?? []) {
           expect(EVENTS[t.event], t.event).toBeDefined();
@@ -141,6 +143,18 @@ function reachable(map: MapDef, from: { x: number; y: number }, flags: Record<st
 const near = (area: Set<string>, x: number, y: number) =>
   [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => area.has(`${x + dx!},${y + dy!}`));
 
+/** ボスの待つ場所（triggers）を壁にしたマップ。そこを通らなければ奥へ行けないことを確かめる。 */
+function wallTriggers(map: MapDef): MapDef {
+  return {
+    ...map,
+    rows: map.rows.map((row, y) => {
+      let r = row;
+      for (const t of (map.triggers ?? []).filter((tr) => tr.y === y)) r = r.slice(0, t.x) + 'W' + r.slice(t.x + 1);
+      return r;
+    }),
+  };
+}
+
 describe('ワールドマップ', () => {
   const world = MAPS.world!;
   const shimizu = world.towns!.find((t) => t.name === '清水湊')!;
@@ -164,6 +178,29 @@ describe('ワールドマップ', () => {
   it('清水湊のまわりの街道では敵が出る', () => {
     expect(encounterAt(world, 42, 10, {})).toBe('suruga');
     expect(encounterAt(world, 24, 10, {})).toBeUndefined();
+  });
+
+  it('大井川の西の東海道では東海道の敵が出る', () => {
+    // 範囲は x 25〜35、y 9〜12（大井川の渡し場 x 36 からは駿府・駿河の範囲）
+    for (const [x, y] of [[25, 9], [35, 10], [25, 12], [35, 12]] as const) expect(encounterAt(world, x, y, {}), `${x},${y}`).toBe('tokaido');
+    expect(encounterAt(world, 35, 13, {})).toBeUndefined();
+    expect(encounterAt(world, 36, 10, {})).toBe('suruga');
+    expect(encounterAt(world, 37, 10, { prologueCleared: true })).toBe('sunpu');
+  });
+
+  it('大井川の渡し場は oigawaOpen まで通れず、通れないときは川越しのイベントを行う。開けば名古屋へ行ける', () => {
+    const gate = closedGateAt(world, 36, 10, {});
+    expect(gate?.event).toBe('oigawa');
+    expect(EVENTS.oigawa).toBeDefined();
+    expect(closedGateAt(world, 36, 10, { oigawaOpen: true })).toBeUndefined();
+    const nagoya = world.towns!.find((t) => t.name === '名古屋')!;
+    expect(reachable(world, landing, {}).has(`${nagoya.x},${nagoya.y}`)).toBe(false);
+    expect(reachable(world, landing, { oigawaOpen: true }).has(`${nagoya.x},${nagoya.y}`)).toBe(true);
+    expect(townAction(world, nagoya.x, nagoya.y, 'ok', { oigawaOpen: true })).toEqual({ kind: 'enter', to: { mapId: 'nagoya', x: 28, y: 8 } });
+  });
+
+  it('関所のイベントは定義されている', () => {
+    for (const gate of world.gates ?? []) if (gate.event) expect(EVENTS[gate.event], gate.event).toBeDefined();
   });
 
   it('清水湊から東の街道へ出ると、ワールドマップの清水湊の印の隣に出る', () => {
@@ -197,6 +234,13 @@ describe('ワールドマップ', () => {
     expect(encounterAt(world, 41, 10, cleared)).toBe('suruga');
   });
 
+  it('名古屋から街道へ出ると、名古屋の印の隣に出る', () => {
+    const nagoya = world.towns!.find((t) => t.name === '名古屋')!;
+    for (const exit of MAPS.nagoya!.exits.filter((e) => e.to === 'world')) {
+      expect(Math.abs(exit.toX - nagoya.x) + Math.abs(exit.toY - nagoya.y)).toBe(1);
+    }
+  });
+
   it('駿府から街道へ出ると、駿府の印の隣に出る', () => {
     const sunpu = world.towns!.find((t) => t.name === '駿府')!;
     for (const exit of MAPS.sunpu!.exits.filter((e) => e.to === 'world')) {
@@ -221,10 +265,19 @@ describe('NPC の出入りと全滅時の戻り先', () => {
     expect(respawnPoint('nowhere')).toEqual({ mapId: 'shimizu', x: 23, y: 5 });
   });
 
-  it('respawnMap の町には respawn がある', () => {
+  it('respawnMap・respawnZones の町には respawn がある', () => {
     for (const map of Object.values(MAPS)) {
       if (map.respawnMap) expect(MAPS[map.respawnMap]?.respawn, `${map.id} -> ${map.respawnMap}`).toBeDefined();
+      for (const z of map.respawnZones ?? []) expect(MAPS[z.mapId]?.respawn, `${map.id} -> ${z.mapId}`).toBeDefined();
     }
+  });
+
+  it('ワールドマップでは、大井川の西（東海道）なら名古屋、それ以外は清水湊に戻る', () => {
+    expect(respawnPoint('world', 34, 10)).toEqual({ mapId: 'nagoya', x: 25, y: 8 });
+    expect(respawnPoint('world', 25, 9)).toEqual({ mapId: 'nagoya', x: 25, y: 8 });
+    expect(respawnPoint('world', 36, 10)).toEqual({ mapId: 'shimizu', x: 23, y: 5 });
+    expect(respawnPoint('world', 38, 10)).toEqual({ mapId: 'shimizu', x: 23, y: 5 });
+    expect(respawnPoint('world')).toEqual({ mapId: 'shimizu', x: 23, y: 5 });
   });
 
   it('hideFlag はどこかのイベントの setFlag で立つ', () => {
@@ -296,16 +349,8 @@ describe('第 1 章の駿府', () => {
     }
     for (const c of yashiki.npcs.filter((n) => n.event?.startsWith('yashikiChest'))) expect(near(area, c.x, c.y), c.id).toBe(true);
     // 鉄瓶の場所を壁にすると、奥の間（装置）に届かない
-    const walled: MapDef = {
-      ...yashiki,
-      rows: yashiki.rows.map((row, y) => {
-        let r = row;
-        for (const t of yashiki.triggers!.filter((tr) => tr.y === y)) r = r.slice(0, t.x) + 'W' + r.slice(t.x + 1);
-        return r;
-      }),
-    };
     const device = yashiki.npcs.find((n) => n.id === 'zenmaiDevice')!;
-    expect(near(reachable(walled, landing, {}, true), device.x, device.y)).toBe(false);
+    expect(near(reachable(wallTriggers(yashiki), landing, {}, true), device.x, device.y)).toBe(false);
   });
 });
 
@@ -337,5 +382,67 @@ describe('序章の狐火の洞', () => {
     const blocked = reachable(walled, landing, {});
     expect(blocked.has(`${trigger.x},${trigger.y}`)).toBe(false);
     expect(near(blocked, crate.x, crate.y)).toBe(false);
+  });
+});
+
+
+describe('第 2 章の名古屋', () => {
+  const nagoya = MAPS.nagoya!;
+  const start = MAPS.world!.towns!.find((t) => t.name === '名古屋')!.to!;
+  const exitTo = (mapId: string) => nagoya.exits.filter((e) => e.to === mapId).map((e) => `${e.x},${e.y}`);
+
+  it('凧屋には最初から入れ、堀川の荷蔵は金太に会う（kintaMet）まで荷車がふさぐ', () => {
+    const before = reachable(nagoya, start, {}, true);
+    expect(exitTo('takoya').some((k) => before.has(k))).toBe(true);
+    expect(exitTo('horikawaKura').some((k) => before.has(k))).toBe(false);
+    const after = reachable(nagoya, start, { kintaMet: true }, true);
+    expect(exitTo('horikawaKura').every((k) => after.has(k))).toBe(true);
+  });
+
+  it('町の人には全員話しかけられる', () => {
+    const area = reachable(nagoya, start, {}, true);
+    for (const npc of nagoya.npcs) expect(near(area, npc.x, npc.y), npc.id).toBe(true);
+  });
+
+  it('凧屋の金太に話しかけられる', () => {
+    const takoya = MAPS.takoya!;
+    const enter = nagoya.exits.find((e) => e.to === 'takoya')!;
+    const kinta = takoya.npcs.find((n) => n.id === 'kinta')!;
+    expect(near(reachable(takoya, { x: enter.toX, y: enter.toY }, {}, true), kinta.x, kinta.y)).toBe(true);
+  });
+
+  it('荷蔵の入口から奥の浪人の場所へ行け、そこを通らなければ奥の間には入れない。葛籠にはすべて近づける', () => {
+    const kura = MAPS.horikawaKura!;
+    const enter = nagoya.exits.find((e) => e.to === 'horikawaKura')!;
+    const landing = { x: enter.toX, y: enter.toY };
+    const area = reachable(kura, landing, {}, true);
+    for (const t of kura.triggers!) {
+      expect(area.has(`${t.x},${t.y}`)).toBe(true);
+      expect(t.unless).toBe('urokoClue');
+    }
+    for (const c of kura.npcs.filter((n) => n.event?.startsWith('horikawaChest'))) expect(near(area, c.x, c.y), c.id).toBe(true);
+    const box = kura.npcs.find((n) => n.id === 'urokoBox')!;
+    expect(near(area, box.x, box.y)).toBe(true);
+    expect(near(reachable(wallTriggers(kura), landing, {}, true), box.x, box.y)).toBe(false);
+  });
+
+  it('大凧で着く天守の場所から金鯱の場所へ行け、そこを通らなければ大棟には上がれない。葛籠と下りる出口に行ける', () => {
+    const tenshu = MAPS.tenshu!;
+    const kite = { x: 8, y: 9 };
+    const area = reachable(tenshu, kite, {}, true);
+    for (const t of tenshu.triggers!) {
+      expect(area.has(`${t.x},${t.y}`)).toBe(true);
+      expect(t.unless).toBe('kinshachiDefeated');
+    }
+    const chest = tenshu.npcs.find((n) => n.id === 'tenshuChest')!;
+    expect(near(area, chest.x, chest.y)).toBe(true);
+    expect(tenshu.exits.some((e) => area.has(`${e.x},${e.y}`))).toBe(true);
+    const daiza = tenshu.npcs.find((n) => n.id === 'shachiDaiza')!;
+    expect(near(area, daiza.x, daiza.y)).toBe(true);
+    expect(near(reachable(wallTriggers(tenshu), kite, {}, true), daiza.x, daiza.y)).toBe(false);
+  });
+
+  it('凧屋・荷蔵・天守で全滅したら名古屋の旅籠の前に戻る', () => {
+    for (const id of ['takoya', 'horikawaKura', 'tenshu']) expect(respawnPoint(id)).toEqual({ mapId: 'nagoya', x: 25, y: 8 });
   });
 });

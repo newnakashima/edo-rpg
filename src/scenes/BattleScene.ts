@@ -429,6 +429,8 @@ export class BattleScene extends Phaser.Scene {
         return `${name}の攻撃が上がった！`;
       case 'atkDown':
         return `${name}の攻撃が下がった！`;
+      case 'defUp':
+        return `${name}の守りが固くなった！`;
       case 'accDown':
         return `${name}は煙に巻かれた！`;
       case 'evade':
@@ -590,8 +592,9 @@ export class BattleScene extends Phaser.Scene {
       });
       return;
     }
-    // 全滅したら、その地域の町の旅籠の前に戻る（ダンジョンでは近くの町、序章では清水湊）
-    const respawn = respawnPoint(getState().mapId);
+    // 全滅したら、その地域の町の旅籠の前に戻る（ダンジョンでは近くの町、東海道では名古屋、序章では清水湊）
+    const { mapId, x, y } = getState();
+    const respawn = respawnPoint(mapId, x, y);
     this.log.setText('');
     this.controls.flush();
     this.message.show(['一行は力尽きた……', '気がつくと、旅籠の布団の上だった。所持金が半分になっている。'], () => {

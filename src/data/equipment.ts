@@ -32,8 +32,10 @@ export const EQUIPMENT: Record<string, EquipDef> = {
   // 武器
   nagawakizashi: { id: 'nagawakizashi', name: '長脇差', slot: 'weapon', price: 40, bonus: { atk: 2 }, wearers: ['hero'], description: '渡世人の差す脇差' },
   dotanuki: { id: 'dotanuki', name: '胴田貫', slot: 'weapon', price: 260, bonus: { atk: 7 }, wearers: ['hero'], description: '肉厚で折れにくい刀' },
+  magoroku: { id: 'magoroku', name: '関の孫六', slot: 'weapon', price: 520, bonus: { atk: 9 }, wearers: ['hero'], description: '美濃の関で鍛えた名刀' },
   kunai: { id: 'kunai', name: '苦無', slot: 'weapon', price: 40, bonus: { atk: 2, spd: 1 }, wearers: ['kasumi'], description: '忍びの小刀' },
   ninjato: { id: 'ninjato', name: '忍者刀', slot: 'weapon', price: 240, bonus: { atk: 6, spd: 2 }, wearers: ['kasumi'], description: '反りのない短い刀' },
+  kusarigama: { id: 'kusarigama', name: '鎖鎌', slot: 'weapon', price: 480, bonus: { atk: 8, spd: 2 }, wearers: ['kasumi'], description: '分銅の鎖で絡め取る鎌' },
   kongozue: { id: 'kongozue', name: '金剛杖', slot: 'weapon', price: 60, bonus: { atk: 3, mag: 2 }, wearers: ['gendo'], description: '八角の樫の杖' },
   shakujo: { id: 'shakujo', name: '錫杖', slot: 'weapon', price: 300, bonus: { atk: 6, mag: 4 }, wearers: ['gendo'], description: '鳴らすと魔を祓う杖' },
   hinawaju: { id: 'hinawaju', name: '火縄銃', slot: 'weapon', price: 60, bonus: { atk: 4 }, wearers: ['orin'], description: '使い込んだ火縄銃' },
@@ -45,6 +47,7 @@ export const EQUIPMENT: Record<string, EquipDef> = {
   // 装飾
   sandogasa: { id: 'sandogasa', name: '三度笠', slot: 'accessory', price: 20, bonus: { def: 1, luck: 1 }, wearers: ALL, description: '旅人の笠' },
   omamori: { id: 'omamori', name: '御守り', slot: 'accessory', price: 50, bonus: { luck: 5 }, wearers: ALL, description: '寺社の御守り' },
+  hachigane: { id: 'hachigane', name: '鉢金', slot: 'accessory', price: 160, bonus: { def: 3 }, wearers: ALL, description: '額を守る鉄の板' },
   inro: { id: 'inro', name: '印籠', slot: 'accessory', price: 150, bonus: { maxHp: 10 }, wearers: ALL, description: '薬を入れる小箱' },
 };
 

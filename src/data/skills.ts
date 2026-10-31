@@ -8,7 +8,7 @@ export type Element = 'fire' | 'thunder' | 'holy' | 'mech';
 export type Ailment = 'poison' | 'paralysis' | 'sleep' | 'confusion' | 'bind';
 
 /** 一時的な能力の変化（良い効果・悪い効果の両方）。 */
-export type Buff = 'atkUp' | 'atkDown' | 'accDown' | 'evade' | 'critUp';
+export type Buff = 'atkUp' | 'atkDown' | 'defUp' | 'accDown' | 'evade' | 'critUp';
 
 export type StatusId = Ailment | Buff;
 
@@ -20,6 +20,7 @@ export const STATUS_NAMES: Record<StatusId, string> = {
   bind: '影縫い',
   atkUp: '攻撃↑',
   atkDown: '攻撃↓',
+  defUp: '防御↑',
   accDown: '命中↓',
   evade: '回避↑',
   critUp: '会心↑',
@@ -133,6 +134,12 @@ export const SKILLS: Record<string, SkillDef> = {
   aobi: { id: 'aobi', name: '青い火', mp: 0, target: 'enemy', effect: { kind: 'magic', power: 5 }, elements: ['fire'], description: '' },
   odoshi: { id: 'odoshi', name: 'すごむ', mp: 0, target: 'enemy', effect: { kind: 'status', status: 'atkDown', turns: 3, chance: 0.6 }, description: '' },
   toboe: { id: 'toboe', name: '遠吠え', mp: 0, target: 'self', effect: { kind: 'status', status: 'atkUp', turns: 3 }, description: '' },
+  // 東海道・名古屋（第 2 章）
+  kesagiri: { id: 'kesagiri', name: '袈裟斬り', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.3 }, description: '' },
+  kamitsuki: { id: 'kamitsuki', name: '噛みつき', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.2 }, description: '' },
+  ikizue: { id: 'ikizue', name: '息杖', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.25 }, description: '' },
+  obire: { id: 'obire', name: '尾びれ', mp: 0, target: 'allEnemies', effect: { kind: 'physical', multiplier: 0.8 }, description: '' },
+  kinUroko: { id: 'kinUroko', name: '金の鱗', mp: 0, target: 'self', effect: { kind: 'status', status: 'defUp', turns: 3 }, description: '' },
 };
 
 /** 仲間ごとに覚える技と習得レベル（docs/characters.md）。 */
