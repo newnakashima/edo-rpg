@@ -95,8 +95,37 @@ describe('町の人の画像', () => {
     '夜叉丸', '朧', '亡霊',
   ]);
 
-  it('施設の人（旅籠・茶屋・店・寺社・飛脚）には画像がある', () => {
-    for (const m of Object.values(MAPS)) for (const n of m.npcs) if (n.action) expect(n.sprite, `${m.id} ${n.id}`).toBeDefined();
+  it('名前から分かる役割と、画像の類型が合う', () => {
+    // 名前に含まれる語 → 類型（先に書いたものから当てる）
+    const RULES: [RegExp, string][] = [
+      [/カピタン/, 'npc_oranda'],
+      [/唐人/, 'npc_tojin'],
+      [/旅籠の主人/, 'npc_innkeeper'],
+      [/刀鍛冶/, 'npc_smith'],
+      [/飛脚/, 'npc_hikyaku'],
+      [/神主/, 'npc_kannushi'],
+      [/舞妓/, 'npc_maiko'],
+      [/老婆|婆$/, 'npc_roba'],
+      [/おかみ|母|女将|女中/, 'npc_okami'],
+      [/娘|織子|売り子/, 'npc_musume'],
+      [/子ども|町の子|小僧/, 'npc_kodomo'],
+      [/船頭|漁師|釣り人/, 'npc_sendo'],
+      [/門番|番人/, 'npc_monban'],
+      [/役人|同心|辻番/, 'npc_yakunin'],
+      [/よろず屋|商人|番頭|米仲買/, 'npc_merchant'],
+      [/浪人|用心棒/, 'npc_ronin'],
+    ];
+    let checked = 0;
+    for (const m of Object.values(MAPS)) {
+      for (const n of m.npcs) {
+        if (!n.sprite?.startsWith('npc_')) continue;
+        const rule = RULES.find(([re]) => re.test(n.name));
+        if (!rule) continue;
+        expect(n.sprite, `${m.id} ${n.id} ${n.name}`).toBe(rule[1]);
+        checked++;
+      }
+    }
+    expect(checked).toBeGreaterThan(80);
   });
 
   it('人には画像があり、色の仮表示は物とまだの人物だけ', () => {
