@@ -21,7 +21,7 @@ export const TILES: Record<string, TileDef> = {
   '^': { kind: 'rock', blocked: true },
 };
 
-export type NpcAction = 'inn' | 'teahouse';
+export type NpcAction = 'inn' | 'teahouse' | 'shop' | 'temple' | 'hikyaku';
 
 export interface NpcDef {
   id: string;
@@ -33,6 +33,8 @@ export interface NpcDef {
   lines: string[];
   /** 台詞のあとに行う施設の処理。 */
   action?: NpcAction;
+  /** action が 'shop' のときの店の ID（SHOPS）。 */
+  shop?: string;
   /** このフラグが立っていたら、lines の代わりにこちらを話す。 */
   after?: { flag: string; lines: string[] };
   /** 話し終えたら立てるフラグ。 */
@@ -69,14 +71,14 @@ export const MAPS: Record<string, MapDef> = {
     rows: [
       'TTTTTTTTTTTTTT==TTTTTTTTTTTT',
       'T,,,,,,,,,,,,,==,,,,,,,,,,,T',
-      'T,RRRRR,,,,,,,==,,,,,RRRRR,T',
-      'T,WWDWW,,,,,,,==,,,,,WWDWW,T',
+      'T,RRRRR,RRRRR,==,RRRRRRRRR,T',
+      'T,WWDWW,WWDWW,==,WWDWWWDWW,T',
       'T,.....,,,,,,,==,,,,,.....,T',
       'T,,,,,,,,,,,,,==,,,,,,,,,,,T',
       'T=========================,T',
       'T,,,,,,,,,,,,,==,,,,,,,,,,,T',
-      'T,RRRRRRR,,,,,==,,,,RRRRR,,T',
-      'T,WWWDWWW,,,,,==,,,,WWDWW,,T',
+      'T,RRRRRRR,RRR,==RRR,RRRRR,,T',
+      'T,WWWDWWW,WDW,==WDW,WWDWW,,T',
       'T,.......,,,,,==,,,,.....,,T',
       'T,,,,,,,,,,,,,==,,,,,,,,,,,T',
       'T~~~~~~~~~~~~~~~~~~~~~~~~~~T',
@@ -115,6 +117,44 @@ export const MAPS: Record<string, MapDef> = {
         color: 0xc76b8f,
         lines: ['茶屋の娘「いらっしゃいまし。お団子はいかが？」'],
         action: 'teahouse',
+      },
+      {
+        id: 'yorozuya',
+        name: 'よろず屋',
+        x: 10,
+        y: 4,
+        color: 0x6b8c5a,
+        lines: ['よろず屋「傷薬に毒消し、なんでもそろってますよ」'],
+        action: 'shop',
+        shop: 'shimizuYorozu',
+      },
+      {
+        id: 'kaji',
+        name: '刀鍛冶',
+        x: 19,
+        y: 4,
+        color: 0x5a5a6b,
+        lines: ['刀鍛冶「旅の御仁、得物の手入れは怠りなさんな」'],
+        action: 'shop',
+        shop: 'shimizuKaji',
+      },
+      {
+        id: 'temple',
+        name: '寺の住職',
+        x: 11,
+        y: 10,
+        color: 0xb08a3e,
+        lines: ['住職「迷える者よ、倒れた者があればお祓いをして進ぜよう」'],
+        action: 'temple',
+      },
+      {
+        id: 'hikyaku',
+        name: '飛脚',
+        x: 17,
+        y: 10,
+        color: 0x3e7cb0,
+        lines: ['飛脚「へい、まいど！ 記録の言付けも、荷物の預かりも承りやす」'],
+        action: 'hikyaku',
       },
       {
         id: 'nagaya',

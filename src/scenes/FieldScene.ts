@@ -4,6 +4,8 @@ import { ENCOUNTERS } from '../data/enemies';
 import { MAPS, START_POSITION, tileAt, type MapDef, type NpcDef } from '../data/maps';
 import { pickGroup, step } from '../systems/encounter';
 import { dangoPrice, eatDango, innPrice, stayAtInn } from '../systems/facilities';
+import { prayAtTemple, templePrice } from '../systems/shop';
+import { SHOPS } from '../data/shops';
 import type { Facing } from '../systems/gameState';
 import { memberLevel } from '../systems/party';
 import { defaultRng } from '../systems/random';
@@ -12,6 +14,7 @@ import { browserStorage } from '../systems/save';
 import { getState, setState } from '../state';
 import { Controls } from '../ui/input';
 import { FieldMenu } from '../ui/FieldMenu';
+import { TradeMenu, type TradeMode } from '../ui/TradeMenu';
 import { SaveSlotMenu } from '../ui/SaveSlotMenu';
 import { COLORS, GAME_HEIGHT, GAME_WIDTH, setupCamera, textStyle, TILE } from '../ui/theme';
 import { Menu, MessageWindow } from '../ui/widgets';
@@ -211,6 +214,9 @@ export class FieldScene extends Phaser.Scene {
       }
       if (npc.action === 'inn') this.openInn();
       if (npc.action === 'teahouse') this.openTeahouse();
+      if (npc.action === 'shop') this.openShop(npc.shop);
+      if (npc.action === 'temple') this.openTemple();
+      if (npc.action === 'hikyaku') this.openHikyaku();
     });
   }
 
@@ -278,6 +284,71 @@ export class FieldScene extends Phaser.Scene {
       getState(),
     );
     this.pushOverlay(slots);
+  }
+
+  private openTrade(mode: TradeMode): void {
+    const menu: TradeMenu = new TradeMenu(this, this.controls, mode, () => {
+      this.overlays = this.overlays.filter((x) => x !== menu);
+      this.controls.flush();
+    });
+    this.pushOverlay(menu);
+  }
+
+  private openShop(shopId: string | undefined): void {
+    const shop = shopId ? SHOPS[shopId] : undefined;
+    if (!shop) return;
+    this.openTrade({ kind: 'shop', name: shop.name, goods: shop.goods });
+  }
+
+  private openTemple(): void {
+    const state = getState();
+    const fallen = state.party.filter((m) => m.hp <= 0).length;
+    if (fallen === 0) {
+      this.message.show(['住職「皆、息災のようじゃな。道中の無事を祈っておるぞ」']);
+      return;
+    }
+    const price = templePrice(this.map.areaLevel);
+    const menu: Menu = new Menu(
+      this,
+      GAME_WIDTH - 170,
+      40,
+      160,
+      [{ label: `お祓いを受ける（1 人 ${price} 文）` }, { label: 'やめる' }],
+      (i) => {
+        this.closeOverlay(menu);
+        if (i !== 0) return;
+        const result = prayAtTemple(getState(), this.map.areaLevel);
+        if (!result.ok) {
+          this.message.show(['住職「お布施が足りぬようじゃな……」']);
+          return;
+        }
+        setState(result.state);
+        const rest = fallen - result.revived;
+        this.message.show([
+          '住職が経を唱えると、倒れていた仲間が息を吹き返した。',
+          ...(rest > 0 ? [`住職「残りの ${rest} 人は、お布施が足りぬゆえ、またの折に」`] : []),
+        ]);
+      },
+      () => this.closeOverlay(menu),
+    );
+    this.pushOverlay(menu);
+  }
+
+  private openHikyaku(): void {
+    const menu: Menu = new Menu(
+      this,
+      GAME_WIDTH - 140,
+      40,
+      130,
+      [{ label: '記録する' }, { label: '荷物を預ける' }, { label: 'やめる' }],
+      (i) => {
+        this.closeOverlay(menu);
+        if (i === 0) this.openSave();
+        else if (i === 1) this.openTrade({ kind: 'storage' });
+      },
+      () => this.closeOverlay(menu),
+    );
+    this.pushOverlay(menu);
   }
 
   private openTeahouse(): void {
