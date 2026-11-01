@@ -440,13 +440,13 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 
 ## UI（`ui/`）
 
-`create_image_pixflux` で作り、Pillow で仕上げた。表示は `src/ui/uiImages.ts`（大きさ・分割）と `src/ui/widgets.ts`（`drawWindow`・`Menu` のカーソル）。
+`create_image_pixflux` で作り、Pillow で仕上げた。表示は `src/ui/uiImages.ts`（大きさ・分割）と `src/ui/widgets.ts`（`drawWindow`・`Menu` のカーソル）、タイトルの背景は `src/scenes/TitleScene.ts`。
 
 | ファイル | 大きさ | 使い方 |
 | --- | --- | --- |
 | window.png | 16 × 16 | ウィンドウ枠。四隅 4 × 4 はそのまま、辺と中央は引き伸ばす（9 分割）。藍の地、縁は外から墨・茶・生成り・墨の 4 px、四隅に金の角金具 |
 | cursor.png | 32 × 32 | メニューのカーソル（右を向いた扇子）。1/3 に縮めて表示する（内部解像度で約 11 px、実際のキャンバスで元の 1 ドットが 1 px） |
-| title.png | 384 × 216 | タイトル画面の背景（夜明けの富士と、松並木の街道）。画面と同じ大きさで、そのまま敷く。題字・副題の y 10〜55 は無地の藍の空 |
+| title.png | 384 × 216 | タイトル画面の背景（夜明けの富士と、松並木の街道）。画面と同じ大きさで、そのまま敷く。題字・副題の y 8〜55 は無地の藍の空 |
 
 ### ウィンドウ枠（`ui/window.png`）
 
@@ -464,6 +464,6 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 ### タイトルの背景（`ui/title.png`）
 
 - 採用: 3 回目（ジョブ f284dfa3-2c15-4fc7-8ffc-2df7793c346c。384 × 216、no_background false、side、medium detail、basic shading、text_guidance_scale 10、init_image_strength 220）。1 回目の絵を 22 px 下へずらして富士の頂を副題より下に下げ、モミの木を消して、Pillow で枝の平たい松並木と土の一本道を描いた下絵を init_image にした。プロンプト: Japanese Edo period landscape background for an RPG title screen. Plain empty dark indigo sky at the top. Mount Fuji with a white snowy cap in the center distance, dawn orange glow at the horizon. A single unpaved brown dirt highway road (Tokaido) runs from the bottom center toward Mount Fuji. Rows of Japanese black pine trees (matsu) with dark brown leaning trunks and flat layered cloud-shaped green crowns line both sides of the road. Green fields. Muted calm colors: indigo, ink black, cream, dark green. No text, no people.
-- 仕上げ: 不透明なので RGB で保存した
+- 仕上げ: テストのデコーダー（8 bit の RGBA）で読めるように RGBA で保存した（すべて不透明）
 - 作り直しの経過（計 3 回）: 1 回目（d55d9b71）は構図がよかったが、富士の頂が副題（y 50）に重なり、並木が西洋のモミの形だった。2 回目（56e550b9）は富士を下げたが、道に舗装路の白線が入り、木はモミのまま、空に顔のような橙の月が出た。3 回目は 1 回目をもとにした下絵から清書し、すべての項目を満たした
 - 松のように形の決まった木は、言葉だけではモミになりやすい。下絵を init_image に渡すと形が保たれる

@@ -22,7 +22,7 @@ export class TitleScene extends Phaser.Scene {
     setupCamera(this);
     playBgm('bgm_title');
     this.controls = new Controls(this);
-    // 富士と街道の松並木（public/assets/ui/title.png。題字の y 10〜55 は無地の夜明けの空）
+    // 富士と街道の松並木（public/assets/ui/title.png。題字・副題の y 8〜55 は無地の藍の空）
     this.add.image(0, 0, TITLE_TEXTURE).setOrigin(0, 0);
 
     this.add.text(GAME_WIDTH / 2, 28, '江戸からくり渡世録', textStyle(22, COLORS.text)).setOrigin(0.5);

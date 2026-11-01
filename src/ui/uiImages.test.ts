@@ -56,10 +56,6 @@ describe('ウィンドウ枠とカーソルの画像', () => {
     expect(pngSize(inlined['../../public/assets/ui/cursor.png']!)).toEqual({ w: CURSOR_IMAGE_SIZE, h: CURSOR_IMAGE_SIZE });
   });
 
-  it('タイトルの背景は画面と同じ大きさ', () => {
-    expect(pngSize(inlined['../../public/assets/ui/title.png']!)).toEqual({ w: GAME_WIDTH, h: GAME_HEIGHT });
-  });
-
   it('カーソルは表示したときに 1 行の高さに収まる', () => {
     expect(CURSOR_IMAGE_SIZE * CURSOR_SCALE).toBeLessThan(MENU_LINE_HEIGHT);
   });
@@ -108,5 +104,18 @@ describe('ウィンドウ枠の 9 分割', () => {
     // デコーダーが正しく読めているか、既知の色で確かめる（地は不透明な藍、左上は墨）
     expect(at(x, y)).toBe('38,32,75,255');
     expect(at(0, 0)).toBe('34,34,37,255');
+  });
+});
+
+describe('タイトルの背景の画像', () => {
+  it('画面と同じ大きさ', () => {
+    expect(pngSize(inlined['../../public/assets/ui/title.png']!)).toEqual({ w: GAME_WIDTH, h: GAME_HEIGHT });
+  });
+
+  it('題字（y 28）・副題（y 50）の行 y 8〜55 は 1 色の不透明な空（生成りの文字が絵に重ならない）', async () => {
+    const px = await decodePng(inlined['../../public/assets/ui/title.png']!);
+    const sky = px[8]![0]!.join(',');
+    for (let y = 8; y <= 55; y++) for (let x = 0; x < GAME_WIDTH; x++) expect(px[y]![x]!.join(','), `${x},${y}`).toBe(sky);
+    expect(sky).toBe('22,40,73,255');
   });
 });
