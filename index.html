@@ -13,30 +13,37 @@
       /* 仮想パッド: タッチ操作の端末でだけ出す */
       #pad { display: none; }
       @media (pointer: coarse) {
-        #pad { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px calc(16px + env(safe-area-inset-bottom)); height: 150px; box-sizing: border-box; }
+        /* 高さは上下の余白 12px・16px と十字キーの 128px、下のセーフエリア（ノッチ付きの端末）を足したもの。十字キーがゲーム画面に重ならない */
+        #pad { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px calc(16px + env(safe-area-inset-bottom)); height: calc(156px + env(safe-area-inset-bottom)); box-sizing: border-box; }
         /* 横持ちでは画面の左右に重ねる */
         @media (orientation: landscape) {
-          #pad { position: fixed; inset: auto 0 0 0; background: none; pointer-events: none; height: 140px; }
+          #pad { position: fixed; inset: auto 0 0 0; background: none; pointer-events: none; }
           #pad > * { pointer-events: auto; opacity: 0.55; }
         }
       }
-      .dpad { display: grid; grid-template: repeat(3, 40px) / repeat(3, 40px); gap: 2px; }
-      .btn { border: 2px solid #e8dcc0; background: #1b1b2f; color: #f4ecd8; border-radius: 8px; font: 16px sans-serif; display: flex; align-items: center; justify-content: center; touch-action: none; }
-      .btn.active { background: #e8b04a; color: #1b1b2f; }
+      /* 仮想パッドの画像（public/assets/ui/。生成の記録は public/assets/README.md）。ドット絵を 2 倍で表示する。
+         url() はページからの相対パスのまま実行時に読まれる（ビルドで「didn't resolve at build time」と出るのは想定どおり。GitHub Pages の /edo-rpg/ の下でも読める） */
+      .dpad { display: grid; grid-template: repeat(3, 1fr) / repeat(3, 1fr); width: 128px; height: 128px; background: url(assets/ui/dpad.png) center / 128px 128px no-repeat; image-rendering: pixelated; }
+      .btn { color: #f4ecd8; font: bold 16px sans-serif; text-shadow: 0 1px 0 #1a1817, 1px 0 0 #1a1817, -1px 0 0 #1a1817, 0 -1px 0 #1a1817; display: flex; align-items: center; justify-content: center; touch-action: none; }
+      /* 十字キーの各腕。押している腕を金色に光らせる */
+      .dpad .btn { margin: 4px; border-radius: 4px; }
+      .dpad .btn.active { background: rgba(232, 176, 74, 0.5); }
       .dpad .up { grid-area: 1 / 2; } .dpad .left { grid-area: 2 / 1; } .dpad .right { grid-area: 2 / 3; } .dpad .down { grid-area: 3 / 2; }
       .actions { display: flex; gap: 16px; align-items: flex-end; }
-      .actions .btn { width: 60px; height: 60px; border-radius: 50%; }
-      .actions .ok { margin-bottom: 30px; }
+      .actions .btn { width: 64px; height: 64px; border-radius: 50%; background: center / 64px 64px no-repeat; image-rendering: pixelated; }
+      .actions .ok { margin-bottom: 30px; background-image: url(assets/ui/button_ok.png); }
+      .actions .cancel { background-image: url(assets/ui/button_cancel.png); }
+      .actions .btn.active { filter: brightness(1.35); transform: translateY(2px); }
     </style>
   </head>
   <body>
     <div id="game"></div>
     <div id="pad" aria-hidden="true">
       <div class="dpad">
-        <div class="btn up" data-key="up">▲</div>
-        <div class="btn left" data-key="left">◀</div>
-        <div class="btn right" data-key="right">▶</div>
-        <div class="btn down" data-key="down">▼</div>
+        <div class="btn up" data-key="up"></div>
+        <div class="btn left" data-key="left"></div>
+        <div class="btn right" data-key="right"></div>
+        <div class="btn down" data-key="down"></div>
       </div>
       <div class="actions">
         <div class="btn cancel" data-key="cancel">取消</div>

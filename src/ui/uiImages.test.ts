@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { CURSOR_IMAGE_SIZE, CURSOR_SCALE, SUBTITLE_TEXT, TITLE_SKY_BAND, TITLE_TEXT, WINDOW_CORNER, WINDOW_IMAGE_SIZE, windowSliceRects } from './uiImages';
+import { CURSOR_IMAGE_SIZE, CURSOR_SCALE, PAD_BUTTON_FACE_RADIUS, PAD_BUTTON_IMAGE_SIZE, PAD_DPAD_IMAGE_SIZE, PAD_IMAGE_SCALE, SUBTITLE_TEXT, TITLE_SKY_BAND, TITLE_TEXT, WINDOW_CORNER, WINDOW_IMAGE_SIZE, windowSliceRects } from './uiImages';
 import { MENU_LINE_HEIGHT } from './widgets';
 import { GAME_HEIGHT, GAME_WIDTH } from './theme';
+import indexHtml from '../../index.html?raw';
 
 /** PNG の幅と高さ（IHDR）。data URL の画像から読む。 */
 function pngSize(dataUrl: string): { w: number; h: number } {
@@ -126,5 +127,103 @@ describe('タイトルの背景の画像', () => {
       for (let x = 0; x < GAME_WIDTH; x++) expect(px[y]![x]!.join(','), `${x},${y}`).toBe(sky);
     }
     expect(sky).toBe('22,40,73,255');
+  });
+});
+
+describe('仮想パッドの画像', () => {
+  const images = {
+    dpad: PAD_DPAD_IMAGE_SIZE,
+    button_ok: PAD_BUTTON_IMAGE_SIZE,
+    button_cancel: PAD_BUTTON_IMAGE_SIZE,
+  } as const;
+
+  it('画像があり、大きさが定数と合う', () => {
+    for (const [name, size] of Object.entries(images)) {
+      expect(pngSize(inlined[`../../public/assets/ui/${name}.png`]!), name).toEqual({ w: size, h: size });
+    }
+  });
+
+  /** index.html の <style> から、セレクターがちょうど selector のルールの宣言をすべて取り出す（現れた順。コメントは除く）。 */
+  function cssRules(selector: string): Record<string, string>[] {
+    const style = indexHtml.slice(indexHtml.indexOf('<style>'), indexHtml.indexOf('</style>')).replace(/\/\*[\s\S]*?\*\//g, '');
+    const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return Array.from(style.matchAll(new RegExp(`(?:^|[}\\s])${escaped}\\s*\\{([^}]*)\\}`, 'g')), (m) => {
+      const decls: Record<string, string> = {};
+      for (const part of m[1]!.split(';')) {
+        const at = part.indexOf(':');
+        if (at > 0) decls[part.slice(0, at).trim()] = part.slice(at + 1).trim();
+      }
+      return decls;
+    });
+  }
+
+  /** セレクターがちょうど selector のルールが 1 つだけあり、その宣言を返す。 */
+  function cssRule(selector: string): Record<string, string> {
+    const rules = cssRules(selector);
+    expect(rules, selector).toHaveLength(1);
+    return rules[0]!;
+  }
+
+  it('index.html の十字キーと丸いボタンのルールが、画像を定数の倍率で表示する', () => {
+    const dpad = PAD_DPAD_IMAGE_SIZE * PAD_IMAGE_SCALE;
+    const button = PAD_BUTTON_IMAGE_SIZE * PAD_IMAGE_SCALE;
+    const d = cssRule('.dpad');
+    expect(d.width).toBe(`${dpad}px`);
+    expect(d.height).toBe(`${dpad}px`);
+    expect(d.background).toBe(`url(assets/ui/dpad.png) center / ${dpad}px ${dpad}px no-repeat`);
+    const b = cssRule('.actions .btn');
+    expect(b.width).toBe(`${button}px`);
+    expect(b.height).toBe(`${button}px`);
+    expect(b.background).toBe(`center / ${button}px ${button}px no-repeat`);
+    expect(cssRule('.actions .ok')['background-image']).toBe('url(assets/ui/button_ok.png)');
+    expect(cssRule('.actions .cancel')['background-image']).toBe('url(assets/ui/button_cancel.png)');
+  });
+
+  it('縦持ちのパッドの高さは、上下の余白と十字キーと下のセーフエリアの和（十字キーがはみ出さない）', () => {
+    // タッチ端末で出すときの #pad（余白を持つルール）。横持ちのルールは高さを上書きしない
+    const rules = cssRules('#pad');
+    const shown = rules.filter((r) => r.padding);
+    expect(shown).toHaveLength(1);
+    expect(rules.filter((r) => r.height)).toHaveLength(1);
+    const pad = shown[0]!;
+    expect(pad['box-sizing']).toBe('border-box');
+    const m = /^(\d+)px \d+px calc\((\d+)px \+ env\(safe-area-inset-bottom\)\)$/.exec(pad.padding!);
+    expect(m, pad.padding).not.toBeNull();
+    const top = Number(m![1]);
+    const bottom = Number(m![2]);
+    expect(pad.height).toBe(`calc(${top + PAD_DPAD_IMAGE_SIZE * PAD_IMAGE_SCALE + bottom}px + env(safe-area-inset-bottom))`);
+  });
+
+  it('十字キーの押せる区画（3 × 3 の格子の上・左・右・下）の中心は絵の腕の上、四隅の区画の中心は透過', async () => {
+    const px = await decodePng(inlined['../../public/assets/ui/dpad.png']!);
+    const cell = (i: number) => Math.floor(((i + 0.5) * PAD_DPAD_IMAGE_SIZE) / 3);
+    const alpha = (col: number, row: number) => px[cell(row)]![cell(col)]![3];
+    for (const [col, row] of [[1, 0], [0, 1], [2, 1], [1, 2], [1, 1]] as const) expect(alpha(col, row), `${col},${row}`).toBe(255);
+    for (const [col, row] of [[0, 0], [2, 0], [0, 2], [2, 2]] as const) expect(alpha(col, row), `${col},${row}`).toBe(0);
+  });
+
+  it('四隅は透過している（十字と円の外が背景に溶ける）', async () => {
+    for (const [name, size] of Object.entries(images)) {
+      const px = await decodePng(inlined[`../../public/assets/ui/${name}.png`]!);
+      for (const [x, y] of [[0, 0], [size - 1, 0], [0, size - 1], [size - 1, size - 1]] as const) {
+        expect(px[y]![x]![3], `${name} ${x},${y}`).toBe(0);
+      }
+    }
+  });
+
+  it('丸いボタンの中央は 1 色の不透明な面で、決定は朱・取消は藍', async () => {
+    const faces: Record<string, string> = {};
+    for (const name of ['button_ok', 'button_cancel']) {
+      const px = await decodePng(inlined[`../../public/assets/ui/${name}.png`]!);
+      const c = (PAD_BUTTON_IMAGE_SIZE - 1) / 2;
+      const face = px[Math.floor(c)]![Math.floor(c)]!.join(',');
+      for (let y = 0; y < PAD_BUTTON_IMAGE_SIZE; y++) {
+        for (let x = 0; x < PAD_BUTTON_IMAGE_SIZE; x++) {
+          if (Math.hypot(x - c, y - c) <= PAD_BUTTON_FACE_RADIUS) expect(px[y]![x]!.join(','), `${name} ${x},${y}`).toBe(face);
+        }
+      }
+      faces[name] = face;
+    }
+    expect(faces).toEqual({ button_ok: '176,55,48,255', button_cancel: '46,64,112,255' });
   });
 });

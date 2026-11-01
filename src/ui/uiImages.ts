@@ -1,4 +1,4 @@
-// ウィンドウ枠・カーソル・タイトルの背景の画像（public/assets/ui/。生成の記録は public/assets/README.md）。
+// ウィンドウ枠・カーソル・タイトルの背景・仮想パッドの画像（public/assets/ui/。生成の記録は public/assets/README.md）。
 
 /** ウィンドウ枠のテクスチャ。16 × 16 を 9 つに分け、四隅はそのまま、辺と中央は引き伸ばす。 */
 export const WINDOW_TEXTURE = 'ui-window';
@@ -24,6 +24,18 @@ export const TITLE_TEXT = { y: 28, size: 22 } as const;
 export const SUBTITLE_TEXT = { y: 50, size: 9 } as const;
 /** タイトルの背景の、無地の藍の空の帯（y の上端と下端。両端を含む）。題字・副題はこの中に置く。 */
 export const TITLE_SKY_BAND = { top: 8, bottom: 55 } as const;
+
+/**
+ * 仮想パッド（index.html の #pad。DOM の要素の背景に CSS で敷く）の画像の一辺と、表示する倍率。
+ * 十字キーは 1 枚の絵の上に、上下左右の押せる区画（3 × 3 の格子の上・左・右・下）を重ねる。
+ * 決定・取消は同じ形の丸い漆塗りのボタンの色違い（朱・藍）で、中央の無地の面に HTML の文字を重ねる。
+ * CSS は index.html に直接書いているので、ここの値はその仕様値で、画像と CSS が合うことをテストで確かめる。
+ */
+export const PAD_DPAD_IMAGE_SIZE = 64;
+export const PAD_BUTTON_IMAGE_SIZE = 32;
+export const PAD_IMAGE_SCALE = 2;
+/** 丸いボタンの中央の無地の面の半径（画像の px）。文字はこの中に置く。 */
+export const PAD_BUTTON_FACE_RADIUS = 9;
 
 /** 9 分割の枠の名前（行: 上・中・下、列: 左・中・右）。 */
 export const WINDOW_SLICES = ['tl', 'tc', 'tr', 'ml', 'mc', 'mr', 'bl', 'bc', 'br'] as const;
