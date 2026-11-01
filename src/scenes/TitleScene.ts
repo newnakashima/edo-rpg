@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { Controls } from '../ui/input';
-import { COLORS, GAME_HEIGHT, GAME_WIDTH, setupCamera, textStyle } from '../ui/theme';
+import { COLORS, GAME_WIDTH, setupCamera, textStyle } from '../ui/theme';
+import { SUBTITLE_TEXT, TITLE_TEXT, TITLE_TEXTURE } from '../ui/uiImages';
 import { Menu } from '../ui/widgets';
 import { browserStorage, listSlots } from '../systems/save';
 import { SaveSlotMenu } from '../ui/SaveSlotMenu';
@@ -21,21 +22,11 @@ export class TitleScene extends Phaser.Scene {
     setupCamera(this);
     playBgm('bgm_title');
     this.controls = new Controls(this);
-    this.cameras.main.setBackgroundColor('#141420');
-    // 富士と街道の仮の背景
-    const g = this.add.graphics();
-    g.fillStyle(0x2a3a5a, 1);
-    g.fillTriangle(GAME_WIDTH / 2 - 120, 150, GAME_WIDTH / 2 + 120, 150, GAME_WIDTH / 2, 50);
-    g.fillStyle(0xe8e0cc, 1);
-    g.fillTriangle(GAME_WIDTH / 2 - 30, 73, GAME_WIDTH / 2 + 30, 73, GAME_WIDTH / 2, 50);
-    g.fillStyle(0x2f4a2e, 1);
-    g.fillRect(0, 150, GAME_WIDTH, GAME_HEIGHT - 150);
-    g.fillStyle(0xc8ad78, 1);
-    g.fillTriangle(GAME_WIDTH / 2 - 6, 150, GAME_WIDTH / 2 + 6, 150, GAME_WIDTH / 2 + 60, GAME_HEIGHT);
-    g.fillTriangle(GAME_WIDTH / 2 - 6, 150, GAME_WIDTH / 2 + 60, GAME_HEIGHT, GAME_WIDTH / 2 - 30, GAME_HEIGHT);
+    // 富士と街道の松並木（public/assets/ui/title.png。題字・副題は無地の藍の空の帯 TITLE_SKY_BAND に置く）
+    this.add.image(0, 0, TITLE_TEXTURE).setOrigin(0, 0);
 
-    this.add.text(GAME_WIDTH / 2, 28, '江戸からくり渡世録', textStyle(22, COLORS.text)).setOrigin(0.5);
-    this.add.text(GAME_WIDTH / 2, 50, '― 試作版 ―', textStyle(9, COLORS.dim)).setOrigin(0.5);
+    this.add.text(GAME_WIDTH / 2, TITLE_TEXT.y, '江戸からくり渡世録', textStyle(TITLE_TEXT.size, COLORS.text)).setOrigin(0.5);
+    this.add.text(GAME_WIDTH / 2, SUBTITLE_TEXT.y, '― 試作版 ―', textStyle(SUBTITLE_TEXT.size, COLORS.dim)).setOrigin(0.5);
 
     this.openMain();
   }
