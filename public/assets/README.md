@@ -440,13 +440,15 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 
 ## UI（`ui/`）
 
-`create_image_pixflux` で作り、Pillow で仕上げた。表示は `src/ui/uiImages.ts`（大きさ・分割）と `src/ui/widgets.ts`（`drawWindow`・`Menu` のカーソル）、タイトルの背景は `src/scenes/TitleScene.ts`。
+`create_image_pixflux` で作り、Pillow で仕上げた。表示は `src/ui/uiImages.ts`（大きさ・分割）と `src/ui/widgets.ts`（`drawWindow`・`Menu` のカーソル）、タイトルの背景は `src/scenes/TitleScene.ts`、仮想パッドは `index.html` の CSS（DOM の要素の背景。大きさと倍率は `uiImages.ts` の `PAD_*`）。
 
 | ファイル | 大きさ | 使い方 |
 | --- | --- | --- |
 | window.png | 16 × 16 | ウィンドウ枠。四隅 4 × 4 はそのまま、辺と中央は引き伸ばす（9 分割）。藍の地、縁は外から墨・茶・生成り・墨の 4 px、四隅に金の角金具 |
 | cursor.png | 32 × 32 | メニューのカーソル（右を向いた扇子）。1/3 に縮めて表示する（内部解像度で約 11 px、実際のキャンバスで元の 1 ドットが 1 px） |
 | title.png | 384 × 216 | タイトル画面の背景（夜明けの富士と、松並木の街道）。画面と同じ大きさで、そのまま敷く。題字・副題の y 8〜55（`TITLE_SKY_BAND`）は無地の藍の空 |
+| dpad.png | 64 × 64 | 仮想パッドの十字キー。2 倍（128 × 128）で表示し、上に上下左右の押せる区画（3 × 3 の格子）を重ねる。黒漆の地・金の縁・生成りの三角の矢印 |
+| button_ok.png・button_cancel.png | 32 × 32 | 仮想パッドの決定（朱）・取消（藍）。2 倍（64 × 64）で表示し、中央の無地の面（半径 9 px）に HTML の文字を重ねる。金の縁・黒の輪郭 |
 
 ### ウィンドウ枠（`ui/window.png`）
 
@@ -467,3 +469,11 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 - 仕上げ: テストのデコーダー（8 bit の RGBA）で読めるように RGBA で保存した（すべて不透明）
 - 作り直しの経過（計 3 回）: 1 回目（d55d9b71）は構図がよかったが、富士の頂が副題（y 50）に重なり、並木が西洋のモミの形だった。2 回目（56e550b9）は富士を下げたが、道に舗装路の白線が入り、木はモミのまま、空に顔のような橙の月が出た。3 回目は 1 回目をもとにした下絵から清書し、すべての項目を満たした
 - 松のように形の決まった木は、言葉だけではモミになりやすい。下絵を init_image に渡すと形が保たれる
+
+### 仮想パッド（`ui/dpad.png`・`ui/button_ok.png`・`ui/button_cancel.png`）
+
+- 十字キー: 1 回目（ジョブ da023c60-ca3e-4eb5-a688-932b1244288b。64 × 64、no_background、黒の 1px 輪郭、basic shading、medium detail、text_guidance_scale 10、init_image_strength 250）を採用。Pillow で描いた十字（墨の輪郭・金の縁・黒漆の地・生成りの三角）の下絵を init_image にした。プロンプト: pixel art game controller directional pad (d-pad) button for a Japanese Edo period RPG, cross shape seen from the front, black urushi lacquer surface with subtle shine, thin gold metal rim around the cross, four cream triangle arrows pointing outward (up, down, left, right), small round gold rivet in the center, clean black outline, perfectly symmetric, no text
+- 丸いボタン: 1 回目（ジョブ dbe1fb00-1b71-4897-a164-d7178302512a。32 × 32、no_background、黒の 1px 輪郭、basic shading、low detail、text_guidance_scale 10、init_image_strength 250）を採用。Pillow で描いた円（墨・金・朱）の下絵を init_image にした。プロンプト: pixel art round game button for a Japanese Edo period RPG, a circle of glossy red vermilion urushi lacquer with a thin gold metal rim, plain flat empty center with no symbol, subtle highlight at the top left, clean black outline, symmetric, no text
+- 仕上げ: ボタンの朱の面にあった近い 2 色（172,55,46 と 176,55,48）を 1 色にそろえて button_ok.png に。同じ面を藍（46,64,112）に塗り替えて button_cancel.png にした（形・縁は同じ）
+- 判定（どちらも 1 回目ですべて ○）: 十字キーは十字の形で四隅が透過・4 本の腕に外向きの矢印・黒漆の地に金の縁と生成りの矢印・黒の輪郭で左右対称・文字なし。ボタンは円の外が透過・中央が無地の面・朱の漆に金の縁・黒の輪郭で左右対称・文字や模様なし。ゲーム画面（縦持ち 390 × 844、横持ち 844 × 390 のタッチ端末）で、暗い背景の上で読め、押した腕が金色に光ることを確かめた
+- 形の決まった UI は、カーソル・タイトルと同じく下絵を init_image に渡すと 1 回で形が保たれた

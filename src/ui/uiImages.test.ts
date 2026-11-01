@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { CURSOR_IMAGE_SIZE, CURSOR_SCALE, SUBTITLE_TEXT, TITLE_SKY_BAND, TITLE_TEXT, WINDOW_CORNER, WINDOW_IMAGE_SIZE, windowSliceRects } from './uiImages';
+import { CURSOR_IMAGE_SIZE, CURSOR_SCALE, PAD_BUTTON_FACE_RADIUS, PAD_BUTTON_IMAGE_SIZE, PAD_DPAD_IMAGE_SIZE, PAD_IMAGE_SCALE, SUBTITLE_TEXT, TITLE_SKY_BAND, TITLE_TEXT, WINDOW_CORNER, WINDOW_IMAGE_SIZE, windowSliceRects } from './uiImages';
 import { MENU_LINE_HEIGHT } from './widgets';
 import { GAME_HEIGHT, GAME_WIDTH } from './theme';
+import indexHtml from '../../index.html?raw';
 
 /** PNG の幅と高さ（IHDR）。data URL の画像から読む。 */
 function pngSize(dataUrl: string): { w: number; h: number } {
@@ -126,5 +127,54 @@ describe('タイトルの背景の画像', () => {
       for (let x = 0; x < GAME_WIDTH; x++) expect(px[y]![x]!.join(','), `${x},${y}`).toBe(sky);
     }
     expect(sky).toBe('22,40,73,255');
+  });
+});
+
+describe('仮想パッドの画像', () => {
+  const images = {
+    dpad: PAD_DPAD_IMAGE_SIZE,
+    button_ok: PAD_BUTTON_IMAGE_SIZE,
+    button_cancel: PAD_BUTTON_IMAGE_SIZE,
+  } as const;
+
+  it('画像があり、大きさが定数と合う', () => {
+    for (const [name, size] of Object.entries(images)) {
+      expect(pngSize(inlined[`../../public/assets/ui/${name}.png`]!), name).toEqual({ w: size, h: size });
+    }
+  });
+
+  it('index.html が画像を参照し、定数の倍率で表示する', () => {
+    for (const name of Object.keys(images)) expect(indexHtml, name).toContain(`url(assets/ui/${name}.png)`);
+    const dpad = PAD_DPAD_IMAGE_SIZE * PAD_IMAGE_SCALE;
+    const button = PAD_BUTTON_IMAGE_SIZE * PAD_IMAGE_SCALE;
+    expect(indexHtml).toContain(`center / ${dpad}px ${dpad}px no-repeat`);
+    expect(indexHtml).toContain(`width: ${dpad}px; height: ${dpad}px;`);
+    expect(indexHtml).toContain(`center / ${button}px ${button}px no-repeat`);
+    expect(indexHtml).toContain(`width: ${button}px; height: ${button}px;`);
+  });
+
+  it('四隅は透過している（十字と円の外が背景に溶ける）', async () => {
+    for (const [name, size] of Object.entries(images)) {
+      const px = await decodePng(inlined[`../../public/assets/ui/${name}.png`]!);
+      for (const [x, y] of [[0, 0], [size - 1, 0], [0, size - 1], [size - 1, size - 1]] as const) {
+        expect(px[y]![x]![3], `${name} ${x},${y}`).toBe(0);
+      }
+    }
+  });
+
+  it('丸いボタンの中央は 1 色の不透明な面で、決定は朱・取消は藍', async () => {
+    const faces: Record<string, string> = {};
+    for (const name of ['button_ok', 'button_cancel']) {
+      const px = await decodePng(inlined[`../../public/assets/ui/${name}.png`]!);
+      const c = (PAD_BUTTON_IMAGE_SIZE - 1) / 2;
+      const face = px[Math.floor(c)]![Math.floor(c)]!.join(',');
+      for (let y = 0; y < PAD_BUTTON_IMAGE_SIZE; y++) {
+        for (let x = 0; x < PAD_BUTTON_IMAGE_SIZE; x++) {
+          if (Math.hypot(x - c, y - c) <= PAD_BUTTON_FACE_RADIUS) expect(px[y]![x]!.join(','), `${name} ${x},${y}`).toBe(face);
+        }
+      }
+      faces[name] = face;
+    }
+    expect(faces).toEqual({ button_ok: '176,55,48,255', button_cancel: '46,64,112,255' });
   });
 });
