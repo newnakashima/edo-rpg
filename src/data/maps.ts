@@ -25,15 +25,15 @@ export const TILESETS = {
   castle: ['wall', 'floor'],
   /** 廃墟（羅生門跡・鬼の巣・南蛮寺跡）。崩れた石の塀と石畳、岩はがれきの山。木は外の木なので共通のまま。 */
   ruins: ['wall', 'floor', 'rock'],
-  /** 船の上（北前船）。甲板、船べり、積み荷の俵。 */
-  ship: ['floor', 'wall', 'roof'],
+  /** 船の上（北前船）。甲板、船べり、積み荷の俵。水は港の海。 */
+  ship: ['floor', 'wall', 'roof', 'water'],
   /** 蔵（堀川の荷蔵）。板の壁と土間。 */
   kura: ['wall', 'floor'],
   /** 大火の町（神田の大火）。燃える長屋の屋根、焦げた板塀、焼け跡の地面、燃え落ちた材木のがれき。 */
   fire: ['roof', 'wall', 'ground', 'rock'],
   // 町ごとの建物（屋根・壁・戸）。通れる地面・道・草は共通のまま
-  /** 港町（清水湊・広島）。石を載せた板屋根、潮で白んだ板壁、縞の暖簾の戸。 */
-  minato: ['roof', 'wall', 'door'],
+  /** 港町（清水湊・広島）。石を載せた板屋根、潮で白んだ板壁、縞の暖簾の戸。水は港の海（町の川・堀にも使うので穏やかな波）。 */
+  minato: ['roof', 'wall', 'door', 'water'],
   /** 武家の城下（駿府・与力の屋敷・仙台）。黒い瓦、なまこ壁、鋲を打った門の戸。 */
   bushi: ['roof', 'wall', 'door'],
   /** 商人の町（名古屋・大坂）。黒い瓦、格子の店構え、藍の暖簾。 */
@@ -42,10 +42,12 @@ export const TILESETS = {
   miyako: ['roof', 'wall', 'door'],
   /** 山里（伊賀上野・鍵屋の辻・伊賀者の里）。茅葺き、土壁、板戸。 */
   sato: ['roof', 'wall', 'door'],
-  /** 南蛮の町（長崎・出島）。赤い洋瓦、白壁と煉瓦の腰（窓なし。出島を囲む塀にも使うため）、緑の洋風の扉。 */
-  nanban: ['roof', 'wall', 'door'],
+  /** 南蛮の町（長崎・出島）。赤い洋瓦、白壁と煉瓦の腰（窓なし。出島を囲む塀にも使うため）、緑の洋風の扉。水は港の海。 */
+  nanban: ['roof', 'wall', 'door', 'water'],
   /** 江戸の長屋（江戸）。板葺きの屋根、板壁、障子の戸。 */
   nagaya: ['roof', 'wall', 'door'],
+  /** ワールドマップ（街道）。波頭の立つ海、緑の野、山、森、街道の土の道、城下町と関所の印。 */
+  field: ['water', 'plain', 'rock', 'tree', 'road', 'town', 'gate'],
 } as const satisfies Record<string, readonly TileKind[]>;
 export type TilesetId = keyof typeof TILESETS;
 
@@ -536,6 +538,7 @@ export const MAPS: Record<string, MapDef> = {
 MAPS.world = {
   id: 'world',
   name: '日本',
+  tileset: 'field',
   areaLevel: 1,
   // 西の九州（長崎・島原、島原の湊から渡し船で渡る熊本）から、関門の渡し、山陽道（広島・大坂）、京、脇道の先の彦根、東海道（伊賀・名古屋・脇道の先の浜松・大井川・駿府・清水湊・箱根）、江戸、奥州街道（仙台、脇道の先の会津若松）まで。
   // 金沢から北国街道で仙台へ（第 8 章。第 7 章を終えるまで金沢からは出られず、ほかの街道とは仙台・江戸を経て箱根の関所でつながる）。
