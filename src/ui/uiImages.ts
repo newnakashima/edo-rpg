@@ -37,20 +37,15 @@ function spans(size: number, c: number): [number, number][] {
   ];
 }
 
-/** 画像の中の 9 分割の枠（テクスチャのフレームに使う）。 */
-export function windowSliceFrames(size = WINDOW_IMAGE_SIZE, c = WINDOW_CORNER): Record<WindowSlice, Rect> {
-  return sliceRects(size, size, c);
-}
-
-/** 幅 w・高さ h のウィンドウで、9 つの部分を置く位置と大きさ（左上を 0, 0 として）。 */
+/**
+ * 幅 w・高さ h を 9 つに分けた枠（左上を 0, 0 として）。四隅は c × c、辺と中央は残りの長さ。
+ * 画像の中のフレーム（w = h = WINDOW_IMAGE_SIZE）にも、ウィンドウに並べる位置と大きさにも使う。
+ * w・h が 2c より小さいと中の長さが負になる（画像が裏返る）ので、2c に切り上げる。
+ */
 export function windowSliceRects(w: number, h: number, c = WINDOW_CORNER): Record<WindowSlice, Rect> {
-  return sliceRects(w, h, c);
-}
-
-function sliceRects(w: number, h: number, c: number): Record<WindowSlice, Rect> {
   const out = {} as Record<WindowSlice, Rect>;
-  const cols = spans(w, c);
-  const rows = spans(h, c);
+  const cols = spans(Math.max(w, 2 * c), c);
+  const rows = spans(Math.max(h, 2 * c), c);
   WINDOW_SLICES.forEach((name, i) => {
     const [x, sw] = cols[i % 3]!;
     const [y, sh] = rows[Math.floor(i / 3)]!;

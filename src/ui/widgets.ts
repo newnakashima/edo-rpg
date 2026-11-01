@@ -8,6 +8,7 @@ import type { Controls } from './input';
 /**
  * 藍の地に生成りの縁と金の角金具のウィンドウ（public/assets/ui/window.png を 9 分割して並べる）。
  * 四隅は元の大きさのまま、辺と中央は引き伸ばす（縁の断面はどこも同じなので、伸ばしても柄は崩れない）。
+ * 縁の太さは WINDOW_CORNER（4）。地は不透明（以前の Graphics の窓は 94% で、背景が少し透けていた）。
  */
 export function drawWindow(scene: Phaser.Scene, x: number, y: number, w: number, h: number): Phaser.GameObjects.Container {
   const rects = windowSliceRects(w, h);
@@ -41,7 +42,7 @@ export class MessageWindow {
     const bg = drawWindow(scene, x, y, w, h);
     this.text = scene.add.text(x + TEXT_PADDING, y + 6, '', { ...textStyle(11), wordWrap: { width: w - TEXT_PADDING * 2, useAdvancedWrap: true }, lineSpacing: 3 });
     this.arrow = scene.add.text(x + w - 14, y + h - 14, '▼', textStyle(8, COLORS.accent));
-    // 顔はウィンドウの縦の中央に置く（フィールドの高さ 54 なら、48 の顔の上下に 3 ずつ空く）
+    // 顔はウィンドウの縦の中央に置く（フィールドの高さ 58 なら、縁 4 の内側 50 に 48 の顔が収まり、上下に 1 ずつ空く）
     this.face = faceOf ? scene.add.image(x + FACE_MARGIN, y + Math.floor(h / 2), '__DEFAULT').setOrigin(0, 0.5).setVisible(false) : null;
     const parts: Phaser.GameObjects.GameObject[] = [bg, this.text, this.arrow];
     if (this.face) parts.push(this.face);
@@ -209,7 +210,7 @@ export class Menu {
     this.layout();
     const label = this.labels[this.cursorIndex];
     // 文字の行（高さ約 15）の縦の中央に扇子を置く
-    if (label) this.cursor.setY(label.y + label.height / 2);
+    if (label) this.cursor.setY(Math.round(label.y + label.height / 2));
     this.onMove?.(this.cursorIndex);
   }
 
