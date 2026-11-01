@@ -41,7 +41,7 @@ describe('タイルの画像', () => {
       kobo: 'interior', takoya: 'interior', tenshu: 'castle', rashomon: 'ruins', oninosu: 'ruins', nanbanji: 'ruins',
       kitamaebune: 'ship', horikawaKura: 'kura', edoTaika: 'fire', edojo: 'castle', matsuNoRoka: 'castle',
       // 町ごとの建物
-      shimizu: 'minato', hiroshima: 'minato', sunpu: 'bushi', yoriki: 'bushi', sendai: 'bushi',
+      shimizu: 'minato', hiroshima: 'minato', sunpu: 'bushi', yoriki: 'bushi', hikone: 'bushi', sendai: 'bushi',
       nagoya: 'shoka', hamamatsu: 'shoka', osaka: 'shoka', kyo: 'miyako', iga: 'sato', kagiya: 'sato', igaSato: 'sato',
       nagasaki: 'nanban', dejima: 'nanban', edo: 'nagaya',
     };
@@ -1588,5 +1588,72 @@ describe('寄り道の浜松', () => {
       yahei: 'hamamatsuTakoDone',
     };
     for (const [id, flag] of Object.entries(want)) expect(hamamatsu.npcs.find((n) => n.id === id)?.after?.flag, id).toBe(flag);
+  });
+});
+
+describe('寄り道の彦根', () => {
+  const world = MAPS.world!;
+  const hikone = MAPS.hikone!;
+  const town = world.towns!.find((t) => t.name === '彦根')!;
+  const nagoya = world.towns!.find((t) => t.name === '名古屋')!;
+  const kyo = world.towns!.find((t) => t.name === '京')!;
+
+  it('京と名古屋を結ぶ街道から北へ折れた脇道の先にあり、名古屋の一件（chapter2Cleared）を片づけるまで入れない。町から出ると印の隣の脇道に出る', () => {
+    expect(reachable(world, nagoya, {}).has(`${town.x},${town.y}`)).toBe(true);
+    expect(reachable(world, kyo, {}).has(`${town.x},${town.y}`)).toBe(true);
+    expect(townAction(world, town.x, town.y, 'ok', {})?.kind).toBe('info');
+    expect(townAction(world, town.x, town.y, 'ok', { chapter2Cleared: true })).toEqual({ kind: 'enter', to: town.to });
+    for (const out of hikone.exits.filter((e) => e.to === 'world')) {
+      expect(Math.abs(out.toX - town.x) + Math.abs(out.toY - town.y)).toBe(1);
+      expect(tileAt(world, out.toX, out.toY)?.kind).toBe('road');
+    }
+  });
+
+  it('脇道と京・名古屋の間の街道の東寄りでは東海道の敵が出て、彦根に着いたら全滅で彦根へ（それまでは名古屋へ）', () => {
+    const toHikone = { mapId: 'hikone', ...hikone.respawn };
+    const toNagoya = { mapId: 'nagoya', ...MAPS.nagoya!.respawn };
+    for (const [x, y] of [[83, 23], [83, 24], [83, 25], [80, 27], [87, 26]] as const) {
+      expect(encounterAt(world, x, y, { chapter2Cleared: true }), `${x},${y}`).toBe('tokaido');
+      expect(respawnPoint('world', x, y, { chapter2Cleared: true }), `${x},${y}`).toEqual(toNagoya);
+      expect(respawnPoint('world', x, y, { chapter2Cleared: true, hikoneIntro: true }), `${x},${y}`).toEqual(toHikone);
+    }
+    // 名古屋の印のまわりと、伊賀への脇道は今までどおり
+    expect(respawnPoint('world', 92, 27, { chapter2Cleared: true, hikoneIntro: true })).toEqual(toNagoya);
+    expect(respawnPoint('world', 80, 28, { chapter2Cleared: true, hikoneIntro: true })).not.toEqual(toHikone);
+  });
+
+  it('町に入ると hikoneEnter を行い、着いたあとは行わない。旅籠・茶屋・店・寺・飛脚がそろう', () => {
+    expect(hikone.onEnter).toEqual({ event: 'hikoneEnter', unless: 'hikoneIntro' });
+    const actions = new Set(hikone.npcs.map((n) => n.action).filter(Boolean));
+    expect(actions).toEqual(new Set(['inn', 'teahouse', 'shop', 'temple', 'hikyaku']));
+    expect(hikone.areaLevel).toBe(10);
+    expect(tileAt(hikone, hikone.respawn!.x, hikone.respawn!.y)?.blocked).toBe(false);
+  });
+
+  it('入口から佐和山の頂の盗人・具足櫃・葛籠まで歩いて行け、工房の甚兵衛や町の人に話しかけられる', () => {
+    const area = reachable(hikone, town.to!, {}, true);
+    for (const id of ['gusokuNusubito', 'gusokuBitsu', 'sawayamaSekihi', 'hikoneChest1', 'jinbei', 'jinbeiDeshi', 'hikoneChest2', 'umoregiRoba', 'hikoneOkami', 'hikoneInn', 'hikoneTemple']) {
+      const npc = hikone.npcs.find((n) => n.id === id)!;
+      expect(near(area, npc.x, npc.y), id).toBe(true);
+    }
+    // 彦根城の中へは、門番がふさいで入れない
+    expect(area.has('15,6')).toBe(false);
+    // 町の広さ（テストプレイの指摘: マップが小さすぎる）
+    expect(reachable(hikone, town.to!, {}).size).toBeGreaterThan(900);
+  });
+
+  it('盗人と具足櫃は、具足を取り返す（hikoneGusokuFound）と消える。町の人の台詞は取り返す・届ける（hikoneGusokuReturned・hikoneGusokuDone）と変わる', () => {
+    for (const id of ['gusokuNusubito', 'gusokuBitsu']) expect(hikone.npcs.find((n) => n.id === id)?.hideFlag, id).toBe('hikoneGusokuFound');
+    const want: Record<string, string> = {
+      hikoneTeahouse: 'hikoneGusokuReturned',
+      jinbeiDeshi: 'hikoneGusokuReturned',
+      hikoneKodomo: 'hikoneGusokuFound',
+      hikoneRojin: 'hikoneGusokuFound',
+      hikoneOkami: 'hikoneGusokuFound',
+      hikoneAshigaru: 'hikoneGusokuDone',
+      // 京の鬼の噂は、第 3 章を終えると退治された話に変わる
+      hikoneTabibito: 'chapter3Cleared',
+    };
+    for (const [id, flag] of Object.entries(want)) expect(hikone.npcs.find((n) => n.id === id)?.after?.flag, id).toBe(flag);
   });
 });
