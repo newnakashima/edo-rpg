@@ -4030,7 +4030,7 @@ MAPS.sendai = {
       x: 22,
       y: 8,
       color: 0x5a5a7a,
-      sprite: 'npc_yakunin',
+      sprite: 'tatewaki',
       event: 'tatewaki',
     },
     {
