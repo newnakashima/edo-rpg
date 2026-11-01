@@ -14,6 +14,8 @@ export type EventRequest =
   | { kind: 'choice'; prompt?: string; labels: string[] }
   | { kind: 'battle'; enemies: string[]; level: number; canEscape: boolean; loseOk: boolean }
   | { kind: 'warp'; mapId: string; x: number; y: number }
+  /** エンディングを出す（イベントはここで終わる）。 */
+  | { kind: 'ending' }
   | { kind: 'done' };
 
 /** 画面から返す入力（選んだ選択肢、戦闘の結果）。 */
@@ -160,6 +162,10 @@ export class EventRunner {
           return { state: { ...s, mapId: step.mapId, x: step.x, y: step.y }, request: { kind: 'warp', mapId: step.mapId, x: step.x, y: step.y } };
         case 'end':
           return this.finish(s);
+        case 'ending':
+          this.stack.length = 0;
+          this.finished = true;
+          return { state: s, request: { kind: 'ending' } };
       }
     }
   }

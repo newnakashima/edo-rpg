@@ -39,6 +39,8 @@ export const EQUIPMENT: Record<string, EquipDef> = {
   kanewaka: { id: 'kanewaka', name: '加州兼若', slot: 'weapon', price: 3300, bonus: { atk: 25 }, wearers: ['hero'], description: '加賀の刀工の手になる刀' },
   kunikane: { id: 'kunikane', name: '仙台国包', slot: 'weapon', price: 3900, bonus: { atk: 27 }, wearers: ['hero'], description: '仙台の刀工の柾目肌の刀' },
   kiyomaro: { id: 'kiyomaro', name: '江戸清麿', slot: 'weapon', price: 4500, bonus: { atk: 30 }, wearers: ['hero'], description: '四谷の刀工の冴えた刃の刀' },
+  // 終章の江戸城の葛籠だけで手に入る（店には置かない）
+  aoiNagawaki: { id: 'aoiNagawaki', name: '葵の長脇差', slot: 'weapon', price: 5400, bonus: { atk: 35 }, wearers: ['hero'], description: '御金蔵に眠っていた、葵の紋の長脇差' },
   sukehiro: { id: 'sukehiro', name: '津田助広', slot: 'weapon', price: 1800, bonus: { atk: 18 }, wearers: ['hero'], description: '大坂の刀工の濤乱刃の刀' },
   kunai: { id: 'kunai', name: '苦無', slot: 'weapon', price: 40, bonus: { atk: 2, spd: 1 }, wearers: ['kasumi'], description: '忍びの小刀' },
   ninjato: { id: 'ninjato', name: '忍者刀', slot: 'weapon', price: 240, bonus: { atk: 6, spd: 2 }, wearers: ['kasumi'], description: '反りのない短い刀' },
@@ -48,6 +50,7 @@ export const EQUIPMENT: Record<string, EquipDef> = {
   karakuriKagizume: { id: 'karakuriKagizume', name: 'からくり鉤爪', slot: 'weapon', price: 2350, bonus: { atk: 20, spd: 4 }, wearers: ['kasumi'], description: 'ゼンマイで爪が伸びる手甲' },
   yukiKodachi: { id: 'yukiKodachi', name: '雪華小太刀', slot: 'weapon', price: 3200, bonus: { atk: 23, spd: 5 }, wearers: ['kasumi'], description: '刃に雪の結晶の紋が浮く小太刀' },
   hibanaKodachi: { id: 'hibanaKodachi', name: '火花小太刀', slot: 'weapon', price: 4300, bonus: { atk: 27, spd: 6 }, wearers: ['kasumi'], description: '打ち合うと火花の散る小太刀' },
+  oniwabanKodachi: { id: 'oniwabanKodachi', name: '御庭番小太刀', slot: 'weapon', price: 5200, bonus: { atk: 31, spd: 7 }, wearers: ['kasumi'], description: '公儀の御庭番に伝わる小太刀。終章の江戸城で手に入る' },
   shinobiKodachi: { id: 'shinobiKodachi', name: '忍び小太刀', slot: 'weapon', price: 1250, bonus: { atk: 14, spd: 3 }, wearers: ['kasumi'], description: '伊賀の鍛冶の打った小太刀' },
   kongozue: { id: 'kongozue', name: '金剛杖', slot: 'weapon', price: 60, bonus: { atk: 3, mag: 2 }, wearers: ['gendo'], description: '八角の樫の杖' },
   shakujo: { id: 'shakujo', name: '錫杖', slot: 'weapon', price: 300, bonus: { atk: 6, mag: 4 }, wearers: ['gendo'], description: '鳴らすと魔を祓う杖' },
@@ -56,6 +59,7 @@ export const EQUIPMENT: Record<string, EquipDef> = {
   rakanShakujo: { id: 'rakanShakujo', name: '羅漢錫杖', slot: 'weapon', price: 2300, bonus: { atk: 15, mag: 13 }, wearers: ['gendo'], description: '羅漢の像を刻んだ錫杖' },
   hakusanShakujo: { id: 'hakusanShakujo', name: '白山錫杖', slot: 'weapon', price: 3100, bonus: { atk: 18, mag: 16 }, wearers: ['gendo'], description: '白山の修験者が鳴らした錫杖' },
   fudoShakujo: { id: 'fudoShakujo', name: '不動錫杖', slot: 'weapon', price: 4200, bonus: { atk: 21, mag: 19 }, wearers: ['gendo'], description: '不動明王の炎を刻んだ錫杖' },
+  nyoraiShakujo: { id: 'nyoraiShakujo', name: '如来錫杖', slot: 'weapon', price: 5000, bonus: { atk: 24, mag: 23 }, wearers: ['gendo'], description: '大奥の持仏堂に納められた錫杖。終章の江戸城で手に入る' },
   kongoShakujo: { id: 'kongoShakujo', name: '金剛錫杖', slot: 'weapon', price: 1700, bonus: { atk: 13, mag: 11 }, wearers: ['gendo'], description: '金剛の輪を下げた錫杖' },
   // 第 4 章でお凛の初期装備をからくり銃に変えたので、今はどこからも手に入らない。
   // 寄り道の町の店に安い銃として置く候補なので、定義は残す（置くかは寄り道の町を作るときに決める）
@@ -65,6 +69,7 @@ export const EQUIPMENT: Record<string, EquipDef> = {
   gewehr: { id: 'gewehr', name: 'ゲベール銃', slot: 'weapon', price: 2400, bonus: { atk: 21 }, wearers: ['orin'], description: '出島から渡ったオランダの銃' },
   kagaZutsu: { id: 'kagaZutsu', name: '加賀筒', slot: 'weapon', price: 3300, bonus: { atk: 25 }, wearers: ['orin'], description: '加賀の鉄砲鍛冶が打った長筒' },
   kunitomoZutsu: { id: 'kunitomoZutsu', name: '国友筒', slot: 'weapon', price: 4500, bonus: { atk: 30 }, wearers: ['orin'], description: '近江の鉄砲鍛冶が打った筒。江戸で売られている' },
+  aoiZutsu: { id: 'aoiZutsu', name: '葵の御筒', slot: 'weapon', price: 5400, bonus: { atk: 35 }, wearers: ['orin'], description: '将軍家の鉄砲蔵の筒。終章の江戸城で手に入る' },
   renpatsuju: { id: 'renpatsuju', name: '連発からくり銃', slot: 'weapon', price: 1800, bonus: { atk: 18 }, wearers: ['orin'], description: 'ゼンマイで弾を続けて送る銃' },
   // 榊兵庫（第 5 章のゲスト）だけが付ける。店には置かない
   hyogoKatana: { id: 'hyogoKatana', name: '与力の差料', slot: 'weapon', price: 0, bonus: { atk: 14 }, wearers: ['hyogo'], description: '兵庫が与力のころから差す刀' },

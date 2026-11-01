@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { availableItemCount, createBattle, DEF_UP_RATE, itemWorks, partyAfterBattle, resolveTurn, type BattleState, type Combatant } from './battle';
+import { actionsPerTurn, availableItemCount, createBattle, DEF_UP_RATE, itemWorks, partyAfterBattle, resolveTurn, type BattleState, type Combatant } from './battle';
 import { ENEMIES } from '../data/enemies';
 import { ITEMS } from '../data/items';
 import { SKILLS } from '../data/skills';
@@ -868,5 +868,27 @@ describe('第 7 章（北前船・金沢）の敵の技', () => {
       const hit = t.events.slice(i + 1, i + 5).filter((e) => e.type === 'damage' || e.type === 'miss').map((e) => ('target' in e ? e.target : ''));
       expect(hit.sort(), skill).toEqual(['p0', 'p1', 'p2', 'p3']);
     }
+  });
+});
+
+describe('1 ターンに何度も動く敵（終章のからくり大権現）', () => {
+  it('からくり大権現は 1 ターンに 2 回動き、ほかの敵と味方は 1 回', () => {
+    const b = createBattle([createMember('hero', 31), createMember('gendo', 31)], 'm', ['karakuriDaigongen', 'karakuriKinju'], 32);
+    expect(actionsPerTurn(get(b, 'e0'))).toBe(2);
+    expect(actionsPerTurn(get(b, 'e1'))).toBe(1);
+    expect(actionsPerTurn(get(b, 'p0'))).toBe(1);
+    // 乱数をいつも 0.99 にすると、敵は重みの最後の行動（大権現は魂のゼンマイ、近習は小太刀）を選ぶ
+    const { events } = resolveTurn(b, { p0: { kind: 'guard' }, p1: { kind: 'guard' } }, () => 0.99);
+    const acts = (key: string) => events.filter((e) => e.type === 'skill' && e.actor === key).length;
+    expect(acts('e0')).toBe(2);
+    expect(acts('e1')).toBe(1);
+  });
+
+  it('眠っていれば 2 回とも動けない', () => {
+    const b = createBattle([createMember('hero', 31)], 'm', ['karakuriDaigongen'], 32);
+    get(b, 'e0').status.sleep = 3;
+    const { events } = resolveTurn(b, { p0: { kind: 'guard' } }, () => 0.99);
+    expect(events.filter((e) => e.type === 'cannotAct' && e.actor === 'e0').length).toBe(2);
+    expect(events.some((e) => e.type === 'skill' && e.actor === 'e0')).toBe(false);
   });
 });

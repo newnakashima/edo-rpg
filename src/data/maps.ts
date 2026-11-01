@@ -1,4 +1,4 @@
-// フィールドのマップ。序章〜第 8 章の町・ダンジョンと、ワールドマップを用意する。
+// フィールドのマップ。序章〜終章の町・ダンジョンと、ワールドマップを用意する。
 // タイルの文字の意味は TILES を参照。
 import type { Facing } from '../systems/gameState';
 import { OBJECT_DEFS, type CharacterSpriteId, type ObjectSpriteId } from './sprites';
@@ -4171,6 +4171,7 @@ MAPS.sendai = {
 /**
  * 第 8 章の江戸の町。北に外堀と江戸城の大手門、その南に神田の長屋と火消しの番屋・火の見櫓、
  * 日本橋川をはさんで南に日本橋の町（旅籠・店・八百屋・寺・芝居小屋）。北東の町木戸から神田の大火の町へ。
+ * 第 8 章を終えて大手門の門番に話しかけると、加賀の手形で門を開け（otemonOpen）、橋から江戸城の本丸御殿（終章）へ入れる。
  */
 MAPS.edo = {
   id: 'edo',
@@ -4232,8 +4233,9 @@ MAPS.edo = {
       y: 8,
       color: 0x5a5a6a,
       sprite: 'npc_monban',
-      lines: ['門番「ここは江戸城の大手門。お触れにより、何人も通すことはならぬ」'],
-      after: { flag: 'chapter8Cleared', lines: ['門番「……加賀の御手形か。夜明けを待たれよ」（終章で江戸城に入る）'] },
+      event: 'otemon',
+      // 第 8 章を終えて話しかけると、加賀の手形で門を開ける（otemonOpen）
+      hideFlag: 'otemonOpen',
     },
     {
       id: 'nagayaOoya',
@@ -4474,6 +4476,8 @@ MAPS.edo = {
     { x: 32, y: 45, to: 'world', toX: 131, toY: 32 },
     // 北東の町木戸から神田の大火の町へ（火事が起きるまで木戸番がふさぐ）
     { x: 63, y: 10, to: 'edoTaika', toX: 1, toY: 32 },
+    // 大手門の橋から江戸城の本丸御殿へ（門番が門を開けるまでふさぐ）
+    { x: 32, y: 7, to: 'edojo', toX: 20, toY: 29 },
   ],
   respawn: { x: 5, y: 33 },
   onEnter: { event: 'edoEnter', unless: 'chapter8Cleared' },
@@ -4566,6 +4570,254 @@ MAPS.edoTaika = {
   onEnter: { event: 'taikaEnter', unless: 'taikaEntered' },
   // 火元への 1 マスの入口で火車からくりが待つ
   triggers: [{ x: 44, y: 25, event: 'kashaKarakuri', unless: 'kashaDefeated' }],
+};
+
+/**
+ * 終章の江戸城 本丸御殿（ダンジョン）。南の玄関から入り、西の御金蔵で金太に会うと（okaneguraCleared）北の御錠口の両脇のからくりの番兵が止まり、大奥へ入れる。
+ * 北の大奥（持仏堂・中庭・局・御鈴廊下）を抜けた東の奥の細い口で化け猫が待ち、その先が松の廊下。
+ */
+MAPS.edojo = {
+  id: 'edojo',
+  tileset: 'castle',
+  name: '江戸城 本丸御殿',
+  areaLevel: 28,
+  rows: [
+    'WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW_WWWW',
+    'WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW_WWWW',
+    'W________W,,,,,,,,,,,,,,,,,W______W_WWWW',
+    'W________W,,T,,,,,,,,,,,T,,W______W_WWWW',
+    'W________W,,,,~~~~~~~~,,,,,W______W_WWWW',
+    'W________W,,,,~~~~~~~~,,,,,W______W_WWWW',
+    'WWWW__WWWW,,,,,,,,,,,,,,,,,WWW__WWW_WWWW',
+    'W________________________________W_____W',
+    'W________________________________W_____W',
+    'W__WW__WW__WWWWWWWW__WWWWWWWWW__WW_____W',
+    'W__W____W__W______W__W_______W__WW_____W',
+    'W__W____W__W______W__W_______W_________W',
+    'W__WWWWWW__WWWW_WWW__WWWW_WWWW__WW_____W',
+    'W______________________________WWWWWWWWW',
+    'WWWWWWWWWWWWWWWWWWWW_WWWWWWWWWWWWWWWWWWW',
+    'W__________WWWWWWW_____WWWWWWWWWWWWWWWWW',
+    'W__________WWWWWWW_____WWWW____________W',
+    'W__________WWWWWWW_____WWWW____________W',
+    'W___WW_WW__WWWWWWW_____WWWW____WW__WW__W',
+    'W__________WWWWWWW_____WWWW____________W',
+    'W__________WWWWWWW_____WWWW____________W',
+    'W__________WWWWWWW_____WWWW____WW__WW__W',
+    'W___WW_WW______________________________W',
+    'W__________WWWWW__________W____________W',
+    'W__________WWWWW__________W____________W',
+    'WWWWWWWWWWWWWWWW__________WWWWWWWWWWWWWW',
+    'WWWWWWWWWWWWWWWW__________WWWWWWWWWWWWWW',
+    'WWWWWWWWWWWWWWWW__________WWWWWWWWWWWWWW',
+    'WWWWWWWWWWWWWWWW__________WWWWWWWWWWWWWW',
+    'WWWWWWWWWWWWWWWW__________WWWWWWWWWWWWWW',
+    'WWWWWWWWWWWWWWWWWWWW__WWWWWWWWWWWWWWWWWW',
+    'WWWWWWWWWWWWWWWWWWWW__WWWWWWWWWWWWWWWWWW',
+  ],
+  npcs: [
+    {
+      id: 'kokichiJo',
+      name: '小吉',
+      x: 17,
+      y: 27,
+      color: 0x3a3a4a,
+      sprite: 'kokichi',
+      lines: ['小吉「ここはおれが見張っとく。外へ文を出すなら、飛脚に届けてやるぜ」'],
+      action: 'hikyaku',
+    },
+    {
+      id: 'jouguchiBanpei1',
+      name: 'からくりの番兵',
+      x: 19,
+      y: 15,
+      color: 0x6a6a7a,
+      object: 'ningyo',
+      lines: ['大奥への御錠口の脇に、からくりの番兵が立っている。', '背中のゼンマイの鍵穴は、金の錠前の形をしている。……御金蔵の鍵か？'],
+      hideFlag: 'okaneguraCleared',
+    },
+    {
+      id: 'jouguchiBanpei2',
+      name: 'からくりの番兵',
+      x: 21,
+      y: 15,
+      color: 0x6a6a7a,
+      object: 'ningyo',
+      lines: ['からくりの番兵の目が、赤く光っている。御錠口に近づく者を見張っているようだ。'],
+      hideFlag: 'okaneguraCleared',
+    },
+    {
+      id: 'okaneguraSenryo',
+      name: '千両箱',
+      x: 6,
+      y: 20,
+      color: 0xb08a3a,
+      object: 'senryobako',
+      lines: ['千両箱が山と積まれている。箱には「からくり御用」の札が貼られている。'],
+    },
+    {
+      id: 'jibutsudoButsuzo',
+      name: '持仏',
+      x: 8,
+      y: 2,
+      color: 0xb09a5a,
+      object: 'butsuzo',
+      lines: ['大奥の持仏堂の阿弥陀さま。供えられた花は、とうに枯れている。'],
+    },
+    {
+      id: 'okuJochu',
+      name: '奥女中',
+      x: 5,
+      y: 10,
+      color: 0xa07a6a,
+      sprite: 'npc_okami',
+      lines: [
+        '奥女中「ひっ……！ あ、あなたがたは、鷲尾さまの手の者ではないのですね」',
+        '奥女中「一年前、上様は御座の間の奥にお移りになったきり。お声も、お姿も……。お世話をするのは、鷲尾さまの近習ばかり」',
+      ],
+    },
+    {
+      id: 'ginjiJo',
+      name: '火消しの頭',
+      x: 37,
+      y: 9,
+      color: 0x8a3a2a,
+      sprite: 'npc_hikeshi',
+      lines: ['頭「御鈴廊下は、おれたちが食い止める！ 後ろは気にせず、上様のところへ行きな！」'],
+      showFlag: 'ookuCleared',
+    },
+    { id: 'edojoChest1', name: '葛籠', x: 1, y: 15, color: 0x8a6a3a, object: 'tsuzura', event: 'edojoChest1' },
+    { id: 'edojoChest2', name: '葛籠', x: 38, y: 16, color: 0x8a6a3a, object: 'tsuzura', event: 'edojoChest2' },
+    { id: 'edojoChest3', name: '葛籠', x: 38, y: 24, color: 0x8a6a3a, object: 'tsuzura', event: 'edojoChest3' },
+    { id: 'edojoChest4', name: '葛籠', x: 1, y: 2, color: 0x8a6a3a, object: 'tsuzura', event: 'edojoChest4' },
+    { id: 'edojoChest5', name: '葛籠', x: 33, y: 2, color: 0x8a6a3a, object: 'tsuzura', event: 'edojoChest5' },
+    { id: 'edojoChest6', name: '葛籠', x: 1, y: 13, color: 0x8a6a3a, object: 'tsuzura', event: 'edojoChest6' },
+  ],
+  exits: [
+    // 玄関から大手門の外（江戸の町）へ
+    { x: 20, y: 31, to: 'edo', toX: 32, toY: 9 },
+    { x: 21, y: 31, to: 'edo', toX: 32, toY: 9 },
+    // 大奥の東の奥から松の廊下へ
+    { x: 35, y: 0, to: 'matsuNoRoka', toX: 2, toY: 21 },
+  ],
+  encounter: 'edojo',
+  respawnMap: 'edo',
+  onEnter: { event: 'edojoEnter', unless: 'edojoEntered' },
+  triggers: [
+    // 大奥への御錠口。御金蔵で金太に会う（okaneguraCleared）までは、両脇のからくりの番兵が押し戻す
+    { x: 20, y: 14, event: 'jouguchi', unless: 'okaneguraCleared' },
+    // 御金蔵への 1 マスの口で、金蔵を守るからくりが待つ（勝つと金太が現れる）
+    { x: 11, y: 22, event: 'okanegura', unless: 'okaneguraCleared' },
+    // 松の廊下への細い口で、大奥の化け猫が待つ（勝つと火消しが駆けつける）
+    { x: 35, y: 5, event: 'ookuBakeneko', unless: 'ookuCleared' },
+  ],
+};
+
+/**
+ * 終章の松の廊下と将軍の間。西の休息の間（榊兵庫・金太）から松の廊下を東へ。廊下の中ほどで鬼塚典膳が待ち、
+ * 東の廊下と溜の間を抜けた北の口で鷲尾が待つ。奥の上座に将軍の影武者。
+ */
+MAPS.matsuNoRoka = {
+  id: 'matsuNoRoka',
+  tileset: 'castle',
+  name: '松の廊下',
+  areaLevel: 28,
+  rows: [
+    'WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW',
+    'WWWW____________________________WWWW',
+    'WWWW____________________________WWWW',
+    'WWWW____________________________WWWW',
+    'WWWW__WW____________________WW__WWWW',
+    'WWWW____________________________WWWW',
+    'WWWW__WW____________________WW__WWWW',
+    'WWWW____________________________WWWW',
+    'WWWWWWWWWWWWWWWWW__WWWWWWWWWWWWWWWWW',
+    'WWWWWWWWWWWWWWWWW__WWWWWWWWWWWWWWWWW',
+    'W______WWWWWWWWWW__WWWWWWWWWWWWWWWWW',
+    'W______WWWWWWWWWW__________________W',
+    'W______WWWWWWWWWW__________________W',
+    'W______WWWWWWWWWWWWWWWWWWWWWWWW____W',
+    'W______WWWWWWWWWWWWWWWWWWWWWWWW____W',
+    'WWW__WWWWWWWWWWWWWWWWWWWWWWWWWW____W',
+    'WWW__WWWWWWWWWWWWWWWWWWWWWWWWWW____W',
+    'WWW__WWWWWWWWWWWWWWWWWWWWWWWWWW____W',
+    'W__________________________________W',
+    'W__________________________________W',
+    'W___WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW',
+    'W___WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW',
+    'W___WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW',
+    'W_WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW',
+  ],
+  npcs: [
+    {
+      id: 'hyogoRoka',
+      name: '榊兵庫',
+      x: 2,
+      y: 11,
+      color: 0x2a3a5a,
+      sprite: 'hyogo',
+      event: 'hyogoRoka',
+      showFlag: 'matsuEntered',
+    },
+    {
+      id: 'kintaRoka',
+      name: '金太',
+      x: 5,
+      y: 11,
+      color: 0xc04a3a,
+      sprite: 'kinta',
+      lines: ['金太「文なら、おいらの凧で飛脚に届けてやるよ！ 記録を残していきな」'],
+      action: 'hikyaku',
+    },
+    {
+      id: 'tenzenRoka',
+      name: '鬼塚典膳',
+      x: 22,
+      y: 18,
+      color: 0x2a1a1a,
+      sprite: 'tenzen',
+      facing: 'left',
+      lines: ['典膳「……」'],
+      hideFlag: 'tenzenDefeated',
+    },
+    {
+      id: 'washioZa',
+      name: '鷲尾',
+      x: 18,
+      y: 3,
+      color: 0x6a1a2a,
+      sprite: 'washio',
+      lines: ['鷲尾「……」'],
+      hideFlag: 'washioDefeated',
+    },
+    {
+      id: 'kagemushaShogun',
+      name: '上様',
+      x: 17,
+      y: 1,
+      color: 0xc0b080,
+      sprite: 'shogun',
+      lines: ['上座の上様は、まばたきひとつしない。胸の奥で、カチ、カチと歯車の音がする。'],
+      hideFlag: 'washioDefeated',
+    },
+    { id: 'matsuChest1', name: '葛籠', x: 1, y: 10, color: 0x8a6a3a, object: 'tsuzura', event: 'matsuChest1' },
+    { id: 'matsuChest2', name: '葛籠', x: 34, y: 11, color: 0x8a6a3a, object: 'tsuzura', event: 'matsuChest2' },
+  ],
+  exits: [
+    // 入口の階段から大奥へ戻る
+    { x: 1, y: 23, to: 'edojo', toX: 35, toY: 1 },
+  ],
+  encounter: 'edojo',
+  respawnMap: 'edo',
+  onEnter: { event: 'matsuEnter', unless: 'matsuEntered' },
+  triggers: [
+    // 松の廊下の中ほどで、鬼塚典膳が待つ（終章の中ボス）
+    { x: 20, y: 18, event: 'tenzen', unless: 'tenzenDefeated' },
+    { x: 20, y: 19, event: 'tenzen', unless: 'tenzenDefeated' },
+    // 将軍の間の口で、鷲尾が待つ（終章のボス。勝つとからくり大権現、倒すとエンディング）
+    { x: 17, y: 9, event: 'shogunNoMa', unless: 'daigongenDefeated' },
+    { x: 18, y: 9, event: 'shogunNoMa', unless: 'daigongenDefeated' },
+  ],
 };
 
 export type TownAction =

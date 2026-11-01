@@ -658,6 +658,12 @@ export function itemWorks(effect: ItemEffect, target: Combatant): boolean {
   }
 }
 
+/** 1 ターンに動く回数（敵の actionsPerTurn。味方と、指定のない敵は 1）。 */
+export function actionsPerTurn(c: Combatant): number {
+  const n = c.side === 'enemy' && c.enemyId ? (ENEMIES[c.enemyId]?.actionsPerTurn ?? 1) : 1;
+  return Math.max(1, Math.floor(n));
+}
+
 function commandPriority(c: Combatant, command: Command | undefined): number {
   if (c.side !== 'party' || command?.kind !== 'skill') return 0;
   return SKILLS[command.skill]?.priority ? 1 : 0;
@@ -714,8 +720,10 @@ export function resolveTurn(
     }
   }
 
+  // 1 ターンに何度も動く敵（からくり大権現）は、回数分だけ行動順に並べる（それぞれ別に素早さで順番を決める）
   const order = state.combatants
     .filter((c) => isAlive(c) && (c.side === 'enemy' || partyActs))
+    .flatMap((c) => Array.from({ length: actionsPerTurn(c) }, () => c))
     .map((c) => ({ c, init: initiative(c.stats.spd, rng), prio: commandPriority(c, commands[c.key]) }))
     .sort((a, b) => b.prio - a.prio || b.init - a.init)
     .map((x) => x.c);

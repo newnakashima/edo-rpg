@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { BattleScene } from './scenes/BattleScene';
 import { BootScene } from './scenes/BootScene';
 import { CharacterSelectScene } from './scenes/CharacterSelectScene';
+import { EndingScene } from './scenes/EndingScene';
 import { FieldScene } from './scenes/FieldScene';
 import { TitleScene } from './scenes/TitleScene';
 import { getState } from './state';
@@ -28,7 +29,7 @@ const game = new Phaser.Game({
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
   input: { activePointers: 3 },
-  scene: [BootScene, TitleScene, CharacterSelectScene, FieldScene, BattleScene],
+  scene: [BootScene, TitleScene, CharacterSelectScene, FieldScene, BattleScene, EndingScene],
 });
 
 // 動作確認用: 開発サーバーで ?debug を付けて開いたときだけ、コンソールからゲームを触れるようにする

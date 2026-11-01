@@ -1,4 +1,4 @@
-// docs/balance.md の「敵とボスの一覧」。章を実装するごとに、その地域の敵を足す（今は序章〜第 8 章）。
+// docs/balance.md の「敵とボスの一覧」。章を実装するごとに、その地域の敵を足す（今は序章〜終章）。
 import type { EnemyFactors } from '../systems/stats';
 import type { Element } from './skills';
 
@@ -25,6 +25,8 @@ export interface EnemyDef {
   actions?: EnemyAction[];
   /** ボスの経験値とお金の倍率（docs/balance.md の「ボス」）。省くと 1（雑魚敵）。 */
   rewardScale?: number;
+  /** 1 ターンに動く回数（終章のからくり大権現は 2）。省くと 1。 */
+  actionsPerTurn?: number;
 }
 
 /** 敵の画像のテクスチャのキー。 */
@@ -909,6 +911,100 @@ export const ENEMIES: Record<string, EnemyDef> = {
     ],
     rewardScale: 6,
   },
+  // 江戸城（終章）。docs/balance.md の「江戸城」
+  karakuriOniwaban: {
+    id: 'karakuriOniwaban',
+    name: 'からくり御庭番',
+    color: 0x3a5a4a,
+    image: true,
+    factors: { hp: 1.0, atk: 1.4, def: 1.2, spd: 1.4 },
+    weak: ['mech'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'kusariFundo', weight: 1 },
+    ],
+  },
+  ookuBakeneko: {
+    id: 'ookuBakeneko',
+    name: '大奥の化け猫',
+    color: 0xa03a4a,
+    image: true,
+    factors: { hp: 1.0, atk: 1.3, def: 1.0, spd: 1.3 },
+    weak: ['holy'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'nekoKaze', weight: 1 },
+    ],
+  },
+  karakuriHatamoto: {
+    id: 'karakuriHatamoto',
+    name: 'からくり旗本',
+    color: 0x2a2a2a,
+    image: true,
+    factors: { hp: 1.4, atk: 1.4, def: 1.5, spd: 0.9 },
+    weak: ['mech', 'thunder'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'naginataBarai', weight: 1 },
+    ],
+  },
+  /** 表にない追加。鷲尾が呼ぶ近習のからくり（江戸城の出現表にも入れて、5 種類以上にする）。 */
+  karakuriKinju: {
+    id: 'karakuriKinju',
+    name: 'からくり近習',
+    color: 0x9a8aaa,
+    image: true,
+    factors: { hp: 0.9, atk: 1.2, def: 1.2, spd: 1.2 },
+    weak: ['mech', 'thunder'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'kinjuGiri', weight: 1 },
+    ],
+  },
+  /** 終章の中ボス。鷲尾の腹心の旗本。松の廊下で居合と燕返しを使う。 */
+  onizukaTenzen: {
+    id: 'onizukaTenzen',
+    name: '鬼塚典膳',
+    color: 0x2a1a1a,
+    image: true,
+    factors: { hp: 12, atk: 1.15, def: 1.2, spd: 1.2 },
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'tenzenIai', weight: 2 },
+      { skill: 'tenzenTsubame', weight: 1 },
+    ],
+    rewardScale: 4,
+  },
+  /** 終章のボス（1 戦目）。老中の威光（全体・攻撃↓）と、からくり近習を呼ぶ。 */
+  washio: {
+    id: 'washio',
+    name: '鷲尾但馬守宗衡',
+    color: 0x6a1a2a,
+    image: true,
+    factors: { hp: 12, atk: 1.1, def: 1.2, spd: 1.0 },
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'roju', weight: 1 },
+      { skill: 'kinjuYobi', weight: 1 },
+    ],
+    rewardScale: 6,
+  },
+  /** 終章のボス（最終形態）。鷲尾が将軍の影武者のからくりと一つになった姿。1 ターンに 2 回動き、権現砲（全体）と魂のゼンマイ（回復）を使う。 */
+  karakuriDaigongen: {
+    id: 'karakuriDaigongen',
+    name: 'からくり大権現',
+    color: 0xc0a040,
+    image: true,
+    factors: { hp: 10, atk: 0.8, def: 1.3, spd: 1.1 },
+    weak: ['mech', 'holy'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'gongenHo', weight: 2 },
+      { skill: 'tamaZenmai', weight: 1 },
+    ],
+    actionsPerTurn: 2,
+    rewardScale: 6,
+  },
 };
 
 export interface EnemyGroup {
@@ -1161,6 +1257,20 @@ const EDO: EncounterTable = {
   ],
 };
 
+/** 江戸城（本丸御殿・松の廊下）の敵の組。御殿を守るからくりと、大奥に巣くう化け猫・怨霊。 */
+const EDOJO: EncounterTable = {
+  level: 28,
+  groups: [
+    { members: ['karakuriOniwaban', 'karakuriOniwaban'], weight: 2 },
+    { members: ['ookuBakeneko', 'onryo'], weight: 2 },
+    { members: ['karakuriHatamoto', 'karakuriKinju'], weight: 2 },
+    { members: ['karakuriKinju', 'karakuriKinju', 'karakuriOniwaban'], weight: 2 },
+    { members: ['ookuBakeneko', 'ookuBakeneko', 'onryo'], weight: 1 },
+    { members: ['karakuriHatamoto', 'karakuriOniwaban', 'karakuriKinju'], weight: 1 },
+    { members: ['karakuriOniwaban', 'ookuBakeneko', 'karakuriKinju', 'onryo'], weight: 1 },
+  ],
+};
+
 export const ENCOUNTERS: Record<string, EncounterTable> = {
   /** 清水湊の裏山。 */
   urayama: PROLOGUE,
@@ -1194,4 +1304,6 @@ export const ENCOUNTERS: Record<string, EncounterTable> = {
   oshu: OSHU,
   /** 江戸の大火の町。 */
   edo: EDO,
+  /** 江戸城の本丸御殿と松の廊下。 */
+  edojo: EDOJO,
 };
