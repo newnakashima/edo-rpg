@@ -13,10 +13,11 @@
       /* 仮想パッド: タッチ操作の端末でだけ出す */
       #pad { display: none; }
       @media (pointer: coarse) {
-        #pad { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px calc(16px + env(safe-area-inset-bottom)); height: 150px; box-sizing: border-box; }
+        /* 高さは上下の余白 12px・16px と十字キーの 128px、下のセーフエリア（ノッチ付きの端末）を足したもの。十字キーがゲーム画面に重ならない */
+        #pad { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px calc(16px + env(safe-area-inset-bottom)); height: calc(156px + env(safe-area-inset-bottom)); box-sizing: border-box; }
         /* 横持ちでは画面の左右に重ねる */
         @media (orientation: landscape) {
-          #pad { position: fixed; inset: auto 0 0 0; background: none; pointer-events: none; height: 140px; }
+          #pad { position: fixed; inset: auto 0 0 0; background: none; pointer-events: none; }
           #pad > * { pointer-events: auto; opacity: 0.55; }
         }
       }

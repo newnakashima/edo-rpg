@@ -29,6 +29,7 @@ export const TITLE_SKY_BAND = { top: 8, bottom: 55 } as const;
  * 仮想パッド（index.html の #pad。DOM の要素の背景に CSS で敷く）の画像の一辺と、表示する倍率。
  * 十字キーは 1 枚の絵の上に、上下左右の押せる区画（3 × 3 の格子の上・左・右・下）を重ねる。
  * 決定・取消は同じ形の丸い漆塗りのボタンの色違い（朱・藍）で、中央の無地の面に HTML の文字を重ねる。
+ * CSS は index.html に直接書いているので、ここの値はその仕様値で、画像と CSS が合うことをテストで確かめる。
  */
 export const PAD_DPAD_IMAGE_SIZE = 64;
 export const PAD_BUTTON_IMAGE_SIZE = 32;

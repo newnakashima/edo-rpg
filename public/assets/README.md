@@ -440,7 +440,7 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 
 ## UI（`ui/`）
 
-`create_image_pixflux` で作り、Pillow で仕上げた。表示は `src/ui/uiImages.ts`（大きさ・分割）と `src/ui/widgets.ts`（`drawWindow`・`Menu` のカーソル）、タイトルの背景は `src/scenes/TitleScene.ts`、仮想パッドは `index.html` の CSS（DOM の要素の背景。大きさと倍率は `uiImages.ts` の `PAD_*`）。
+`create_image_pixflux` で作り、Pillow で仕上げた。表示は `src/ui/uiImages.ts`（大きさ・分割）と `src/ui/widgets.ts`（`drawWindow`・`Menu` のカーソル）、タイトルの背景は `src/scenes/TitleScene.ts`、仮想パッドは `index.html` の CSS（DOM の要素の背景。大きさと倍率は CSS に直接書き、`uiImages.ts` の `PAD_*` の仕様値と合うことをテストで確かめる）。
 
 | ファイル | 大きさ | 使い方 |
 | --- | --- | --- |
@@ -475,5 +475,5 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 - 十字キー: 1 回目（ジョブ da023c60-ca3e-4eb5-a688-932b1244288b。64 × 64、no_background、黒の 1px 輪郭、basic shading、medium detail、text_guidance_scale 10、init_image_strength 250）を採用。Pillow で描いた十字（墨の輪郭・金の縁・黒漆の地・生成りの三角）の下絵を init_image にした。プロンプト: pixel art game controller directional pad (d-pad) button for a Japanese Edo period RPG, cross shape seen from the front, black urushi lacquer surface with subtle shine, thin gold metal rim around the cross, four cream triangle arrows pointing outward (up, down, left, right), small round gold rivet in the center, clean black outline, perfectly symmetric, no text
 - 丸いボタン: 1 回目（ジョブ dbe1fb00-1b71-4897-a164-d7178302512a。32 × 32、no_background、黒の 1px 輪郭、basic shading、low detail、text_guidance_scale 10、init_image_strength 250）を採用。Pillow で描いた円（墨・金・朱）の下絵を init_image にした。プロンプト: pixel art round game button for a Japanese Edo period RPG, a circle of glossy red vermilion urushi lacquer with a thin gold metal rim, plain flat empty center with no symbol, subtle highlight at the top left, clean black outline, symmetric, no text
 - 仕上げ: ボタンの朱の面にあった近い 2 色（172,55,46 と 176,55,48）を 1 色にそろえて button_ok.png に。同じ面を藍（46,64,112）に塗り替えて button_cancel.png にした（形・縁は同じ）
-- 判定（どちらも 1 回目ですべて ○）: 十字キーは十字の形で四隅が透過・4 本の腕に外向きの矢印・黒漆の地に金の縁と生成りの矢印・黒の輪郭で左右対称・文字なし。ボタンは円の外が透過・中央が無地の面・朱の漆に金の縁・黒の輪郭で左右対称・文字や模様なし。ゲーム画面（縦持ち 390 × 844、横持ち 844 × 390 のタッチ端末）で、暗い背景の上で読め、押した腕が金色に光ることを確かめた
+- 判定（どちらも 1 回目ですべて ○）: 十字キーは十字の形で四隅が透過・4 本の腕に外向きの矢印・黒漆の地に金の縁と生成りの矢印・黒の輪郭で左右対称・文字なし。ボタンは円の外が透過・中央が無地の面・朱の漆に金の縁・黒の輪郭で左右対称・文字や模様なし。ゲーム画面（縦持ち 390 × 844、横持ち 844 × 390 のタッチ端末。下のセーフエリアなし）で、暗い背景の上で読め、押した腕が金色に光ることを確かめた。十字キーが 128 px になったので、縦持ちのパッドの高さを余白と十字キーと下のセーフエリアの和にした（ゲーム画面に重ならない）
 - 形の決まった UI は、カーソル・タイトルと同じく下絵を init_image に渡すと 1 回で形が保たれた
