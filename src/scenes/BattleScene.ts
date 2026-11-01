@@ -25,6 +25,7 @@ import { defaultRng } from '../systems/random';
 import { getState, reportBattleOutcome, setState } from '../state';
 import { Controls } from '../ui/input';
 import { COLORS, GAME_HEIGHT, GAME_WIDTH, setupCamera, textStyle } from '../ui/theme';
+import { itemIcon, SKILL_ICON } from '../ui/icons';
 import { drawWindow, Menu, menuHeight, MessageWindow, type MenuItem } from '../ui/widgets';
 
 export interface BattleData {
@@ -227,7 +228,7 @@ export class BattleScene extends Phaser.Scene {
     if (!actor) return;
     const skills = actor.skills.map((id) => SKILLS[id]).filter((s) => s !== undefined);
     this.openMenu(
-      skills.map((s) => ({ label: s.name, note: String(s.mp), enabled: actor.mp >= s.mp })),
+      skills.map((s) => ({ label: s.name, note: String(s.mp), enabled: actor.mp >= s.mp, icon: SKILL_ICON })),
       SUB_X,
       SUB_W,
       (i) => {
@@ -254,7 +255,7 @@ export class BattleScene extends Phaser.Scene {
     this.openMenu(
       ids.map((id) => {
         const n = availableItemCount(this.battle, id, this.commands);
-        return { label: ITEMS[id]?.name ?? id, note: `×${n}`, enabled: n > 0 };
+        return { label: ITEMS[id]?.name ?? id, note: `×${n}`, enabled: n > 0, icon: itemIcon(id) };
       }),
       SUB_X,
       SUB_W,

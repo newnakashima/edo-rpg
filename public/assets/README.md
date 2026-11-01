@@ -448,6 +448,7 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 | cursor.png | 32 × 32 | メニューのカーソル（右を向いた扇子）。1/3 に縮めて表示する（内部解像度で約 11 px、実際のキャンバスで元の 1 ドットが 1 px） |
 | title.png | 384 × 216 | タイトル画面の背景（夜明けの富士と、松並木の街道）。画面と同じ大きさで、そのまま敷く。題字・副題の y 8〜55（`TITLE_SKY_BAND`）は無地の藍の空 |
 | dpad.png | 64 × 64 | 仮想パッドの十字キー。2 倍（128 × 128）で表示し、上に上下左右の押せる区画（3 × 3 の格子）を重ねる。黒漆の地・金の縁・生成りの三角の矢印 |
+| icons.png | 320 × 32 | メニューのアイコン。32 × 32 のコマを `ICON_NAMES` の順（刀・鉄砲・錫杖・手裏剣・胴・薬包・団子・巻物・お守り・文銭）に横に並べた 1 枚。カーソルと同じく 1/3 で表示する。どれを出すかは `src/ui/icons.ts` |
 | button_ok.png・button_cancel.png | 32 × 32 | 仮想パッドの決定（朱）・取消（藍）。2 倍（64 × 64）で表示し、中央の無地の面（半径 9 px）に HTML の文字を重ねる。金の縁・黒の輪郭 |
 
 ### ウィンドウ枠（`ui/window.png`）
@@ -477,3 +478,22 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 - 仕上げ: ボタンの朱の面にあった近い 2 色（172,55,46 と 176,55,48）を 1 色にそろえて button_ok.png に。同じ面を藍（46,64,112）に塗り替えて button_cancel.png にした（形・縁は同じ）
 - 判定（どちらも 1 回目ですべて ○）: 十字キーは十字の形で四隅が透過・4 本の腕に外向きの矢印・黒漆の地に金の縁と生成りの矢印・黒の輪郭で左右対称・文字なし。ボタンは円の外が透過・中央が無地の面・朱の漆に金の縁・黒の輪郭で左右対称・文字や模様なし。ゲーム画面（縦持ち 390 × 844、横持ち 844 × 390 のタッチ端末。下のセーフエリアなし）で、暗い背景の上で読め、押した腕が金色に光ることを確かめた。十字キーが 128 px になったので、縦持ちのパッドの高さを余白と十字キーと下のセーフエリアの和にした（ゲーム画面に重ならない）
 - 形の決まった UI は、カーソル・タイトルと同じく下絵を init_image に渡すと 1 回で形が保たれた
+
+### アイコン（`ui/icons.png`）
+
+- 10 個とも `create_image_pixflux`（32 × 32、no_background、single color black outline、text_guidance_scale 10、init_image_strength 250）で、Pillow で描いた下絵を init_image にした。できた 10 枚を Pillow で横に並べて 1 枚にした（絵には手を入れていない）
+- 共通の項目: 32 × 32 で背景が透過 [必須]／何の絵か一目で分かる [必須]／縁に 1 px 以上の余白があり輪郭が切れない [必須]／1/3 に縮めた約 11 px でも形が読め、ほかの 9 個と見分けがつく [必須]／黒の 1px 輪郭／藍・朱・墨・生成り・金の落ち着いた配色
+- 採用（すべての項目が ○）:
+  - 刀 1 回目（2309f2fe-4872-4753-9eb4-9873876b6503）: Japanese katana in its indigo lacquered scabbard, diagonal from bottom-left to top-right, round gold tsuba guard, ivory wrapped handle
+  - 鉄砲 1 回目（41f67754-141c-4cb0-9ce8-77ed838b297c）: Japanese matchlock musket (tanegashima), long dark iron barrel and brown wooden stock, diagonal
+  - 錫杖 1 回目（6055b8f0-7529-496e-880c-f83b9c29ff7e）: Buddhist monk's staff (shakujo), long brown wooden pole diagonal, gold metal ring loop at the top end with small gold rings
+  - 手裏剣 1 回目（a2d27f37-3992-4a13-93d8-e9c4239e84ed）: steel four-pointed ninja shuriken throwing star, grey metal with a hole in the center
+  - 胴 1 回目（d9f9150d-d3f8-4870-b8e3-619962853946）: Japanese samurai armor chest plate (do), front view, dark indigo lacquered plates laced with red cords in horizontal rows
+  - 薬包 1 回目（2651e59c-dd79-472c-af8f-9508d4d0914e）: folded paper medicine packet, cream washi paper folded into a diamond shape with fold lines, red paper seal label in the middle
+  - 団子 1 回目（08c859eb-d642-43bd-b6a0-93a8dff64b1a）: Japanese hanami dango, three round rice dumplings pink white and green on a wooden skewer, diagonal
+  - 巻物 2 回目（a290dd22-e904-4472-bc02-a2996d72adbd）: rolled-up Japanese paper scroll (makimono), closed cream paper cylinder lying diagonally, spiral paper end visible at the top right, dark wooden roller knob at the bottom left, tied around the middle with a red cord
+  - お守り 1 回目（8e25e508-4371-470e-8e04-8d93d293ab44）: Japanese omamori charm, small red brocade pouch with gold label panel and a knotted cord loop at the top, front view
+  - 文銭 1 回目（67743f92-4f69-4ffd-a9e5-11e076ca0392）: old Japanese copper mon coin, round bronze coin with a square hole in the center and a raised rim
+  - どのプロンプトも先頭に「pixel art item icon of」、末尾に「clean black outline, whole ... inside the canvas」を付けた
+- 作り直し: 巻物の 1 回目（a3295673）は広げた紙を平たい朱の帯で挟んだ形で、巻物ではなく札に見えた。下絵を「巻いて閉じた筒・渦巻きの端・軸の頭・真ん中の朱の紐」に描き直して 2 回目で採用した
+- ゲーム画面（道具・技・装備の一覧、戦闘の技・道具、所持金の窓）で、文字の行に収まり、カーソルの扇子と重ならず、11 px でも何の絵か分かることを確かめた

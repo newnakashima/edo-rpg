@@ -3,7 +3,7 @@ import { ENEMIES, enemyImageKey } from '../data/enemies';
 import { FACES, faceKey } from '../data/faces';
 import { TILE_KINDS, TILESETS, tileTextureKey, type TilesetId } from '../data/maps';
 import { CHAR_FRAME, CHARACTER_SPRITES, FACINGS, OBJECT_DEFS, OBJECT_SPRITES, objectKey, spriteKey, walkAnimKey, walkFrame, WALK_FPS, WALK_FRAMES } from '../data/sprites';
-import { CURSOR_TEXTURE, TITLE_TEXTURE, WINDOW_IMAGE_SIZE, WINDOW_SLICES, WINDOW_TEXTURE, windowSliceRects } from '../ui/uiImages';
+import { CURSOR_TEXTURE, ICON_IMAGE_SIZE, ICON_TEXTURE, TITLE_TEXTURE, WINDOW_IMAGE_SIZE, WINDOW_SLICES, WINDOW_TEXTURE, windowSliceRects } from '../ui/uiImages';
 
 /**
  * 画像を読み込み、まだ画像のないもの（仮の NPC・画像のない敵）は仮の画像をコードで描いてテクスチャにする。
@@ -32,6 +32,7 @@ export class BootScene extends Phaser.Scene {
     this.load.image(WINDOW_TEXTURE, 'assets/ui/window.png');
     this.load.image(CURSOR_TEXTURE, 'assets/ui/cursor.png');
     this.load.image(TITLE_TEXTURE, 'assets/ui/title.png');
+    this.load.spritesheet(ICON_TEXTURE, 'assets/ui/icons.png', { frameWidth: ICON_IMAGE_SIZE, frameHeight: ICON_IMAGE_SIZE });
   }
 
   create(): void {

@@ -10,7 +10,8 @@ import type { Stats } from '../systems/stats';
 import { getState, setState } from '../state';
 import type { Controls } from './input';
 import { COLORS, GAME_HEIGHT, GAME_WIDTH, textStyle } from './theme';
-import { drawWindow, maxMenuRows, Menu, menuHeight, type MenuItem } from './widgets';
+import { itemIcon, MONEY_ICON, SKILL_ICON, slotIcon } from './icons';
+import { addIcon, drawWindow, maxMenuRows, Menu, MENU_ICON_SPACE, menuHeight, type MenuItem } from './widgets';
 
 const MAIN_X = 8;
 const MAIN_W = 80;
@@ -141,7 +142,7 @@ export class FieldMenu {
       return;
     }
     this.push(
-      ids.map((id) => ({ label: ITEMS[id]?.name ?? id, note: `×${itemCount(state.items, id)}`, enabled: ITEMS[id]?.field ?? false })),
+      ids.map((id) => ({ label: ITEMS[id]?.name ?? id, note: `×${itemCount(state.items, id)}`, enabled: ITEMS[id]?.field ?? false, icon: itemIcon(id) })),
       SUB_X,
       8,
       SUB_W,
@@ -181,7 +182,7 @@ export class FieldMenu {
       return;
     }
     this.push(
-      ids.map((id) => ({ label: SKILLS[id]?.name ?? id, note: String(SKILLS[id]?.mp ?? 0), enabled: member.mp >= (SKILLS[id]?.mp ?? 0) })),
+      ids.map((id) => ({ label: SKILLS[id]?.name ?? id, note: String(SKILLS[id]?.mp ?? 0), enabled: member.mp >= (SKILLS[id]?.mp ?? 0), icon: SKILL_ICON })),
       SUB_X,
       8,
       SUB_W,
@@ -221,7 +222,7 @@ export class FieldMenu {
     this.push(
       EQUIP_SLOTS.map((slot) => {
         const id = member.equip[slot];
-        return { label: SLOT_NAMES[slot], note: id ? itemName(id) : '――' };
+        return { label: SLOT_NAMES[slot], note: id ? itemName(id) : '――', icon: slotIcon(slot, member.id) };
       }),
       SUB_X,
       8,
@@ -245,7 +246,7 @@ export class FieldMenu {
     const before = memberStats(member);
     const depth = this.menus.length;
     this.push(
-      choices.map((id) => (id === null ? { label: 'はずす', enabled: member.equip[slot] !== undefined } : { label: itemName(id), note: `×${itemCount(state.items, id)}` })),
+      choices.map((id) => (id === null ? { label: 'はずす', enabled: member.equip[slot] !== undefined } : { label: itemName(id), note: `×${itemCount(state.items, id)}`, icon: itemIcon(id) })),
       SUB_X + 20,
       20,
       SUB_W,
@@ -319,7 +320,8 @@ export class FieldMenu {
     const lineH = 12;
     const h = Math.min(INFO_Y - 12, 22 + state.party.length * lineH * 3);
     const objs: Phaser.GameObjects.GameObject[] = [drawWindow(this.scene, x, y, w, h)];
-    objs.push(this.scene.add.text(x + 8, y + 6, `所持金 ${state.money} 文`, textStyle(10, COLORS.accent)));
+    objs.push(addIcon(this.scene, x + 8, y + 12, MONEY_ICON));
+    objs.push(this.scene.add.text(x + 8 + MENU_ICON_SPACE, y + 6, `所持金 ${state.money} 文`, textStyle(10, COLORS.accent)));
     state.party.forEach((m, i) => {
       const s = memberStats(m);
       const top = y + 20 + i * lineH * 3;

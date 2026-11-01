@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { CURSOR_IMAGE_SIZE, CURSOR_SCALE, PAD_BUTTON_FACE_RADIUS, PAD_BUTTON_IMAGE_SIZE, PAD_DPAD_IMAGE_SIZE, PAD_IMAGE_SCALE, SUBTITLE_TEXT, TITLE_SKY_BAND, TITLE_TEXT, WINDOW_CORNER, WINDOW_IMAGE_SIZE, windowSliceRects } from './uiImages';
-import { MENU_LINE_HEIGHT } from './widgets';
+import { CURSOR_IMAGE_SIZE, CURSOR_SCALE, ICON_IMAGE_SIZE, ICON_NAMES, ICON_SCALE, iconFrame, PAD_BUTTON_FACE_RADIUS, PAD_BUTTON_IMAGE_SIZE, PAD_DPAD_IMAGE_SIZE, PAD_IMAGE_SCALE, SUBTITLE_TEXT, TITLE_SKY_BAND, TITLE_TEXT, WINDOW_CORNER, WINDOW_IMAGE_SIZE, windowSliceRects } from './uiImages';
+import { MENU_ICON_SPACE, MENU_LABEL_LEFT, MENU_LINE_HEIGHT, menuLabelLeft } from './widgets';
 import { GAME_HEIGHT, GAME_WIDTH } from './theme';
 import indexHtml from '../../index.html?raw';
 
@@ -225,5 +225,46 @@ describe('仮想パッドの画像', () => {
       faces[name] = face;
     }
     expect(faces).toEqual({ button_ok: '176,55,48,255', button_cancel: '46,64,112,255' });
+  });
+});
+
+describe('メニューのアイコンの画像', () => {
+  const url = () => inlined['../../public/assets/ui/icons.png']!;
+
+  it('32 × 32 のコマが ICON_NAMES の数だけ横に並ぶ', () => {
+    expect(pngSize(url())).toEqual({ w: ICON_IMAGE_SIZE * ICON_NAMES.length, h: ICON_IMAGE_SIZE });
+    ICON_NAMES.forEach((name, i) => expect(iconFrame(name)).toBe(i));
+  });
+
+  it('表示したときに 1 行の高さに収まる', () => {
+    expect(ICON_IMAGE_SIZE * ICON_SCALE).toBeLessThan(MENU_LINE_HEIGHT);
+  });
+
+  it('どのコマにも絵があり、縁の 1 px は透明（隣のコマや窓の縁に絵がはみ出さない）', async () => {
+    const px = await decodePng(url());
+    ICON_NAMES.forEach((name, i) => {
+      const left = i * ICON_IMAGE_SIZE;
+      let opaque = 0;
+      for (let y = 0; y < ICON_IMAGE_SIZE; y++) {
+        for (let x = 0; x < ICON_IMAGE_SIZE; x++) {
+          const a = px[y]![left + x]![3]!;
+          if (a > 0) opaque++;
+          const edge = x === 0 || y === 0 || x === ICON_IMAGE_SIZE - 1 || y === ICON_IMAGE_SIZE - 1;
+          if (edge) expect(a, `${name} (${x}, ${y})`).toBe(0);
+        }
+      }
+      expect(opaque, name).toBeGreaterThan(40);
+    });
+  });
+});
+
+describe('アイコンのあるメニューの名前の位置', () => {
+  it('1 行でもアイコンがあれば、全部の行の名前をアイコンの分だけずらす', () => {
+    expect(menuLabelLeft([{ label: 'たたかう' }, { label: 'にげる' }])).toBe(MENU_LABEL_LEFT);
+    expect(menuLabelLeft([{ label: '長脇差', icon: 'katana' }, { label: 'はずす' }])).toBe(MENU_LABEL_LEFT + MENU_ICON_SPACE);
+  });
+
+  it('アイコンは名前の左の空きに収まる', () => {
+    expect(ICON_IMAGE_SIZE * ICON_SCALE).toBeLessThan(MENU_ICON_SPACE);
   });
 });
