@@ -3,6 +3,7 @@ import { ENEMIES, enemyImageKey } from '../data/enemies';
 import { FACES, faceKey } from '../data/faces';
 import { TILE_KINDS, TILESETS, tileTextureKey, type TilesetId } from '../data/maps';
 import { CHAR_FRAME, CHARACTER_SPRITES, FACINGS, OBJECT_DEFS, OBJECT_SPRITES, objectKey, spriteKey, walkAnimKey, walkFrame, WALK_FPS, WALK_FRAMES } from '../data/sprites';
+import { CURSOR_TEXTURE, WINDOW_IMAGE_SIZE, WINDOW_SLICES, WINDOW_TEXTURE, windowSliceRects } from '../ui/uiImages';
 
 /**
  * 画像を読み込み、まだ画像のないもの（仮の NPC・画像のない敵）は仮の画像をコードで描いてテクスチャにする。
@@ -28,9 +29,19 @@ export class BootScene extends Phaser.Scene {
     for (const id of OBJECT_SPRITES) {
       this.load.spritesheet(objectKey(id), `assets/objects/${id}.png`, { frameWidth: OBJECT_DEFS[id].size, frameHeight: OBJECT_DEFS[id].size });
     }
+    this.load.image(WINDOW_TEXTURE, 'assets/ui/window.png');
+    this.load.image(CURSOR_TEXTURE, 'assets/ui/cursor.png');
   }
 
   create(): void {
+    // ウィンドウ枠を 9 分割したフレーム（drawWindow が四隅・辺・中央を並べる）
+    const windowTexture = this.textures.get(WINDOW_TEXTURE);
+    const frames = windowSliceRects(WINDOW_IMAGE_SIZE, WINDOW_IMAGE_SIZE);
+    for (const name of WINDOW_SLICES) {
+      const r = frames[name];
+      windowTexture.add(name, 0, r.x, r.y, r.w, r.h);
+    }
+
     for (const id of CHARACTER_SPRITES) {
       for (const facing of FACINGS) {
         this.anims.create({

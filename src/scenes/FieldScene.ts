@@ -132,7 +132,8 @@ export class FieldScene extends Phaser.Scene {
 
     this.followPlayer();
 
-    this.message = new MessageWindow(this, 8, GAME_HEIGHT - 62, GAME_WIDTH - 16, 54, (page) => {
+    // 高さ 58: 縁 4 の内側 50 に 48 の顔が収まる
+    this.message = new MessageWindow(this, 8, GAME_HEIGHT - 66, GAME_WIDTH - 16, 58, (page) => {
       const face = faceForPage(page);
       return face && faceKey(face);
     });
