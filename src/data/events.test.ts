@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CHARACTERS, type CharacterId } from './characters';
 import { EQUIPMENT } from './equipment';
+import { speakerOf } from './faces';
 import { SHOPS } from './shops';
 import { ENCOUNTERS, ENEMIES } from './enemies';
 import type { EventStep } from './eventTypes';
@@ -1134,7 +1135,7 @@ describe('寄り道の浜松（遠州の凧揚げ合戦）', () => {
       });
     for (const id of ['hamamatsuEnter', 'hamamatsuGenta', 'hamamatsuTako']) {
       for (const line of lines(EVENTS[id]!.steps)) {
-        for (const name of ['霞', '玄道', 'お凛', '榊兵庫']) expect(line.startsWith(`${name}「`), `${id}: ${line}`).toBe(false);
+        for (const name of ['霞', '玄道', 'お凛', '榊兵庫']) expect(speakerOf(line), `${id}: ${line}`).not.toBe(name);
       }
     }
   });
@@ -1221,7 +1222,7 @@ describe('寄り道の彦根（赤備えの具足を探す）', () => {
       });
     for (const id of ['hikoneEnter', 'hikoneJinbei', 'hikoneGusoku']) {
       for (const line of lines(EVENTS[id]!.steps)) {
-        for (const name of ['霞', '玄道', 'お凛', '榊兵庫']) expect(line.startsWith(`${name}「`), `${id}: ${line}`).toBe(false);
+        for (const name of ['霞', '玄道', 'お凛', '榊兵庫']) expect(speakerOf(line), `${id}: ${line}`).not.toBe(name);
       }
     }
   });

@@ -135,7 +135,7 @@ standard の size 24 では笠と合羽が描き分けられないため、主�
 
 ## 顔グラフィック（`faces/`）
 
-会話の窓の左に出す 48 × 48 の顔（`src/data/faces.ts`。台詞の「名前「」の名前から引く）。表情差分はまだない（通常だけ）。
+会話の窓の左に出す 48 × 48 の顔（`src/data/faces.ts`。台詞の「名前「」の名前から引く）。表情差分（怒り・悲しみ）は旅の仲間だけにある（下の「表情差分」）。
 立ち姿のある人は、シートの下向きの立ち姿（40 × 40 の 1 コマ目）を `create_portrait_character`（direction `character_to_portrait`、result_size 48、view `low top-down`）で胸像にした。足りない所は `edit_image`（文での編集）か Pillow で直した。
 立ち姿のない蘭斎は `create_image_pro`（48 × 48、玄道の顔を style_image）で 25 候補を作って選んだ。権六は戦闘の画像（`enemies/gonroku.png`）を胸像にした。
 
@@ -167,6 +167,24 @@ standard の size 24 では笠と合羽が描き分けられないため、主�
 - create_image_pro は候補によって下端に灰色の横線が出る。選ぶときに下端の行を確かめる。
 - shogun の顔の判定（5 回の上限で採用）: 必須の ○ は 2・4・5 回目が 4/5、合計 6/7 で並んだ。2・4 回目は烏帽子が上端で切れて平たい帽子に見え、5 回目は胸が切れる。上様の目印（加賀の殿様との見分け）は縦長の烏帽子なので、5 回目を選んだ。
 - create_image_pro は 48 × 48 の胸像で背の高い帽子を描かせると、「帽子全体を収める」と言っても上端で切る。帽子の高い人物の顔は、Pillow で絵を下げて帽子の上を描き足すほうが早い。
+
+### 表情差分（`faces/<ID>_angry.png`・`faces/<ID>_sad.png`）
+
+旅の仲間（hero_m・hero_f・kasumi・gendo・orin）の通常の顔を `edit_image`（文での編集、48 × 48、背景透過のまま）で怒り・悲しみに変えた。台詞の〈怒〉〈悲〉の印で出す。
+
+要件: 1. [必須] 48 × 48・背景透過　2. [必須] 通常の顔と同じ人物と分かる（髪・笠・服・配色）　3. [必須] 表情が等倍で読める（怒: 眉が内側へ下がり、目つきが鋭く、口を結ぶか歯を食いしばる／悲: 眉の内側が上がり、目を伏せ、口の端が下がる）　4. [必須] 通常の顔と並べて違いが分かる　5. 構図が通常の顔と同じ　6. 暗い色の輪郭・浮いた点がない。霞は 7. [必須] 覆面が口を覆ったまま。
+
+指示の要点: 怒「Change only the facial expression to ANGRY: … eyebrows sharply angled down toward the center in a frown, narrowed fierce glaring eyes, mouth a tight grimace showing clenched teeth. Keep the …, composition and colors exactly the same.」、悲「… SAD: eyebrows raised at the inner ends and slanting down outward, eyes looking down (with a tear), mouth corners turned down …」（服や髪の特徴を「Keep」で人ごとに書く）。
+
+| ID | 採用したもの | 回数 |
+| --- | --- | --- |
+| hero_f_angry・hero_f_sad・gendo_angry・gendo_sad・orin_angry・orin_sad・kasumi_sad | 1 回目の edit_image をそのまま採用（14780ce0・85cff100・8b41db9c・461834e7・cea795be・7eae7395・7e56e1d8） | 1 |
+| hero_m_angry | 1 回目（3292b784）・2 回目（6fb26e8b「two thick black eyebrows forming a sharp V shape …」）とも、笠の影の黒に眉が溶けて見えず、2 回目は口が白い四角になった。3 回目は Pillow で通常の顔の目頭を眉で隠し歯を描いたが、眉はまだ見えなかった。4 回目は Pillow で目の段（23・24 行目）を肌に塗り直し、目を 1 段下げて、その上に外が高く内が低い眉と、食いしばった歯を描いて採用 | 4 |
+| hero_m_sad | 1 回目（9e9e142d）は口が丸く開いて驚いた顔、2 回目（0fa5c41c）は伏し目だけで眉が見えなかった。3 回目は Pillow で伏し目・涙・への字口を描いたが眉がなかった。4 回目は怒りと同じく目の段を塗り直し、内が高く外が低い眉、閉じた伏し目、涙、への字口を描いて採用 | 4 |
+| kasumi_angry | 1 回目（35ce9a05）・2 回目（9f5a5b46）とも通常の顔とほとんど違わなかった（覆面で口がなく、眉の変化が小さい）。3 回目は Pillow で眉を V 字に描き直したが目つきが通常のままだった。4 回目は目頭の白目を消して目を細くして採用 | 4 |
+
+- 笠を深くかぶった主人公（男）は、笠の影で目の上が黒いので、AI の編集では眉が描かれない。目の段を下げて肌の上に眉を描くと読める。
+- 覆面の霞は口で表情を出せないので、眉の傾きと目の細さだけで描き分ける。ほかの人より控えめな違いになる。
 
 ## タイル（`tiles/`）
 
