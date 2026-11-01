@@ -15,8 +15,6 @@ export function setupCamera(scene: Phaser.Scene): Phaser.Cameras.Scene2D.Camera 
 }
 
 export const COLORS = {
-  windowFill: 0x1b1b2f,
-  windowBorder: 0xe8dcc0,
   text: '#f4ecd8',
   dim: '#8a8476',
   accent: '#e8b04a',

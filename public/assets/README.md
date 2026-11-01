@@ -437,3 +437,25 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 - 判定の観点（全物共通）: 説明の主な特徴が見える、背景が透過、見下ろし気味でタイルと矛盾しない、濃い輪郭、落ち着いた配色（出島・研究所の洋物を除く）、32 × 32 に収まり下端が地面、ほかの物と見分けがつく。ゲーム画面で工房・鍵屋の辻・鬼の巣・研究所・原城跡・出島を確かめた
 
 - toro（第 7 章の兼六園の徽軫灯籠）: `create_image_pixflux`（32 × 32、`no_background: true`、黒の 1px 輪郭、low top-down、medium detail）。1 回目（d043095d-010f-4c31-af44-35b4876048e4。Japanese kotoji-toro stone lantern of Kenroku-en garden, grey granite lantern with a wide flat umbrella-shaped roof (kasa) and a square fire box with a window, standing on TWO separate stone legs of different lengths …、text_guidance_scale 11）は脚が 1 本の台座で、火袋の赤い光が目に見えた。2 回目（fb8c0764-5ae6-415b-8ffc-cc3031042408。脚を「TWO thin straight stone legs standing apart」と言い直し、text_guidance_scale 13）も台座で、窓が目に見えた。3 回目は 1 回目の笠と火袋を使い、Pillow で窓を 1 つの黄色い灯りに、脚を長い左脚と石に乗った短い右脚に描き直して採用（計 3 回）
+
+## UI（`ui/`）
+
+`create_image_pixflux` で作り、Pillow で仕上げた。表示は `src/ui/uiImages.ts`（大きさ・分割）と `src/ui/widgets.ts`（`drawWindow`・`Menu` のカーソル）。
+
+| ファイル | 大きさ | 使い方 |
+| --- | --- | --- |
+| window.png | 16 × 16 | ウィンドウ枠。四隅 4 × 4 はそのまま、辺と中央は引き伸ばす（9 分割）。藍の地、縁は外から墨・茶・生成り・墨の 4 px、四隅に金の角金具 |
+| cursor.png | 32 × 32 | メニューのカーソル（右を向いた扇子）。1/3 に縮めて表示する（内部解像度で約 11 px、実際のキャンバスで元の 1 ドットが 1 px） |
+
+### ウィンドウ枠（`ui/window.png`）
+
+- 採用: 2 回目（ジョブ 15df11a5-1880-4c37-8c34-e490052dec61。32 × 32、no_background、flat shading、low detail、黒の 1px 輪郭、text_guidance_scale 14）。プロンプト: simple pixel art RPG menu window frame. Center is ONE flat solid dark navy blue color with no texture and no noise. Border: 1 pixel black outer line, then 2 pixel plain smooth cream line, then 1 pixel dark line, same thickness on all four sides, straight and uniform. Each of the four corners has an identical small gold square metal fitting. Perfectly symmetric.
+- 仕上げ: 2 回目の四隅 4 × 4 だけを残し、縁は 1 本の断面（墨・茶・生成り・墨。下と右は茶と生成りが逆）を辺の全長にそろえ、中央を 1 色にして 16 × 16 に組み直した（9 分割で伸ばしても筋が出ないように）
+- 作り直しの経過（計 4 回）: 1 回目（21def222、64 × 64）は中央がざらつき、縁に斑があり、外の輪郭がなかった。2 回目は中央が 1 色になったが、縁の生成りが 3 色の斑だった。3 回目は Pillow で色をそろえたが、緑がかった点が残った。4 回目は上の仕上げで、すべての項目を満たした
+
+### カーソル（`ui/cursor.png`）
+
+- 採用: 4 回目（ジョブ 4761f787-40aa-44a4-84c5-6d39d972df98。32 × 32、no_background、黒の 1px 輪郭、text_guidance_scale 10、init_image_strength 250）。Pillow で描いた「左に要、右へ開く朱の扇子」の下絵を init_image にした。プロンプト: pixel art cursor icon of an open Japanese folding fan (sensu) lying sideways and opening toward the right, gold pivot rivet at the left, thin brown wooden ribs fanning out, red vermilion paper, clean black outline, entire fan inside the canvas
+- 上限の 5 回で採用したので、残った点がある: 画像は 16 px 以内の要件に対して 32 px（表示は 1/3 に縮めて行に収める）。扇の右の上下が画像の端で切れて輪郭がなく、下の端に黄色の点が 1 つ浮いている
+- 作り直しの経過（計 5 回）: 1 回目（f7cfe551）は扇子らしいが上向きで 28 px と大きかった。2 回目（be71f81a）は右向きの小さな絵を頼んだが、赤い虫のようで扇子に見えなかった。3 回目は 1 回目を右へ回して 16 px に縮めたが、骨が潰れて貝に見えた。4 回目は下絵から清書し、扇子で右向きになった（採用）。5 回目は 4 回目を 16 px に縮めたが、赤い四角に見えた
+- 1 回目から右向きを頼むと崩れやすい。扇子のような形の決まった小物は、下絵を init_image に渡すと形が保たれる
