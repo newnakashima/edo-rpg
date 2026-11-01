@@ -1642,15 +1642,17 @@ describe('寄り道の彦根', () => {
     expect(reachable(hikone, town.to!, {}).size).toBeGreaterThan(900);
   });
 
-  it('盗人と具足櫃は、具足を取り返す（hikoneGusokuFound）と消える。町の人の台詞は取り返す・届ける（hikoneGusokuDone）と変わる', () => {
+  it('盗人と具足櫃は、具足を取り返す（hikoneGusokuFound）と消える。町の人の台詞は取り返す・届ける（hikoneGusokuReturned・hikoneGusokuDone）と変わる', () => {
     for (const id of ['gusokuNusubito', 'gusokuBitsu']) expect(hikone.npcs.find((n) => n.id === id)?.hideFlag, id).toBe('hikoneGusokuFound');
     const want: Record<string, string> = {
-      hikoneTeahouse: 'hikoneGusokuFound',
-      jinbeiDeshi: 'hikoneGusokuFound',
+      hikoneTeahouse: 'hikoneGusokuReturned',
+      jinbeiDeshi: 'hikoneGusokuReturned',
       hikoneKodomo: 'hikoneGusokuFound',
       hikoneRojin: 'hikoneGusokuFound',
       hikoneOkami: 'hikoneGusokuFound',
       hikoneAshigaru: 'hikoneGusokuDone',
+      // 京の鬼の噂は、第 3 章を終えると退治された話に変わる
+      hikoneTabibito: 'chapter3Cleared',
     };
     for (const [id, flag] of Object.entries(want)) expect(hikone.npcs.find((n) => n.id === id)?.after?.flag, id).toBe(flag);
   });

@@ -4557,7 +4557,7 @@ MAPS.hikone = {
       color: 0x6a5a4a,
       sprite: 'npc_ninsoku',
       lines: ['弟子「親方は、朱の漆を何べんも塗り重ねて、赤備えの色を出すんです。……その具足が盗まれちまって、親方は飯も喉を通らねえ」'],
-      after: { flag: 'hikoneGusokuFound', lines: ['弟子「具足が戻ってきて、親方もやっと笑ってくれました。おいらも、いつか赤備えを任される具足師になりてえ」'] },
+      after: { flag: 'hikoneGusokuReturned', lines: ['弟子「具足が戻ってきて、親方もやっと笑ってくれました。おいらも、いつか赤備えを任される具足師になりてえ」'] },
     },
     { id: 'hikoneChest2', name: '葛籠', x: 50, y: 1, color: 0x8a6a3a, object: 'tsuzura', event: 'hikoneChest2' },
     {
@@ -4568,6 +4568,7 @@ MAPS.hikone = {
       color: 0x8a7a6a,
       sprite: 'npc_rojin',
       lines: ['老人「東へ戻れば名古屋、西へ行けば京じゃ。京では夜な夜な鬼が出ると聞く。くわばら、くわばら」'],
+      after: { flag: 'chapter3Cleared', lines: ['老人「東へ戻れば名古屋、西へ行けば京じゃ。京の鬼は、旅の者が退治したそうな。ありがたや、ありがたや」'] },
     },
     // 街道の南の店並び
     {
@@ -4591,7 +4592,7 @@ MAPS.hikone = {
         '茶屋の娘「いらっしゃいませ。多賀さまの門前の糸切餅、召し上がっていってくださいな」',
         '茶屋の娘「甚兵衛さんの工房から、赤備えの具足が盗まれたんですって。具足揃えまで、あと三日しかないのに……」',
       ],
-      after: { flag: 'hikoneGusokuFound', lines: ['茶屋の娘「いらっしゃいませ。赤備えの具足、戻ってきたんですってね！ 具足揃えには、きっと間に合いますね」'] },
+      after: { flag: 'hikoneGusokuReturned', lines: ['茶屋の娘「いらっしゃいませ。赤備えの具足、戻ってきたんですってね！ 具足揃えには、きっと間に合いますね」'] },
       action: 'teahouse',
     },
     {
