@@ -10,7 +10,7 @@ import { memberLevel } from '../systems/party';
 import { defaultRng } from '../systems/random';
 import { playBgm } from '../systems/audio';
 import { browserStorage } from '../systems/save';
-import { getState, setPendingEvent, setState, shouldRunEnterEvent, takePendingEvent } from '../state';
+import { getState, holdEventWhileAway, setState, shouldRunEnterEvent, takePendingEvent } from '../state';
 import { EVENTS } from '../data/events';
 import { CHAR_DISPLAY_ORIGIN, heroSprite, idleFrame, objectDepth, objectDisplayOrigin, objectKey, oppositeFacing, personDepth, shouldStandStill, spriteKey, walkAnimKey, walkDepthRow, type CharacterSpriteId } from '../data/sprites';
 import { EventRunner, type EventInput } from '../systems/eventScript';
@@ -197,7 +197,7 @@ export class FieldScene extends Phaser.Scene {
       }
       case 'battle':
         // 戦闘から戻ってきたフィールドが続きを行う。まだ行っていない onEnter があれば（warp の直後など）、戻ったあとに行う
-        setPendingEvent({ runner, fromMapId, enterPending: this.enterPending });
+        holdEventWhileAway(runner, fromMapId, this.enterPending);
         this.runner = null;
         this.moving = true;
         this.standStill();
@@ -207,7 +207,7 @@ export class FieldScene extends Phaser.Scene {
         );
         return;
       case 'warp':
-        setPendingEvent({ runner, fromMapId, enterPending: this.enterPending });
+        holdEventWhileAway(runner, fromMapId, this.enterPending);
         this.runner = null;
         this.moving = true;
         this.standStill();

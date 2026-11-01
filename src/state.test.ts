@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { reportBattleOutcome, setPendingEvent, shouldRunEnterEvent, takePendingEvent } from './state';
+import { holdEventWhileAway, reportBattleOutcome, setPendingEvent, shouldRunEnterEvent, takePendingEvent } from './state';
 import { EventRunner } from './systems/eventScript';
 
 describe('途中のイベントを預かる', () => {
@@ -45,5 +45,24 @@ describe('フィールドに来たとき、マップに入ったときのイベ�
   it('warp で来たマップのイベントの続きで戦闘に入り、同じマップに戻ったときも行う（enterPending を引き継ぐ）', () => {
     // warp の先で戦闘に入ると fromMapId は移動先のマップになる。まだ onEnter を行っていないことを enterPending で覚えている
     expect(shouldRunEnterEvent('kanazawa', pending('kanazawa', true))).toBe(true);
+  });
+
+  it('warp で来て、イベントの続きの戦闘から戻ったあとも行う（離れるときに預け、戻ったときに取り出す往復）', () => {
+    const runner = new EventRunner([]);
+    // 北前船（kitamaebune）から warp で金沢（kanazawa）へ。移動先のフィールドはまだ onEnter を行っていない
+    holdEventWhileAway(runner, 'kitamaebune', false);
+    const arrived = shouldRunEnterEvent('kanazawa', takePendingEvent());
+    expect(arrived).toBe(true);
+    // 金沢でイベントの続きの戦闘に入る。離れるマップも戻るマップも金沢
+    holdEventWhileAway(runner, 'kanazawa', arrived);
+    reportBattleOutcome('victory');
+    const back = takePendingEvent();
+    expect(back).toMatchObject({ runner, fromMapId: 'kanazawa', enterPending: true, resume: { kind: 'battle', outcome: 'victory' } });
+    expect(shouldRunEnterEvent('kanazawa', back)).toBe(true);
+  });
+
+  it('onEnter を行ったあとの戦闘から同じマップに戻ったときは、もう行わない', () => {
+    holdEventWhileAway(new EventRunner([]), 'kanazawa', false);
+    expect(shouldRunEnterEvent('kanazawa', takePendingEvent())).toBe(false);
   });
 });

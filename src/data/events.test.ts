@@ -962,7 +962,6 @@ describe('終章の流れ', () => {
   });
 });
 
-
 describe('寄り道の会津若松（什の掟を守る少年たち）', () => {
   const base = newGame('f', { mapId: 'aizu', x: 50, y: 13 });
   const heard = {

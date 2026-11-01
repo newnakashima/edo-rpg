@@ -36,6 +36,15 @@ export function setPendingEvent(p: PendingEvent | null): void {
 }
 
 /**
+ * 戦闘や warp でフィールドを離れる間、途中のイベントを預ける。
+ * enterPending には、離れるフィールドがまだ行っていない onEnter があるか（FieldScene の enterPending）をそのまま渡す。
+ * warp で来たマップのイベントの続きで戦闘に入ったとき、戻ったあとに onEnter を行えるように引き継ぐため。
+ */
+export function holdEventWhileAway(runner: EventRunner, fromMapId: string, enterPending: boolean): void {
+  setPendingEvent({ runner, fromMapId, enterPending });
+}
+
+/**
  * フィールドに来たとき、そのマップに入ったときのイベント（onEnter）を、途中のイベントのあとに行うか。
  * pending: 預かっていたイベント。dataFromMapId: 戦闘から戻ったとき、戦闘を始めたマップ（イベントの外の戦闘）。
  * どちらもなければ（始めたとき・読み込んだとき）行う。
