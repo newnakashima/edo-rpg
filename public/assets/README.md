@@ -46,7 +46,7 @@ standard の size 24 では笠と合羽が描き分けられないため、主�
 
 - borei: 1 回目（bcc58de0-6585-449d-830f-d487ee996aac。white triangular cloth headband）は額の布がただの白い鉢巻きになり、三角に見えなかった。2 回目は「a small white TRIANGLE of cloth … pointing up in the middle of the forehead」と形と位置を言い、採用
 
-### 物語の専用の人物（`chars/hyogo.png`・`kinta.png`・`sakon.png`・`kagaTono.png`）
+### 物語の専用の人物（`chars/hyogo.png`・`kinta.png`・`sakon.png`・`kagaTono.png`・`kokichi.png`）
 
 町の人の類型で代えていた主要な人物に、専用の立ち姿を作った（`src/data/sprites.ts` の `STORY_SPRITES`）。設定は敵方の人物と同じ（mode `v3`、size 28、黒の 1px 輪郭、medium detail、low top-down。歩行は作らず `scripts/pack_character.py` で立ち姿を並べる）。
 
@@ -55,6 +55,7 @@ standard の size 24 では笠と合羽が描き分けられないため、主�
 | hyogo（榊兵庫） | 1c362666-f9d5-4126-83af-4946e2962ec5 | chibi Edo period Japanese former police samurai (yoriki) in his thirties, black hair in a neat topknot (chonmage), stern calm face, dark navy blue haori jacket with a small white family crest on the chest, grey striped hakama trousers, two swords (katana and wakizashi) at his left hip, white tabi socks and straw sandals | 2 |
 | kinta（金太） | 8b2e2a4f-981a-4568-9b48-e2d38dfc0f36 | chibi Edo period Japanese young acrobat performer (karuwazashi), cheerful young man with short spiky black hair and a red twisted headband (hachimaki), bright red and yellow checkered short performer jacket, black tight leggings, bare feet in straw sandals, a small diamond-shaped paper kite tied on his back | 1 |
 | sakon（長瀬左近） | be96b965-6e9d-4865-b91f-69fa21704dcd | chibi Edo period Japanese elderly loyal retainer samurai, old man with white hair in a small topknot and white eyebrows, slightly bent back, formal kamishimo: dark navy stiff winged shoulder vest over a pale grey kimono and navy hakama, a short wakizashi sword at his hip, straw sandals | 3 |
+| kokichi（鼠の小吉、第 8 章） | 6dc9d10d-0639-491d-95f3-24920551c42f | chibi Edo period Japanese gentleman thief (nezumi kozo), young slim man with a dark blue tenugui cloth covering his head and tied in a knot under his nose (hokkamuri), sly friendly grin, dark navy short kimono tucked up at the hem showing his legs, black tight leggings, straw sandals, a small dark green furoshiki cloth bundle tied on his back | 1 |
 | kagaTono（加賀の殿様） | 13d55f69-7426-433a-b527-b7024dffda52 | chibi Edo period Japanese daimyo lord, thin pale young man with black hair in a topknot, wearing luxurious deep purple formal robes with gold crest patterns and very long trailing purple hakama, white undercollar, dignified tired face, no weapons | 1 |
 
 - hyogo: 1 回目は胸の家紋が見えなかった。2 回目は Pillow で羽織の左右の胸に白い家紋を描き足して採用（計 2 回）
@@ -85,6 +86,7 @@ standard の size 24 では笠と合羽が描き分けられないため、主�
 | npc_ninsoku | 8aa11a08-f15b-49fb-9916-e12d5155b2a8 | 人足・木こり・農夫・木戸番など | Edo period Japanese laborer (ninsoku), burly tanned man with a twisted rope headband, short red-brown hanten work coat, tight black work pants, straw sandals | 1 |
 | npc_maiko | a47b22eb-883b-4f81-a4f4-465a4819ab3a | 舞妓 | Kyoto maiko girl, white painted face, red lips, black hair in an elaborate bun with colorful flower kanzashi hairpins, bright red and orange patterned kimono, long hanging darari obi sash at the back | 1 |
 | npc_oranda | 87355f1f-b899-4cea-83a4-86800bd01819 | カピタン・商館の医者 | 17th century Dutch merchant man, blond hair, wide black hat, black coat with a big white collar, knee breeches and stockings, buckled shoes | 1 |
+| npc_hikeshi | 670374f6-219a-447f-ada4-4acbe581c003 | 火消し・火消しの頭（第 8 章） | Edo period Japanese town firefighter (machi-bikeshi), man with a white twisted headband (hachimaki), dark navy blue happi coat with red trim and a white emblem, tight black work pants, straw sandals, holding a long wooden fire hook pole (tobiguchi) upright with an iron hook at the top（左右の向きの鳶口を Pillow で描き足した） | 2 |
 | npc_tojin | 88c641f1-2ac4-4acd-a590-58088020b48d | 唐人の商人 | Qing dynasty Chinese trader, front of head shaved bald, one very long black braided pigtail queue hanging down his back to his waist, small round black skullcap, long dark blue silk robe, thin long mustache（text_guidance_scale 11） | 2 |
 
 作り直しの記録:
@@ -94,6 +96,7 @@ standard の size 24 では笠と合羽が描き分けられないため、主�
 - 唐人: 1 回目は弁髪が見えなかった。2 回目で「very long braided pigtail queue hanging down his back」で採用（計 2 回）。
 - 飛脚: 1 回目は現代風の帽子で棒がなく、2 回目は文箱を手に提げ、3 回目も棒を担がなかった。4 回目で棒を肩に担いだが先の文箱が出なかった。5 回目は 4 回目の 4 方向に Pillow で文箱（と横向きの棒）を描き足して採用（計 5 回）。上限で採用したため、小さく見ると文箱が棒の先の旗のようにも見える点が残る。
 - ほかの 15 類型は 1 回目で採用。
+- 火消し（第 8 章で足した類型）: 1 回目は左右の向きで鳶口が消えた。2 回目は左右の向きに Pillow で柄と先の鉤を描き足して採用（計 2 回）。
 
 ## 顔グラフィック（`faces/`）
 
@@ -118,6 +121,7 @@ standard の size 24 では笠と合羽が描き分けられないため、主�
 | gonroku | enemies/gonroku.png | 1 回目・2 回目（edit_image「long pale scar running diagonally across his left cheek」）とも頬の傷が見分けられなかった。3 回目は Pillow で左の頬に斜めの傷を描いて採用 | 3 |
 | ranzai | （なし） | create_image_pro「elderly Edo period Japanese Dutch-studies scholar … small round wire-rimmed glasses, grey-streaked black hair combed straight back and tied at the back of the head … dark brown haori jacket over a dull green kimono」の 25 候補のうち、丸眼鏡があり下端に線の出ていない 12 番を採用 | 1 |
 | sakon | chars/sakon.png | 1 回目は肩衣が棘のある鎧になった。2 回目は edit_image「a stiff flat dark navy shoulder vest whose shoulders stick straight out sideways like wide flat wings … small white topknot」で採用 | 2 |
+| kokichi | chars/kokichi.png | 1 回目は頬かむりの布で口が隠れた。2 回目は edit_image「pull the dark blue cloth mask down below his chin so his whole lower face is visible: nose, a sly friendly grinning mouth … Keep the dark blue cloth covering the top of his head」で採用（create_portrait_character a6820274-b57a-4553-8f06-4dee9d64e010 → edit_image e00866d1-78eb-43d1-9924-54a75e23ea73） | 2 |
 | kagaTono | chars/kagaTono.png | 1 回目は髪が紫で、肩章とネクタイの洋装になった。2 回目は edit_image「jet black hair tied in a neat topknot, … traditional deep purple kimono and haori with small gold family crests … Remove the gold epaulettes and the necktie」で直ったが、耳に金の耳飾りのような点が出た。3 回目は Pillow でその点を消して採用 | 3 |
 
 - create_portrait_character は顔の細部（目の色の左右差、浮いた点、耳飾り）がときどき崩れるので、8 倍に拡大して確かめる。
@@ -144,6 +148,7 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 | --- | --- | --- |
 | 19748264-c606-43e1-a041-9d37a6593518 | 1). snow covered ground … 2). snow covered lawn … 3). trodden snowy road … 4). snow covered dark green pine tree … 5). snow covered dark grey kawara roof tiles … 6). grey boulder rock with white snow on top … 7). wooden ship deck … 8). ship hull rail … 9). straw rice bales (tawara) stacked as ship cargo … 10). tatami mat floor … 11). shoji paper sliding wall … | 0 → snow/ground、1 → snow/grass、2 → snow/road、3 → snow/tree、4 → snow/roof、5 → snow/rock、6 → ship/floor、7 → ship/wall、8 → ship/roof、9 → interior/floor、10 → interior/wall |
 | ef84a959-510b-4d63-9ecd-9cc487ffe7ae | 1). dark cave rock wall … 2). cave floor … 3). dark underground pool water … 4). riveted dark iron plate wall with brass pipes … 5). iron grate floor plates … 6). brass cogwheel machinery block … 7). castle stone wall (ishigaki) … 8). polished dark wooden castle floor boards … 9). crumbled ruined grey stone wall … 10). cracked old stone flagstone floor … 11). dark wooden storehouse wall … 12). earthen storehouse floor (doma) … | 0 → cave/rock、1 → cave/ground、2 → cave/water、3 → karakuri/wall、4 → karakuri/floor、5 → karakuri/roof、6 → castle/wall、7 → castle/floor、8 → ruins/wall、9 → ruins/floor、10 → kura/wall、11 → kura/floor |
+| 2c3efbe8-233c-4b0e-bdaf-5797fcf2e773 | Edo period Japan great fire, top-down RPG map tiles, muted ukiyo-e palette, seamless 16x16. 1). dark grey kawara roof tiles in horizontal rows with bright orange and red flames burning on top, clearly an obstacle 2). charred blackened wooden plank fence wall with glowing orange embers in the cracks 3). burnt ground of grey ash and black soot with a few tiny orange embers, flat and walkable 4). heap of collapsed burnt black wooden beams with small flames, clearly an obstacle（第 8 章の神田の大火。共通の ground・roof・wall を style の参照に、配色は写さない。1 回目で採用） | 2 → fire/roof、6 → fire/wall、9 → fire/ground、14 → fire/rock |
 | e629b2a6-3193-42cc-8a93-b99d84a2bda4 | Japanese temple ruins top-down RPG map tiles, muted ukiyo-e palette, seamless 16x16. 1). pile of fallen rubble: broken grey stone blocks and shards of old dark roof tiles heaped on grass, clearly an obstacle 2). collapsed burnt wooden beams … 3). large cracked grey stone block … 4). heap of broken grey foundation stones …（ruins/wall・ruins/floor を style の参照に、配色も写す。レビューで、南蛮寺跡の大半を占める岩が共通の見た目のままと指摘されたため足した） | 0 → ruins/rock |
 
 ## 敵（`enemies/`）
@@ -295,6 +300,25 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 - からくり藩士: 1 回目は西洋風の甲冑で地面に影が残り、2 回目は人間の侍に見えた。3 回目で「clockwork robot ... riveted dark iron plates」を前に出して採用（計 3 回）。
 - 金箔からくり: 1 回目はかわいい娘、2 回目は西洋のロボットになった。3 回目は既存のからくり人形を金に塗った下絵から作り、4 回目に顔と手を金に塗って扇を描き足して採用（計 4 回）。
 - 足元をそろえるため、64 × 64 の 6 体は足元を y = 58、96 × 96 の 2 体は 89% に縮めて足元を y = 90 に置いた。
+
+第 8 章（奥州街道・江戸）の 7 体の記録（計 12 回。Pillow での描き直し 4 回を含む）。設定は上と同じ（64 × 64、ボスの火車からくりは 96 × 96、direction south-west）:
+
+| ID | PixelLab のジョブ ID | プロンプト |
+| --- | --- | --- |
+| hitsukeTozoku | 855d9943-e31c-4767-a3dd-b7caac630173 | Edo period Japanese arsonist bandit (hitsuke tozoku), man with a dark brown cloth tied over his head and around his cheeks (hokkamuri), dark indigo short kimono and tight black leggings, holding up a burning wooden torch with a bright orange flame in one hand, sneaky crouching stance, full body, small and centered with empty space around it, JRPG enemy battle sprite, three-quarter front view（頭と頬の布を Pillow で白地に藍の豆絞りの手拭いに描き替えた） |
+| kasha | 503b3531-c284-4f5d-bdb6-a181188388d6 | Japanese yokai kasha, a large black and orange demon cat walking on four legs, its whole body wreathed in roaring red and orange flames, two tails of fire, fierce glowing yellow eyes and sharp fangs, full body, small and centered with empty space around it, JRPG enemy battle sprite, three-quarter front view |
+| karakuriDoshin | 15dda38c-91de-4fd5-bbff-7e6b26ae3e4d | clockwork robot Edo police officer (karakuri doshin) made of riveted dark iron plates, robot head with a black iron topknot and glowing red eyes, wearing a black haori jacket, round brass cogwheels exposed in its open chest, holding up a silver iron jitte truncheon with a hook and a red tassel in its right hand, full body standing, small and centered with empty space around it, JRPG enemy battle sprite, three-quarter front view（十手を Pillow で、L 字の鉤のある銀の棒と赤い房に描き直した） |
+| hatamotoYakko | 9ad16e96-ab16-4acf-b3fb-fe44c58b9f0f | Edo period Japanese hatamoto-yakko street gang samurai, swaggering arrogant man with a big bushy black handlebar mustache and a huge tall topknot, very gaudy flashy kimono with bold purple and white pattern and a wide red sash, holding a very long drawn katana over his shoulder, full body standing, small and centered with empty space around it, JRPG enemy battle sprite, three-quarter front view |
+| hinezumi | 859bec87-0394-48cb-b85d-73e97a01ad5d | Japanese yokai fire rat (hinezumi), a small rat-shaped creature whose entire body and fur is made of living orange and yellow fire, flickering flame fur all over its back, glowing red eyes, long thin tail ending in fire, small and centered with lots of empty space around it, JRPG enemy battle sprite, three-quarter front view（text_guidance_scale 11） |
+| okuriOkami | 4f2678f4-0890-4520-8a79-d82d4133632d | Japanese okuri-okami, a large lean grey wolf with dark grey back fur and pale grey belly, bared white fangs, glowing yellow eyes, head lowered stalking menacingly, full body standing on four legs, small and centered with empty space around it, JRPG enemy battle sprite, three-quarter front view |
+| kashaKarakuri | 9890dfc1-087a-4884-aa2b-1eff17d14d6e | giant karakuri clockwork fire wheel machine, a huge wooden cart wheel with iron rim burning with red and orange flames, a fierce demon cat face with fangs and glowing yellow eyes at the hub in the center, two big jointed dark iron robot arms with claws sticking out from both sides of the wheel, large round brass cogwheels with teeth clearly visible at the axle beside the hub, menacing, full body, JRPG boss battle sprite, three-quarter front view（96 × 96、text_guidance_scale 11。上端の離れた火の粉 2 点を消した） |
+
+- 火車・旗本奴・送り狼: 1 回目で採用（各 1 回）。
+- 火付け盗賊: 1 回目は布が鉢巻きのようで頬を覆わず、2 回目（eb7b4f53-0830-43cf-8b67-05265f396092）は布がなかった。3 回目は 1 回目の頬に茶色の布を Pillow で描いたがひげに見えた。4 回目は頭から頬・口もとまでを白地に藍の豆絞りの手拭いに描き替えて採用（計 4 回）。
+- からくり同心: 1 回目は十手が先の丸い棍棒に見え、2 回目（70b94472-1821-44e1-aebf-df6ae8b0bbef）は細い棒だけで鉤がなかった。3 回目は 1 回目の棒を Pillow でまっすぐな銀の棒に描き直したが鉤が小さく、4 回目に鉤を L 字に大きくして採用（計 4 回）。
+- 火鼠: 1 回目（e594f343-a20f-46e6-9c24-d27b323547b1）は赤茶の毛の鼠に炎が少し付いただけだった。2 回目で「entire body and fur is made of living … fire」で採用（計 2 回）。
+- 火車からくり: 1 回目（38b0d1aa-2f16-451e-9b08-7e24e9dd6ed8）はからくりの腕と歯車がなかった。2 回目で腕と歯車を前に出して採用（計 2 回）。
+- 足元をそろえるため、64 × 64 の 6 体は足元を y = 58（火車は 97% に縮めた）、火車からくりは 89% に縮めて足元を y = 90 に置いた。
 
 ## 物（`objects/`）
 

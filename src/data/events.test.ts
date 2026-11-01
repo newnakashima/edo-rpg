@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { CHARACTERS } from './characters';
-import { ENEMIES } from './enemies';
+import { ENCOUNTERS, ENEMIES } from './enemies';
 import type { EventStep } from './eventTypes';
 import { EVENTS } from './events';
 import { isKnownItem } from './items';
-import { MAPS, tileAt } from './maps';
+import { SKILLS } from './skills';
+import { MAPS, npcVisible, tileAt } from './maps';
 import { EventRunner } from '../systems/eventScript';
 import { newGame, type GameState } from '../systems/gameState';
 import { createMember, memberLevel } from '../systems/party';
@@ -621,6 +622,153 @@ describe('第 7 章の流れ', () => {
     expect(run('kanazawaEnter', cleared).money).toBe(cleared.money);
     // 金沢の onEnter は chapter7Cleared で止まる（2 回目の褒美はない）
     expect(MAPS.kanazawa!.onEnter).toEqual({ event: 'kanazawaEnter', unless: 'chapter7Cleared' });
+  });
+});
+
+describe('第 8 章の流れ', () => {
+  const base = newGame('m', { mapId: 'sendai', x: 50, y: 18 });
+  const ch7 = {
+    ...base,
+    party: [createMember('hero', 25), createMember('gendo', 25), createMember('orin', 25), createMember('kasumi', 25)],
+    flags: { intro: true, chapter6Cleared: true, kanazawaArrived: true, tonoRescued: true, kagaTegata: true, chapter7Cleared: true },
+  };
+  const warpOf = (id: string, state: GameState): { mapId: string; x: number; y: number } | undefined => {
+    const runner = new EventRunner(EVENTS[id]!.steps);
+    let r = runner.next(state);
+    let last: { mapId: string; x: number; y: number } | undefined;
+    for (let guard = 0; guard < 50 && r.request.kind !== 'done'; guard++) {
+      if (r.request.kind === 'warp') last = { mapId: r.request.mapId, x: r.request.x, y: r.request.y };
+      if (r.request.kind === 'choice') r = runner.next(r.state, { kind: 'choice', index: 0 });
+      else if (r.request.kind === 'battle') r = runner.next(r.state, { kind: 'battle', outcome: 'victory' });
+      else r = runner.next(r.state);
+    }
+    return last;
+  };
+  /** 戦闘を含むイベントで、最初の戦闘の要求。 */
+  const battleOf = (id: string, state: GameState) => {
+    const runner = new EventRunner(EVENTS[id]!.steps);
+    return skipSay(runner, runner.next(state)).request;
+  };
+  /** 話しかけて、最初のページの数（2 回目以降は短い）。 */
+  const pagesOf = (id: string, state: GameState) => {
+    const r = new EventRunner(EVENTS[id]!.steps).next(state);
+    return r.request.kind === 'say' ? r.request.pages.length : 0;
+  };
+
+  it('仙台に初めて入ると sendaiIntro。片平帯刀の屋敷で刺客（Lv25）に勝つと sendaiHeard と 2000 文。負けたら聞けない', () => {
+    const intro = run('sendaiEnter', ch7);
+    expect(intro.flags.sendaiIntro).toBe(true);
+    expect(new EventRunner(EVENTS.sendaiEnter!.steps).next(intro).request.kind).toBe('done');
+    expect(battleOf('tatewaki', intro)).toMatchObject({ kind: 'battle', level: 25, canEscape: false, loseOk: false });
+    const heard = run('tatewaki', intro);
+    expect(heard.flags.sendaiHeard).toBe(true);
+    expect(heard.money).toBe(intro.money + 2000);
+    expect(run('tatewaki', intro, 'defeat').flags.sendaiHeard).toBeFalsy();
+    expect(run('tatewaki', heard).money).toBe(heard.money);
+    expect(pagesOf('tatewaki', heard)).toBe(1);
+  });
+
+  const heard = run('tatewaki', run('sendaiEnter', ch7));
+
+  it('江戸に初めて入ると人相書きの高札（edoIntro）。大家の源兵衛にかくまわれると edoHideout で、長屋に小吉が現れる', () => {
+    const arrived = run('edoEnter', heard);
+    expect(arrived.flags.edoIntro).toBe(true);
+    expect(new EventRunner(EVENTS.edoEnter!.steps).next(arrived).request.kind).toBe('done');
+    const hidden = run('nagayaOoya', arrived);
+    expect(hidden.flags.edoHideout).toBe(true);
+    expect(pagesOf('nagayaOoya', hidden)).toBe(1);
+    const kokichi = MAPS.edo!.npcs.find((n) => n.id === 'kokichi')!;
+    expect(npcVisible(kokichi, arrived.flags)).toBe(false);
+    expect(npcVisible(kokichi, hidden.flags)).toBe(true);
+  });
+
+  const hidden = run('nagayaOoya', run('edoEnter', heard));
+
+  it('小吉を追うからくり同心と旗本奴（Lv25）に勝つと kokichiMet。負けたら会えない', () => {
+    expect(battleOf('kokichi', hidden)).toMatchObject({ kind: 'battle', enemies: ['karakuriDoshin', 'hatamotoYakko', 'karakuriDoshin'], level: 25, canEscape: false, loseOk: false });
+    expect(run('kokichi', hidden).flags.kokichiMet).toBe(true);
+    expect(run('kokichi', hidden, 'defeat').flags.kokichiMet).toBeFalsy();
+  });
+
+  const met = run('kokichi', hidden);
+
+  it('火消しの頭は小吉に会うまで相手にせず、会ったあとは hikeshiMet。小吉の知らせ（kokichiReport）は頭に会ってから', () => {
+    expect(run('hikeshiGashira', hidden).flags.hikeshiMet).toBeFalsy();
+    expect(run('kokichi', met).flags.kokichiReport).toBeFalsy();
+    const gashira = run('hikeshiGashira', met);
+    expect(gashira.flags.hikeshiMet).toBe(true);
+    const report = run('kokichi', gashira);
+    expect(report.flags.kokichiReport).toBe(true);
+    expect(pagesOf('kokichi', report)).toBe(1);
+    // 小吉の知らせのあと、長屋にお鈴が現れる
+    const osuzu = MAPS.edo!.npcs.find((n) => n.id === 'osuzu')!;
+    expect(npcVisible(osuzu, gashira.flags)).toBe(false);
+    expect(npcVisible(osuzu, report.flags)).toBe(true);
+  });
+
+  const report = run('kokichi', run('hikeshiGashira', met));
+
+  it('八百屋の娘は小吉の知らせまでは上の空。知らせのあと火付け盗賊（Lv25）に勝つと taikaStarted で、火消しの手拭いを受け取る', () => {
+    expect(run('oharu', run('hikeshiGashira', met)).flags.taikaStarted).toBeFalsy();
+    expect(battleOf('oharu', report)).toMatchObject({ kind: 'battle', level: 25, canEscape: false, loseOk: false });
+    const fire = run('oharu', report);
+    expect(fire.flags.taikaStarted).toBe(true);
+    expect(fire.items.hikeshiTenugui).toBe(1);
+    expect(run('oharu', report, 'defeat').flags.taikaStarted).toBeFalsy();
+    expect(run('oharu', fire).items.hikeshiTenugui).toBe(1);
+    // 町木戸の木戸番は火事が起きるとどく
+    const kidoban = MAPS.edo!.npcs.find((n) => n.id === 'kidoban')!;
+    expect(npcVisible(kidoban, report.flags)).toBe(true);
+    expect(npcVisible(kidoban, fire.flags)).toBe(false);
+  });
+
+  const fire = run('oharu', report);
+
+  it('火車からくり（Lv28）に勝つと kashaDefeated で長屋へ戻り、江戸に入ると第 8 章が終わる（chapter8Cleared・4000 文）。褒美は一度だけ', () => {
+    const entered = run('taikaEnter', fire);
+    expect(entered.flags.taikaEntered).toBe(true);
+    expect(battleOf('kashaKarakuri', entered)).toMatchObject({ kind: 'battle', enemies: ['kashaKarakuri'], level: 28, canEscape: false, loseOk: false });
+    const lost = run('kashaKarakuri', entered, 'defeat');
+    expect(lost.flags.kashaDefeated).toBeFalsy();
+    expect(pagesOf('kashaKarakuri', lost)).toBe(1);
+    // 火車からくりを倒す前に江戸へ入り直しても、章は終わらず褒美もない
+    for (const st of [fire, entered, lost]) {
+      const again = run('edoEnter', st);
+      expect(again.flags.chapter8Cleared).toBeFalsy();
+      expect(again.money).toBe(st.money);
+    }
+    const won = run('kashaKarakuri', entered);
+    expect(won.flags.kashaDefeated).toBe(true);
+    expect(warpOf('kashaKarakuri', entered)).toEqual({ mapId: 'edo', x: 22, y: 16 });
+    const cleared = run('edoEnter', won);
+    expect(cleared.flags.chapter8Cleared).toBe(true);
+    expect(cleared.money).toBe(won.money + 4000);
+    expect(run('edoEnter', cleared).money).toBe(cleared.money);
+    expect(MAPS.edo!.onEnter).toEqual({ event: 'edoEnter', unless: 'chapter8Cleared' });
+  });
+
+  it('第 8 章の敵の技はすべて定義され、火車からくりはボス（報酬 6 倍・祓と機が弱点・火に強い）', () => {
+    const boss = ENEMIES.kashaKarakuri!;
+    expect(boss.rewardScale).toBe(6);
+    expect(boss.weak).toEqual(['holy', 'mech']);
+    expect(boss.resist).toEqual(['fire']);
+    // docs/balance.md の「第 8 章で見積もりから変えたこと」の数値（勝率 Lv27 95%・Lv26 72% はこの値で試した）
+    expect(boss.factors).toEqual({ hp: 13, atk: 1.05, def: 1.2, spd: 1.1 });
+    expect(boss.actions).toEqual([
+      { skill: 'attack', weight: 3 },
+      { skill: 'kaenGuruma', weight: 2 },
+      { skill: 'mojaNoTe', weight: 1 },
+    ]);
+    expect(SKILLS.kaenGuruma).toMatchObject({ target: 'allEnemies', effect: { kind: 'physical', multiplier: 0.7 }, elements: ['fire'] });
+    expect(SKILLS.mojaNoTe).toMatchObject({ target: 'enemy', effect: { kind: 'status', status: 'paralysis', turns: 2, chance: 0.5 } });
+  });
+
+  it('奥州街道の表には江戸の町なかの敵（火付け盗賊・旗本奴・火鼠）が出ず、江戸の大火の表には送り狼・雪女・加賀の忍びが出ない。どちらも 4 人で来るので 4 体の組がある', () => {
+    const members = (id: string) => new Set(ENCOUNTERS[id]!.groups.flatMap((g) => g.members));
+    for (const e of ['hitsukeTozoku', 'hatamotoYakko', 'hinezumi']) expect(members('oshu').has(e), e).toBe(false);
+    for (const e of ['okuriOkami', 'yukiOnna', 'kagaShinobi']) expect(members('edo').has(e), e).toBe(false);
+    for (const id of ['oshu', 'edo']) expect(Math.max(...ENCOUNTERS[id]!.groups.map((g) => g.members.length)), id).toBe(4);
+    for (const id of ['hitsukeTozoku', 'kasha', 'karakuriDoshin', 'hatamotoYakko', 'hinezumi', 'okuriOkami', 'kashaKarakuri']) expect(ENEMIES[id]?.image, id).toBe(true);
   });
 });
 
