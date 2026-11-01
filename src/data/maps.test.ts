@@ -43,6 +43,7 @@ describe('タイルの画像', () => {
       // 町ごとの建物
       shimizu: 'minato', hiroshima: 'minato', sunpu: 'bushi', yoriki: 'bushi', hikone: 'bushi', sendai: 'bushi',
       nagoya: 'shoka', hamamatsu: 'shoka', osaka: 'shoka', kyo: 'miyako', iga: 'sato', kagiya: 'sato', igaSato: 'sato',
+      kumamoto: 'bushi', kiyomasaIdo: 'cave',
       nagasaki: 'nanban', dejima: 'nanban', edo: 'nagaya',
     };
     const actual = Object.fromEntries(Object.values(MAPS).filter((m) => m.tileset).map((m) => [m.id, m.tileset]));
@@ -1655,5 +1656,65 @@ describe('寄り道の彦根', () => {
       hikoneTabibito: 'chapter3Cleared',
     };
     for (const [id, flag] of Object.entries(want)) expect(hikone.npcs.find((n) => n.id === id)?.after?.flag, id).toBe(flag);
+  });
+});
+
+describe('寄り道の熊本', () => {
+  const world = MAPS.world!;
+  const kumamoto = MAPS.kumamoto!;
+  const ido = MAPS.kiyomasaIdo!;
+  const town = world.towns!.find((t) => t.name === '熊本')!;
+  const shimabara = world.towns!.find((t) => t.name === '島原')!;
+  const nagasaki = world.towns!.find((t) => t.name === '長崎')!;
+
+  it('島原の印の東の湊の印から渡し船で渡る。島原の古城の手がかり（shimabaraOpen）を得るまで渡れない', () => {
+    expect(Math.abs(town.x - shimabara.x) + Math.abs(town.y - shimabara.y)).toBe(2);
+    expect(reachable(world, nagasaki, {}).has(`${town.x},${town.y}`)).toBe(true);
+    expect(tileAt(world, 17, 53)?.kind).toBe('road');
+    expect(townAction(world, town.x, town.y, 'ok', {})?.kind).toBe('info');
+    expect(townAction(world, town.x, town.y, 'ok', { shimabaraOpen: true })).toEqual({ kind: 'enter', to: { mapId: 'kumamoto', x: 5, y: 32 } });
+    // 島原の湊のまわりは九州の範囲（長崎の敵・全滅で長崎へ）
+    expect(encounterAt(world, 17, 53, { kasumiRejoined: true })).toBe('nagasaki');
+    expect(respawnPoint('world', 17, 53, { nagasakiArrived: true })).toEqual({ mapId: 'nagasaki', ...MAPS.nagasaki!.respawn });
+  });
+
+  it('町に入ると kumamotoEnter を行い、着いたあとは行わない。旅籠・茶屋・店・寺・飛脚がそろう', () => {
+    expect(kumamoto.onEnter).toEqual({ event: 'kumamotoEnter', unless: 'kumamotoIntro' });
+    const actions = new Set(kumamoto.npcs.map((n) => n.action).filter(Boolean));
+    expect(actions).toEqual(new Set(['inn', 'teahouse', 'shop', 'temple', 'hikyaku']));
+    expect(kumamoto.areaLevel).toBe(19);
+    expect(kumamoto.exits).toEqual([]);
+    expect(tileAt(kumamoto, kumamoto.respawn!.x, kumamoto.respawn!.y)?.blocked).toBe(false);
+  });
+
+  it('湊から、茂作・古井戸・船頭・池の庭師・葛籠まで歩いて行ける。熊本城の中へは門番がふさいで入れない', () => {
+    const area = reachable(kumamoto, town.to!, {}, true);
+    for (const id of ['mosaku', 'furuido', 'watashiSendo', 'suizenjiNiwashi', 'kumamotoChest2', 'ichoSekihi', 'kumamotoInn', 'kumamotoTemple', 'kumamotoRenkon']) {
+      const npc = kumamoto.npcs.find((n) => n.id === id)!;
+      expect(near(area, npc.x, npc.y), id).toBe(true);
+    }
+    expect(area.has('18,6')).toBe(false);
+    expect(reachable(kumamoto, town.to!, {}).size).toBeGreaterThan(900);
+  });
+
+  it('古井戸の底は長崎の敵が出るダンジョン。石段から古井戸の前へ戻り、全滅したら熊本へ', () => {
+    expect(ido.encounter).toBe('nagasaki');
+    expect(respawnPoint('kiyomasaIdo')).toEqual({ mapId: 'kumamoto', ...kumamoto.respawn });
+    const back = ido.exits.find((e) => e.to === 'kumamoto')!;
+    const well = kumamoto.npcs.find((n) => n.id === 'furuido')!;
+    expect(Math.abs(back.toX - well.x) + Math.abs(back.toY - well.y)).toBe(1);
+    const area = reachable(ido, { x: 3, y: 2 }, {}, true);
+    expect(area.has(`${back.x},${back.y}`)).toBe(true);
+    for (const id of ['mizuKarakuri', 'kumamotoChest1', 'kumamotoChest3']) {
+      const npc = ido.npcs.find((n) => n.id === id)!;
+      expect(near(area, npc.x, npc.y), id).toBe(true);
+    }
+  });
+
+  it('からくりは水を戻す（kumamotoIdoFound）と消える。町の人の台詞は水が戻ると変わる', () => {
+    expect(ido.npcs.find((n) => n.id === 'mizuKarakuri')?.hideFlag).toBe('kumamotoIdoFound');
+    for (const id of ['kumamotoMonban2', 'ichoRojin', 'kumamotoKusuriuri', 'kumamotoInn', 'kumamotoTeahouse', 'kumamotoOkami', 'kumamotoKodomo', 'idobataMusume', 'idobataRoba', 'suizenjiNiwashi']) {
+      expect(kumamoto.npcs.find((n) => n.id === id)?.after?.flag, id).toBe('kumamotoIdoFound');
+    }
   });
 });
