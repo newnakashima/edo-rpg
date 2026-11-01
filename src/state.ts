@@ -21,6 +21,11 @@ export interface PendingEvent {
   runner: EventRunner;
   /** フィールドを離れたときのマップ。戻ったときに別のマップなら（移動・全滅）、そのマップに入ったときのイベントも行う。 */
   fromMapId: string;
+  /**
+   * 離れたときに、まだ行っていない「マップに入ったときのイベント」があったか。
+   * warp で移動した先のイベントの続きで戦闘に入ると fromMapId は移動先のマップになるので、これで引き継ぐ。
+   */
+  enterPending: boolean;
   resume?: EventInput;
 }
 
@@ -28,6 +33,16 @@ let pending: PendingEvent | null = null;
 
 export function setPendingEvent(p: PendingEvent | null): void {
   pending = p;
+}
+
+/**
+ * フィールドに来たとき、そのマップに入ったときのイベント（onEnter）を、途中のイベントのあとに行うか。
+ * pending: 預かっていたイベント。dataFromMapId: 戦闘から戻ったとき、戦闘を始めたマップ（イベントの外の戦闘）。
+ * どちらもなければ（始めたとき・読み込んだとき）行う。
+ */
+export function shouldRunEnterEvent(mapId: string, pending: PendingEvent | null, dataFromMapId?: string): boolean {
+  if (pending) return pending.enterPending || pending.fromMapId !== mapId;
+  return dataFromMapId !== mapId;
 }
 
 /** 預かっているイベントを取り出す（取り出したら空にする）。 */
