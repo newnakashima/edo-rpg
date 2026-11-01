@@ -23,6 +23,7 @@ export const FACES = [
   'washio',
   'tenzen',
   'shogun',
+  'tatewaki',
 ] as const;
 export type FaceId = (typeof FACES)[number];
 
@@ -51,6 +52,7 @@ export const SPEAKER_FACES: Readonly<Record<string, FaceId>> = {
   典膳: 'tenzen',
   // 終章の将軍（影武者は話さないので、本物の上様だけが使う）
   上様: 'shogun',
+  片平帯刀: 'tatewaki',
 };
 
 export function faceKey(id: FaceId): string {

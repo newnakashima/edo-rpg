@@ -50,7 +50,7 @@ export const NPC_SPRITES = [
 export const VILLAIN_SPRITES = ['yashamaru', 'oboro', 'borei', 'tenzen', 'washio'] as const;
 
 /** 物語の専用の人物（町の人の類型で代えていた人。フィールドに立っている姿だけ。歩かないので歩行のコマにも立ち姿を置く）。 */
-export const STORY_SPRITES = ['hyogo', 'kinta', 'sakon', 'kagaTono', 'kokichi', 'shogun'] as const;
+export const STORY_SPRITES = ['hyogo', 'kinta', 'sakon', 'kagaTono', 'kokichi', 'shogun', 'tatewaki'] as const;
 
 /** シートがあるキャラクター。 */
 export const CHARACTER_SPRITES = ['hero_m', 'hero_f', 'kasumi', 'gendo', 'orin', 'tatsugoro', ...NPC_SPRITES, ...VILLAIN_SPRITES, ...STORY_SPRITES] as const;

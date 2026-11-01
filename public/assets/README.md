@@ -86,6 +86,18 @@ standard の size 24 では笠と合羽が描き分けられないため、主�
   - 2 回目（edf8c3af-18ba-441e-ad00-e24b0554510c。「a tall narrow rounded black cap … with NO brim」）は烏帽子は直ったが、頬の赤い丸顔で子どもに見え、東向きの目が緑、西向きの足元に灰色の浮いた点があった。
   - 3 回目は「gaunt adult man … hollow cheeks … thin black mustache, no blush」と年齢と頬を言って採用。最終判定はすべて ○。
 
+### 第 8 章の人物（`chars/tatewaki.png`）
+
+仙台の片平帯刀（伊達の重臣）は、初めは役人の類型（npc_yakunin）で代えていた。設定は「物語の専用の人物」と同じ（`create_character` mode `v3`、size 28、黒の 1px 輪郭、medium detail、low top-down。歩行は作らず `scripts/pack_character.py` で立ち姿を並べる）。
+
+| ID | PixelLab のキャラクター ID | 生成プロンプト | 回数 |
+| --- | --- | --- | --- |
+| tatewaki（片平帯刀） | acc71b02-3c0c-45a9-982d-1d16e7bc204d | chibi Edo period Japanese senior retainer samurai of the Date clan in his fifties, dignified wise face with a short neat grey goatee beard, grey-streaked black hair in a neat topknot (chonmage), deep dark green haori jacket with a small white round family crest on the chest, brown hakama trousers, katana and wakizashi at his left hip, white tabi socks and straw sandals（＋Pillow で髪を塗り替え） | 2 |
+
+- チェック項目: 4 方向とも同じ人物で崩れがない [必須]／背景透過・黒の 1px 輪郭 [必須]／50 代の侍・灰色まじりの黒髪のまげ・灰のあごひげ [必須]／深緑の羽織＋茶の袴で、兵庫（紺）・左近（紺・白髪）・鷲尾（黒＋深紅）・加賀の殿様（紫）と色で見分けられる [必須]／胸に小さな白い紋／左腰に刀／40 × 40 のシートで背丈が兵庫・左近と釣り合う。
+- 1 回目は髪が全部灰色になり（左近の白髪に近い）、東向きの頭の左に灰白の浮いた点があった。
+- 2 回目は Pillow で、各向きの目より上の髪の灰色を 3 段（明るい灰 → 969ca8 の筋、中間 → 3a3842、暗い灰 → 201f26）に塗り替えて黒髪に灰の筋にし、東向きの浮いた点（目の高さの後ろの 4 × 2 ドット）を消して採用。最終判定はすべて ○。
+
 ### 町の人（`chars/npc_*.png`）
 
 テストプレイで「主要人物以外のキャラクターに画像がない」と指摘されたため、町の人を 19 の類型に分けて 1 体ずつ作った（どの町の人にどれを使うかは `src/data/maps.ts` の `sprite`）。
@@ -151,6 +163,7 @@ standard の size 24 では笠と合羽が描き分けられないため、主�
 | washio | chars/washio.png | 1 回目（create_portrait_character dad06ae5-f32c-4344-8bfe-dc1e9b4de251）は初老の顔と片眼鏡はよかったが、まげがなく、洋風の立て襟と金の丸いブローチになった。2 回目は edit_image（2f0a5673-63e2-4753-ae8d-fb2bd0211325）「Keep his old stern face, grey hair and the gold monocle exactly. Comb the grey-streaked hair back into a small neat Japanese topknot … a deep crimson kimono with its collar crossed left over right in a V at the neck, a white undercollar, and a stiff black kamishimo shoulder vest … No brooch, no medal」で直ったが、金の枠が鼻を越えて右目まで伸び、眼鏡に見えた。3 回目は Pillow で鼻の上の金の 7 ドットを肌色にして採用 | 3 |
 | tenzen | chars/tenzen.png | create_portrait_character（d0c8294d-ef22-4259-a46e-ac588a6e846c）をそのまま採用（まげ・太い眉・額から頬への赤黒い傷・黒の着物と胸の赤い紋） | 1 |
 | shogun | chars/shogun.png | 1 回目（create_portrait_character d04b0413-77c3-4bb5-a8fc-238aecfe76e9）はつばのあるシルクハットと黒い外套、太い八の字ひげの西洋紳士になった。2 回目は create_image_pro（4ee525a5-0e90-4253-88b2-9121a86b4eae。立ち姿を 4 倍にして reference「character base」、washio の顔を style_image）「Front-facing bust portrait … gaunt adult MAN in his thirties … tall black lacquered court cap (eboshi) … with NO brim … pale gold and cream Japanese court robes (hitatare) … small dark green round family crests」の 25 候補から 14 番を選んだが、烏帽子が上端で切れて縦長に見えなかった。3 回目は 14 番を Pillow で 7px 下げて烏帽子を描き足したが、胸が切れて紋が消えた。4 回目（create_image_pro 2e89d8da-f525-44f5-bfe7-ab4ae2927e69。「the WHOLE tall hat fits inside the image」）も 25 候補すべてで烏帽子が上端で切れた。5 回目は 2 回目の 14 番を Pillow で 5px 下げ、烏帽子の上 5 行（丸い頂）を描き足し、両肩の下端に緑の紋（32462a）を 6 ドットずつ描いて採用（5 回の上限。残る ×: 胸がほぼ切れ、肩と襟元しか見えない） | 5 |
+| tatewaki | chars/tatewaki.png | 1 回目（create_portrait_character 5802c075-9184-4c52-9729-a2e3cadd1c8f）はまげがなく尖った髪で、緑は立て襟と銀のボタンの洋風の外套になった。2 回目は edit_image（79063ca3-6634-4d78-8d2e-9cd2642a49ea）「Keep his stern face, dark eyes and grey beard exactly. Comb the black and grey streaked hair back flat into a small neat Japanese samurai topknot (chonmage) … a kimono collar crossed left over right in a V at the neck with a white undercollar, under a deep dark green haori jacket, with one small white round family crest on the left chest. No buttons, no high collar, no western coat」で採用 | 2 |
 
 - create_portrait_character は顔の細部（目の色の左右差、浮いた点、耳飾り）がときどき崩れるので、8 倍に拡大して確かめる。
 - create_image_pro は候補によって下端に灰色の横線が出る。選ぶときに下端の行を確かめる。

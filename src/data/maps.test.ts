@@ -65,8 +65,8 @@ describe('人でない物の画像（テストプレイの指摘: 主要人物�
     for (const n of npcs) expect(n.sprite, n.id).toBeDefined();
   });
 
-  it('榊兵庫・金太・長瀬左近・加賀の殿様は、町の人の類型でなく専用の画像を使い、専用の画像はどれもどこかで使う', () => {
-    const want: Record<string, string> = { hyogoJuku: 'hyogo', kinta: 'kinta', sakon: 'sakon', kagaTono: 'kagaTono' };
+  it('榊兵庫・金太・長瀬左近・加賀の殿様・片平帯刀は、町の人の類型でなく専用の画像を使い、専用の画像はどれもどこかで使う', () => {
+    const want: Record<string, string> = { hyogoJuku: 'hyogo', kinta: 'kinta', sakon: 'sakon', kagaTono: 'kagaTono', tatewaki: 'tatewaki' };
     const all = Object.values(MAPS).flatMap((m) => m.npcs);
     for (const [id, sprite] of Object.entries(want)) expect(all.find((n) => n.id === id)?.sprite, id).toBe(sprite);
     const used = new Set(all.map((n) => n.sprite));
