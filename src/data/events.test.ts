@@ -1247,3 +1247,111 @@ describe('寄り道の彦根（赤備えの具足を探す）', () => {
     expect(run('hikoneChest2', arrived).items.itokiriMochi).toBe((arrived.items.itokiriMochi ?? 0) + 1);
   });
 });
+
+describe('寄り道の熊本（籠城の備えの井戸の謎）', () => {
+  const base = newGame('m', { mapId: 'kumamoto', x: 5, y: 32 });
+  const arrived = {
+    ...base,
+    party: [createMember('hero', 19), createMember('gendo', 19), createMember('orin', 19), createMember('kasumi', 19)],
+    flags: { intro: true, chapter5Cleared: true, kasumiRejoined: true, nagasakiArrived: true, shimabaraOpen: true, kumamotoIntro: true },
+  };
+  const pagesOf = (id: string, state: GameState) => {
+    const r = new EventRunner(EVENTS[id]!.steps).next(state);
+    return r.request.kind === 'say' ? r.request.pages.length : 0;
+  };
+  /** 選択肢を index で選びながら進め、最後の warp の行き先を返す。 */
+  const warpWith = (id: string, state: GameState, index: number) => {
+    const runner = new EventRunner(EVENTS[id]!.steps);
+    let r = runner.next(state);
+    let last: { mapId: string; x: number; y: number } | undefined;
+    for (let guard = 0; guard < 50 && r.request.kind !== 'done'; guard++) {
+      if (r.request.kind === 'warp') last = { mapId: r.request.mapId, x: r.request.x, y: r.request.y };
+      r = r.request.kind === 'choice' ? runner.next(r.state, { kind: 'choice', index }) : runner.next(r.state);
+    }
+    return last;
+  };
+  const asked = run('kumamotoMosaku', arrived);
+  const found = run('kumamotoKarakuri', asked);
+
+  it('熊本に初めて入ると kumamotoIntro。2 回目からは何もしない', () => {
+    const entered = run('kumamotoEnter', { ...arrived, flags: { ...arrived.flags, kumamotoIntro: false } });
+    expect(entered.flags.kumamotoIntro).toBe(true);
+    expect(new EventRunner(EVENTS.kumamotoEnter!.steps).next(entered).request.kind).toBe('done');
+  });
+
+  it('茂作の頼み（kumamotoIdoAsked）を聞くまでは、古井戸を下りられない。聞いたあとは古井戸の底へ下りられる', () => {
+    expect(warpWith('kumamotoFuruido', arrived, 0)).toBeUndefined();
+    expect(asked.flags.kumamotoIdoAsked).toBe(true);
+    expect(warpWith('kumamotoFuruido', asked, 0)).toEqual({ mapId: 'kiyomasaIdo', x: 3, y: 2 });
+    // 「やめておく」なら下りない
+    expect(warpWith('kumamotoFuruido', asked, 1)).toBeUndefined();
+    // からくりを壊したあとは、水の音がするだけ
+    expect(warpWith('kumamotoFuruido', found, 0)).toBeUndefined();
+  });
+
+  it('水脈のからくりでは外法使い・南蛮兵 3（Lv21・逃げられない）と戦い、勝つと水が戻る（kumamotoIdoFound）。負けたら戻らない', () => {
+    const runner = new EventRunner(EVENTS.kumamotoKarakuri!.steps);
+    expect(skipSay(runner, runner.next(asked)).request).toMatchObject({
+      kind: 'battle',
+      enemies: ['gehoTsukai', 'nanbanHei', 'nanbanHei', 'nanbanHei'],
+      level: 21,
+      canEscape: false,
+      loseOk: false,
+    });
+    expect(found.flags.kumamotoIdoFound).toBe(true);
+    expect(run('kumamotoKarakuri', asked, 'defeat').flags.kumamotoIdoFound).toBeFalsy();
+    // 戻る前に茂作に話すと、古井戸を指す短い台詞だけ
+    expect(run('kumamotoMosaku', asked).flags).toEqual(asked.flags);
+    expect(pagesOf('kumamotoMosaku', asked)).toBe(1);
+  });
+
+  it('茂作に知らせると、肥後象嵌の鍔を一度だけ受け取る（kumamotoIdoDone）。店には置かない', () => {
+    const done = run('kumamotoMosaku', found);
+    expect(done.flags.kumamotoIdoReturned).toBe(true);
+    expect(done.flags.kumamotoIdoDone).toBe(true);
+    expect(done.items.higoZoganTsuba).toBe(1);
+    const again = run('kumamotoMosaku', done);
+    expect([again.items, again.money, again.flags]).toEqual([done.items, done.money, done.flags]);
+    expect(pagesOf('kumamotoMosaku', done)).toBe(1);
+    expect(EQUIPMENT.higoZoganTsuba?.slot).toBe('accessory');
+    for (const shop of Object.values(SHOPS)) expect(shop.goods, shop.id).not.toContain('higoZoganTsuba');
+  });
+
+  it('持ち物がいっぱいで鍔を受け取れなければ kumamotoIdoDone は立たず、次は知らせた場面を繰り返さずに受け取れる', () => {
+    const full = { ...found, items: { ...found.items, higoZoganTsuba: 99 } };
+    const refused = run('kumamotoMosaku', full);
+    expect(refused.flags.kumamotoIdoReturned).toBe(true);
+    expect(refused.flags.kumamotoIdoDone).toBeFalsy();
+    const freed = { ...refused, items: { ...refused.items, higoZoganTsuba: 0 } };
+    expect(pagesOf('kumamotoMosaku', freed)).toBe(1);
+    const got = run('kumamotoMosaku', freed);
+    expect(got.flags.kumamotoIdoDone).toBe(true);
+    expect(got.items.higoZoganTsuba).toBe(1);
+  });
+
+  it('川尻の湊の船頭は、長崎の湊か島原の湊（ワールドマップの熊本の印の西の街道）へ渡す', () => {
+    expect(warpWith('kumamotoWatashi', arrived, 0)).toEqual({ mapId: 'nagasaki', x: 14, y: 22 });
+    expect(warpWith('kumamotoWatashi', arrived, 1)).toEqual({ mapId: 'world', x: 17, y: 53 });
+    expect(warpWith('kumamotoWatashi', arrived, 2)).toBeUndefined();
+  });
+
+  it('熊本へは島原の古城の手がかり（shimabaraOpen）のあとでしか来られず、そのときの仲間は霞・玄道・お凛（兵庫は第 5 章で抜けたまま）', () => {
+    // 仲間の台詞を入れてよいわけ: shimabaraOpen は霞が戻った（kasumiRejoined）あとの長崎で立ち、兵庫が再び加わるイベントはない
+    const joins = (steps: readonly EventStep[]): string[] =>
+      steps.flatMap((st) => {
+        if (st.type === 'join' || st.type === 'rejoin') return [st.member];
+        if (st.type === 'if') return [...joins(st.then), ...joins(st.else ?? [])];
+        if (st.type === 'choice') return st.options.flatMap((o) => joins(o.steps));
+        return [];
+      });
+    const all = Object.values(EVENTS).flatMap((e) => joins(e.steps));
+    expect(all.filter((m) => m === 'hyogo')).toHaveLength(1);
+    expect(MAPS.world!.towns!.find((t) => t.name === '熊本')?.openFlag).toBe('shimabaraOpen');
+  });
+
+  it('葛籠の中身は、水脈が金平糖と反魂丹、町が辛子蓮根', () => {
+    expect(run('kumamotoChest1', arrived).items.konpeito).toBe((arrived.items.konpeito ?? 0) + 1);
+    expect(run('kumamotoChest3', arrived).items.hangontan).toBe((arrived.items.hangontan ?? 0) + 1);
+    expect(run('kumamotoChest2', arrived).items.karashiRenkon).toBe((arrived.items.karashiRenkon ?? 0) + 1);
+  });
+});

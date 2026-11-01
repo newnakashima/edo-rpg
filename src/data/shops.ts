@@ -48,6 +48,10 @@ export const SHOPS: Record<string, ShopDef> = {
   // 彦根（第 3 章の寄り道）。第 3 章の初め（主人公と霞の 2 人）から来られるので、京の品ぞろえに 2 人分の装備を置く
   hikoneYorozu: { id: 'hikoneYorozu', name: 'よろず屋', goods: ['kizugusuri', 'itokiriMochi', 'kintsuba', 'mankintan', 'dokukeshi', 'kumanoi', 'hangontan', 'kitsukegusuri', 'waraji', 'chochin'] },
   hikoneKaji: { id: 'hikoneKaji', name: '刀鍛冶', goods: ['kotetsu', 'tekkokagi', 'shakujo', 'nanbando', 'kusarishozoku', 'hachigane', 'inro'] },
+  // 熊本（第 6 章の寄り道。島原の湊から渡し船で渡る）。長崎と同じ地域なので、長崎の品ぞろえに熊本の名物を足す
+  kumamotoYorozu: { id: 'kumamotoYorozu', name: 'よろず屋', goods: ['kintsuba', 'karashiRenkon', 'mankintan', 'konpeito', 'hyorogan', 'dokukeshi', 'hakka', 'hangontan', 'kitsukegusuri', 'ninjin'] },
+  kumamotoKaji: { id: 'kumamotoKaji', name: '刀鍛冶', goods: ['tadayoshi', 'karakuriKagizume', 'rakanShakujo', 'orandaDo', 'kageShozoku', 'hachigane', 'inro'] },
+  kumamotoRenkon: { id: 'kumamotoRenkon', name: '辛子蓮根の店', goods: ['karashiRenkon', 'omusubi', 'amazake'] },
   // 会津若松（第 8 章の寄り道）
   aizuYorozu: { id: 'aizuYorozu', name: 'よろず屋', goods: ['kintsuba', 'mishirazuGaki', 'mankintan', 'bocha', 'hyorogan', 'dokukeshi', 'kumanoi', 'hakka', 'hangontan', 'kitsukegusuri', 'ninjin', 'chochin'] },
   aizuKaji: { id: 'aizuKaji', name: '刀鍛冶', goods: ['aizuKanesada', 'yukiKodachi', 'hakusanShakujo', 'kagaZutsu', 'yukinoshitaDo', 'yukiShozoku', 'hachigane', 'inro'] },

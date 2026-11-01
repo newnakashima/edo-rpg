@@ -102,6 +102,8 @@ export const EQUIPMENT: Record<string, EquipDef> = {
   takoItomaki: { id: 'takoItomaki', name: '凧の糸巻き', slot: 'accessory', price: 300, bonus: { spd: 3, luck: 3 }, wearers: ALL, description: '遠州の空っ風に耐えてきた凧師の糸巻き' },
   // 彦根の具足師の甚兵衛のお礼（寄り道のサブイベント）。店には置かない
   akazonaeKote: { id: 'akazonaeKote', name: '赤備えの籠手', slot: 'accessory', price: 500, bonus: { atk: 3, def: 2 }, wearers: ALL, description: '具足師が朱の漆を塗り重ねた、井伊の赤備えの籠手' },
+  // 熊本の井戸掘りの茂作のお礼（寄り道のサブイベント）。店には置かない
+  higoZoganTsuba: { id: 'higoZoganTsuba', name: '肥後象嵌の鍔', slot: 'accessory', price: 1000, bonus: { atk: 4, def: 2, luck: 3 }, wearers: ALL, description: '鉄の地に金銀の糸を打ち込んだ、肥後の職人の鍔' },
   // 会津若松の什の少年たちのお礼（寄り道のサブイベント）。店には置かない
   okiagariKoboshi: { id: 'okiagariKoboshi', name: '起き上がり小法師', slot: 'accessory', price: 1400, bonus: { maxHp: 20, def: 2, luck: 6 }, wearers: ALL, description: '何度転んでも起き上がる、会津の張り子の人形' },
   waraji: { id: 'waraji', name: 'わらじ', slot: 'accessory', price: 15, bonus: { spd: 2 }, wearers: ALL, description: '履き替え用の新しい草鞋' },
