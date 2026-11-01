@@ -205,6 +205,17 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 | 19cac181-18a0-4a46-b293-a4e0fc020eb6 | 1)–2). samurai residence gate door: dark brown wooden double door with rows of big round black iron studs clearly visible … 3)–4). fishing village roof seen from above: grey weathered wooden planks with several big round light grey stones sitting on top …（1 回目の武家の戸は鋲が見えず、港町の屋根は重しの石がはっきりしなかったため作り直した。共通の roof・door を参照に） | 3 → bushi/door、8 → minato/roof |
 | 4ba31f67-73b4-4f29-a0d1-70eaa07c4fc3 | Nagasaki Dejima Dutch trading post, top-down RPG map tiles, muted palette, seamless 16x16, dark outlines. 1). plain white plaster wall with a low band of red bricks along the bottom and a thin dark wooden beam on top, no windows, usable as a long boundary wall 2). white stucco wall with red brick base course … 3). whitewashed western wall … no window（1 回目の窓のある白壁は、出島を囲む塀に使うと窓が延々と並んで不自然だったため作り直した。共通の wall を参照に） | 3 → nanban/wall |
 
+#### 街道（ワールドマップ）と港の海
+
+ワールドマップが共通の黄緑の野・岩・水のままで、海と町の川、山と岩の見分けがつかなかったため、`field`（水・野原・岩・木・道・町・関所）を作り、港町の水（minato・nanban・ship の water）を港の海にした。
+共通の `water.png`・`tree.png` を `style_images` に（style_options は輪郭・細部・陰影を写し、配色は写さない）。
+判定の観点: 16 × 16 で全面が埋まる、並べて継ぎ目が目立たない、海・港の水・野・山・森・街道が互いに見分けられる、山が岩の塊でなく峰に見える、町と関所の印が 16px で読める。ワールドマップ全体の描き出しと、ゲーム画面（ワールドマップ・清水湊・出島）で確かめた。
+
+| ID | プロンプト（共通の頭: Edo period Japan world map, top-down RPG overworld tiles, muted ukiyo-e palette, seamless 16x16, dark outlines.） | 使ったタイル（ZIP の番号 → タイルセット/種類） |
+| --- | --- | --- |
+| 340fba81-a3c9-45e3-bfc2-4452542290f9 | 1). deep indigo blue open sea with small white curling wave crests … 2). calm muted green grassland meadow, very little detail … 3). small mountain seen from above: a pointed brown and grey-green peak with dark ridge lines and a tiny white snow tip … 4). dense forest: several round dark green pine tree crowns packed together … 5). plain packed light brown dirt highway surface … same in every direction … 6). tiny Japanese castle town icon …（不採用） 7). tiny wooden checkpoint barrier gate (sekisho) … 8). harbour water: medium blue water with gentle short white ripples, calmer than the open sea … | 0 → field/water、3 → field/plain、4 → field/rock、6 → field/tree、9 → field/road、13 → field/gate、15 → minato/water・nanban/water・ship/water |
+| e657a957-345a-4032-9db6-42f7159c07da | （頭は overworld map icons … on light brown dirt ground）1). castle town icon: a small white Japanese castle keep (tenshu) in the center with two dark grey roof tiers, clear white walls, bold black outline 2)–4). 天守・家並みの別案（1 回目の町の印は黒っぽい塊で町と読めなかったため作り直した。field/road と共通の town を参照に） | 2 → field/town |
+
 ## 敵（`enemies/`）
 
 `create_image_pixflux`（64 × 64、`no_background: true`、黒の 1px 輪郭、view `side`、medium detail）で 1 体ずつ作る（1 体 1 回）。ボスは 96 × 96 で作る。

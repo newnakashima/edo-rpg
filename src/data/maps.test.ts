@@ -45,11 +45,13 @@ describe('タイルの画像', () => {
       nagoya: 'shoka', hamamatsu: 'shoka', osaka: 'shoka', kyo: 'miyako', iga: 'sato', kagiya: 'sato', igaSato: 'sato',
       kumamoto: 'bushi', kiyomasaIdo: 'cave',
       nagasaki: 'nanban', dejima: 'nanban', edo: 'nagaya',
+      // ワールドマップ（街道）
+      world: 'field',
     };
     const actual = Object.fromEntries(Object.values(MAPS).filter((m) => m.tileset).map((m) => [m.id, m.tileset]));
     expect(actual).toEqual(expected);
-    // 外の野山・ワールドマップのほかに、共通の見た目のままのマップを増やさない（町も建物を町ごとの見た目にした）
-    const outdoor = ['world', 'urayama', 'harajo'];
+    // 外の野山のほかに、共通の見た目のままのマップを増やさない（町も建物を町ごとの見た目にした）
+    const outdoor = ['urayama', 'harajo'];
     for (const m of Object.values(MAPS)) if (!outdoor.includes(m.id)) expect(m.tileset, m.id).toBeDefined();
   });
 });
