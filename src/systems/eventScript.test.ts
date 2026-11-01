@@ -235,3 +235,19 @@ describe('一時離脱からの復帰（第 6 章）', () => {
     expect(r.state.away).toEqual([]);
   });
 });
+
+describe('エンディング（終章）', () => {
+  it('ending でイベントが終わり、分岐の中に置いても続きの手順は行わない', () => {
+    const steps: EventStep[] = [
+      { type: 'say', lines: ['前'] },
+      { type: 'if', flag: 'a', then: [{ type: 'setFlag', flag: 'cleared' }, { type: 'ending' }, { type: 'say', lines: ['分岐の後'] }] },
+      { type: 'say', lines: ['後'] },
+    ];
+    const { requests, state, runner } = play(steps, game({ flags: { a: true } }));
+    expect(requests.map((r) => r.kind)).toEqual(['say', 'ending', 'done']);
+    expect(state.flags.cleared).toBe(true);
+    expect(runner.done).toBe(true);
+    // 終わったあとに進めても何も起きない
+    expect(runner.next(state).request.kind).toBe('done');
+  });
+});

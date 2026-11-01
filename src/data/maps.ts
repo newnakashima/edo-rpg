@@ -4766,7 +4766,7 @@ MAPS.matsuNoRoka = {
       y: 11,
       color: 0xc04a3a,
       sprite: 'kinta',
-      lines: ['金太「文なら、おいらの凧で飛脚に届けてやるよ！ 記録を残していきな」'],
+      lines: ['金太「文なら、おれの凧で飛脚に届けてやるよ！ 記録を残していきな」'],
       action: 'hikyaku',
     },
     {

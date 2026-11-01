@@ -558,13 +558,17 @@ class TurnContext {
     return actions[actions.length - 1]?.skill ?? 'attack';
   }
 
-  /** 1 人分の行動。 */
-  act(actor: Combatant, command: Command | undefined): void {
-    this.acted.add(actor.key);
+  /**
+   * 1 人分の行動。last は、そのターンの最後の行動か（1 ターンに何度も動く敵は、最後の行動のときだけ true）。
+   * 「このターンはもう動いた」（acted。このあとかかった効果は次のターンから数える）にするのも、影縫いを解くのも、最後の行動のとき。
+   * 1 回目と 2 回目の間にかかった効果が、1 ターン余計に残ったり、影縫いが 2 回目を止めなかったりしないようにする。
+   */
+  act(actor: Combatant, command: Command | undefined, last = true): void {
+    if (last) this.acted.add(actor.key);
     // 動けない状態異常
     for (const reason of ['sleep', 'paralysis', 'bind'] as const) {
       if (actor.status[reason]) {
-        if (reason === 'bind') delete actor.status.bind;
+        if (reason === 'bind' && last) delete actor.status.bind;
         this.events.push({ type: 'cannotAct', actor: actor.key, reason });
         return;
       }
@@ -728,9 +732,14 @@ export function resolveTurn(
     .sort((a, b) => b.prio - a.prio || b.init - a.init)
     .map((x) => x.c);
 
+  // 残りの行動の回数（最後の行動を知るため）
+  const left = new Map<string, number>();
+  for (const c of order) left.set(c.key, (left.get(c.key) ?? 0) + 1);
   for (const actor of order) {
+    const n = (left.get(actor.key) ?? 1) - 1;
+    left.set(actor.key, n);
     if (!isAlive(actor) || judge(state) !== 'ongoing') continue;
-    ctx.act(actor, commands[actor.key]);
+    ctx.act(actor, commands[actor.key], n === 0);
   }
 
   if (judge(state) === 'ongoing') ctx.endOfTurn();

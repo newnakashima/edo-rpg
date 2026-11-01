@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { CHARACTERS } from './characters';
+import { CHARACTERS, type CharacterId } from './characters';
+import { EQUIPMENT } from './equipment';
+import { SHOPS } from './shops';
 import { ENCOUNTERS, ENEMIES } from './enemies';
 import type { EventStep } from './eventTypes';
 import { EVENTS } from './events';
@@ -904,6 +906,44 @@ describe('終章の流れ', () => {
       requests('shogunNoMa', state).flatMap((r) => (r.kind === 'say' ? r.pages : [])).filter((p) => p.includes('勝手に'));
     expect(pagesOf(ch8)).toEqual(['弥太郎「……へっ。勝手にしな」']);
     expect(pagesOf({ ...ch8, gender: 'f' })).toEqual(['お志乃「……ふふ。勝手におし」']);
+  });
+
+  it('大手門の門番は otemon のイベントで話す', () => {
+    expect(MAPS.edo!.npcs.find((n) => n.id === 'edoMonban')).toMatchObject({ event: 'otemon', hideFlag: 'otemonOpen' });
+  });
+
+  it('江戸城の葛籠に、4 人それぞれの最後の武器がある（docs/balance.md の攻撃 35・31・24・35。江戸の店のどの武器より強い）', () => {
+    const want: [string, string, CharacterId, number][] = [
+      ['edojoChest1', 'aoiNagawaki', 'hero', 35],
+      ['edojoChest5', 'oniwabanKodachi', 'kasumi', 31],
+      ['edojoChest4', 'nyoraiShakujo', 'gendo', 24],
+      ['edojoChest2', 'aoiZutsu', 'orin', 35],
+    ];
+    const shopWeapons = Object.values(SHOPS).flatMap((sh) => sh.goods).map((id) => EQUIPMENT[id]).filter((e) => e?.slot === 'weapon');
+    for (const [chestId, item, wearer, atk] of want) {
+      expect(run(chestId, ch8).items[item], chestId).toBe(1);
+      const eq = EQUIPMENT[item]!;
+      expect(eq.wearers).toEqual([wearer]);
+      expect(eq.bonus.atk).toBe(atk);
+      for (const w of shopWeapons.filter((x) => x!.wearers.includes(wearer))) expect(atk, `${item} > ${w!.id}`).toBeGreaterThan(w!.bonus.atk ?? 0);
+    }
+  });
+
+  it('江戸城の出現表は 5 種類以上の敵で、どれも定義されている', () => {
+    const members = new Set(ENCOUNTERS.edojo!.groups.flatMap((g) => g.members));
+    expect(members.size).toBeGreaterThanOrEqual(5);
+    for (const id of members) expect(ENEMIES[id], id).toBeDefined();
+    expect(SKILLS.roju).toMatchObject({ target: 'allEnemies', effect: { kind: 'status', status: 'atkDown', turns: 3, chance: 0.6 } });
+    expect(ENEMIES.washio!.actions).toEqual([
+      { skill: 'attack', weight: 3 },
+      { skill: 'roju', weight: 1 },
+      { skill: 'kinjuYobi', weight: 1 },
+    ]);
+    expect(ENEMIES.karakuriDaigongen!.actions).toEqual([
+      { skill: 'attack', weight: 3 },
+      { skill: 'gongenHo', weight: 2 },
+      { skill: 'tamaZenmai', weight: 1 },
+    ]);
   });
 
   it('終章の敵は、ボスの報酬と弱点が決めたとおりで、画像がある。大権現は 1 ターンに 2 回動く', () => {
