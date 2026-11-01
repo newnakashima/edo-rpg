@@ -29,6 +29,7 @@ export function itemIcon(id: string): IconName | undefined {
   const item = ITEMS[id];
   if (item) return item.kind === 'medicine' ? 'kusuri' : 'dango';
   const equip = EQUIPMENT[id];
-  // 武器を付けられるのは 1 人だけ（equipment.test.ts で確かめる）
-  return equip ? slotIcon(equip.slot, equip.wearers[0] ?? 'hero') : undefined;
+  // 武器を付けられるのは 1 人だけ（icons.test.ts で確かめる）。付ける人のいない装備はアイコンなし（icons.test.ts で全装備にアイコンがあることを確かめる）
+  const wearer = equip?.wearers[0];
+  return equip && wearer ? slotIcon(equip.slot, wearer) : undefined;
 }

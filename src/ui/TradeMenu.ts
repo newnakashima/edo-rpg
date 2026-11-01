@@ -14,9 +14,12 @@ export type TradeMode = { kind: 'shop'; name: string; goods: string[] } | { kind
 
 const INFO_H = 42;
 const INFO_Y = GAME_HEIGHT - INFO_H - 6;
-const LIST_X = 100;
-/** 右上の所持金の窓に重ならない幅。 */
-const LIST_W = 168;
+/**
+ * 品の一覧の左端と幅。右端（274）は右上の所持金の窓（276〜）に重ならない。左の買う・売るの窓（8〜92）には少し重ねる（文字には掛からない）。
+ * 名前の左にアイコンを出すので、最長の「起き上がり小法師」（8 文字）と売る一覧の「700 文 ×99」が並んでも重ならない幅にする。
+ */
+const LIST_X = 80;
+const LIST_W = 194;
 
 const FAIL: Record<Exclude<TradeResult, { ok: true }>['reason'], string> = {
   money: 'お金が足りない。',

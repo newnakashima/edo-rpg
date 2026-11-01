@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CURSOR_IMAGE_SIZE, CURSOR_SCALE, ICON_IMAGE_SIZE, ICON_NAMES, ICON_SCALE, iconFrame, PAD_BUTTON_FACE_RADIUS, PAD_BUTTON_IMAGE_SIZE, PAD_DPAD_IMAGE_SIZE, PAD_IMAGE_SCALE, SUBTITLE_TEXT, TITLE_SKY_BAND, TITLE_TEXT, WINDOW_CORNER, WINDOW_IMAGE_SIZE, windowSliceRects } from './uiImages';
-import { MENU_LINE_HEIGHT } from './widgets';
+import { MENU_ICON_SPACE, MENU_LABEL_LEFT, MENU_LINE_HEIGHT, menuLabelLeft } from './widgets';
 import { GAME_HEIGHT, GAME_WIDTH } from './theme';
 import indexHtml from '../../index.html?raw';
 
@@ -255,5 +255,16 @@ describe('メニューのアイコンの画像', () => {
       }
       expect(opaque, name).toBeGreaterThan(40);
     });
+  });
+});
+
+describe('アイコンのあるメニューの名前の位置', () => {
+  it('1 行でもアイコンがあれば、全部の行の名前をアイコンの分だけずらす', () => {
+    expect(menuLabelLeft([{ label: 'たたかう' }, { label: 'にげる' }])).toBe(MENU_LABEL_LEFT);
+    expect(menuLabelLeft([{ label: '長脇差', icon: 'katana' }, { label: 'はずす' }])).toBe(MENU_LABEL_LEFT + MENU_ICON_SPACE);
+  });
+
+  it('アイコンは名前の左の空きに収まる', () => {
+    expect(ICON_IMAGE_SIZE * ICON_SCALE).toBeLessThan(MENU_ICON_SPACE);
   });
 });

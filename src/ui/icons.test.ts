@@ -9,6 +9,17 @@ describe('道具・装備品のアイコン', () => {
     expect(itemIcon('nothing')).toBeUndefined();
   });
 
+  it('道具と装備品の ID は重ならない（itemIcon は道具を先に引くため）', () => {
+    for (const id of Object.keys(ITEMS)) expect(Object.hasOwn(EQUIPMENT, id), id).toBe(false);
+  });
+
+  it('状態異常を治す道具と気付けの道具は薬', () => {
+    for (const item of Object.values(ITEMS).filter((i) => i.effect.kind === 'cure' || i.effect.kind === 'revive')) {
+      // 梅干しは食べ物（酸っぱさで目が覚める）
+      if (item.id !== 'umeboshi') expect(item.kind, item.id).toBe('medicine');
+    }
+  });
+
   it('道具は食べ物なら団子、薬なら薬包', () => {
     expect(itemIcon('dango')).toBe('dango');
     expect(itemIcon('kasutera')).toBe('dango');

@@ -109,6 +109,11 @@ export const MENU_LABEL_LEFT = 16;
 /** アイコンを出すときに名前をずらす幅（アイコン約 11 px と間 2 px）。 */
 export const MENU_ICON_SPACE = 13;
 
+/** 名前の左端（窓の左端から）。1 行でもアイコンがあれば、全部の行をアイコンの分だけずらす（アイコンのない「はずす」なども頭がそろう）。 */
+export function menuLabelLeft(items: readonly MenuItem[]): number {
+  return MENU_LABEL_LEFT + (items.some((item) => item.icon) ? MENU_ICON_SPACE : 0);
+}
+
 /** アイコン（1/3 で表示）。x, y は左端と縦の中央。 */
 export function addIcon(scene: Phaser.Scene, x: number, y: number, name: IconName): Phaser.GameObjects.Image {
   return scene.add.image(x, y, ICON_TEXTURE, iconFrame(name)).setOrigin(0, 0.5).setScale(ICON_SCALE);
@@ -161,7 +166,7 @@ export class Menu {
     this.rows = Math.max(1, Math.min(items.length, maxRows));
     this.top = y;
     const bg = drawWindow(scene, x, y, width, menuHeight(this.rows));
-    const labelX = x + MENU_LABEL_LEFT + (items.some((item) => item.icon) ? MENU_ICON_SPACE : 0);
+    const labelX = x + menuLabelLeft(items);
     this.labels = items.map((item) => scene.add.text(labelX, y, item.label, textStyle(11, item.enabled === false ? COLORS.dim : COLORS.text)));
     // 選べない行のアイコンは、文字と同じく薄くする
     this.icons = items.map((item) => (item.icon ? addIcon(scene, x + MENU_LABEL_LEFT, y, item.icon).setAlpha(item.enabled === false ? 0.5 : 1) : undefined));
