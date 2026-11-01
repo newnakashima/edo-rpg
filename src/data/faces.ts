@@ -55,19 +55,59 @@ export const SPEAKER_FACES: Readonly<Record<string, FaceId>> = {
   片平帯刀: 'tatewaki',
 };
 
-export function faceKey(id: FaceId): string {
+/**
+ * 表情差分。台詞の名前の後ろに〈怒〉〈悲〉を書くと、その表情の顔を出す（例: 霞〈怒〉「許さない」）。
+ * 印は画面には出さない（pageText で外す）。印のない台詞と、差分のない人の台詞は通常の顔。
+ */
+export const EXPRESSIONS = { 怒: 'angry', 悲: 'sad' } as const;
+export type ExpressionMark = keyof typeof EXPRESSIONS;
+export type Expression = (typeof EXPRESSIONS)[ExpressionMark];
+
+/** 表情差分（怒り・悲しみ）の顔がある人物（旅の仲間。画像は faces/<ID>_<表情>.png）。 */
+export const EXPRESSION_FACES = ['hero_m', 'hero_f', 'kasumi', 'gendo', 'orin'] as const satisfies readonly FaceId[];
+
+/** 顔の画像（通常の顔と表情差分）。public/assets/faces/<この名前>.png。 */
+export type FaceImage = FaceId | `${(typeof EXPRESSION_FACES)[number]}_${Expression}`;
+export const FACE_IMAGES: readonly FaceImage[] = [
+  ...FACES,
+  ...EXPRESSION_FACES.flatMap((id) => Object.values(EXPRESSIONS).map((e) => `${id}_${e}` as const)),
+];
+
+export function faceKey(id: FaceImage): string {
   return `face_${id}`;
 }
 
-/** ページの先頭の「名前「」から話し手の名前を取り出す。台詞でなければ undefined。 */
-export function speakerOf(page: string): string | undefined {
-  const m = /^([^「」\s]{1,8})「/.exec(page);
-  return m?.[1];
+/** ページの先頭の「名前「」または「名前〈印〉「」。名前・印・印を外した文を返す。 */
+function parsePage(page: string): { speaker?: string; mark?: string; text: string } {
+  const m = /^([^「」〈〉\s]{1,8})(?:〈([^〈〉「」]{1,2})〉)?「/.exec(page);
+  if (!m) return { text: page };
+  const speaker = m[1]!;
+  const mark = m[2];
+  return { speaker, mark, text: mark === undefined ? page : speaker + page.slice(speaker.length + mark.length + 2) };
 }
 
-/** ページの話し手の顔。顔のない人や地の文なら undefined。 */
-export function faceForPage(page: string): FaceId | undefined {
-  const speaker = speakerOf(page);
+/** ページの先頭の「名前「」（または「名前〈印〉「」）から話し手の名前を取り出す。台詞でなければ undefined。 */
+export function speakerOf(page: string): string | undefined {
+  return parsePage(page).speaker;
+}
+
+/** ページの表情の印（〈怒〉なら「怒」）。印がなければ undefined。 */
+export function expressionMarkOf(page: string): string | undefined {
+  return parsePage(page).mark;
+}
+
+/** 画面に出す文（表情の印を外したもの）。 */
+export function pageText(page: string): string {
+  return parsePage(page).text;
+}
+
+/** ページの話し手の顔の画像。顔のない人や地の文なら undefined。表情差分のない人・印は通常の顔にする。 */
+export function faceForPage(page: string): FaceImage | undefined {
+  const { speaker, mark } = parsePage(page);
   // Object.hasOwn: 「constructor「」のような名前でオブジェクトの継承したものを引かないため
-  return speaker !== undefined && Object.hasOwn(SPEAKER_FACES, speaker) ? SPEAKER_FACES[speaker] : undefined;
+  if (speaker === undefined || !Object.hasOwn(SPEAKER_FACES, speaker)) return undefined;
+  const face = SPEAKER_FACES[speaker]!;
+  if (mark === undefined || !Object.hasOwn(EXPRESSIONS, mark)) return face;
+  const expression = EXPRESSIONS[mark as ExpressionMark];
+  return (EXPRESSION_FACES as readonly FaceId[]).includes(face) ? (`${face}_${expression}` as FaceImage) : face;
 }

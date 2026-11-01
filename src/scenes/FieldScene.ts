@@ -20,7 +20,7 @@ import { TradeMenu, type TradeMode } from '../ui/TradeMenu';
 import { SaveSlotMenu } from '../ui/SaveSlotMenu';
 import { COLORS, GAME_HEIGHT, GAME_WIDTH, setupCamera, textStyle, TILE } from '../ui/theme';
 import { Menu, MessageWindow } from '../ui/widgets';
-import { faceForPage, faceKey } from '../data/faces';
+import { faceForPage, faceKey, pageText } from '../data/faces';
 
 const DELTA: Record<Facing, [number, number]> = {
   up: [0, -1],
@@ -135,7 +135,7 @@ export class FieldScene extends Phaser.Scene {
     // 高さ 58: 縁 4 の内側 50 に 48 の顔が収まる
     this.message = new MessageWindow(this, 8, GAME_HEIGHT - 66, GAME_WIDTH - 16, 58, (page) => {
       const face = faceForPage(page);
-      return face && faceKey(face);
+      return { text: pageText(page), face: face && faceKey(face) };
     });
     this.showAreaName(map.name);
 

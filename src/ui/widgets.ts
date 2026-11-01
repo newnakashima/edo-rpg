@@ -19,9 +19,16 @@ export function drawWindow(scene: Phaser.Scene, x: number, y: number, w: number,
   return scene.add.container(x, y, parts);
 }
 
+/** メッセージウィンドウの 1 ページの見せ方（画面に出す文と、顔のテクスチャのキー）。 */
+export interface PageView {
+  text: string;
+  face?: string;
+}
+
 /**
  * ページ送りのメッセージウィンドウ。決定ボタンで次のページへ進む。
- * faceOf を渡すと、ページごとに顔のテクスチャのキーを引き、あれば左に顔を出して文字を右へずらす。
+ * view を渡すと、ページごとに画面に出す文と顔のテクスチャのキーを引き、顔があれば左に出して文字を右へずらす
+ * （台詞の表情の印〈怒〉などは view が外す）。
  */
 export class MessageWindow {
   private readonly container: Phaser.GameObjects.Container;
@@ -30,20 +37,20 @@ export class MessageWindow {
   private readonly face: Phaser.GameObjects.Image | null;
   private readonly x: number;
   private readonly w: number;
-  private readonly faceOf: ((page: string) => string | undefined) | undefined;
+  private readonly view: ((page: string) => PageView) | undefined;
   private pages: string[] = [];
   private index = 0;
   private onDone: (() => void) | null = null;
 
-  constructor(scene: Phaser.Scene, x: number, y: number, w: number, h: number, faceOf?: (page: string) => string | undefined) {
+  constructor(scene: Phaser.Scene, x: number, y: number, w: number, h: number, view?: (page: string) => PageView) {
     this.x = x;
     this.w = w;
-    this.faceOf = faceOf;
+    this.view = view;
     const bg = drawWindow(scene, x, y, w, h);
     this.text = scene.add.text(x + TEXT_PADDING, y + 6, '', { ...textStyle(11), wordWrap: { width: w - TEXT_PADDING * 2, useAdvancedWrap: true }, lineSpacing: 3 });
     this.arrow = scene.add.text(x + w - 14, y + h - 14, '▼', textStyle(8, COLORS.accent));
     // 顔はウィンドウの縦の中央に置く（フィールドの高さ 58 なら、縁 4 の内側 50 に 48 の顔が収まり、上下に 1 ずつ空く）
-    this.face = faceOf ? scene.add.image(x + FACE_MARGIN, y + Math.floor(h / 2), '__DEFAULT').setOrigin(0, 0.5).setVisible(false) : null;
+    this.face = view ? scene.add.image(x + FACE_MARGIN, y + Math.floor(h / 2), '__DEFAULT').setOrigin(0, 0.5).setVisible(false) : null;
     const parts: Phaser.GameObjects.GameObject[] = [bg, this.text, this.arrow];
     if (this.face) parts.push(this.face);
     this.container = scene.add.container(0, 0, parts).setScrollFactor(0).setDepth(100).setVisible(false);
@@ -76,14 +83,14 @@ export class MessageWindow {
   }
 
   private showPage(page: string): void {
-    const key = this.faceOf?.(page);
+    const { text, face: key } = this.view?.(page) ?? { text: page };
     const hasFace = !!this.face && key !== undefined && this.face.scene.textures.exists(key);
     if (hasFace) this.face!.setTexture(key);
     this.face?.setVisible(hasFace);
     const { left, wrapWidth } = messageTextLayout(this.w, hasFace ? this.face!.width : undefined);
     this.text.setX(this.x + left);
     this.text.setWordWrapWidth(wrapWidth, true);
-    this.text.setText(page);
+    this.text.setText(text);
   }
 
   update(controls: Controls): void {
