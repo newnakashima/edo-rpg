@@ -636,11 +636,12 @@ MAPS.world = {
   // 駿府のまわり（x 103〜109、大井川の渡し場から駿府まで）: 序章を終えたら駿府の敵（それまでは序章の敵）
   // 駿河（x 103〜119、清水湊・富士の裾野・箱根の関所まで）: 序章の敵。全滅で清水湊へ（範囲の外の既定）
   // 箱根の東（x 120〜、y 20〜40。江戸のまわり）: 奥州街道の敵。江戸に着いたら全滅で江戸へ（それまでは仙台へ。仙台にも着く前なら清水湊）
-  // 北国街道・奥州街道の北（x 78〜、y 0〜19。金沢の東〜仙台）: 奥州街道の敵。全滅で仙台へ（仙台に着く前の x 78〜117 は金沢へ）
+  // 北国街道・奥州街道の北（x 78〜、y 0〜19。金沢の東〜仙台）: 奥州街道の敵。全滅で仙台へ（仙台に着く前と、x 78〜117 は金沢へ）
   respawnZones: [
     { x: 120, y: 20, w: 30, h: 21, mapId: 'edo', flag: 'edoIntro' },
-    { x: 118, y: 0, w: 32, h: 41, mapId: 'sendai', flag: 'sendaiIntro' },
-    { x: 78, y: 0, w: 40, h: 20, mapId: 'kanazawa' },
+    { x: 120, y: 20, w: 30, h: 21, mapId: 'sendai', flag: 'sendaiIntro' },
+    { x: 118, y: 0, w: 32, h: 20, mapId: 'sendai', flag: 'sendaiIntro' },
+    { x: 78, y: 0, w: 72, h: 20, mapId: 'kanazawa' },
     { x: 0, y: 36, w: 24, h: 24, mapId: 'nagasaki', flag: 'nagasakiArrived' },
     { x: 0, y: 20, w: 52, h: 40, mapId: 'hiroshima', flag: 'chapter5Cleared' },
     { x: 52, y: 20, w: 12, h: 21, mapId: 'osaka', flag: 'chapter4Cleared' },

@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { CHARACTERS } from './characters';
-import { ENEMIES } from './enemies';
+import { ENCOUNTERS, ENEMIES } from './enemies';
 import type { EventStep } from './eventTypes';
 import { EVENTS } from './events';
 import { isKnownItem } from './items';
+import { SKILLS } from './skills';
 import { MAPS, npcVisible, tileAt } from './maps';
 import { EventRunner } from '../systems/eventScript';
 import { newGame, type GameState } from '../systems/gameState';
@@ -730,6 +731,12 @@ describe('第 8 章の流れ', () => {
     const lost = run('kashaKarakuri', entered, 'defeat');
     expect(lost.flags.kashaDefeated).toBeFalsy();
     expect(pagesOf('kashaKarakuri', lost)).toBe(1);
+    // 火車からくりを倒す前に江戸へ入り直しても、章は終わらず褒美もない
+    for (const st of [fire, entered, lost]) {
+      const again = run('edoEnter', st);
+      expect(again.flags.chapter8Cleared).toBeFalsy();
+      expect(again.money).toBe(st.money);
+    }
     const won = run('kashaKarakuri', entered);
     expect(won.flags.kashaDefeated).toBe(true);
     expect(warpOf('kashaKarakuri', entered)).toEqual({ mapId: 'edo', x: 22, y: 16 });
@@ -745,6 +752,23 @@ describe('第 8 章の流れ', () => {
     expect(boss.rewardScale).toBe(6);
     expect(boss.weak).toEqual(['holy', 'mech']);
     expect(boss.resist).toEqual(['fire']);
+    // docs/balance.md の「第 8 章で見積もりから変えたこと」の数値（勝率 Lv27 95%・Lv26 72% はこの値で試した）
+    expect(boss.factors).toEqual({ hp: 13, atk: 1.05, def: 1.2, spd: 1.1 });
+    expect(boss.actions).toEqual([
+      { skill: 'attack', weight: 3 },
+      { skill: 'kaenGuruma', weight: 2 },
+      { skill: 'mojaNoTe', weight: 1 },
+    ]);
+    expect(SKILLS.kaenGuruma).toMatchObject({ target: 'allEnemies', effect: { kind: 'physical', multiplier: 0.7 }, elements: ['fire'] });
+    expect(SKILLS.mojaNoTe).toMatchObject({ target: 'enemy', effect: { kind: 'status', status: 'paralysis', turns: 2, chance: 0.5 } });
+  });
+
+  it('奥州街道の表には江戸の町なかの敵（火付け盗賊・旗本奴・火鼠）が出ず、江戸の大火の表には送り狼・雪女・加賀の忍びが出ない。どちらも 4 人で来るので 4 体の組がある', () => {
+    const members = (id: string) => new Set(ENCOUNTERS[id]!.groups.flatMap((g) => g.members));
+    for (const e of ['hitsukeTozoku', 'hatamotoYakko', 'hinezumi']) expect(members('oshu').has(e), e).toBe(false);
+    for (const e of ['okuriOkami', 'yukiOnna', 'kagaShinobi']) expect(members('edo').has(e), e).toBe(false);
+    for (const id of ['oshu', 'edo']) expect(Math.max(...ENCOUNTERS[id]!.groups.map((g) => g.members.length)), id).toBe(4);
+    for (const id of ['hitsukeTozoku', 'kasha', 'karakuriDoshin', 'hatamotoYakko', 'hinezumi', 'okuriOkami', 'kashaKarakuri']) expect(ENEMIES[id]?.image, id).toBe(true);
   });
 });
 

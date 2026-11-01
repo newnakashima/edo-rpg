@@ -1288,6 +1288,14 @@ describe('第 8 章のマップ（北国街道・仙台・江戸・神田の大�
     expect(encounterAt(world, 114, 30, {})).toBe('suruga');
     expect(respawnPoint('world', 90, 14)).toEqual({ mapId: 'kanazawa', ...MAPS.kanazawa!.respawn });
     expect(respawnPoint('world', 130, 5, { sendaiIntro: true })).toEqual({ mapId: 'sendai', ...sendai.respawn });
+    // 仙台に着く前は、北国街道の東の端（仙台の印の手前）まで金沢へ戻る
+    for (const [x, y] of [[125, 5], [136, 9]] as const) {
+      expect(tileAt(world, x, y)?.blocked, `${x},${y}`).toBe(false);
+      expect(respawnPoint('world', x, y), `${x},${y}`).toEqual({ mapId: 'kanazawa', ...MAPS.kanazawa!.respawn });
+      expect(respawnPoint('world', x, y, { sendaiIntro: true }), `${x},${y}`).toEqual({ mapId: 'sendai', ...sendai.respawn });
+    }
+    // 箱根の関所の西（駿河）は、仙台に着いたあとも清水湊へ戻る
+    expect(respawnPoint('world', 118, 28, { sendaiIntro: true, edoIntro: true })).toEqual({ mapId: 'shimizu', ...MAPS.shimizu!.respawn });
     expect(respawnPoint('world', 123, 28, { sendaiIntro: true })).toEqual({ mapId: 'sendai', ...sendai.respawn });
     expect(respawnPoint('world', 123, 28, { sendaiIntro: true, edoIntro: true })).toEqual({ mapId: 'edo', ...edo.respawn });
   });
@@ -1352,6 +1360,15 @@ describe('第 8 章のマップ（北国街道・仙台・江戸・神田の大�
     if (warp?.type !== 'warp') return;
     expect(tileAt(edo, warp.x, warp.y)?.blocked).toBe(false);
     expect(edo.npcs.some((n) => n.x === warp.x && n.y === warp.y)).toBe(false);
+  });
+
+  it('showFlag が立つまではいない。立ったあとも hideFlag が立てばいなくなる', () => {
+    const npc = { id: 'x', name: 'x', x: 0, y: 0, color: 0, showFlag: 'a', hideFlag: 'b' };
+    expect(npcVisible(npc, {})).toBe(false);
+    expect(npcVisible(npc, { a: true })).toBe(true);
+    expect(npcVisible(npc, { b: true })).toBe(false);
+    expect(npcVisible(npc, { a: true, b: true })).toBe(false);
+    expect(npcVisible({ ...npc, showFlag: undefined }, {})).toBe(true);
   });
 
   it('showFlag はどこかのイベントの setFlag で立つ', () => {
