@@ -46,7 +46,7 @@ standard の size 24 では笠と合羽が描き分けられないため、主�
 
 - borei: 1 回目（bcc58de0-6585-449d-830f-d487ee996aac。white triangular cloth headband）は額の布がただの白い鉢巻きになり、三角に見えなかった。2 回目は「a small white TRIANGLE of cloth … pointing up in the middle of the forehead」と形と位置を言い、採用
 
-### 物語の専用の人物（`chars/hyogo.png`・`kinta.png`・`sakon.png`・`kagaTono.png`・`kokichi.png`）
+### 物語の専用の人物（`chars/hyogo.png`・`kinta.png`・`sakon.png`・`kagaTono.png`・`kokichi.png`・`tatewaki.png`）
 
 町の人の類型で代えていた主要な人物に、専用の立ち姿を作った（`src/data/sprites.ts` の `STORY_SPRITES`）。設定は敵方の人物と同じ（mode `v3`、size 28、黒の 1px 輪郭、medium detail、low top-down。歩行は作らず `scripts/pack_character.py` で立ち姿を並べる）。
 
@@ -60,6 +60,16 @@ standard の size 24 では笠と合羽が描き分けられないため、主�
 
 - hyogo: 1 回目は胸の家紋が見えなかった。2 回目は Pillow で羽織の左右の胸に白い家紋を描き足して採用（計 2 回）
 - sakon: 1 回目は肩衣の張った肩がなかった。2 回目（d63c8980-ddb4-4620-9238-978ab0de9782。very wide pointed shoulder wings）は張りが大きすぎて、こうもりの羽に見えた。3 回目は 1 回目の正面と背面に、小さな紺の肩衣の張りを Pillow で描き足して採用（計 3 回）
+
+第 8 章・仙台の片平帯刀（伊達の重臣）も、初めは役人の類型（npc_yakunin）で代えていたので、同じ設定で作った。
+
+| ID | PixelLab のキャラクター ID | 生成プロンプト | 回数 |
+| --- | --- | --- | --- |
+| tatewaki（片平帯刀） | acc71b02-3c0c-45a9-982d-1d16e7bc204d | chibi Edo period Japanese senior retainer samurai of the Date clan in his fifties, dignified wise face with a short neat grey goatee beard, grey-streaked black hair in a neat topknot (chonmage), deep dark green haori jacket with a small white round family crest on the chest, brown hakama trousers, katana and wakizashi at his left hip, white tabi socks and straw sandals（＋Pillow で髪を塗り替え） | 2 |
+
+- チェック項目: 4 方向とも同じ人物で崩れがない [必須]／背景透過・黒の 1px 輪郭 [必須]／50 代の侍・灰色まじりの黒髪のまげ・灰のあごひげ [必須]／深緑の羽織＋茶の袴で、兵庫（紺）・左近（紺・白髪）・鷲尾（黒＋深紅）・加賀の殿様（紫）と色で見分けられる [必須]／胸に小さな白い紋／左腰に刀／40 × 40 のシートで背丈が兵庫・左近と釣り合う。
+- 1 回目は髪が全部灰色になり（左近の白髪に近い）、東向きの頭の左に灰白の浮いた点があった。
+- 2 回目は Pillow で、各向きの目より上の髪の灰色を 3 段（明るい灰 → 969ca8 の筋、中間 → 3a3842、暗い灰 → 201f26）に塗り替えて黒髪に灰の筋にし、東向きの浮いた点（目の高さの後ろの 4 × 2 ドット）を消して採用。最終判定はすべて ○。
 
 ### 終章「将軍の間」の人物（`chars/washio.png`・`tenzen.png`・`shogun.png`）
 
@@ -85,18 +95,6 @@ standard の size 24 では笠と合羽が描き分けられないため、主�
   - 1 回目（aef01165-ae2d-4791-a1d2-081a02f3e6ca）は烏帽子がつばと耳のある帽子になり、顔も髪の影で見えなかった。紋は胸に 1 点だけ。
   - 2 回目（edf8c3af-18ba-441e-ad00-e24b0554510c。「a tall narrow rounded black cap … with NO brim」）は烏帽子は直ったが、頬の赤い丸顔で子どもに見え、東向きの目が緑、西向きの足元に灰色の浮いた点があった。
   - 3 回目は「gaunt adult man … hollow cheeks … thin black mustache, no blush」と年齢と頬を言って採用。最終判定はすべて ○。
-
-### 第 8 章の人物（`chars/tatewaki.png`）
-
-仙台の片平帯刀（伊達の重臣）は、初めは役人の類型（npc_yakunin）で代えていた。設定は「物語の専用の人物」と同じ（`create_character` mode `v3`、size 28、黒の 1px 輪郭、medium detail、low top-down。歩行は作らず `scripts/pack_character.py` で立ち姿を並べる）。
-
-| ID | PixelLab のキャラクター ID | 生成プロンプト | 回数 |
-| --- | --- | --- | --- |
-| tatewaki（片平帯刀） | acc71b02-3c0c-45a9-982d-1d16e7bc204d | chibi Edo period Japanese senior retainer samurai of the Date clan in his fifties, dignified wise face with a short neat grey goatee beard, grey-streaked black hair in a neat topknot (chonmage), deep dark green haori jacket with a small white round family crest on the chest, brown hakama trousers, katana and wakizashi at his left hip, white tabi socks and straw sandals（＋Pillow で髪を塗り替え） | 2 |
-
-- チェック項目: 4 方向とも同じ人物で崩れがない [必須]／背景透過・黒の 1px 輪郭 [必須]／50 代の侍・灰色まじりの黒髪のまげ・灰のあごひげ [必須]／深緑の羽織＋茶の袴で、兵庫（紺）・左近（紺・白髪）・鷲尾（黒＋深紅）・加賀の殿様（紫）と色で見分けられる [必須]／胸に小さな白い紋／左腰に刀／40 × 40 のシートで背丈が兵庫・左近と釣り合う。
-- 1 回目は髪が全部灰色になり（左近の白髪に近い）、東向きの頭の左に灰白の浮いた点があった。
-- 2 回目は Pillow で、各向きの目より上の髪の灰色を 3 段（明るい灰 → 969ca8 の筋、中間 → 3a3842、暗い灰 → 201f26）に塗り替えて黒髪に灰の筋にし、東向きの浮いた点（目の高さの後ろの 4 × 2 ドット）を消して採用。最終判定はすべて ○。
 
 ### 町の人（`chars/npc_*.png`）
 
