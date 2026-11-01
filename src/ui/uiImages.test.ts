@@ -29,6 +29,7 @@ async function decodePng(dataUrl: string): Promise<number[][][]> {
   const out = new Uint8Array(h * stride);
   for (let y = 0; y < h; y++) {
     const filter = raw[y * (stride + 1)]!;
+    expect(filter, 'PNG のフィルタは 0〜4').toBeLessThanOrEqual(4);
     for (let i = 0; i < stride; i++) {
       const v = raw[y * (stride + 1) + 1 + i]!;
       const a = i >= 4 ? out[y * stride + i - 4]! : 0;
@@ -99,7 +100,8 @@ describe('ウィンドウ枠の 9 分割', () => {
     }
     const { x, y, w, h } = r.mc;
     for (let dy = 0; dy < h; dy++) for (let dx = 0; dx < w; dx++) expect(at(x + dx, y + dy), 'mc').toBe(at(x, y));
-    // 地は不透明
-    expect(px[y]![x]![3]).toBe(255);
+    // デコーダーが正しく読めているか、既知の色で確かめる（地は不透明な藍、左上は墨）
+    expect(at(x, y)).toBe('38,32,75,255');
+    expect(at(0, 0)).toBe('34,34,37,255');
   });
 });
