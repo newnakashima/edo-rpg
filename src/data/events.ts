@@ -2209,7 +2209,7 @@ export const EVENTS: Record<string, EventDef> = {
       },
     ],
   },
-  /** 大銀杏の根元の清正の古井戸。茂作の頼みを聞いたあとなら、石段を下りて地の下の水脈へ。 */
+  /** 大銀杏の根元の清正の古井戸。茂作の頼みを聞いたあとなら、石段を下りて地の下の水脈へ（からくりを壊したあとも下りられる）。 */
   kumamotoFuruido: {
     id: 'kumamotoFuruido',
     steps: [
@@ -2217,26 +2217,25 @@ export const EVENTS: Record<string, EventDef> = {
         type: 'if',
         flag: 'kumamotoIdoAsked',
         then: [
+          // からくりを壊したあとも、取り残した葛籠のために下りられる
           {
             type: 'if',
             flag: 'kumamotoIdoFound',
             then: [{ type: 'say', lines: ['古井戸の底から、水の流れる音が聞こえてくる。'] }],
-            else: [
-              { type: 'say', lines: ['石を組んだ古い井戸だ。内側の壁に石段が切ってあり、暗い底へ続いている。……ごうん、ごうんと、鉄の鳴る音がする。'] },
+            else: [{ type: 'say', lines: ['石を組んだ古い井戸だ。内側の壁に石段が切ってあり、暗い底へ続いている。……ごうん、ごうんと、鉄の鳴る音がする。'] }],
+          },
+          {
+            type: 'choice',
+            prompt: '古井戸の底へ下りるか？',
+            options: [
               {
-                type: 'choice',
-                prompt: '古井戸の底へ下りるか？',
-                options: [
-                  {
-                    label: '下りる',
-                    steps: [
-                      { type: 'say', lines: ['石段を伝って、古井戸の底へ下りていった。'] },
-                      { type: 'warp', mapId: 'kiyomasaIdo', x: 3, y: 2 },
-                    ],
-                  },
-                  { label: 'やめておく', steps: [] },
+                label: '下りる',
+                steps: [
+                  { type: 'say', lines: ['石段を伝って、古井戸の底へ下りていった。'] },
+                  { type: 'warp', mapId: 'kiyomasaIdo', x: 3, y: 2 },
                 ],
               },
+              { label: 'やめておく', steps: [] },
             ],
           },
         ],

@@ -1285,8 +1285,8 @@ describe('寄り道の熊本（籠城の備えの井戸の謎）', () => {
     expect(warpWith('kumamotoFuruido', asked, 0)).toEqual({ mapId: 'kiyomasaIdo', x: 3, y: 2 });
     // 「やめておく」なら下りない
     expect(warpWith('kumamotoFuruido', asked, 1)).toBeUndefined();
-    // からくりを壊したあとは、水の音がするだけ
-    expect(warpWith('kumamotoFuruido', found, 0)).toBeUndefined();
+    // からくりを壊したあとも、取り残した葛籠のために下りられる
+    expect(warpWith('kumamotoFuruido', found, 0)).toEqual({ mapId: 'kiyomasaIdo', x: 3, y: 2 });
   });
 
   it('水脈のからくりでは外法使い・南蛮兵 3（Lv21・逃げられない）と戦い、勝つと水が戻る（kumamotoIdoFound）。負けたら戻らない', () => {
