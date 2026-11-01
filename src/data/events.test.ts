@@ -1160,3 +1160,90 @@ describe('寄り道の浜松（遠州の凧揚げ合戦）', () => {
     expect(run('hamamatsuChest2', arrived).items.unagi).toBe((arrived.items.unagi ?? 0) + 1);
   });
 });
+
+describe('寄り道の彦根（赤備えの具足を探す）', () => {
+  const base = newGame('m', { mapId: 'hikone', x: 50, y: 12 });
+  const arrived = {
+    ...base,
+    party: [createMember('hero', 10), createMember('kasumi', 10)],
+    flags: { intro: true, prologueCleared: true, chapter1Cleared: true, oigawaOpen: true, chapter2Cleared: true, hikoneIntro: true },
+  };
+  const pagesOf = (id: string, state: GameState) => {
+    const r = new EventRunner(EVENTS[id]!.steps).next(state);
+    return r.request.kind === 'say' ? r.request.pages.length : 0;
+  };
+  const firstBattle = (id: string, state: GameState) => {
+    const runner = new EventRunner(EVENTS[id]!.steps);
+    return skipSay(runner, runner.next(state)).request;
+  };
+  const found = run('hikoneGusoku', run('hikoneJinbei', arrived));
+
+  it('彦根に初めて入ると hikoneIntro。2 回目からは何もしない', () => {
+    const entered = run('hikoneEnter', { ...arrived, flags: { ...arrived.flags, hikoneIntro: false } });
+    expect(entered.flags.hikoneIntro).toBe(true);
+    expect(new EventRunner(EVENTS.hikoneEnter!.steps).next(entered).request.kind).toBe('done');
+  });
+
+  it('甚兵衛の頼みを聞く前は、佐和山の盗人は追い払うだけで戦わない', () => {
+    expect(firstBattle('hikoneGusoku', arrived).kind).toBe('done');
+    expect(run('hikoneGusoku', arrived).flags.hikoneGusokuFound).toBeFalsy();
+  });
+
+  it('甚兵衛の頼み（hikoneGusokuAsked）を聞くと、亡霊武者 2（Lv11・逃げられない）と戦い、勝つと具足を取り返す。負けたら取り返せない', () => {
+    const asked = run('hikoneJinbei', arrived);
+    expect(asked.flags.hikoneGusokuAsked).toBe(true);
+    expect(firstBattle('hikoneGusoku', asked)).toMatchObject({ kind: 'battle', enemies: ['boreiMusha', 'boreiMusha'], level: 11, canEscape: false, loseOk: false });
+    expect(found.flags.hikoneGusokuFound).toBe(true);
+    expect(run('hikoneGusoku', asked, 'defeat').flags.hikoneGusokuFound).toBeFalsy();
+    // 取り返す前に甚兵衛に話すと、佐和山を指す短い台詞だけ
+    expect(run('hikoneJinbei', asked).flags).toEqual(asked.flags);
+    expect(pagesOf('hikoneJinbei', asked)).toBe(1);
+  });
+
+  it('具足を届けると、赤備えの籠手を一度だけ受け取る（hikoneGusokuDone）。店には置かない', () => {
+    const done = run('hikoneJinbei', found);
+    expect(done.flags.hikoneGusokuReturned).toBe(true);
+    expect(done.flags.hikoneGusokuDone).toBe(true);
+    expect(done.items.akazonaeKote).toBe(1);
+    // 終えたあとは短い台詞だけで、何も変わらない
+    const again = run('hikoneJinbei', done);
+    expect([again.items, again.money, again.flags]).toEqual([done.items, done.money, done.flags]);
+    expect(pagesOf('hikoneJinbei', done)).toBe(1);
+    expect(EQUIPMENT.akazonaeKote?.slot).toBe('accessory');
+    for (const shop of Object.values(SHOPS)) expect(shop.goods, shop.id).not.toContain('akazonaeKote');
+  });
+
+  it('持ち物がいっぱいで籠手を受け取れなければ hikoneGusokuDone は立たず、次は届けた場面を繰り返さずに受け取れる', () => {
+    const full = { ...found, items: { ...found.items, akazonaeKote: 99 } };
+    const refused = run('hikoneJinbei', full);
+    expect(refused.flags.hikoneGusokuReturned).toBe(true);
+    expect(refused.flags.hikoneGusokuDone).toBeFalsy();
+    expect(refused.items.akazonaeKote).toBe(99);
+    const freed = { ...refused, items: { ...refused.items, akazonaeKote: 0 } };
+    expect(pagesOf('hikoneJinbei', freed)).toBe(1);
+    const got = run('hikoneJinbei', freed);
+    expect(got.flags.hikoneGusokuDone).toBe(true);
+    expect(got.items.akazonaeKote).toBe(1);
+  });
+
+  it('彦根の台詞には仲間が出てこない（第 3 章の初めから、霞が抜けている第 5 章にも来られるため）', () => {
+    const lines = (steps: EventStep[]): string[] =>
+      steps.flatMap((st) => {
+        if (st.type === 'say') return [...st.lines, ...(st.linesF ?? [])];
+        if (st.type === 'if') return [...lines(st.then), ...lines(st.else ?? [])];
+        if (st.type === 'choice') return st.options.flatMap((o) => lines(o.steps));
+        if (st.type === 'giveItem') return lines(st.ifFull ?? []);
+        return [];
+      });
+    for (const id of ['hikoneEnter', 'hikoneJinbei', 'hikoneGusoku']) {
+      for (const line of lines(EVENTS[id]!.steps)) {
+        for (const name of ['霞', '玄道', 'お凛', '榊兵庫']) expect(line.startsWith(`${name}「`), `${id}: ${line}`).toBe(false);
+      }
+    }
+  });
+
+  it('葛籠の中身は、佐和山が万金丹、町が糸切餅', () => {
+    expect(run('hikoneChest1', arrived).items.mankintan).toBe((arrived.items.mankintan ?? 0) + 1);
+    expect(run('hikoneChest2', arrived).items.itokiriMochi).toBe((arrived.items.itokiriMochi ?? 0) + 1);
+  });
+});

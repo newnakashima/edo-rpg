@@ -45,6 +45,9 @@ export const SHOPS: Record<string, ShopDef> = {
   // 浜松（第 2 章の寄り道）。主人公と霞の 2 人で来るので、2 人分の装備を置く
   hamamatsuYorozu: { id: 'hamamatsuYorozu', name: 'よろず屋', goods: ['omusubi', 'kizugusuri', 'dango', 'unagi', 'amazake', 'mankintan', 'dokukeshi', 'umeboshi', 'hangontan', 'kitsukegusuri', 'waraji', 'chochin'] },
   hamamatsuKaji: { id: 'hamamatsuKaji', name: '刀鍛冶', goods: ['dotanuki', 'magoroku', 'ninjato', 'kusarigama', 'kusarikatabira', 'shinobishozoku', 'hachigane', 'inro'] },
+  // 彦根（第 3 章の寄り道）。第 3 章の初め（主人公と霞の 2 人）から来られるので、京の品ぞろえに 2 人分の装備を置く
+  hikoneYorozu: { id: 'hikoneYorozu', name: 'よろず屋', goods: ['kizugusuri', 'itokiriMochi', 'kintsuba', 'mankintan', 'dokukeshi', 'kumanoi', 'hangontan', 'kitsukegusuri', 'waraji', 'chochin'] },
+  hikoneKaji: { id: 'hikoneKaji', name: '刀鍛冶', goods: ['kotetsu', 'tekkokagi', 'shakujo', 'nanbando', 'kusarishozoku', 'hachigane', 'inro'] },
   // 会津若松（第 8 章の寄り道）
   aizuYorozu: { id: 'aizuYorozu', name: 'よろず屋', goods: ['kintsuba', 'mishirazuGaki', 'mankintan', 'bocha', 'hyorogan', 'dokukeshi', 'kumanoi', 'hakka', 'hangontan', 'kitsukegusuri', 'ninjin', 'chochin'] },
   aizuKaji: { id: 'aizuKaji', name: '刀鍛冶', goods: ['aizuKanesada', 'yukiKodachi', 'hakusanShakujo', 'kagaZutsu', 'yukinoshitaDo', 'yukiShozoku', 'hachigane', 'inro'] },
