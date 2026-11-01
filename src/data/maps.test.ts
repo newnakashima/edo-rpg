@@ -39,7 +39,7 @@ describe('タイルの画像', () => {
       kanazawa: 'snow', kenrokuen: 'snow', kitsunebiCave: 'cave',
       karakuriYashiki: 'karakuri', komeKura: 'karakuri', kenkyujo: 'karakuri', karakuriGura: 'karakuri',
       kobo: 'interior', takoya: 'interior', tenshu: 'castle', rashomon: 'ruins', oninosu: 'ruins', nanbanji: 'ruins',
-      kitamaebune: 'ship', horikawaKura: 'kura', edoTaika: 'fire',
+      kitamaebune: 'ship', horikawaKura: 'kura', edoTaika: 'fire', edojo: 'castle', matsuNoRoka: 'castle',
     };
     const actual = Object.fromEntries(Object.values(MAPS).filter((m) => m.tileset).map((m) => [m.id, m.tileset]));
     expect(actual).toEqual(expected);
@@ -1385,5 +1385,86 @@ describe('第 8 章のマップ（北国街道・仙台・江戸・神田の大�
     };
     for (const ev of Object.values(EVENTS)) walk(ev.steps);
     for (const m of Object.values(MAPS)) for (const n of m.npcs) if (n.showFlag) expect(set.has(n.showFlag), `${m.id}/${n.id}`).toBe(true);
+  });
+});
+
+describe('終章の江戸城', () => {
+  const edo = MAPS.edo!;
+  const edojo = MAPS.edojo!;
+  const matsu = MAPS.matsuNoRoka!;
+  const exitTo = (map: MapDef, mapId: string) => map.exits.find((e) => e.to === mapId)!;
+  const landingOf = (map: MapDef, mapId: string) => {
+    const e = exitTo(map, mapId);
+    return { x: e.toX, y: e.toY };
+  };
+  const trigger = (map: MapDef, event: string) => map.triggers!.filter((t) => t.event === event);
+
+  it('大手門の橋の出口は、門番が門を開ける（otemonOpen）まで通れない', () => {
+    const start = MAPS.world!.towns!.find((t) => t.name === '江戸')!.to!;
+    const gate = exitTo(edo, 'edojo');
+    const later = { taikaStarted: true, edoHideout: true, kokichiReport: true, chapter8Cleared: true };
+    expect(reachable(edo, start, later, true).has(`${gate.x},${gate.y}`)).toBe(false);
+    expect(reachable(edo, start, { ...later, otemonOpen: true }, true).has(`${gate.x},${gate.y}`)).toBe(true);
+  });
+
+  it('本丸御殿の玄関から御金蔵の口へ行け、御錠口と御金蔵の口を通らなければ大奥にも御金蔵の奥にも入れない', () => {
+    const landing = landingOf(edo, 'edojo');
+    const area = reachable(edojo, landing, {}, true);
+    const [okane] = trigger(edojo, 'okanegura');
+    const [jou] = trigger(edojo, 'jouguchi');
+    expect(area.has(`${okane!.x},${okane!.y}`)).toBe(true);
+    expect(area.has(`${jou!.x},${jou!.y}`)).toBe(true);
+    const walled = reachable(wallTriggers(edojo), landing, {}, true);
+    // 御金蔵の千両箱、大奥の持仏、松の廊下への出口には、どちらの口も通らずには行けない
+    for (const id of ['okaneguraSenryo', 'jibutsudoButsuzo', 'okuJochu']) {
+      const n = edojo.npcs.find((x) => x.id === id)!;
+      expect(near(walled, n.x, n.y), id).toBe(false);
+    }
+    const out = exitTo(edojo, 'matsuNoRoka');
+    expect(walled.has(`${out.x},${out.y}`)).toBe(false);
+    // 化け猫の口を通らなければ松の廊下へは出られない（御錠口と御金蔵の口は通れるものとする）
+    const onlyOoku = { ...edojo, triggers: trigger(edojo, 'ookuBakeneko') };
+    expect(reachable(wallTriggers(onlyOoku), landing, {}, true).has(`${out.x},${out.y}`)).toBe(false);
+    expect(reachable(edojo, landing, {}, true).has(`${out.x},${out.y}`)).toBe(true);
+  });
+
+  it('松の廊下の入口から典膳の場所へ行け、典膳を通らなければ鷲尾の場所へ、鷲尾の場所を通らなければ将軍の間へ入れない', () => {
+    const landing = landingOf(edojo, 'matsuNoRoka');
+    const area = reachable(matsu, landing, {}, true);
+    for (const t of matsu.triggers!) expect(area.has(`${t.x},${t.y}`), `${t.event} ${t.x},${t.y}`).toBe(true);
+    const tenzenOnly = { ...matsu, triggers: trigger(matsu, 'tenzen') };
+    const beforeTenzen = reachable(wallTriggers(tenzenOnly), landing, {}, true);
+    for (const t of trigger(matsu, 'shogunNoMa')) expect(beforeTenzen.has(`${t.x},${t.y}`)).toBe(false);
+    const washioOnly = { ...matsu, triggers: trigger(matsu, 'shogunNoMa') };
+    const beforeWashio = reachable(wallTriggers(washioOnly), landing, {}, true);
+    const shogun = matsu.npcs.find((n) => n.id === 'kagemushaShogun')!;
+    expect(near(beforeWashio, shogun.x, shogun.y)).toBe(false);
+    // 休息の間の兵庫と金太は、典膳の手前にいる
+    for (const id of ['hyogoRoka', 'kintaRoka']) {
+      const n = matsu.npcs.find((x) => x.id === id)!;
+      expect(near(beforeTenzen, n.x, n.y), id).toBe(true);
+    }
+  });
+
+  it('本丸御殿と松の廊下は江戸城の敵が出て、全滅したら江戸の旅籠の前に戻る', () => {
+    for (const m of [edojo, matsu]) {
+      expect(m.encounter, m.id).toBe('edojo');
+      expect(respawnPoint(m.id), m.id).toEqual({ mapId: 'edo', ...edo.respawn });
+    }
+  });
+
+  it('御錠口で押し戻される場所は、通れて人のいない場所で、御錠口の手前', () => {
+    const warp = EVENTS.jouguchi!.steps.find((s) => s.type === 'warp');
+    expect(warp).toMatchObject({ mapId: 'edojo' });
+    if (warp?.type !== 'warp') return;
+    expect(tileAt(edojo, warp.x, warp.y)?.blocked).toBe(false);
+    expect(edojo.npcs.some((n) => n.x === warp.x && n.y === warp.y)).toBe(false);
+    const [jou] = trigger(edojo, 'jouguchi');
+    expect(warp.y).toBeGreaterThan(jou!.y);
+  });
+
+  it('鷲尾・典膳・将軍は専用の画像を使う', () => {
+    const want: Record<string, string> = { washioZa: 'washio', tenzenRoka: 'tenzen', kagemushaShogun: 'shogun' };
+    for (const [id, sprite] of Object.entries(want)) expect(matsu.npcs.find((n) => n.id === id)?.sprite, id).toBe(sprite);
   });
 });

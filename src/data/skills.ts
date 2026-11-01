@@ -211,6 +211,17 @@ export const SKILLS: Record<string, SkillDef> = {
   okuriKiba: { id: 'okuriKiba', name: '送り牙', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.3 }, description: '' },
   kaenGuruma: { id: 'kaenGuruma', name: '火炎車', mp: 0, target: 'allEnemies', effect: { kind: 'physical', multiplier: 0.7 }, elements: ['fire'], description: '' },
   mojaNoTe: { id: 'mojaNoTe', name: '亡者の手', mp: 0, target: 'enemy', effect: { kind: 'status', status: 'paralysis', turns: 2, chance: 0.5 }, description: '' },
+  // 江戸城（終章）
+  kusariFundo: { id: 'kusariFundo', name: '鎖分銅', mp: 0, target: 'enemy', effect: { kind: 'status', status: 'bind', turns: 1, chance: 0.4 }, description: '' },
+  nekoKaze: { id: 'nekoKaze', name: '化け猫の舞', mp: 0, target: 'allEnemies', effect: { kind: 'status', status: 'confusion', turns: 2, chance: 0.3 }, description: '' },
+  naginataBarai: { id: 'naginataBarai', name: '薙刀払い', mp: 0, target: 'allEnemies', effect: { kind: 'physical', multiplier: 0.6 }, description: '' },
+  kinjuGiri: { id: 'kinjuGiri', name: '近習斬り', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.2 }, description: '' },
+  tenzenIai: { id: 'tenzenIai', name: '居合・鬼斬り', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.4 }, description: '' },
+  tenzenTsubame: { id: 'tenzenTsubame', name: '燕返し', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 0.8, hits: 2 }, description: '' },
+  roju: { id: 'roju', name: '老中の威光', mp: 0, target: 'allEnemies', effect: { kind: 'status', status: 'atkDown', turns: 3, chance: 0.6 }, description: '' },
+  kinjuYobi: { id: 'kinjuYobi', name: '近習を呼ぶ', mp: 0, target: 'self', effect: { kind: 'summon', enemy: 'karakuriKinju', max: 2, level: 26 }, description: '' },
+  gongenHo: { id: 'gongenHo', name: '権現砲', mp: 0, target: 'allEnemies', effect: { kind: 'physical', multiplier: 0.7 }, description: '' },
+  tamaZenmai: { id: 'tamaZenmai', name: '魂のゼンマイ', mp: 0, target: 'self', effect: { kind: 'heal', power: 16 }, description: '' },
 };
 
 /** 仲間ごとに覚える技と習得レベル（docs/characters.md）。 */

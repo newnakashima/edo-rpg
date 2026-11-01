@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { CHARACTERS } from './characters';
+import { CHARACTERS, type CharacterId } from './characters';
+import { EQUIPMENT } from './equipment';
+import { SHOPS } from './shops';
 import { ENCOUNTERS, ENEMIES } from './enemies';
 import type { EventStep } from './eventTypes';
 import { EVENTS } from './events';
@@ -769,6 +771,194 @@ describe('第 8 章の流れ', () => {
     for (const e of ['okuriOkami', 'yukiOnna', 'kagaShinobi']) expect(members('edo').has(e), e).toBe(false);
     for (const id of ['oshu', 'edo']) expect(Math.max(...ENCOUNTERS[id]!.groups.map((g) => g.members.length)), id).toBe(4);
     for (const id of ['hitsukeTozoku', 'kasha', 'karakuriDoshin', 'hatamotoYakko', 'hinezumi', 'okuriOkami', 'kashaKarakuri']) expect(ENEMIES[id]?.image, id).toBe(true);
+  });
+});
+
+describe('終章の流れ', () => {
+  const base = newGame('m', { mapId: 'edo', x: 32, y: 9 });
+  const ch8 = {
+    ...base,
+    party: [createMember('hero', 29), createMember('gendo', 29), createMember('orin', 29), createMember('kasumi', 29)],
+    flags: { intro: true, kagaTegata: true, chapter7Cleared: true, edoIntro: true, kashaDefeated: true, chapter8Cleared: true },
+  };
+  /** イベントの要求を順に集める（選択肢は最初、戦闘は outcome）。 */
+  const requests = (id: string, state: GameState, outcome: 'victory' | 'defeat' = 'victory') => {
+    const runner = new EventRunner(EVENTS[id]!.steps);
+    let r = runner.next(state);
+    const list = [r.request];
+    for (let guard = 0; guard < 80 && r.request.kind !== 'done'; guard++) {
+      if (r.request.kind === 'choice') r = runner.next(r.state, { kind: 'choice', index: 0 });
+      else if (r.request.kind === 'battle') r = runner.next(r.state, { kind: 'battle', outcome });
+      else r = runner.next(r.state);
+      list.push(r.request);
+    }
+    return list;
+  };
+  const battles = (id: string, state: GameState, outcome: 'victory' | 'defeat' = 'victory') =>
+    requests(id, state, outcome).filter((r) => r.kind === 'battle');
+  /** 最初の台詞のページ数（出直すと短い）。 */
+  const firstPages = (id: string, state: GameState) => {
+    const r = new EventRunner(EVENTS[id]!.steps).next(state).request;
+    return r.kind === 'say' ? r.pages.length : 0;
+  };
+  const hurt = (state: GameState): GameState => ({ ...state, party: state.party.map((m) => ({ ...m, hp: 1 })) });
+  const healed = (state: GameState) => state.party.every((m) => m.hp > 1);
+
+  it('大手門の門番は、第 8 章を終えるまでは通さず、終えると加賀の手形で門を開ける（otemonOpen。門番がどく）', () => {
+    const before = { ...ch8, flags: { ...ch8.flags, chapter8Cleared: false } };
+    expect(run('otemon', before).flags.otemonOpen).toBeFalsy();
+    const open = run('otemon', ch8);
+    expect(open.flags.otemonOpen).toBe(true);
+    const monban = MAPS.edo!.npcs.find((n) => n.id === 'edoMonban')!;
+    expect(npcVisible(monban, ch8.flags)).toBe(true);
+    expect(npcVisible(monban, open.flags)).toBe(false);
+  });
+
+  it('本丸御殿に入ると小吉が待っていて（edojoEntered）、御錠口は御金蔵の鍵を回すまで番兵が押し戻す', () => {
+    const entered = run('edojoEnter', ch8);
+    expect(entered.flags.edojoEntered).toBe(true);
+    expect(MAPS.edojo!.onEnter).toEqual({ event: 'edojoEnter', unless: 'edojoEntered' });
+    expect(requests('jouguchi', entered).some((r) => r.kind === 'warp')).toBe(true);
+    expect(MAPS.edojo!.triggers!.find((t) => t.event === 'jouguchi')?.unless).toBe('okaneguraCleared');
+  });
+
+  it('御金蔵でからくり旗本（Lv28）に勝つと金太が現れて全回復し、okaneguraCleared。負けたら立たず、出直すと口上を短くする', () => {
+    expect(battles('okanegura', ch8)[0]).toMatchObject({ kind: 'battle', level: 28, canEscape: false, loseOk: false });
+    const won = run('okanegura', hurt(ch8));
+    expect(won.flags.okaneguraCleared).toBe(true);
+    expect(healed(won)).toBe(true);
+    const lost = run('okanegura', ch8, 'defeat');
+    expect(lost.flags.okaneguraCleared).toBeFalsy();
+    expect(lost.flags.okaneguraMet).toBe(true);
+    expect(firstPages('okanegura', lost)).toBeLessThan(firstPages('okanegura', ch8));
+    // 御錠口の番兵は鍵を回すと止まる
+    for (const n of MAPS.edojo!.npcs.filter((x) => x.id.startsWith('jouguchiBanpei'))) {
+      expect(npcVisible(n, ch8.flags)).toBe(true);
+      expect(npcVisible(n, won.flags)).toBe(false);
+    }
+  });
+
+  it('大奥の化け猫（Lv28、4 体）に勝つと火消しが駆けつけて全回復し、ookuCleared。負けたら立たない', () => {
+    const b = battles('ookuBakeneko', ch8)[0];
+    expect(b).toMatchObject({ kind: 'battle', level: 28, canEscape: false, loseOk: false });
+    expect(b?.kind === 'battle' && b.enemies.length).toBe(4);
+    const won = run('ookuBakeneko', hurt(ch8));
+    expect(won.flags.ookuCleared).toBe(true);
+    expect(healed(won)).toBe(true);
+    expect(run('ookuBakeneko', ch8, 'defeat').flags.ookuCleared).toBeFalsy();
+  });
+
+  it('松の廊下に入ると兵庫が待っていて（matsuEntered）、話しかけると全回復する', () => {
+    const entered = run('matsuEnter', ch8);
+    expect(entered.flags.matsuEntered).toBe(true);
+    expect(MAPS.matsuNoRoka!.onEnter).toEqual({ event: 'matsuEnter', unless: 'matsuEntered' });
+    const hyogo = MAPS.matsuNoRoka!.npcs.find((n) => n.id === 'hyogoRoka')!;
+    expect(npcVisible(hyogo, ch8.flags)).toBe(false);
+    expect(npcVisible(hyogo, entered.flags)).toBe(true);
+    expect(healed(run('hyogoRoka', hurt(entered)))).toBe(true);
+    // 金太は飛脚の代わりに記録を預かる
+    expect(MAPS.matsuNoRoka!.npcs.find((n) => n.id === 'kintaRoka')?.action).toBe('hikyaku');
+    expect(MAPS.edojo!.npcs.find((n) => n.id === 'kokichiJo')?.action).toBe('hikyaku');
+  });
+
+  it('鬼塚典膳（Lv30）に勝つと tenzenDefeated。負けたら立たず、出直すと口上を短くする', () => {
+    expect(battles('tenzen', ch8)).toEqual([{ kind: 'battle', enemies: ['onizukaTenzen'], level: 30, canEscape: false, loseOk: false }]);
+    expect(run('tenzen', ch8).flags.tenzenDefeated).toBe(true);
+    const lost = run('tenzen', ch8, 'defeat');
+    expect(lost.flags.tenzenDefeated).toBeFalsy();
+    expect(firstPages('tenzen', lost)).toBeLessThan(firstPages('tenzen', ch8));
+  });
+
+  it('将軍の間で鷲尾（Lv31）、続けて全回復してからくり大権現（Lv32）。倒すとエンディング（daigongenDefeated・gameCleared）', () => {
+    expect(battles('shogunNoMa', ch8)).toEqual([
+      { kind: 'battle', enemies: ['washio'], level: 31, canEscape: false, loseOk: false },
+      { kind: 'battle', enemies: ['karakuriDaigongen'], level: 32, canEscape: false, loseOk: false },
+    ]);
+    const list = requests('shogunNoMa', ch8);
+    expect(list[list.length - 1]?.kind).toBe('done');
+    expect(list[list.length - 2]?.kind).toBe('ending');
+    const won = run('shogunNoMa', ch8);
+    expect(won.flags.washioDefeated && won.flags.daigongenDefeated && won.flags.gameCleared).toBe(true);
+    // 鷲尾に負けたら何も立たない
+    const lostWashio = run('shogunNoMa', ch8, 'defeat');
+    expect(lostWashio.flags.washioDefeated).toBeFalsy();
+    expect(lostWashio.flags.washioMet).toBe(true);
+  });
+
+  it('大権現に負けて出直すと、鷲尾とは戦わず、全回復して大権現とだけ戦う', () => {
+    const afterWashio = { ...ch8, flags: { ...ch8.flags, washioMet: true, washioDefeated: true } };
+    expect(battles('shogunNoMa', afterWashio)).toEqual([{ kind: 'battle', enemies: ['karakuriDaigongen'], level: 32, canEscape: false, loseOk: false }]);
+    const lost = run('shogunNoMa', hurt(afterWashio), 'defeat');
+    expect(lost.flags.daigongenDefeated).toBeFalsy();
+    expect(lost.flags.gameCleared).toBeFalsy();
+    // 戦いの前に魂の光で全回復している
+    const runner = new EventRunner(EVENTS.shogunNoMa!.steps);
+    let r = runner.next(hurt(afterWashio));
+    while (r.request.kind !== 'battle') r = runner.next(r.state);
+    expect(healed(r.state)).toBe(true);
+    const triggers = MAPS.matsuNoRoka!.triggers!.filter((t) => t.event === 'shogunNoMa');
+    expect(triggers.length).toBeGreaterThan(0);
+    for (const t of triggers) expect(t.unless).toBe('daigongenDefeated');
+  });
+
+  it('エンディングの茶屋の場面は、主人公が女なら台詞を変える', () => {
+    const pagesOf = (state: GameState) =>
+      requests('shogunNoMa', state).flatMap((r) => (r.kind === 'say' ? r.pages : [])).filter((p) => p.includes('勝手に'));
+    expect(pagesOf(ch8)).toEqual(['弥太郎「……へっ。勝手にしな」']);
+    expect(pagesOf({ ...ch8, gender: 'f' })).toEqual(['お志乃「……ふふ。勝手におし」']);
+  });
+
+  it('大手門の門番は otemon のイベントで話す', () => {
+    expect(MAPS.edo!.npcs.find((n) => n.id === 'edoMonban')).toMatchObject({ event: 'otemon', hideFlag: 'otemonOpen' });
+  });
+
+  it('江戸城の葛籠に、4 人それぞれの最後の武器がある（docs/balance.md の攻撃 35・31・24・35。江戸の店のどの武器より強い）', () => {
+    const want: [string, string, CharacterId, number][] = [
+      ['edojoChest1', 'aoiNagawaki', 'hero', 35],
+      ['edojoChest5', 'oniwabanKodachi', 'kasumi', 31],
+      ['edojoChest4', 'nyoraiShakujo', 'gendo', 24],
+      ['edojoChest2', 'aoiZutsu', 'orin', 35],
+    ];
+    const shopWeapons = Object.values(SHOPS).flatMap((sh) => sh.goods).map((id) => EQUIPMENT[id]).filter((e) => e?.slot === 'weapon');
+    for (const [chestId, item, wearer, atk] of want) {
+      expect(run(chestId, ch8).items[item], chestId).toBe(1);
+      const eq = EQUIPMENT[item]!;
+      expect(eq.wearers).toEqual([wearer]);
+      expect(eq.bonus.atk).toBe(atk);
+      for (const w of shopWeapons.filter((x) => x!.wearers.includes(wearer))) expect(atk, `${item} > ${w!.id}`).toBeGreaterThan(w!.bonus.atk ?? 0);
+    }
+  });
+
+  it('江戸城の出現表は 5 種類以上の敵で、どれも定義されている', () => {
+    const members = new Set(ENCOUNTERS.edojo!.groups.flatMap((g) => g.members));
+    expect(members.size).toBeGreaterThanOrEqual(5);
+    for (const id of members) expect(ENEMIES[id], id).toBeDefined();
+    expect(SKILLS.roju).toMatchObject({ target: 'allEnemies', effect: { kind: 'status', status: 'atkDown', turns: 3, chance: 0.6 } });
+    expect(ENEMIES.washio!.actions).toEqual([
+      { skill: 'attack', weight: 3 },
+      { skill: 'roju', weight: 1 },
+      { skill: 'kinjuYobi', weight: 1 },
+    ]);
+    expect(ENEMIES.karakuriDaigongen!.actions).toEqual([
+      { skill: 'attack', weight: 3 },
+      { skill: 'gongenHo', weight: 2 },
+      { skill: 'tamaZenmai', weight: 1 },
+    ]);
+  });
+
+  it('終章の敵は、ボスの報酬と弱点が決めたとおりで、画像がある。大権現は 1 ターンに 2 回動く', () => {
+    expect(ENEMIES.onizukaTenzen).toMatchObject({ rewardScale: 4, factors: { hp: 12, atk: 1.15, def: 1.2, spd: 1.2 } });
+    expect(ENEMIES.washio).toMatchObject({ rewardScale: 6, factors: { hp: 12, atk: 1.1, def: 1.2, spd: 1.0 } });
+    expect(ENEMIES.karakuriDaigongen).toMatchObject({ rewardScale: 6, actionsPerTurn: 2, weak: ['mech', 'holy'], factors: { hp: 10, atk: 0.8, def: 1.3, spd: 1.1 } });
+    // docs/balance.md の「終章で見積もりから変えたこと」の数値（勝率はこの値で試した）
+    expect(SKILLS.tenzenIai).toMatchObject({ effect: { kind: 'physical', multiplier: 1.4 } });
+    expect(SKILLS.kinjuYobi).toMatchObject({ effect: { kind: 'summon', enemy: 'karakuriKinju', max: 2, level: 26 } });
+    expect(SKILLS.gongenHo).toMatchObject({ target: 'allEnemies', effect: { kind: 'physical', multiplier: 0.7 } });
+    expect(ENCOUNTERS.edojo!.level).toBe(28);
+    expect(Math.max(...ENCOUNTERS.edojo!.groups.map((g) => g.members.length))).toBe(4);
+    for (const id of ['karakuriOniwaban', 'ookuBakeneko', 'karakuriHatamoto', 'karakuriKinju', 'onizukaTenzen', 'washio', 'karakuriDaigongen']) {
+      expect(ENEMIES[id]?.image, id).toBe(true);
+    }
   });
 });
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { availableItemCount, createBattle, DEF_UP_RATE, itemWorks, partyAfterBattle, resolveTurn, type BattleState, type Combatant } from './battle';
+import { actionsPerTurn, availableItemCount, createBattle, DEF_UP_RATE, itemWorks, partyAfterBattle, resolveTurn, type BattleState, type Combatant } from './battle';
 import { ENEMIES } from '../data/enemies';
 import { ITEMS } from '../data/items';
 import { SKILLS } from '../data/skills';
@@ -870,3 +870,65 @@ describe('第 7 章（北前船・金沢）の敵の技', () => {
     }
   });
 });
+
+describe('1 ターンに何度も動く敵（終章のからくり大権現）', () => {
+  it('からくり大権現は 1 ターンに 2 回動き、ほかの敵と味方は 1 回', () => {
+    const b = createBattle([createMember('hero', 31), createMember('gendo', 31)], 'm', ['karakuriDaigongen', 'karakuriKinju'], 32);
+    expect(actionsPerTurn(get(b, 'e0'))).toBe(2);
+    expect(actionsPerTurn(get(b, 'e1'))).toBe(1);
+    expect(actionsPerTurn(get(b, 'p0'))).toBe(1);
+    // 乱数をいつも 0.99 にすると、敵は重みの最後の行動（大権現は魂のゼンマイ、近習は小太刀）を選ぶ
+    const { events } = resolveTurn(b, { p0: { kind: 'guard' }, p1: { kind: 'guard' } }, () => 0.99);
+    const acts = (key: string) => events.filter((e) => e.type === 'skill' && e.actor === key).length;
+    expect(acts('e0')).toBe(2);
+    expect(acts('e1')).toBe(1);
+  });
+
+  it('眠っていれば 2 回とも動けない', () => {
+    const b = createBattle([createMember('hero', 31)], 'm', ['karakuriDaigongen'], 32);
+    get(b, 'e0').status.sleep = 3;
+    const { events } = resolveTurn(b, { p0: { kind: 'guard' } }, () => 0.99);
+    expect(events.filter((e) => e.type === 'cannotAct' && e.actor === 'e0').length).toBe(2);
+    expect(events.some((e) => e.type === 'skill' && e.actor === 'e0')).toBe(false);
+  });
+
+  it('影縫いは 2 回とも止め、ターンの終わりに解ける', () => {
+    const b = createBattle([createMember('hero', 31)], 'm', ['karakuriDaigongen'], 32);
+    get(b, 'e0').status.bind = 1;
+    const { state, events } = resolveTurn(b, { p0: { kind: 'guard' } }, () => 0.99);
+    expect(events.filter((e) => e.type === 'cannotAct' && e.actor === 'e0').length).toBe(2);
+    expect(get(state, 'e0').status.bind).toBeUndefined();
+  });
+
+  it('1 回目と 2 回目の間にかかった麻痺は、2 回目を止め、そのターンから数える（ほかの敵の、動く前にかかった効果と同じ）', () => {
+    // 乱数の種を変えて、「大権現が動く → 霞の痺れ薬が効く → 大権現の 2 回目が止まる」順になる戦闘を探す
+    let found = false;
+    for (let seed = 1; seed <= 2000 && !found; seed++) {
+      const b = createBattle([createMember('kasumi', 31)], 'm', ['karakuriDaigongen'], 32);
+      get(b, 'p0').hp = 9999;
+      // 霞は素早いので、大権現と同じくらいの素早さにして、2 回の行動のあいだに入れるようにする
+      get(b, 'p0').stats = { ...get(b, 'p0').stats, maxHp: 9999, spd: get(b, 'e0').stats.spd };
+      const { state, events } = resolveTurn(b, { p0: { kind: 'skill', skill: 'shibire', target: 'e0' } }, seededRng(seed));
+      const order = events
+        .map((e) => (e.type === 'status' && e.target === 'e0' ? 'para' : 'actor' in e && e.actor === 'e0' ? (e.type === 'cannotAct' ? 'stop' : 'act') : null))
+        .filter((x) => x !== null);
+      if (order[0] !== 'act' || order[1] !== 'para') continue;
+      found = true;
+      expect(order[2]).toBe('stop');
+      // 痺れ薬は 3 ターン。かかったターンから数えるので、ターンの終わりに 2 になる
+      expect(get(state, 'e0').status.paralysis).toBe(2);
+    }
+    expect(found).toBe(true);
+  });
+
+  it('1 回目の前に倒れたら、2 回目も動かない', () => {
+    const b = createBattle([createMember('hero', 31)], 'm', ['karakuriDaigongen'], 32);
+    get(b, 'e0').hp = 1;
+    // 居合（先制）で先に倒す
+    get(b, 'p0').skills.push('iai');
+    const { state, events } = resolveTurn(b, { p0: { kind: 'skill', skill: 'iai', target: 'e0' } }, () => 0.5);
+    expect(state.outcome).toBe('victory');
+    expect(events.some((e) => (e.type === 'skill' || e.type === 'attack') && e.actor === 'e0')).toBe(false);
+  });
+});
+

@@ -216,6 +216,14 @@ export class FieldScene extends Phaser.Scene {
         this.cameras.main.fadeOut(200, 0, 0, 0);
         this.cameras.main.once('camerafadeoutcomplete', () => this.scene.restart({}));
         return;
+      case 'ending':
+        // 終章のからくり大権現を倒したあと。暗転してエンディングへ
+        this.runner = null;
+        this.moving = true;
+        this.standStill();
+        this.cameras.main.fadeOut(1200, 0, 0, 0);
+        this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Ending'));
+        return;
       case 'done':
         this.runner = null;
         this.controls.flush();

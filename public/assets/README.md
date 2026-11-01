@@ -61,6 +61,31 @@ standard の size 24 では笠と合羽が描き分けられないため、主�
 - hyogo: 1 回目は胸の家紋が見えなかった。2 回目は Pillow で羽織の左右の胸に白い家紋を描き足して採用（計 2 回）
 - sakon: 1 回目は肩衣の張った肩がなかった。2 回目（d63c8980-ddb4-4620-9238-978ab0de9782。very wide pointed shoulder wings）は張りが大きすぎて、こうもりの羽に見えた。3 回目は 1 回目の正面と背面に、小さな紺の肩衣の張りを Pillow で描き足して採用（計 3 回）
 
+### 終章「将軍の間」の人物（`chars/washio.png`・`tenzen.png`・`shogun.png`）
+
+設定は「物語の専用の人物」と同じ（`create_character` mode `v3`、size 28、黒の 1px 輪郭、medium detail、low top-down。8 方向のうち下・左・右・上を使う。歩行は作らず `python3 scripts/pack_character.py <展開したフォルダ> public/assets/chars/<ID>.png` で立ち姿を並べる）。偽の上様（からくり）は shogun と同じシートを使う。
+
+| ID | PixelLab のキャラクター ID | 生成プロンプト | 回数 |
+| --- | --- | --- | --- |
+| washio（鷲尾但馬守宗衡） | 69b30b3f-4d9e-4612-8ee7-aa366a884d4e | chibi Edo period Japanese elderly senior shogunate councilor (roju), thin cold old man in his late fifties, grey-streaked black hair in a neat topknot (chonmage), sharp narrow eyes, a small round brass clockwork monocle over his right eye, very formal stiff kamishimo: black stiff winged shoulder vest over a deep crimson kimono, black hakama, holding a closed folding fan in his right hand, white tabi socks（＋Pillow で片眼鏡を描き足し） | 2 |
+| tenzen（鬼塚典膳） | 474bcc11-cacc-4fea-b62b-517eaa169161 | chibi Edo period Japanese big heavyset muscular samurai bodyguard in his forties, large wide body with very broad square shoulders and a thick neck, jet black hair in a short topknot (chonmage), thick black eyebrows, square jaw, a thick dark red scar running diagonally across his face over one eye, plain black haori jacket with one small red crest on the chest, grey hakama trousers, a long katana in a black scabbard tucked into his sash at his left hip, straw sandals | 4 |
+| shogun（上様） | 4e403a3a-de5f-4dfc-be36-8317cee05fd8 | chibi Edo period Japanese shogun, gaunt adult man in his thirties, thin pale sallow face with hollow cheeks, tired dark eyes, thin straight black eyebrows and a thin black mustache, no blush, wearing a tall narrow rounded black court cap (eboshi) standing straight up on top of his head with no brim, formal pale gold and cream court robes (hitatare) with wide square sleeves decorated with small dark green round crests, long cream hakama, white undercollar, standing upright with empty hands, no weapons | 3 |
+
+チェック項目（共通）: 4 方向とも同じ人物で崩れがない [必須]、背景透過・黒の 1px 輪郭 [必須]、40 × 40 のシートで背丈が兵庫・左近と釣り合う。人物ごとの項目は下の各行。
+
+- washio: 項目 = 痩せた初老の男・白髪交じりのまげ [必須]／黒の肩衣（張った肩）＋深紅の着物 [必須]／閉じた扇子／片目に真鍮の片眼鏡／兵庫（紺）・左近（紺・白髪）と色で見分けられる [必須]。
+  - 1 回目（69b30b3f）は片眼鏡が描かれなかった（ほかは ○。扇子は金色の閉じた扇子）。
+  - 2 回目は 1 回目の下向き（右目＝画面の左の目）と東向きの目の周りに、Pillow で真鍮の輪（e8c060・d4a03c・a07028）と青い玉の光（8cbed2）を 4〜5 ドット描き足して採用。最終判定はすべて ○。
+- tenzen: 項目 = がっしりした 40 代の侍・黒髪のまげ・太い眉 [必須]／黒の羽織か肩衣＋灰の袴 [必須]／胸に小さな赤い紋／顔を横切る長い傷／左腰に長い刀 [必須]／兵庫・washio と見分けがつく [必須]。
+  - 1 回目（3c448eab-7bca-40d1-be46-8ac48199b468。「a long pale scar diagonally across his face」）は傷が白い点の散らばりで傷と分からなかった。
+  - 2 回目（697b85f1-a828-4922-8221-3a1263322bd4。傷を「long dark red scar line … over his left eye」と言った）は傷は出たが、長い乱れ髪でまげに見えず、紋が見えず、抜き身のような刀が両脇に出た。
+  - 3 回目は 1 回目に Pillow で赤い傷を描き、髪の白いつやを暗くしたが、シートで兵庫と並べると小柄でがっしりして見えず、髪も灰色がかった。
+  - 4 回目は「big heavyset muscular … very broad square shoulders and a thick neck, jet black hair」と体格と髪の色を前に出して、兵庫より明らかに幅のある体になり採用。最終判定はすべて ○。
+- shogun: 項目 = 30 代のやつれた男 [必須]／縦長の黒い烏帽子 [必須]／淡い金・生成りの直垂 [必須]／小さな紋／武器なし [必須]／加賀の殿様（深い紫・帽子なし）と見分けがつく [必須]。
+  - 1 回目（aef01165-ae2d-4791-a1d2-081a02f3e6ca）は烏帽子がつばと耳のある帽子になり、顔も髪の影で見えなかった。紋は胸に 1 点だけ。
+  - 2 回目（edf8c3af-18ba-441e-ad00-e24b0554510c。「a tall narrow rounded black cap … with NO brim」）は烏帽子は直ったが、頬の赤い丸顔で子どもに見え、東向きの目が緑、西向きの足元に灰色の浮いた点があった。
+  - 3 回目は「gaunt adult man … hollow cheeks … thin black mustache, no blush」と年齢と頬を言って採用。最終判定はすべて ○。
+
 ### 町の人（`chars/npc_*.png`）
 
 テストプレイで「主要人物以外のキャラクターに画像がない」と指摘されたため、町の人を 19 の類型に分けて 1 体ずつ作った（どの町の人にどれを使うかは `src/data/maps.ts` の `sprite`）。
@@ -123,9 +148,14 @@ standard の size 24 では笠と合羽が描き分けられないため、主�
 | sakon | chars/sakon.png | 1 回目は肩衣が棘のある鎧になった。2 回目は edit_image「a stiff flat dark navy shoulder vest whose shoulders stick straight out sideways like wide flat wings … small white topknot」で採用 | 2 |
 | kokichi | chars/kokichi.png | 1 回目は頬かむりの布で口が隠れた。2 回目は edit_image「pull the dark blue cloth mask down below his chin so his whole lower face is visible: nose, a sly friendly grinning mouth … Keep the dark blue cloth covering the top of his head」で採用（create_portrait_character a6820274-b57a-4553-8f06-4dee9d64e010 → edit_image e00866d1-78eb-43d1-9924-54a75e23ea73） | 2 |
 | kagaTono | chars/kagaTono.png | 1 回目は髪が紫で、肩章とネクタイの洋装になった。2 回目は edit_image「jet black hair tied in a neat topknot, … traditional deep purple kimono and haori with small gold family crests … Remove the gold epaulettes and the necktie」で直ったが、耳に金の耳飾りのような点が出た。3 回目は Pillow でその点を消して採用 | 3 |
+| washio | chars/washio.png | 1 回目（create_portrait_character dad06ae5-f32c-4344-8bfe-dc1e9b4de251）は初老の顔と片眼鏡はよかったが、まげがなく、洋風の立て襟と金の丸いブローチになった。2 回目は edit_image（2f0a5673-63e2-4753-ae8d-fb2bd0211325）「Keep his old stern face, grey hair and the gold monocle exactly. Comb the grey-streaked hair back into a small neat Japanese topknot … a deep crimson kimono with its collar crossed left over right in a V at the neck, a white undercollar, and a stiff black kamishimo shoulder vest … No brooch, no medal」で直ったが、金の枠が鼻を越えて右目まで伸び、眼鏡に見えた。3 回目は Pillow で鼻の上の金の 7 ドットを肌色にして採用 | 3 |
+| tenzen | chars/tenzen.png | create_portrait_character（d0c8294d-ef22-4259-a46e-ac588a6e846c）をそのまま採用（まげ・太い眉・額から頬への赤黒い傷・黒の着物と胸の赤い紋） | 1 |
+| shogun | chars/shogun.png | 1 回目（create_portrait_character d04b0413-77c3-4bb5-a8fc-238aecfe76e9）はつばのあるシルクハットと黒い外套、太い八の字ひげの西洋紳士になった。2 回目は create_image_pro（4ee525a5-0e90-4253-88b2-9121a86b4eae。立ち姿を 4 倍にして reference「character base」、washio の顔を style_image）「Front-facing bust portrait … gaunt adult MAN in his thirties … tall black lacquered court cap (eboshi) … with NO brim … pale gold and cream Japanese court robes (hitatare) … small dark green round family crests」の 25 候補から 14 番を選んだが、烏帽子が上端で切れて縦長に見えなかった。3 回目は 14 番を Pillow で 7px 下げて烏帽子を描き足したが、胸が切れて紋が消えた。4 回目（create_image_pro 2e89d8da-f525-44f5-bfe7-ab4ae2927e69。「the WHOLE tall hat fits inside the image」）も 25 候補すべてで烏帽子が上端で切れた。5 回目は 2 回目の 14 番を Pillow で 5px 下げ、烏帽子の上 5 行（丸い頂）を描き足し、両肩の下端に緑の紋（32462a）を 6 ドットずつ描いて採用（5 回の上限。残る ×: 胸がほぼ切れ、肩と襟元しか見えない） | 5 |
 
 - create_portrait_character は顔の細部（目の色の左右差、浮いた点、耳飾り）がときどき崩れるので、8 倍に拡大して確かめる。
 - create_image_pro は候補によって下端に灰色の横線が出る。選ぶときに下端の行を確かめる。
+- shogun の顔の判定（5 回の上限で採用）: 必須の ○ は 2・4・5 回目が 4/5、合計 6/7 で並んだ。2・4 回目は烏帽子が上端で切れて平たい帽子に見え、5 回目は胸が切れる。上様の目印（加賀の殿様との見分け）は縦長の烏帽子なので、5 回目を選んだ。
+- create_image_pro は 48 × 48 の胸像で背の高い帽子を描かせると、「帽子全体を収める」と言っても上端で切る。帽子の高い人物の顔は、Pillow で絵を下げて帽子の上を描き足すほうが早い。
 
 ## タイル（`tiles/`）
 
@@ -319,6 +349,36 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 - 火鼠: 1 回目（e594f343-a20f-46e6-9c24-d27b323547b1）は赤茶の毛の鼠に炎が少し付いただけだった。2 回目で「entire body and fur is made of living … fire」で採用（計 2 回）。
 - 火車からくり: 1 回目（38b0d1aa-2f16-451e-9b08-7e24e9dd6ed8）はからくりの腕と歯車がなかった。2 回目で腕と歯車を前に出して採用（計 2 回）。
 - 足元をそろえるため、64 × 64 の 6 体は足元を y = 58（火車は 97% に縮めた）、火車からくりは 89% に縮めて足元を y = 90 に置いた。
+
+終章（将軍の間・江戸城）の 4 体の記録（計 13 回。Pillow での描き直し 1 回を含む）。設定は上と同じ（`create_image_pixflux`、64 × 64、`no_background: true`、黒の 1px 輪郭（`single color black outline`）、view `side`、medium detail、direction south-west）:
+
+| ID | PixelLab のジョブ ID | プロンプト |
+| --- | --- | --- |
+| karakuriOniwaban | 23aa52df-c00d-4056-9119-40516a822f68 | clockwork robot ninja spy (karakuri oniwaban), robot body made of riveted dark bronze-green iron plates, robot head covered by a dark green ninja hood, ONE single round glowing red eye lens in the middle of its metal face, brass cogwheels with teeth at its shoulders and knees, holding a kusarigama: a silver curved sickle in one hand with an iron chain hanging from it, crouching ready stance, full body, small and centered with empty space around it, JRPG enemy battle sprite, three-quarter front view（1 回目の f67ee56b-e2dd-4cbb-a607-fa011b2589a7 の 2 つの目を 1 つの赤いレンズにし、左手の塊を鎖鎌（銀の鎌と鎖と分銅）に、肩と膝に歯のある真鍮の歯車を Pillow で描き足したものを init_image に、init_image_strength 300） |
+| ookuBakeneko | 36ece03a-c151-4ef4-a05c-c4cc6a8fbbc1 | Japanese monster cat yokai (bakeneko) disguised as a court lady of the shogun's inner palace, walking upright on two legs, wearing a luxurious red and gold embroidered uchikake robe, a large fierce cat head with glowing green eyes, open mouth with sharp white fangs, sharp white claws out on its paws, two split cat tails rising behind her, menacing, full body, small and centered with empty space around it, JRPG enemy battle sprite, three-quarter front view（1 回目の 4edf4bdc-a2ce-44cc-afb6-700053355e86 の口に白い牙、両手に白い爪を Pillow で描き足したものを init_image に、init_image_strength 300） |
+| karakuriHatamoto | d944d3ab-d693-4ea8-8d75-11149f76292c | big bulky heavy clockwork robot samurai (karakuri hatamoto), made of black lacquered iron plates with gold trim, full Japanese samurai yoroi armor, kabuto helmet with a large golden crest, glowing red eyes, a brass wind-up key sticking out of its back, holding a large naginata polearm with a curved silver blade at its top, menacing wide stance, full body, small and centered with empty space around it, JRPG enemy battle sprite, three-quarter front view（1 回目の 0a05148d-0be9-4f30-92c6-9833d179c801 の足元の影を消し、柄の先の真鍮の飾りを反った銀の刃に、右肩の後ろにゼンマイの鍵を Pillow で描き足したものを init_image に、init_image_strength 300。生成後、目がはっきりしなかったので、面頬の暗い所に赤く光る細い目を Pillow で描き足した） |
+| karakuriKinju | 9823477d-3346-495d-84b9-71775c92296c | slim karakuri clockwork page boy doll (kinju), porcelain-white expressionless doll face, neat black young page-boy hair with front bangs (maegami), wearing a pale purple formal kimono and grey hakama trousers, a small brass cogwheel at the open collar, holding a short drawn silver wakizashi sword, stiff upright stance, full body, small and centered with empty space around it, JRPG enemy battle sprite, three-quarter front view（1 回目の ac3b787a-b4d9-4e77-a4b3-a17287981318 の黒い棒を銀の脇差に、襟元に真鍮の歯車を Pillow で描き足したものを init_image に、init_image_strength 300。上限の 5 回に達して採用。襟元の歯車と斜めの向きは満たしていない） |
+
+- からくり御庭番: 1 回目は目が 2 つで、鎖鎌が黒い塊に見え、関節の真鍮も丸いだけで歯車に見えなかった。2 回目（aa1a25fa-fb8a-40f3-8ada-43486f96c56d、text_guidance_scale 11）は一つ目になったが、頭が潜水ヘルメットのようで頭巾でなく、鎖も見えなかった。3 回目は 1 回目に単眼・鎖鎌・歯車を描き足した下絵から作り、すべて満たしたので採用（計 3 回）。
+- 大奥の化け猫: 1 回目は打掛・二股の尾はよかったが、牙と爪が見えなかった。2 回目（bbda646b-ba76-4346-9ece-bd0cd742c4bc、三毛、text_guidance_scale 11）は牙が出たが、尾が 1 本しか見えず爪もなかった。3 回目は 1 回目に牙と爪を描き足した下絵から作り、すべて満たしたので採用（計 3 回）。黒猫の猫又・火車と見分けるため、直立して赤と金の打掛を着せた。
+- からくり旗本: 1 回目は薙刀の刃が真鍮の槌のような飾りになり、背中の鍵が分からず、足元に黒い影が残った。2 回目（2999e2cf-2173-4100-85c8-73b505889596、text_guidance_scale 11）は鍵が出たが、薙刀が細い棒で刃がなく、体も細くなった。3 回目は 1 回目の影を消し、刃と鍵を描き足した下絵から作り、刃・鍵・前立てが出たが、目が赤い点 1 つではっきりせず、刃の先が上端に付いた。4 回目は 3 回目の目を Pillow で描き足して採用し、刃の先の余白は配置のときに縮めて作った（計 4 回）。
+- からくり近習: 1 回目は脇差が黒い棒に見え、襟元に歯車がなく（帯の金具だけ）、人の子に見えた。2 回目（ff865e0d-2cc7-48ed-be03-4b01b4cee893、text_guidance_scale 11）は脇差が出たが、髪が乱れ、足元に灰色の影が残り、歯車もなかった。3 回目は 1 回目に脇差と襟元の歯車を描き足した下絵から作り、脇差・白い顔・前髪・薄紫の着物と袴は出たが、歯車が茶色の市松模様になり、体も真正面だった。4 回目（13b69a55-b9d7-4adb-88c2-115bd148106f、init_image なし、「body turned three-quarter to the left」、text_guidance_scale 11）は頭の大きい二頭身で刀が 2 本、歯車も帯の位置になった。5 回目（757b4050-1f85-4869-9aa5-c3d166954658、3 回目の襟元に大きい歯車を描き直したものを init_image に、strength 120、text_guidance_scale 10）は顔が肌色になり、歯車も胸から腹へずれ、向きも真正面のままだった。上限の 5 回に達したので、必須の項目をすべて満たした 3 回目を採用した（計 5 回）。残った ×: 「襟元に真鍮の歯車が見える」（茶色の市松模様に見える）、「斜め前（左下向き）」（体が真正面。脇差は左下に向けている）。
+- 足元をそろえるため、4 体とも足元を y = 58 に置いた。からくり御庭番は 95%、からくり旗本は 90% に縮めた（最近傍補間）。大奥の化け猫は一様に縮めると牙と爪が崩れたので、打掛の行（y = 42・46・50・54）を 4 行抜き、からくり近習は袴の行（y = 46・50・54）を 3 行抜いて背丈を合わせた（顔はそのまま）。
+
+終章（将軍の間・江戸城）のボス 3 体の記録（計 15 回。Pillow での描き直し・下絵づくりを含む）。設定は上と同じ（`create_image_pixflux`、96 × 96、`no_background: true`、黒の 1px 輪郭、view `side`、medium detail、direction south-west）。
+3 体とも、生成した 96 × 96 を最近傍補間で 89%（85 × 85）に縮め、左右は中央（x = 5 から）、足元（いちばん下の不透明な行）を y = 90 に置いた（下に透明な行が 5 行残る）。
+
+| ID | PixelLab のジョブ ID | プロンプト |
+| --- | --- | --- |
+| onizukaTenzen | 3d06cf57-40fd-4a2f-bd07-0c2cbc88ae42 | burly middle-aged Edo period Japanese samurai swordsman, human man in his forties, black topknot, a long thin red scar running diagonally across his face over one eye, fierce glaring eyes, black haori jacket over black kimono, a small red oni demon face crest on his chest, grey hakama trousers, crouched low in an iai quick-draw stance, his right hand gripping the hilt of a long katana sheathed in a black scabbard at his left hip, blade not drawn, full body, JRPG boss battle sprite, three-quarter front view（96 × 96、text_guidance_scale 10。2 回目の 6d257dbf-56b7-4976-b7b2-1ea67a63b6bc の抜き身の刀と地面の影を消し、鞘の口から柄を描き足して右の拳を柄の近くへ移し、顔の赤い塗りを細い傷の線に描き直したものを init_image に、init_image_strength 250。生成後、89% に縮めて足元を y = 90 に置き、胸の紋を Pillow で鬼の顔（金の角・黄の目・白い牙）に描き直した） |
+| washio | 6dab7636-3dcf-43df-ad16-58b2a3ce7029 | thin gaunt elderly Edo period Japanese shogunate councilor, human man in his late fifties, pale cold face, grey-streaked topknot, a round brass monocle over his right eye, black kamishimo with big stiff triangular winged shoulder pieces spread wide over a deep crimson kimono, black hakama, holding an open red folding fan in his right hand, glowing golden brass cogwheels behind his back, arrogant upright standing pose, full body standing, JRPG boss battle sprite, three-quarter front view（96 × 96、text_guidance_scale 10。3 回目の f9abca24-c192-47cf-b28b-91fe7903f085 の足元の影を消し、両肩に黒い三角の肩衣を Pillow で描き足したものを init_image に、init_image_strength 250。生成後、89% に縮めて足元を y = 90 に置き、輪郭のなかった背中の歯車と扇の外側に黒の 1px 輪郭を付けた） |
+| karakuriDaigongen | ac9dea9f-2148-41b8-b6ab-052bbba7f3a6 | giant multi-armed golden clockwork Buddhist deity statue machine (karakuri gongen idol), gilded gold and brass body with black lacquer and crimson robes, a huge brass cogwheel halo with square teeth behind its head, a pale stern human old man's face on its head, four brass mechanical arms with claw hands, two black cannons on its shoulders, glowing blue spiral springs inside its open belly, awe-inspiring and menacing, full body, JRPG boss battle sprite, three-quarter front view（96 × 96、text_guidance_scale 10。2 回目の abb33186-cba6-434c-9914-e289e8473024 の下の 1 対の砲身を真鍮の腕に塗り替えて先に爪の手を描き、光背の外側に歯を描き足したものを init_image に、init_image_strength 250。生成後、89% に縮めて足元を y = 90 に置き、丸くつぶれた光背の上半分に黒の輪郭付きの歯車の歯を Pillow で描き直した） |
+
+- 鬼塚典膳: 1 回目（d977f28b-9000-4d96-846f-06a60a8ab838）は刀を抜いて構え、顔に傷がなかった。2 回目（6d257dbf-…）は居合の腰の構えと鞘は出たが、反対の手に抜き身の刀を持ち、傷が赤い塗りに見え、地面に影が残った。3 回目（3c326696-aa70-4a2a-9047-bd76db4f34cf）は正面向きで刀身が見え、紋が四角だった。4 回目は 2 回目を Pillow で直した下絵から作り、鞘に納めた刀・細い傷・影なしになったが、紋が赤と金の四角のままだった。5 回目に紋を Pillow で鬼の顔に描き直して採用（計 5 回）。
+  - 上限の 5 回で採用。残った ×: 「右手が左腰の刀の柄を握っている」（拳は鞘の口の柄頭のすぐ手前にあり、柄を握っているとまでは言い切れない。居合で腰を落とし、刀は鞘に納まっている点は ○）。
+- 鷲尾但馬守宗衡: 1 回目（f857d563-7df8-4a0b-b0ff-6de30e3a23e9）は太った老人で、片眼鏡がなく、扇が手を離れて浮き、地面に影があった。2 回目（bd804bf5-7b47-4080-9053-9c0ed3a51733）は片眼鏡・扇・歯車は出たが、足が画像の下で切れ、肩衣がなく、オレンジの矢のようなごみが付いた。3 回目（f9abca24-…）は全身・片眼鏡・扇・背中の歯車がそろったが、裃の肩衣が張っておらず、足元に影が残った。4 回目は 3 回目に肩衣を描き足した下絵から作り、すべて出たが、背中の歯車と扇に黒の輪郭がなかった。5 回目に Pillow で黒の輪郭を付けて採用（計 5 回。最後の判定で × なし）。あごひげはプロンプトの clean-shaven にかかわらず残った（要件の項目ではない）。
+- からくり大権現: 1 回目（dc4894bd-a3b3-49bf-a26c-d8c2c1dfa1a2）は腕が 2 本の西洋風の鎧で、顔は仮面に見え、肩の大砲もはっきりしなかった。2 回目（abb33186-…）は頭に青白い人の顔、肩の大砲 4 門、腹の青いばねが出たが、光背が歯のない輪で、腕が 2 本だった。3 回目（9237c6b1-299d-4ff3-91b1-b5cbc28b9101）は歯のある光背になったが、顔が金色で人の顔に見えず、腕も 2 本だった。4 回目は 2 回目の下の砲身を真鍮の腕に塗り替え、光背に歯を描き足した下絵から作り、腕 4 本になったが、光背の歯がつぶれて丸い輪に戻った。5 回目に光背の上半分の歯を Pillow で描き直して採用（計 5 回。最後の判定で × なし）。
+- 足元をそろえるため、3 体とも 89% に縮めて足元を y = 90 に置いた（典膳・鷲尾・大権現の不透明な範囲は、それぞれ x 24〜81・y 15〜90、x 16〜81・y 14〜90、x 7〜87・y 4〜90）。
 
 ## 物（`objects/`）
 

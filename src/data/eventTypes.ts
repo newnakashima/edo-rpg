@@ -40,7 +40,9 @@ export type EventStep =
   | { type: 'battle'; enemies: string[]; level: number; canEscape?: boolean; ifLose?: EventStep[] }
   | { type: 'warp'; mapId: string; x: number; y: number }
   /** イベントをここで終える。 */
-  | { type: 'end' };
+  | { type: 'end' }
+  /** イベントを終え、エンディング（スタッフロールと「完」）を出してタイトルへ戻る（終章のからくり大権現を倒したあと）。 */
+  | { type: 'ending' };
 
 export interface EventDef {
   id: string;
