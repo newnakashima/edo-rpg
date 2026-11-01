@@ -38,6 +38,7 @@ export const EQUIPMENT: Record<string, EquipDef> = {
   tadayoshi: { id: 'tadayoshi', name: '肥前忠吉', slot: 'weapon', price: 2400, bonus: { atk: 21 }, wearers: ['hero'], description: '肥前の刀工の手になる刀' },
   kanewaka: { id: 'kanewaka', name: '加州兼若', slot: 'weapon', price: 3300, bonus: { atk: 25 }, wearers: ['hero'], description: '加賀の刀工の手になる刀' },
   kunikane: { id: 'kunikane', name: '仙台国包', slot: 'weapon', price: 3900, bonus: { atk: 27 }, wearers: ['hero'], description: '仙台の刀工の柾目肌の刀' },
+  aizuKanesada: { id: 'aizuKanesada', name: '会津兼定', slot: 'weapon', price: 4200, bonus: { atk: 28 }, wearers: ['hero'], description: '会津の御抱え刀工が打った刀' },
   kiyomaro: { id: 'kiyomaro', name: '江戸清麿', slot: 'weapon', price: 4500, bonus: { atk: 30 }, wearers: ['hero'], description: '四谷の刀工の冴えた刃の刀' },
   // 終章の江戸城の葛籠だけで手に入る（店には置かない）
   aoiNagawaki: { id: 'aoiNagawaki', name: '葵の長脇差', slot: 'weapon', price: 5400, bonus: { atk: 35 }, wearers: ['hero'], description: '御金蔵に眠っていた、葵の紋の長脇差' },
@@ -97,6 +98,8 @@ export const EQUIPMENT: Record<string, EquipDef> = {
   tomegane: { id: 'tomegane', name: '遠眼鏡', slot: 'accessory', price: 900, bonus: { spd: 2, luck: 6 }, wearers: ALL, description: '遠くまで見通す南蛮の筒' },
   kinpakuMamori: { id: 'kinpakuMamori', name: '金箔の御守り', slot: 'accessory', price: 1200, bonus: { def: 2, luck: 9 }, wearers: ALL, description: '金箔を貼った尾山神社の御守り' },
   hikeshiTenugui: { id: 'hikeshiTenugui', name: '火消しの手拭い', slot: 'accessory', price: 1500, bonus: { def: 4, spd: 3, luck: 4 }, wearers: ALL, description: '組の印を染めた手拭い' },
+  // 会津若松の什の少年たちのお礼（寄り道のサブイベント）。店には置かない
+  okiagariKoboshi: { id: 'okiagariKoboshi', name: '起き上がり小法師', slot: 'accessory', price: 1400, bonus: { maxHp: 20, def: 2, luck: 6 }, wearers: ALL, description: '何度転んでも起き上がる、会津の張り子の人形' },
   waraji: { id: 'waraji', name: 'わらじ', slot: 'accessory', price: 15, bonus: { spd: 2 }, wearers: ALL, description: '履き替え用の新しい草鞋' },
   chochin: { id: 'chochin', name: '提灯', slot: 'accessory', price: 60, bonus: { def: 1, luck: 3 }, wearers: ALL, description: '夜道を照らす小田原提灯' },
   kiseru: { id: 'kiseru', name: 'キセル', slot: 'accessory', price: 120, bonus: { mag: 4 }, wearers: ALL, description: '一服すると頭が冴える煙管' },

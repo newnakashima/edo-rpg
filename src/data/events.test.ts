@@ -977,3 +977,53 @@ describe('イベントの warp', () => {
     for (const ev of Object.values(EVENTS)) check(ev.steps, ev.id);
   });
 });
+
+describe('寄り道の会津若松（什の掟を守る少年たち）', () => {
+  const base = newGame('f', { mapId: 'aizu', x: 50, y: 13 });
+  const heard = {
+    ...base,
+    party: [createMember('hero', 26), createMember('gendo', 26), createMember('orin', 26), createMember('kasumi', 26)],
+    flags: { intro: true, chapter7Cleared: true, kagaTegata: true, sendaiIntro: true, sendaiHeard: true },
+  };
+  const firstBattle = (id: string, state: GameState) => {
+    const runner = new EventRunner(EVENTS[id]!.steps);
+    return skipSay(runner, runner.next(state)).request;
+  };
+
+  it('会津若松に初めて入ると aizuIntro。2 回目からは何もしない', () => {
+    const arrived = run('aizuEnter', heard);
+    expect(arrived.flags.aizuIntro).toBe(true);
+    expect(new EventRunner(EVENTS.aizuEnter!.steps).next(arrived).request.kind).toBe('done');
+  });
+
+  it('新之助の頼みを聞く前は、飯盛山の平太は話さず戦わない', () => {
+    const r = run('heita', heard);
+    expect(r.flags.heitaFound).toBeFalsy();
+    expect(firstBattle('heita', heard).kind).toBe('done');
+  });
+
+  it('新之助の頼み（aizuJuuAsked）を聞くと、平太の前で送り狼の群れ（Lv25・逃げられない）と戦い、勝つと heitaFound。負けたら連れ帰れない', () => {
+    const asked = run('aizuJuu', heard);
+    expect(asked.flags.aizuJuuAsked).toBe(true);
+    expect(firstBattle('heita', asked)).toMatchObject({ kind: 'battle', enemies: ['okuriOkami', 'okuriOkami', 'yukiOnna', 'okuriOkami'], level: 25, canEscape: false, loseOk: false });
+    expect(run('heita', asked).flags.heitaFound).toBe(true);
+    expect(run('heita', asked, 'defeat').flags.heitaFound).toBeFalsy();
+    // 平太を連れ帰る前に新之助に話しても、終わらない
+    expect(run('aizuJuu', asked).flags.aizuJuuDone).toBeFalsy();
+  });
+
+  it('平太を連れ帰って新之助に話すと aizuJuuDone で、起き上がり小法師を一度だけ受け取る。平太は山から日新館の庭へ移る', () => {
+    const found = run('heita', run('aizuJuu', heard));
+    const done = run('aizuJuu', found);
+    expect(done.flags.aizuJuuDone).toBe(true);
+    expect(done.items.okiagariKoboshi).toBe(1);
+    expect(run('aizuJuu', done).items.okiagariKoboshi).toBe(1);
+    expect(EQUIPMENT.okiagariKoboshi?.slot).toBe('accessory');
+    for (const shop of Object.values(SHOPS)) expect(shop.goods, shop.id).not.toContain('okiagariKoboshi');
+    const aizu = MAPS.aizu!;
+    const onMountain = aizu.npcs.find((n) => n.id === 'heita')!;
+    const atHome = aizu.npcs.find((n) => n.id === 'heitaHome')!;
+    expect([npcVisible(onMountain, heard.flags), npcVisible(atHome, heard.flags)]).toEqual([true, false]);
+    expect([npcVisible(onMountain, found.flags), npcVisible(atHome, found.flags)]).toEqual([false, true]);
+  });
+});
