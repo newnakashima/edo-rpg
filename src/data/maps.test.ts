@@ -34,9 +34,9 @@ describe('タイルの画像', () => {
     expect(tileTextureKey(undefined, 'roof')).toBe('tile-roof');
   });
 
-  it('タイルセットの割り当ては決めたとおり（ダンジョン・屋内・船は地域の見た目、町は金沢のほかは共通の見た目）', () => {
+  it('タイルセットの割り当ては決めたとおり（ダンジョン・屋内・船は地域の見た目、町は雪国の金沢・会津若松のほかは共通の見た目）', () => {
     const expected: Record<string, string> = {
-      kanazawa: 'snow', kenrokuen: 'snow', kitsunebiCave: 'cave',
+      kanazawa: 'snow', kenrokuen: 'snow', aizu: 'snow', kitsunebiCave: 'cave',
       karakuriYashiki: 'karakuri', komeKura: 'karakuri', kenkyujo: 'karakuri', karakuriGura: 'karakuri',
       kobo: 'interior', takoya: 'interior', tenshu: 'castle', rashomon: 'ruins', oninosu: 'ruins', nanbanji: 'ruins',
       kitamaebune: 'ship', horikawaKura: 'kura', edoTaika: 'fire', edojo: 'castle', matsuNoRoka: 'castle',
@@ -369,12 +369,12 @@ describe('ワールドマップ', () => {
     expect(unreachable).toEqual([]);
   });
 
-  it('箱根の関所が閉じていれば、金沢の印から北国街道で行けるのは仙台と江戸だけ（ほかの街道とは箱根の関所でだけつながる）', () => {
+  it('箱根の関所が閉じていれば、金沢の印から北国街道で行けるのは仙台・会津若松・江戸だけ（ほかの街道とは箱根の関所でだけつながる）', () => {
     const kanazawa = world.towns!.find((t) => t.name === '金沢')!;
     const flags = Object.fromEntries(world.gates!.filter((g) => g.flag !== 'kagaTegata').map((g) => [g.flag, true]));
     const area = reachable(world, kanazawa, flags);
     const towns = world.towns!.filter((t) => area.has(`${t.x},${t.y}`)).map((t) => t.name);
-    expect(towns.sort()).toEqual(['仙台', '江戸', '金沢'].sort());
+    expect(towns.sort()).toEqual(['仙台', '会津若松', '江戸', '金沢'].sort());
     expect(reachable(world, landing, flags).has(`${kanazawa.x},${kanazawa.y}`)).toBe(false);
   });
 
@@ -1466,5 +1466,57 @@ describe('終章の江戸城', () => {
   it('鷲尾・典膳・将軍は専用の画像を使う', () => {
     const want: Record<string, string> = { washioZa: 'washio', tenzenRoka: 'tenzen', kagemushaShogun: 'shogun' };
     for (const [id, sprite] of Object.entries(want)) expect(matsu.npcs.find((n) => n.id === id)?.sprite, id).toBe(sprite);
+  });
+});
+
+describe('寄り道の会津若松', () => {
+  const world = MAPS.world!;
+  const aizu = MAPS.aizu!;
+  const town = world.towns!.find((t) => t.name === '会津若松')!;
+
+  it('仙台で重臣の話を聞く（sendaiHeard）まで入れず、聞いたら入れる。町から出ると印の隣の脇道に出る', () => {
+    expect(townAction(world, town.x, town.y, 'ok', { sendaiIntro: true })).toMatchObject({ kind: 'info' });
+    expect(townAction(world, town.x, town.y, 'ok', { sendaiHeard: true })).toEqual({ kind: 'enter', to: town.to });
+    const out = aizu.exits.find((e) => e.to === 'world')!;
+    expect(Math.abs(out.toX - town.x) + Math.abs(out.toY - town.y)).toBe(1);
+  });
+
+  it('奥州街道から脇道で行ける。脇道では奥州街道の敵が出て、会津若松に着いたら全滅で会津若松へ（それまでは仙台へ）', () => {
+    const sendai = world.towns!.find((t) => t.name === '仙台')!;
+    expect(reachable(world, sendai, {}).has(`${town.x},${town.y}`)).toBe(true);
+    expect(encounterAt(world, 130, 17, {})).toBe('oshu');
+    expect(respawnPoint('world', 130, 17, { sendaiIntro: true })).toEqual({ mapId: 'sendai', ...MAPS.sendai!.respawn });
+    expect(respawnPoint('world', 130, 17, { sendaiIntro: true, aizuIntro: true })).toEqual({ mapId: 'aizu', ...aizu.respawn });
+    // 脇道の両端（印の隣 x 124 と、本道の手前 x 135）まで会津若松へ戻る
+    for (const x of [124, 135]) {
+      expect(tileAt(world, x, 17)?.kind, `${x},17`).toBe('road');
+      expect(respawnPoint('world', x, 17, { sendaiIntro: true, aizuIntro: true }), `${x},17`).toEqual({ mapId: 'aizu', ...aizu.respawn });
+      expect(encounterAt(world, x, 17, {}), `${x},17`).toBe('oshu');
+    }
+    // 奥州街道の本道（x 136）と、脇道の外の江戸のまわり（y 20〜）は、会津若松に着いたあとも仙台・江戸へ戻る
+    expect(respawnPoint('world', 136, 17, { sendaiIntro: true, aizuIntro: true })).toEqual({ mapId: 'sendai', ...MAPS.sendai!.respawn });
+    expect(respawnPoint('world', 136, 20, { sendaiIntro: true, aizuIntro: true, edoIntro: true })).toEqual({ mapId: 'edo', ...MAPS.edo!.respawn });
+  });
+
+  it('町に入ると aizuEnter を行い、着いたあとは行わない。旅籠・茶屋・店・寺・飛脚がそろう', () => {
+    expect(aizu.onEnter).toEqual({ event: 'aizuEnter', unless: 'aizuIntro' });
+    const actions = new Set(aizu.npcs.map((n) => n.action).filter(Boolean));
+    expect(actions).toEqual(new Set(['inn', 'teahouse', 'shop', 'temple', 'hikyaku']));
+    expect(aizu.areaLevel).toBe(25);
+  });
+
+  it('入口から飯盛山の洞門の前の平太・祠・葛籠まで歩いて行け、日新館の新之助に話しかけられる', () => {
+    const area = reachable(aizu, town.to!, {}, true);
+    for (const id of ['heita', 'iimoriHokora', 'aizuChest1', 'shinnosuke', 'aizuChest2']) {
+      const npc = aizu.npcs.find((n) => n.id === id)!;
+      expect(near(area, npc.x, npc.y), id).toBe(true);
+    }
+    // 鶴ヶ城の中へは、門番がふさいで入れない
+    expect(area.has('24,7')).toBe(false);
+  });
+
+  it('町の人の台詞は、平太が戻る（heitaFound）・什の一件が済む（aizuJuuDone）と変わる', () => {
+    const want: Record<string, string> = { aizuTeahouse: 'heitaFound', oyakuenBannin: 'heitaFound', juuBoy2: 'aizuJuuDone', heitaHome: 'aizuJuuDone', aizuOkami: 'aizuJuuDone' };
+    for (const [id, flag] of Object.entries(want)) expect(aizu.npcs.find((n) => n.id === id)?.after?.flag, id).toBe(flag);
   });
 });

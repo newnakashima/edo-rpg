@@ -977,3 +977,83 @@ describe('イベントの warp', () => {
     for (const ev of Object.values(EVENTS)) check(ev.steps, ev.id);
   });
 });
+
+describe('寄り道の会津若松（什の掟を守る少年たち）', () => {
+  const base = newGame('f', { mapId: 'aizu', x: 50, y: 13 });
+  const heard = {
+    ...base,
+    party: [createMember('hero', 26), createMember('gendo', 26), createMember('orin', 26), createMember('kasumi', 26)],
+    flags: { intro: true, chapter7Cleared: true, kagaTegata: true, sendaiIntro: true, sendaiHeard: true },
+  };
+  const pagesOf = (id: string, state: GameState) => {
+    const r = new EventRunner(EVENTS[id]!.steps).next(state);
+    return r.request.kind === 'say' ? r.request.pages.length : 0;
+  };
+  const firstBattle = (id: string, state: GameState) => {
+    const runner = new EventRunner(EVENTS[id]!.steps);
+    return skipSay(runner, runner.next(state)).request;
+  };
+
+  it('会津若松に初めて入ると aizuIntro。2 回目からは何もしない', () => {
+    const arrived = run('aizuEnter', heard);
+    expect(arrived.flags.aizuIntro).toBe(true);
+    expect(new EventRunner(EVENTS.aizuEnter!.steps).next(arrived).request.kind).toBe('done');
+  });
+
+  it('新之助の頼みを聞く前は、飯盛山の平太は話さず戦わない', () => {
+    const r = run('heita', heard);
+    expect(r.flags.heitaFound).toBeFalsy();
+    expect(firstBattle('heita', heard).kind).toBe('done');
+  });
+
+  it('新之助の頼み（aizuJuuAsked）を聞くと、平太の前で送り狼の群れ（Lv25・逃げられない）と戦い、勝つと heitaFound。負けたら連れ帰れない', () => {
+    const asked = run('aizuJuu', heard);
+    expect(asked.flags.aizuJuuAsked).toBe(true);
+    expect(firstBattle('heita', asked)).toMatchObject({ kind: 'battle', enemies: ['okuriOkami', 'okuriOkami', 'yukiOnna', 'okuriOkami'], level: 25, canEscape: false, loseOk: false });
+    expect(run('heita', asked).flags.heitaFound).toBe(true);
+    expect(run('heita', asked, 'defeat').flags.heitaFound).toBeFalsy();
+    // 平太を連れ帰る前に新之助に話すと、飯盛山を指す短い台詞だけで、終わらない
+    const again = run('aizuJuu', asked);
+    expect(again.flags).toEqual(asked.flags);
+    expect(again.items).toEqual(asked.items);
+    expect(pagesOf('aizuJuu', asked)).toBe(1);
+  });
+
+  it('平太を連れ帰って新之助に話すと aizuJuuDone で、起き上がり小法師を一度だけ受け取る。平太は山から日新館の庭へ移る', () => {
+    const found = run('heita', run('aizuJuu', heard));
+    const done = run('aizuJuu', found);
+    expect(done.flags.aizuJuuDone).toBe(true);
+    expect(done.items.okiagariKoboshi).toBe(1);
+    // 終えたあとは短い台詞だけで、何も変わらない
+    expect(run('aizuJuu', done).items).toEqual(done.items);
+    expect(run('aizuJuu', done).flags).toEqual(done.flags);
+    expect(pagesOf('aizuJuu', done)).toBe(1);
+    expect(EQUIPMENT.okiagariKoboshi?.slot).toBe('accessory');
+    for (const shop of Object.values(SHOPS)) expect(shop.goods, shop.id).not.toContain('okiagariKoboshi');
+    const aizu = MAPS.aizu!;
+    const onMountain = aizu.npcs.find((n) => n.id === 'heita')!;
+    const atHome = aizu.npcs.find((n) => n.id === 'heitaHome')!;
+    expect([npcVisible(onMountain, heard.flags), npcVisible(atHome, heard.flags)]).toEqual([true, false]);
+    expect([npcVisible(onMountain, found.flags), npcVisible(atHome, found.flags)]).toEqual([false, true]);
+  });
+
+  it('持ち物がいっぱいでお礼を受け取れなければ aizuJuuDone は立たず、次は裁きの場面を繰り返さずに受け取れる', () => {
+    const found = run('heita', run('aizuJuu', heard));
+    const full = { ...found, items: { ...found.items, okiagariKoboshi: 99 } };
+    const refused = run('aizuJuu', full);
+    expect(refused.flags.aizuJuuJudged).toBe(true);
+    expect(refused.flags.aizuJuuDone).toBeFalsy();
+    expect(refused.items.okiagariKoboshi).toBe(99);
+    // 空きを作って話しかけると、短い台詞のあとで受け取れる（裁きの長い台詞は繰り返さない）
+    const freed = { ...refused, items: { ...refused.items, okiagariKoboshi: 0 } };
+    expect(pagesOf('aizuJuu', freed)).toBe(1);
+    const got = run('aizuJuu', freed);
+    expect(got.flags.aizuJuuDone).toBe(true);
+    expect(got.items.okiagariKoboshi).toBe(1);
+  });
+
+  it('葛籠の中身は、飯盛山が朝鮮人参、町が身不知柿', () => {
+    expect(run('aizuChest1', heard).items.ninjin).toBe((heard.items.ninjin ?? 0) + 1);
+    expect(run('aizuChest2', heard).items.mishirazuGaki).toBe((heard.items.mishirazuGaki ?? 0) + 1);
+  });
+});
