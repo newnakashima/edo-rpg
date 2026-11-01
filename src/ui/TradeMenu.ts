@@ -7,7 +7,8 @@ import { buy, buyPrice, deposit, sell, sellPrice, withdraw, type TradeResult } f
 import { getState, setState } from '../state';
 import type { Controls } from './input';
 import { COLORS, GAME_HEIGHT, GAME_WIDTH, textStyle } from './theme';
-import { drawWindow, maxMenuRows, Menu, type MenuItem } from './widgets';
+import { itemIcon, MONEY_ICON } from './icons';
+import { addIcon, drawWindow, maxMenuRows, Menu, type MenuItem } from './widgets';
 
 export type TradeMode = { kind: 'shop'; name: string; goods: string[] } | { kind: 'storage' };
 
@@ -49,7 +50,9 @@ export class TradeMenu {
     this.info = scene.add.text(16, INFO_Y + 4, '', { ...textStyle(10), wordWrap: { width: GAME_WIDTH - 32, useAdvancedWrap: true }, lineSpacing: 2 });
     const moneyBg = drawWindow(scene, GAME_WIDTH - 108, 8, 100, 22);
     this.money = scene.add.text(GAME_WIDTH - 16, 13, '', textStyle(10, COLORS.accent)).setOrigin(1, 0);
-    this.objs = scene.add.container(0, 0, [bg, this.info, moneyBg, this.money]).setScrollFactor(0).setDepth(120);
+    // 窓の左に文銭のアイコン、右寄せで額（窓の高さ 22 の縦の中央）
+    const moneyIcon = addIcon(scene, GAME_WIDTH - 102, 19, MONEY_ICON);
+    this.objs = scene.add.container(0, 0, [bg, this.info, moneyBg, moneyIcon, this.money]).setScrollFactor(0).setDepth(120);
     this.refreshMoney();
     this.openTop();
     this.setInfo(mode.kind === 'shop' ? `${mode.name}: 何をお求めで？` : '飛脚: 荷物を預かりやすぜ。');
@@ -113,7 +116,7 @@ export class TradeMenu {
       return;
     }
     this.push(
-      ids.map((id) => ({ label: itemName(id), note: spec.note(id) })),
+      ids.map((id) => ({ label: itemName(id), note: spec.note(id), icon: itemIcon(id) })),
       LIST_X,
       LIST_W,
       (i) => {

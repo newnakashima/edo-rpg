@@ -73,3 +73,19 @@ export function windowSliceRects(w: number, h: number, c = WINDOW_CORNER): Recor
   });
   return out;
 }
+
+/**
+ * メニューのアイコン（public/assets/ui/icons.png。32 × 32 のコマを ICON_NAMES の順に横に並べた 1 枚）。
+ * カーソルと同じく 1/3 で表示する（内部解像度で約 11 px、実際のキャンバスで元の 1 ドットが 1 px）。
+ */
+export const ICON_TEXTURE = 'ui-icons';
+export const ICON_IMAGE_SIZE = 32;
+export const ICON_SCALE = 1 / 3;
+/** アイコンの名前（並びは画像のコマの順）。 */
+export const ICON_NAMES = ['katana', 'teppo', 'shakujo', 'shuriken', 'armor', 'kusuri', 'dango', 'makimono', 'omamori', 'zeni'] as const;
+export type IconName = (typeof ICON_NAMES)[number];
+
+/** アイコンのコマの番号。 */
+export function iconFrame(name: IconName): number {
+  return ICON_NAMES.indexOf(name);
+}

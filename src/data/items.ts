@@ -13,11 +13,15 @@ export type ItemEffect =
   /** 戦闘不能から HP の rate の割合で起き上がらせる。 */
   | { kind: 'revive'; rate: number };
 
+export type ItemKind = 'food' | 'medicine';
+
 export interface ItemDef {
   id: string;
   name: string;
   /** 買値（文）。売値は半額。店（フェーズ 2 の町の施設）で使う。 */
   price: number;
+  /** 食べ物・飲み物か、薬か（メニューのアイコン: 団子・薬包）。 */
+  kind: ItemKind;
   effect: ItemEffect;
   /** 対象。今は味方単体の道具だけ。 */
   target: 'ally';
@@ -30,41 +34,41 @@ export interface ItemDef {
 // 名物の食べ物は、その土地の店（shops.ts）で売る。
 export const ITEMS: Record<string, ItemDef> = {
   // 体力
-  omusubi: { id: 'omusubi', name: 'おむすび', price: 4, effect: { kind: 'healHp', amount: 20 }, target: 'ally', field: true, description: '塩むすび。体力を 20 回復する' },
-  kizugusuri: { id: 'kizugusuri', name: '傷薬', price: 8, effect: { kind: 'healHp', amount: 30 }, target: 'ally', field: true, description: '体力を 30 回復する' },
-  dango: { id: 'dango', name: '団子', price: 10, effect: { kind: 'healHp', amount: 35 }, target: 'ally', field: true, description: '茶屋の串団子。体力を 35 回復する' },
-  abekawamochi: { id: 'abekawamochi', name: '安倍川餅', price: 18, effect: { kind: 'healHp', amount: 50 }, target: 'ally', field: true, description: '駿府の名物のきな粉餅。体力を 50 回復する' },
-  unagi: { id: 'unagi', name: 'うなぎの蒲焼', price: 22, effect: { kind: 'healHp', amount: 58 }, target: 'ally', field: true, description: '浜名湖のうなぎを焼いた浜松の名物。体力を 58 回復する' },
-  uiro: { id: 'uiro', name: 'ういろう', price: 26, effect: { kind: 'healHp', amount: 65 }, target: 'ally', field: true, description: '名古屋の米の蒸し菓子。体力を 65 回復する' },
-  itokiriMochi: { id: 'itokiriMochi', name: '糸切餅', price: 27, effect: { kind: 'healHp', amount: 68 }, target: 'ally', field: true, description: '多賀の門前の、糸で切った紅白の餅。体力を 68 回復する' },
-  yatsuhashi: { id: 'yatsuhashi', name: '八ツ橋', price: 28, effect: { kind: 'healHp', amount: 70 }, target: 'ally', field: true, description: '京の肉桂の焼き菓子。体力を 70 回復する' },
-  katayaki: { id: 'katayaki', name: 'かたやき', price: 30, effect: { kind: 'healHp', amount: 75 }, target: 'ally', field: true, description: '伊賀の忍びの固い煎餅。体力を 75 回復する' },
-  kakimeshi: { id: 'kakimeshi', name: '牡蠣飯', price: 30, effect: { kind: 'healHp', amount: 90 }, target: 'ally', field: true, description: '広島の牡蠣の炊き込み飯。体力を 90 回復する' },
-  awaokoshi: { id: 'awaokoshi', name: '粟おこし', price: 40, effect: { kind: 'healHp', amount: 100 }, target: 'ally', field: true, description: '大坂の名物の干菓子。体力を 100 回復する' },
-  kintsuba: { id: 'kintsuba', name: '金創膏', price: 60, effect: { kind: 'healHp', amount: 120 }, target: 'ally', field: true, description: '体力を 120 回復する' },
-  karashiRenkon: { id: 'karashiRenkon', name: '辛子蓮根', price: 85, effect: { kind: 'healHp', amount: 160 }, target: 'ally', field: true, description: '蓮根の穴に辛子味噌を詰めて揚げた熊本の名物。体力を 160 回復する' },
-  kasutera: { id: 'kasutera', name: 'カステラ', price: 110, effect: { kind: 'healHp', amount: 200 }, target: 'ally', field: true, description: '長崎の南蛮菓子。体力を 200 回復する' },
-  shibafune: { id: 'shibafune', name: '柴舟', price: 130, effect: { kind: 'healHp', amount: 240 }, target: 'ally', field: true, description: '金沢の生姜の煎餅。体力を 240 回復する' },
-  zundaMochi: { id: 'zundaMochi', name: 'ずんだ餅', price: 150, effect: { kind: 'healHp', amount: 270 }, target: 'ally', field: true, description: '仙台の枝豆の餡の餅。体力を 270 回復する' },
-  mishirazuGaki: { id: 'mishirazuGaki', name: '身不知柿', price: 160, effect: { kind: 'healHp', amount: 285 }, target: 'ally', field: true, description: '会津の渋を抜いた甘い柿。体力を 285 回復する' },
-  sakuraMochi: { id: 'sakuraMochi', name: '桜餅', price: 170, effect: { kind: 'healHp', amount: 300 }, target: 'ally', field: true, description: '江戸向島の桜の葉の餅。体力を 300 回復する' },
+  omusubi: { id: 'omusubi', name: 'おむすび', price: 4, kind: 'food', effect: { kind: 'healHp', amount: 20 }, target: 'ally', field: true, description: '塩むすび。体力を 20 回復する' },
+  kizugusuri: { id: 'kizugusuri', name: '傷薬', price: 8, kind: 'medicine', effect: { kind: 'healHp', amount: 30 }, target: 'ally', field: true, description: '体力を 30 回復する' },
+  dango: { id: 'dango', name: '団子', price: 10, kind: 'food', effect: { kind: 'healHp', amount: 35 }, target: 'ally', field: true, description: '茶屋の串団子。体力を 35 回復する' },
+  abekawamochi: { id: 'abekawamochi', name: '安倍川餅', price: 18, kind: 'food', effect: { kind: 'healHp', amount: 50 }, target: 'ally', field: true, description: '駿府の名物のきな粉餅。体力を 50 回復する' },
+  unagi: { id: 'unagi', name: 'うなぎの蒲焼', price: 22, kind: 'food', effect: { kind: 'healHp', amount: 58 }, target: 'ally', field: true, description: '浜名湖のうなぎを焼いた浜松の名物。体力を 58 回復する' },
+  uiro: { id: 'uiro', name: 'ういろう', price: 26, kind: 'food', effect: { kind: 'healHp', amount: 65 }, target: 'ally', field: true, description: '名古屋の米の蒸し菓子。体力を 65 回復する' },
+  itokiriMochi: { id: 'itokiriMochi', name: '糸切餅', price: 27, kind: 'food', effect: { kind: 'healHp', amount: 68 }, target: 'ally', field: true, description: '多賀の門前の、糸で切った紅白の餅。体力を 68 回復する' },
+  yatsuhashi: { id: 'yatsuhashi', name: '八ツ橋', price: 28, kind: 'food', effect: { kind: 'healHp', amount: 70 }, target: 'ally', field: true, description: '京の肉桂の焼き菓子。体力を 70 回復する' },
+  katayaki: { id: 'katayaki', name: 'かたやき', price: 30, kind: 'food', effect: { kind: 'healHp', amount: 75 }, target: 'ally', field: true, description: '伊賀の忍びの固い煎餅。体力を 75 回復する' },
+  kakimeshi: { id: 'kakimeshi', name: '牡蠣飯', price: 30, kind: 'food', effect: { kind: 'healHp', amount: 90 }, target: 'ally', field: true, description: '広島の牡蠣の炊き込み飯。体力を 90 回復する' },
+  awaokoshi: { id: 'awaokoshi', name: '粟おこし', price: 40, kind: 'food', effect: { kind: 'healHp', amount: 100 }, target: 'ally', field: true, description: '大坂の名物の干菓子。体力を 100 回復する' },
+  kintsuba: { id: 'kintsuba', name: '金創膏', price: 60, kind: 'medicine', effect: { kind: 'healHp', amount: 120 }, target: 'ally', field: true, description: '体力を 120 回復する' },
+  karashiRenkon: { id: 'karashiRenkon', name: '辛子蓮根', price: 85, kind: 'food', effect: { kind: 'healHp', amount: 160 }, target: 'ally', field: true, description: '蓮根の穴に辛子味噌を詰めて揚げた熊本の名物。体力を 160 回復する' },
+  kasutera: { id: 'kasutera', name: 'カステラ', price: 110, kind: 'food', effect: { kind: 'healHp', amount: 200 }, target: 'ally', field: true, description: '長崎の南蛮菓子。体力を 200 回復する' },
+  shibafune: { id: 'shibafune', name: '柴舟', price: 130, kind: 'food', effect: { kind: 'healHp', amount: 240 }, target: 'ally', field: true, description: '金沢の生姜の煎餅。体力を 240 回復する' },
+  zundaMochi: { id: 'zundaMochi', name: 'ずんだ餅', price: 150, kind: 'food', effect: { kind: 'healHp', amount: 270 }, target: 'ally', field: true, description: '仙台の枝豆の餡の餅。体力を 270 回復する' },
+  mishirazuGaki: { id: 'mishirazuGaki', name: '身不知柿', price: 160, kind: 'food', effect: { kind: 'healHp', amount: 285 }, target: 'ally', field: true, description: '会津の渋を抜いた甘い柿。体力を 285 回復する' },
+  sakuraMochi: { id: 'sakuraMochi', name: '桜餅', price: 170, kind: 'food', effect: { kind: 'healHp', amount: 300 }, target: 'ally', field: true, description: '江戸向島の桜の葉の餅。体力を 300 回復する' },
   // 気力
-  amazake: { id: 'amazake', name: '甘酒', price: 20, effect: { kind: 'healMp', amount: 8 }, target: 'ally', field: true, description: '体の温まる甘酒。気力を 8 回復する' },
-  mankintan: { id: 'mankintan', name: '万金丹', price: 40, effect: { kind: 'healMp', amount: 15 }, target: 'ally', field: true, description: '気力を 15 回復する' },
-  matcha: { id: 'matcha', name: '宇治の抹茶', price: 70, effect: { kind: 'healMp', amount: 24 }, target: 'ally', field: true, description: '宇治の濃い抹茶。気力を 24 回復する' },
-  konpeito: { id: 'konpeito', name: '金平糖', price: 90, effect: { kind: 'healMp', amount: 30 }, target: 'ally', field: true, description: '南蛮渡りの砂糖菓子。気力を 30 回復する' },
-  bocha: { id: 'bocha', name: '加賀棒茶', price: 110, effect: { kind: 'healMp', amount: 36 }, target: 'ally', field: true, description: '茎を焙じた加賀の茶。気力を 36 回復する' },
+  amazake: { id: 'amazake', name: '甘酒', price: 20, kind: 'food', effect: { kind: 'healMp', amount: 8 }, target: 'ally', field: true, description: '体の温まる甘酒。気力を 8 回復する' },
+  mankintan: { id: 'mankintan', name: '万金丹', price: 40, kind: 'medicine', effect: { kind: 'healMp', amount: 15 }, target: 'ally', field: true, description: '気力を 15 回復する' },
+  matcha: { id: 'matcha', name: '宇治の抹茶', price: 70, kind: 'food', effect: { kind: 'healMp', amount: 24 }, target: 'ally', field: true, description: '宇治の濃い抹茶。気力を 24 回復する' },
+  konpeito: { id: 'konpeito', name: '金平糖', price: 90, kind: 'food', effect: { kind: 'healMp', amount: 30 }, target: 'ally', field: true, description: '南蛮渡りの砂糖菓子。気力を 30 回復する' },
+  bocha: { id: 'bocha', name: '加賀棒茶', price: 110, kind: 'food', effect: { kind: 'healMp', amount: 36 }, target: 'ally', field: true, description: '茎を焙じた加賀の茶。気力を 36 回復する' },
   // 体力と気力
-  hyorogan: { id: 'hyorogan', name: '兵糧丸', price: 60, effect: { kind: 'healBoth', hp: 60, mp: 12 }, target: 'ally', field: true, description: '忍びの携帯食。体力を 60、気力を 12 回復する' },
+  hyorogan: { id: 'hyorogan', name: '兵糧丸', price: 60, kind: 'food', effect: { kind: 'healBoth', hp: 60, mp: 12 }, target: 'ally', field: true, description: '忍びの携帯食。体力を 60、気力を 12 回復する' },
   // 状態異常（戦闘が終わると治るので、戦闘中だけ）
-  dokukeshi: { id: 'dokukeshi', name: '毒消し', price: 6, effect: { kind: 'cure', ailment: 'poison' }, target: 'ally', field: false, description: '毒を治す' },
-  umeboshi: { id: 'umeboshi', name: '梅干し', price: 8, effect: { kind: 'cure', ailment: 'sleep' }, target: 'ally', field: false, description: '酸っぱさで目が覚める。眠りを治す' },
-  kumanoi: { id: 'kumanoi', name: '熊の胆', price: 20, effect: { kind: 'cure', ailment: 'paralysis' }, target: 'ally', field: false, description: '苦い胆の薬。痺れを治す' },
-  hakka: { id: 'hakka', name: '薄荷', price: 18, effect: { kind: 'cure', ailment: 'confusion' }, target: 'ally', field: false, description: 'すっとする香りで正気に返る。混乱を治す' },
-  hangontan: { id: 'hangontan', name: '反魂丹', price: 30, effect: { kind: 'cure' }, target: 'ally', field: false, description: '状態異常をすべて治す' },
+  dokukeshi: { id: 'dokukeshi', name: '毒消し', price: 6, kind: 'medicine', effect: { kind: 'cure', ailment: 'poison' }, target: 'ally', field: false, description: '毒を治す' },
+  umeboshi: { id: 'umeboshi', name: '梅干し', price: 8, kind: 'food', effect: { kind: 'cure', ailment: 'sleep' }, target: 'ally', field: false, description: '酸っぱさで目が覚める。眠りを治す' },
+  kumanoi: { id: 'kumanoi', name: '熊の胆', price: 20, kind: 'medicine', effect: { kind: 'cure', ailment: 'paralysis' }, target: 'ally', field: false, description: '苦い胆の薬。痺れを治す' },
+  hakka: { id: 'hakka', name: '薄荷', price: 18, kind: 'medicine', effect: { kind: 'cure', ailment: 'confusion' }, target: 'ally', field: false, description: 'すっとする香りで正気に返る。混乱を治す' },
+  hangontan: { id: 'hangontan', name: '反魂丹', price: 30, kind: 'medicine', effect: { kind: 'cure' }, target: 'ally', field: false, description: '状態異常をすべて治す' },
   // 気付け
-  kitsukegusuri: { id: 'kitsukegusuri', name: '気付け薬', price: 100, effect: { kind: 'revive', rate: 0.25 }, target: 'ally', field: true, description: '戦闘不能から起こす' },
-  ninjin: { id: 'ninjin', name: '朝鮮人参', price: 280, effect: { kind: 'revive', rate: 0.5 }, target: 'ally', field: true, description: '高価な薬の根。戦闘不能から体力の半分で起こす' },
+  kitsukegusuri: { id: 'kitsukegusuri', name: '気付け薬', price: 100, kind: 'medicine', effect: { kind: 'revive', rate: 0.25 }, target: 'ally', field: true, description: '戦闘不能から起こす' },
+  ninjin: { id: 'ninjin', name: '朝鮮人参', price: 280, kind: 'medicine', effect: { kind: 'revive', rate: 0.5 }, target: 'ally', field: true, description: '高価な薬の根。戦闘不能から体力の半分で起こす' },
 };
 
 /** 所持品（道具・装備品の ID ごとの個数）。 */

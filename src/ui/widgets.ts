@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { FACE_MARGIN, messageTextLayout, TEXT_PADDING } from './messageLayout';
 import { scrollOffset, wrapIndex } from './menuScroll';
 import { COLORS, textStyle } from './theme';
-import { CURSOR_SCALE, CURSOR_TEXTURE, WINDOW_SLICES, WINDOW_TEXTURE, windowSliceRects } from './uiImages';
+import { CURSOR_SCALE, CURSOR_TEXTURE, ICON_SCALE, ICON_TEXTURE, iconFrame, WINDOW_SLICES, WINDOW_TEXTURE, windowSliceRects, type IconName } from './uiImages';
 import type { Controls } from './input';
 
 /**
@@ -100,6 +100,18 @@ export interface MenuItem {
   /** 右寄せで出す補足（消費 MP、個数など）。 */
   note?: string;
   enabled?: boolean;
+  /** 名前の左に出すアイコン（道具・装備品・技）。1 つでもあれば、全部の行の名前をアイコンの分だけ右へずらす。 */
+  icon?: IconName;
+}
+
+/** Menu の名前の左端（窓の左端から。カーソルの扇子の右）。 */
+export const MENU_LABEL_LEFT = 16;
+/** アイコンを出すときに名前をずらす幅（アイコン約 11 px と間 2 px）。 */
+export const MENU_ICON_SPACE = 13;
+
+/** アイコン（1/3 で表示）。x, y は左端と縦の中央。 */
+export function addIcon(scene: Phaser.Scene, x: number, y: number, name: IconName): Phaser.GameObjects.Image {
+  return scene.add.image(x, y, ICON_TEXTURE, iconFrame(name)).setOrigin(0, 0.5).setScale(ICON_SCALE);
 }
 
 /** Menu の 1 行の高さ。 */
@@ -120,6 +132,7 @@ export class Menu {
   private readonly container: Phaser.GameObjects.Container;
   private readonly labels: Phaser.GameObjects.Text[];
   private readonly notes: (Phaser.GameObjects.Text | undefined)[];
+  private readonly icons: (Phaser.GameObjects.Image | undefined)[];
   private readonly cursor: Phaser.GameObjects.Image;
   private readonly moreUp: Phaser.GameObjects.Text;
   private readonly moreDown: Phaser.GameObjects.Text;
@@ -148,7 +161,10 @@ export class Menu {
     this.rows = Math.max(1, Math.min(items.length, maxRows));
     this.top = y;
     const bg = drawWindow(scene, x, y, width, menuHeight(this.rows));
-    this.labels = items.map((item) => scene.add.text(x + 16, y, item.label, textStyle(11, item.enabled === false ? COLORS.dim : COLORS.text)));
+    const labelX = x + MENU_LABEL_LEFT + (items.some((item) => item.icon) ? MENU_ICON_SPACE : 0);
+    this.labels = items.map((item) => scene.add.text(labelX, y, item.label, textStyle(11, item.enabled === false ? COLORS.dim : COLORS.text)));
+    // 選べない行のアイコンは、文字と同じく薄くする
+    this.icons = items.map((item) => (item.icon ? addIcon(scene, x + MENU_LABEL_LEFT, y, item.icon).setAlpha(item.enabled === false ? 0.5 : 1) : undefined));
     this.notes = items.map((item) =>
       item.note === undefined
         ? undefined
@@ -158,8 +174,9 @@ export class Menu {
     this.moreUp = scene.add.text(x + width / 2, y - 2, '▲', textStyle(8, COLORS.accent)).setOrigin(0.5, 0);
     this.moreDown = scene.add.text(x + width / 2, y + menuHeight(this.rows) - 9, '▼', textStyle(8, COLORS.accent)).setOrigin(0.5, 0);
     const notes = this.notes.filter((n): n is Phaser.GameObjects.Text => n !== undefined);
+    const icons = this.icons.filter((n): n is Phaser.GameObjects.Image => n !== undefined);
     this.container = scene.add
-      .container(0, 0, [bg, ...this.labels, ...notes, this.cursor, this.moreUp, this.moreDown])
+      .container(0, 0, [bg, ...this.labels, ...notes, ...icons, this.cursor, this.moreUp, this.moreDown])
       .setScrollFactor(0)
       .setDepth(110);
     this.labels.forEach((label, i) => {
@@ -198,6 +215,7 @@ export class Menu {
       const y = this.top + 5 + row * MENU_LINE_HEIGHT;
       label.setVisible(visible).setY(y);
       this.notes[i]?.setVisible(visible).setY(y);
+      this.icons[i]?.setVisible(visible).setY(Math.round(y + label.height / 2));
     });
     this.moreUp.setVisible(this.offset > 0);
     this.moreDown.setVisible(this.offset + this.rows < this.items.length);
