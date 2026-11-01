@@ -1057,3 +1057,106 @@ describe('寄り道の会津若松（什の掟を守る少年たち）', () => {
     expect(run('aizuChest2', heard).items.mishirazuGaki).toBe((heard.items.mishirazuGaki ?? 0) + 1);
   });
 });
+
+describe('寄り道の浜松（遠州の凧揚げ合戦）', () => {
+  const base = newGame('m', { mapId: 'hamamatsu', x: 50, y: 12 });
+  const arrived = {
+    ...base,
+    party: [createMember('hero', 7), createMember('kasumi', 7)],
+    flags: { intro: true, prologueCleared: true, chapter1Cleared: true, oigawaOpen: true, hamamatsuIntro: true },
+  };
+  const pagesOf = (id: string, state: GameState) => {
+    const r = new EventRunner(EVENTS[id]!.steps).next(state);
+    return r.request.kind === 'say' ? r.request.pages.length : 0;
+  };
+  const firstBattle = (id: string, state: GameState) => {
+    const runner = new EventRunner(EVENTS[id]!.steps);
+    return skipSay(runner, runner.next(state)).request;
+  };
+  /** 選択肢で index を選んで最後まで進める。 */
+  const runChoosing = (id: string, state: GameState, index: number) => {
+    const runner = new EventRunner(EVENTS[id]!.steps);
+    let r = runner.next(state);
+    for (let guard = 0; guard < 50 && r.request.kind !== 'done'; guard++) {
+      if (r.request.kind === 'choice') r = runner.next(r.state, { kind: 'choice', index });
+      else if (r.request.kind === 'battle') r = runner.next(r.state, { kind: 'battle', outcome: 'victory' });
+      else r = runner.next(r.state);
+    }
+    return r.state;
+  };
+  const found = run('hamamatsuTako', run('hamamatsuGenta', arrived));
+
+  it('浜松に初めて入ると hamamatsuIntro。2 回目からは何もしない', () => {
+    const entered = run('hamamatsuEnter', { ...arrived, flags: { ...arrived.flags, hamamatsuIntro: false } });
+    expect(entered.flags.hamamatsuIntro).toBe(true);
+    expect(new EventRunner(EVENTS.hamamatsuEnter!.steps).next(entered).request.kind).toBe('done');
+  });
+
+  it('源太の頼みを聞く前は、松林の浪人は追い払うだけで戦わない', () => {
+    expect(firstBattle('hamamatsuTako', arrived).kind).toBe('done');
+    expect(run('hamamatsuTako', arrived).flags.hamamatsuTakoFound).toBeFalsy();
+  });
+
+  it('源太の頼み（hamamatsuTakoAsked）を聞くと、浪人・雲助・獺（Lv7・逃げられない）と戦い、勝つと初凧を取り返す。負けたら取り返せない', () => {
+    const asked = run('hamamatsuGenta', arrived);
+    expect(asked.flags.hamamatsuTakoAsked).toBe(true);
+    expect(firstBattle('hamamatsuTako', asked)).toMatchObject({ kind: 'battle', enemies: ['oihagiRonin', 'kumosuke', 'kawauso'], level: 7, canEscape: false, loseOk: false });
+    expect(found.flags.hamamatsuTakoFound).toBe(true);
+    expect(run('hamamatsuTako', asked, 'defeat').flags.hamamatsuTakoFound).toBeFalsy();
+    // 取り返す前に源太に話すと、松林を指す短い台詞だけ
+    expect(run('hamamatsuGenta', asked).flags).toEqual(asked.flags);
+    expect(pagesOf('hamamatsuGenta', asked)).toBe(1);
+  });
+
+  it('初凧を届けると凧揚げ合戦。引けば祝儀 200 文、繰り出せば祝儀なし。どちらも凧の糸巻きを一度だけ受け取る（hamamatsuTakoDone）', () => {
+    const pulled = runChoosing('hamamatsuGenta', found, 0);
+    const released = runChoosing('hamamatsuGenta', found, 1);
+    expect(pulled.money).toBe(found.money + 200);
+    expect(released.money).toBe(found.money);
+    for (const done of [pulled, released]) {
+      expect(done.flags.hamamatsuTakoDone).toBe(true);
+      expect(done.items.takoItomaki).toBe(1);
+      // 終えたあとは短い台詞だけで、何も変わらない
+      const again = run('hamamatsuGenta', done);
+      expect([again.items, again.money, again.flags]).toEqual([done.items, done.money, done.flags]);
+      expect(pagesOf('hamamatsuGenta', done)).toBe(1);
+    }
+    expect(EQUIPMENT.takoItomaki?.slot).toBe('accessory');
+    for (const shop of Object.values(SHOPS)) expect(shop.goods, shop.id).not.toContain('takoItomaki');
+  });
+
+  it('持ち物がいっぱいで糸巻きを受け取れなければ hamamatsuTakoDone は立たず、次は合戦を繰り返さずに受け取れる（祝儀も二度は出ない）', () => {
+    const full = { ...found, items: { ...found.items, takoItomaki: 99 } };
+    const refused = run('hamamatsuGenta', full);
+    expect(refused.flags.hamamatsuTakoFlown).toBe(true);
+    expect(refused.flags.hamamatsuTakoDone).toBeFalsy();
+    expect(refused.items.takoItomaki).toBe(99);
+    const freed = { ...refused, items: { ...refused.items, takoItomaki: 0 } };
+    expect(pagesOf('hamamatsuGenta', freed)).toBe(1);
+    const got = run('hamamatsuGenta', freed);
+    expect(got.flags.hamamatsuTakoDone).toBe(true);
+    expect(got.items.takoItomaki).toBe(1);
+    expect(got.money).toBe(refused.money);
+  });
+
+  it('浜松の台詞には仲間が出てこない（第 2 章から、霞が抜けている第 5 章にも来られるため）', () => {
+    const lines = (steps: EventStep[]): string[] =>
+      steps.flatMap((st) => {
+        if (st.type === 'say') return [...st.lines, ...(st.linesF ?? [])];
+        if (st.type === 'if') return [...lines(st.then), ...lines(st.else ?? [])];
+        if (st.type === 'choice') return st.options.flatMap((o) => lines(o.steps));
+        if (st.type === 'giveItem') return lines(st.ifFull ?? []);
+        return [];
+      });
+    for (const id of ['hamamatsuEnter', 'hamamatsuGenta', 'hamamatsuTako']) {
+      for (const line of lines(EVENTS[id]!.steps)) {
+        for (const name of ['霞', '玄道', 'お凛', '榊兵庫']) expect(line.startsWith(`${name}「`), `${id}: ${line}`).toBe(false);
+      }
+    }
+  });
+
+  it('葛籠の中身は、松林が金創膏、町がうなぎの蒲焼', () => {
+    expect(run('hamamatsuChest1', arrived).items.kintsuba).toBe((arrived.items.kintsuba ?? 0) + 1);
+    expect(run('hamamatsuChest2', arrived).items.unagi).toBe((arrived.items.unagi ?? 0) + 1);
+  });
+});

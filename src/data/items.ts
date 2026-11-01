@@ -34,6 +34,7 @@ export const ITEMS: Record<string, ItemDef> = {
   kizugusuri: { id: 'kizugusuri', name: '傷薬', price: 8, effect: { kind: 'healHp', amount: 30 }, target: 'ally', field: true, description: '体力を 30 回復する' },
   dango: { id: 'dango', name: '団子', price: 10, effect: { kind: 'healHp', amount: 35 }, target: 'ally', field: true, description: '茶屋の串団子。体力を 35 回復する' },
   abekawamochi: { id: 'abekawamochi', name: '安倍川餅', price: 18, effect: { kind: 'healHp', amount: 50 }, target: 'ally', field: true, description: '駿府の名物のきな粉餅。体力を 50 回復する' },
+  unagi: { id: 'unagi', name: 'うなぎの蒲焼', price: 22, effect: { kind: 'healHp', amount: 58 }, target: 'ally', field: true, description: '浜名湖のうなぎを焼いた浜松の名物。体力を 58 回復する' },
   uiro: { id: 'uiro', name: 'ういろう', price: 26, effect: { kind: 'healHp', amount: 65 }, target: 'ally', field: true, description: '名古屋の米の蒸し菓子。体力を 65 回復する' },
   yatsuhashi: { id: 'yatsuhashi', name: '八ツ橋', price: 28, effect: { kind: 'healHp', amount: 70 }, target: 'ally', field: true, description: '京の肉桂の焼き菓子。体力を 70 回復する' },
   katayaki: { id: 'katayaki', name: 'かたやき', price: 30, effect: { kind: 'healHp', amount: 75 }, target: 'ally', field: true, description: '伊賀の忍びの固い煎餅。体力を 75 回復する' },

@@ -42,7 +42,7 @@ describe('タイルの画像', () => {
       kitamaebune: 'ship', horikawaKura: 'kura', edoTaika: 'fire', edojo: 'castle', matsuNoRoka: 'castle',
       // 町ごとの建物
       shimizu: 'minato', hiroshima: 'minato', sunpu: 'bushi', yoriki: 'bushi', sendai: 'bushi',
-      nagoya: 'shoka', osaka: 'shoka', kyo: 'miyako', iga: 'sato', kagiya: 'sato', igaSato: 'sato',
+      nagoya: 'shoka', hamamatsu: 'shoka', osaka: 'shoka', kyo: 'miyako', iga: 'sato', kagiya: 'sato', igaSato: 'sato',
       nagasaki: 'nanban', dejima: 'nanban', edo: 'nagaya',
     };
     const actual = Object.fromEntries(Object.values(MAPS).filter((m) => m.tileset).map((m) => [m.id, m.tileset]));
@@ -1522,5 +1522,71 @@ describe('寄り道の会津若松', () => {
   it('町の人の台詞は、平太が戻る（heitaFound）・什の一件が済む（aizuJuuDone）と変わる', () => {
     const want: Record<string, string> = { aizuTeahouse: 'heitaFound', oyakuenBannin: 'heitaFound', juuBoy2: 'aizuJuuDone', heitaHome: 'aizuJuuDone', aizuOkami: 'aizuJuuDone' };
     for (const [id, flag] of Object.entries(want)) expect(aizu.npcs.find((n) => n.id === id)?.after?.flag, id).toBe(flag);
+  });
+});
+
+describe('寄り道の浜松', () => {
+  const world = MAPS.world!;
+  const hamamatsu = MAPS.hamamatsu!;
+  const town = world.towns!.find((t) => t.name === '浜松')!;
+  const shimizu = world.towns!.find((t) => t.name === '清水湊')!;
+  const nagoya = world.towns!.find((t) => t.name === '名古屋')!;
+
+  it('大井川の渡し場の西にあり、渡れる（oigawaOpen）まで清水湊からは着かない。町から出ると印の隣の脇道に出る', () => {
+    expect(reachable(world, shimizu, {}).has(`${town.x},${town.y}`)).toBe(false);
+    expect(reachable(world, shimizu, { oigawaOpen: true }).has(`${town.x},${town.y}`)).toBe(true);
+    expect(reachable(world, nagoya, {}).has(`${town.x},${town.y}`)).toBe(true);
+    expect(townAction(world, town.x, town.y, 'ok', {})).toEqual({ kind: 'enter', to: town.to });
+    for (const out of hamamatsu.exits.filter((e) => e.to === 'world')) {
+      expect(Math.abs(out.toX - town.x) + Math.abs(out.toY - town.y)).toBe(1);
+      expect(tileAt(world, out.toX, out.toY)?.kind).toBe('road');
+    }
+  });
+
+  it('脇道と東海道の東の端では東海道の敵が出て、浜松に着いたら全滅で浜松へ（それまでは名古屋へ）', () => {
+    const toHamamatsu = { mapId: 'hamamatsu', ...hamamatsu.respawn };
+    const toNagoya = { mapId: 'nagoya', ...MAPS.nagoya!.respawn };
+    for (const [x, y] of [[100, 31], [100, 32], [102, 30], [93, 27]] as const) {
+      expect(encounterAt(world, x, y, { oigawaOpen: true }), `${x},${y}`).toBe('tokaido');
+      expect(respawnPoint('world', x, y, { oigawaOpen: true }), `${x},${y}`).toEqual(toNagoya);
+      expect(respawnPoint('world', x, y, { oigawaOpen: true, hamamatsuIntro: true }), `${x},${y}`).toEqual(toHamamatsu);
+    }
+    // 名古屋の印のまわり（x 92 から西）は、浜松に着いたあとも名古屋へ
+    expect(respawnPoint('world', 92, 27, { oigawaOpen: true, hamamatsuIntro: true })).toEqual(toNagoya);
+    // 大井川の渡し場から東（駿府のまわり）は今までどおり
+    expect(respawnPoint('world', 104, 30, { oigawaOpen: true, hamamatsuIntro: true })).not.toEqual(toHamamatsu);
+  });
+
+  it('町に入ると hamamatsuEnter を行い、着いたあとは行わない。旅籠・茶屋・店・寺・飛脚がそろう', () => {
+    expect(hamamatsu.onEnter).toEqual({ event: 'hamamatsuEnter', unless: 'hamamatsuIntro' });
+    const actions = new Set(hamamatsu.npcs.map((n) => n.action).filter(Boolean));
+    expect(actions).toEqual(new Set(['inn', 'teahouse', 'shop', 'temple', 'hikyaku']));
+    expect(hamamatsu.areaLevel).toBe(7);
+    expect(tileAt(hamamatsu, hamamatsu.respawn!.x, hamamatsu.respawn!.y)?.blocked).toBe(false);
+  });
+
+  it('入口から松林の奥の浪人・初凧・葛籠まで歩いて行け、砂丘の源太や町の人に話しかけられる', () => {
+    const area = reachable(hamamatsu, town.to!, {}, true);
+    for (const id of ['takoRonin', 'hatsudako', 'hamamatsuChest1', 'genta', 'tonariWakashu', 'hamamatsuChest2', 'yahei', 'toryo', 'toryoOkami', 'hamamatsuInn', 'hamamatsuTemple']) {
+      const npc = hamamatsu.npcs.find((n) => n.id === id)!;
+      expect(near(area, npc.x, npc.y), id).toBe(true);
+    }
+    // 浜松城の中へは、門番がふさいで入れない
+    expect(area.has('12,6')).toBe(false);
+    // 町の広さ（テストプレイの指摘: マップが小さすぎる）
+    expect(reachable(hamamatsu, town.to!, {}).size).toBeGreaterThan(900);
+  });
+
+  it('浪人と初凧は、初凧を取り返す（hamamatsuTakoFound）と消える。町の人の台詞は取り返す・合戦が済む（hamamatsuTakoDone）と変わる', () => {
+    for (const id of ['takoRonin', 'hatsudako']) expect(hamamatsu.npcs.find((n) => n.id === id)?.hideFlag, id).toBe('hamamatsuTakoFound');
+    const want: Record<string, string> = {
+      hamamatsuTeahouse: 'hamamatsuTakoFound',
+      toryo: 'hamamatsuTakoFound',
+      hamamatsuRojin: 'hamamatsuTakoFound',
+      toryoOkami: 'hamamatsuTakoDone',
+      tonariWakashu: 'hamamatsuTakoDone',
+      yahei: 'hamamatsuTakoDone',
+    };
+    for (const [id, flag] of Object.entries(want)) expect(hamamatsu.npcs.find((n) => n.id === id)?.after?.flag, id).toBe(flag);
   });
 });

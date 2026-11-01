@@ -535,6 +535,122 @@ const SENDAI_ARRIVE: EventStep[] = [
   { type: 'setFlag', flag: 'sendaiIntro' },
 ];
 
+/**
+ * 寄り道の浜松に初めて入ったとき。凧揚げ合戦の支度でにぎわう町。
+ * 浜松へは第 2 章から（第 5 章で霞が抜けている間にも）来られ、そろっている仲間が決まらないので、台詞は主人公と町の人だけにする。
+ */
+const HAMAMATSU_ARRIVE: EventStep[] = [
+  {
+    type: 'say',
+    lines: [
+      '東海道から南へ折れ、一行は遠州浜松の城下に入った。北の丘に、浜松城の石垣が見える。',
+      '町のあちこちで、畳よりも大きな四角い凧に、町ごとの印を描いている。',
+      '町人「もうすぐ中田島の砂丘で凧揚げ合戦があるんだ。跡取りの男の子が生まれた家は、名前を書いた初凧を揚げて祝うのさ」',
+      '{hero}「にぎやかな町だな。ちょいと寄っていくか」',
+    ],
+    linesF: [
+      '東海道から南へ折れ、一行は遠州浜松の城下に入った。北の丘に、浜松城の石垣が見える。',
+      '町のあちこちで、畳よりも大きな四角い凧に、町ごとの印を描いている。',
+      '町人「もうすぐ中田島の砂丘で凧揚げ合戦があるんだ。跡取りの男の子が生まれた家は、名前を書いた初凧を揚げて祝うのさ」',
+      '{hero}「にぎやかな町だね。ちょいと寄っていこうか」',
+    ],
+  },
+  { type: 'setFlag', flag: 'hamamatsuIntro' },
+];
+
+/** 若衆頭の源太の頼み。松林の浪人たちに奪われた初凧を取り返してほしい（hamamatsuTakoAsked）。 */
+const HAMAMATSU_TAKO_ASK: EventStep[] = [
+  {
+    type: 'say',
+    lines: [
+      '若衆頭の源太「おう、旅の人。腕っぷしが強そうだな。ひとつ頼まれちゃくれねえか」',
+      '源太「町の大工の棟梁に、初めての男の子が生まれてな。凧師の弥平じいさんが、名前入りの初凧を張ってくれたんだ」',
+      '源太「ところが試し揚げの最中に糸が切れて、凧は砂丘の西の松林へ落ちちまった」',
+      '源太「取りに行った若いのが、松林にたむろする浪人と雲助に追い返されてな。返してほしけりゃ酒手を出せと、ぬかしやがる」',
+      '源太「合戦は明日だ。初凧が揚がらなきゃ、喜之助坊の祝いが台無しよ」',
+      '{hero}「わかった。凧はあっしが取り返してこよう」',
+      '源太「ありがてえ！ 松林は、この砂丘を西へ行った奥だ」',
+    ],
+    linesF: [
+      '若衆頭の源太「おう、旅の人。腕っぷしが強そうだな。ひとつ頼まれちゃくれねえか」',
+      '源太「町の大工の棟梁に、初めての男の子が生まれてな。凧師の弥平じいさんが、名前入りの初凧を張ってくれたんだ」',
+      '源太「ところが試し揚げの最中に糸が切れて、凧は砂丘の西の松林へ落ちちまった」',
+      '源太「取りに行った若いのが、松林にたむろする浪人と雲助に追い返されてな。返してほしけりゃ酒手を出せと、ぬかしやがる」',
+      '源太「合戦は明日だ。初凧が揚がらなきゃ、喜之助坊の祝いが台無しよ」',
+      '{hero}「わかったよ。凧はあたしが取り返してくる」',
+      '源太「ありがてえ！ 松林は、この砂丘を西へ行った奥だ」',
+    ],
+  },
+  { type: 'setFlag', flag: 'hamamatsuTakoAsked' },
+];
+
+/** 凧師の弥平のお礼の凧の糸巻きを渡す（hamamatsuTakoDone）。持ちきれなければ渡さず、また話しかけたときに受け取れる。 */
+const HAMAMATSU_TAKO_REWARD: EventStep[] = [
+  {
+    type: 'giveItem',
+    item: 'takoItomaki',
+    ifFull: [{ type: 'say', lines: ['弥平「……おや、荷物がいっぱいのようじゃな。源太に預けておくから、また寄っておくれ」'] }, { type: 'end' }],
+  },
+  { type: 'say', lines: ['凧の糸巻きを受け取った。'] },
+  { type: 'setFlag', flag: 'hamamatsuTakoDone' },
+];
+
+/**
+ * 初凧を源太に届けたあとの凧揚げ合戦。隣町の凧と糸を絡ませる「糸切り合戦」で、引けば隣町の糸を切って源太から祝儀（200 文）、
+ * 繰り出せば勝負はつかない。どちらでも初凧は揚がり、弥平からお礼を受け取る（hamamatsuTakoFlown → hamamatsuTakoDone）。
+ */
+const HAMAMATSU_TAKO_GASSEN: EventStep[] = [
+  {
+    type: 'say',
+    lines: [
+      '源太「おお、初凧だ！ 破れもねえ。弥平じいさん、糸目を付け直してくれ！」',
+      '凧師の弥平「任せておけ。……よし、揚げるぞ！」',
+      '砂丘の風を受けて、「初　喜之助」の凧が空へ昇っていく。町ごとの大凧がいくつも揚がり、糸と糸を擦り合わせて相手の糸を切る、糸切り合戦が始まった。',
+      '源太「旅の人、糸を持ってくれ！ 隣町の凧が、上から糸をかぶせてきやがった！」',
+    ],
+  },
+  {
+    type: 'choice',
+    prompt: '糸をどうする？',
+    options: [
+      {
+        label: 'ぐいぐい引く',
+        steps: [
+          {
+            type: 'say',
+            lines: [
+              '糸と糸が擦れ合い、焦げくさい匂いが立ちのぼる。……ぷつりと切れたのは、隣町の糸だった！',
+              '源太「やった！ 隣町の凧が、海の方へ流れていくぜ！ こいつは合戦の祝儀だ、取っといてくれ」',
+            ],
+          },
+          { type: 'giveMoney', amount: 200 },
+          { type: 'say', lines: ['200 文を受け取った。'] },
+        ],
+      },
+      {
+        label: '一気に繰り出す',
+        steps: [
+          {
+            type: 'say',
+            lines: ['糸を緩めると、初凧はふわりと隣町の糸から離れた。糸は切れずにすんだが、勝負もつかなかった。', '源太「ははっ、逃げるが勝ちってか。まあいい、初凧が無事ならそれで十分よ」'],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    type: 'say',
+    lines: [
+      '初凧は、砂丘の空でいちばん高く揚がっている。浜で見上げる人々から、歓声が上がった。',
+      '弥平「旅のお方、ありがとうよ。これは、わしが使うておった凧の糸巻きじゃ」',
+      '弥平「長年、遠州の空っ風に耐えてきた糸巻きでな。持っておれば、足が軽うなるぞ」',
+    ],
+  },
+  // 持ち物がいっぱいで受け取れなかったとき、次に話しかけても合戦の場面を繰り返さない
+  { type: 'setFlag', flag: 'hamamatsuTakoFlown' },
+  ...HAMAMATSU_TAKO_REWARD,
+];
+
 /** 寄り道の会津若松に初めて入ったとき。日新館の前で、什の少年たちが掟を唱えている。 */
 const AIZU_ARRIVE: EventStep[] = [
   {
@@ -1751,6 +1867,80 @@ export const EVENTS: Record<string, EventDef> = {
       },
     ],
   },
+  // 寄り道の浜松（第 2 章、大井川を渡ったあと）
+  /** 浜松に入ったとき。初めてなら町の紹介。 */
+  hamamatsuEnter: { id: 'hamamatsuEnter', steps: [{ type: 'if', flag: 'hamamatsuIntro', then: [], else: HAMAMATSU_ARRIVE }] },
+  /** 砂丘の若衆頭・源太。初凧を取り返してほしいと頼み（hamamatsuTakoAsked）、取り返したら（hamamatsuTakoFound）凧揚げ合戦（hamamatsuTakoFlown）とお礼（hamamatsuTakoDone）。 */
+  hamamatsuGenta: {
+    id: 'hamamatsuGenta',
+    steps: [
+      {
+        type: 'if',
+        flag: 'hamamatsuTakoDone',
+        then: [{ type: 'say', lines: ['源太「初凧が揚がりゃ、その子は丈夫に育つ。遠州の空っ風みてえに、たくましくな」'] }],
+        else: [
+          {
+            type: 'if',
+            flag: 'hamamatsuTakoFlown',
+            then: [{ type: 'say', lines: ['源太「弥平じいさんから、糸巻きを預かってるぜ。受け取ってくんな」'] }, ...HAMAMATSU_TAKO_REWARD],
+            else: [
+              {
+                type: 'if',
+                flag: 'hamamatsuTakoFound',
+                then: HAMAMATSU_TAKO_GASSEN,
+                else: [
+                  {
+                    type: 'if',
+                    flag: 'hamamatsuTakoAsked',
+                    then: [{ type: 'say', lines: ['源太「初凧は、砂丘を西へ行った松林の奥だ。……頼んだぜ」'] }],
+                    else: HAMAMATSU_TAKO_ASK,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  /** 松林の奥の浪人。源太の頼みを聞いたあとなら、浪人・雲助・獺（Lv7）を退けて初凧を取り返す（hamamatsuTakoFound）。 */
+  hamamatsuTako: {
+    id: 'hamamatsuTako',
+    steps: [
+      {
+        type: 'if',
+        flag: 'hamamatsuTakoAsked',
+        then: [
+          {
+            type: 'say',
+            lines: [
+              '浪人「なんだ、てめえ。この凧は、おれたちが拾ったもんだ。返してほしけりゃ、酒手を置いていきな」',
+              '{hero}「拾ったもんなら、持ち主に返すのが筋だろう。初凧は、子どもの祝いの凧だぜ」',
+              '浪人「うるせえ！ やっちまえ！」',
+            ],
+            linesF: [
+              '浪人「なんだ、てめえ。この凧は、おれたちが拾ったもんだ。返してほしけりゃ、酒手を置いていきな」',
+              '{hero}「拾ったもんなら、持ち主に返すのが筋だろう。初凧は、子どもの祝いの凧だよ」',
+              '浪人「うるせえ！ やっちまえ！」',
+            ],
+          },
+          { type: 'battle', enemies: ['oihagiRonin', 'kumosuke', 'kawauso'], level: 7 },
+          {
+            type: 'say',
+            lines: [
+              '浪人「ちっ、覚えてやがれ！」 浪人たちは、砂丘の向こうへ逃げていった。',
+              '松の枝から、大きな四角い凧を下ろした。真ん中に、太い筆で「初　喜之助」と書いてある。',
+              '初凧を抱えて、松林を出た。（砂丘で、若衆頭の源太が待っている）',
+            ],
+          },
+          { type: 'setFlag', flag: 'hamamatsuTakoFound' },
+        ],
+        else: [{ type: 'say', lines: ['浪人「なんだ、てめえ。見せもんじゃねえぞ。とっとと失せな」'] }],
+      },
+    ],
+  },
+  hamamatsuChest1: chest('hamamatsuChest1', 'kintsuba', '金創膏'),
+  hamamatsuChest2: chest('hamamatsuChest2', 'unagi', 'うなぎの蒲焼'),
   // 寄り道の会津若松（第 8 章、仙台のあと）
   /** 会津若松に入ったとき。初めてなら町の紹介。 */
   aizuEnter: { id: 'aizuEnter', steps: [{ type: 'if', flag: 'aizuIntro', then: [], else: AIZU_ARRIVE }] },
