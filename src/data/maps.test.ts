@@ -39,7 +39,7 @@ describe('タイルの画像', () => {
       kanazawa: 'snow', kenrokuen: 'snow', kitsunebiCave: 'cave',
       karakuriYashiki: 'karakuri', komeKura: 'karakuri', kenkyujo: 'karakuri', karakuriGura: 'karakuri',
       kobo: 'interior', takoya: 'interior', tenshu: 'castle', rashomon: 'ruins', oninosu: 'ruins', nanbanji: 'ruins',
-      kitamaebune: 'ship', horikawaKura: 'kura',
+      kitamaebune: 'ship', horikawaKura: 'kura', edoTaika: 'fire',
     };
     const actual = Object.fromEntries(Object.values(MAPS).filter((m) => m.tileset).map((m) => [m.id, m.tileset]));
     expect(actual).toEqual(expected);
@@ -362,11 +362,20 @@ describe('ワールドマップ', () => {
     expect(towns.sort()).toEqual(['清水湊', '駿府'].sort());
   });
 
-  it('関所が開けば、金沢（北前船で渡る）のほかはすべての町に街道でつながる', () => {
+  it('関所が開けば、すべての町に街道でつながる（金沢は北国街道・仙台・江戸を経て箱根の関所で）', () => {
     const flags = Object.fromEntries(world.gates!.map((g) => [g.flag, true]));
     const area = reachable(world, landing, flags);
     const unreachable = world.towns!.filter((t) => !area.has(`${t.x},${t.y}`)).map((t) => t.name);
-    expect(unreachable).toEqual(['金沢']);
+    expect(unreachable).toEqual([]);
+  });
+
+  it('箱根の関所が閉じていれば、金沢の印から北国街道で行けるのは仙台と江戸だけ（ほかの街道とは箱根の関所でだけつながる）', () => {
+    const kanazawa = world.towns!.find((t) => t.name === '金沢')!;
+    const flags = Object.fromEntries(world.gates!.filter((g) => g.flag !== 'kagaTegata').map((g) => [g.flag, true]));
+    const area = reachable(world, kanazawa, flags);
+    const towns = world.towns!.filter((t) => area.has(`${t.x},${t.y}`)).map((t) => t.name);
+    expect(towns.sort()).toEqual(['仙台', '江戸', '金沢'].sort());
+    expect(reachable(world, landing, flags).has(`${kanazawa.x},${kanazawa.y}`)).toBe(false);
   });
 
   it('清水湊のまわりの街道では敵が出る', () => {
@@ -494,13 +503,12 @@ describe('ワールドマップ', () => {
       expect(near(reachable(world, landing, {}, true), fuji.x, fuji.y)).toBe(true);
     });
 
-    it('関所が開けば、金沢の印（北前船で渡る）のほかの歩けるマスはすべてつながっている', () => {
-      const kanazawa = townOf('金沢');
+    it('関所が開けば、歩けるマスはすべてつながっている', () => {
       const all = reachable(world, landing, open);
       const lost: string[] = [];
       world.rows.forEach((row, y) =>
         [...row].forEach((_, x) => {
-          if (tileAt(world, x, y)?.blocked === false && !all.has(`${x},${y}`) && !(x === kanazawa.x && y === kanazawa.y)) lost.push(`${x},${y}`);
+          if (tileAt(world, x, y)?.blocked === false && !all.has(`${x},${y}`)) lost.push(`${x},${y}`);
         }),
       );
       expect(lost).toEqual([]);
@@ -1074,10 +1082,16 @@ describe('第 7 章のマップ（北前船・金沢・兼六園・からくり�
   const gura = MAPS.karakuriGura!;
   const exitTo = (m: MapDef, to: string) => m.exits.find((e) => e.to === to)!;
 
-  it('金沢はワールドマップの街道につながず、ワールドマップの印からは入れない（北前船で渡る）。町からワールドマップへの出口もない', () => {
-    const town = MAPS.world!.towns!.find((t) => t.name === '金沢')!;
-    expect(town.to).toBeUndefined();
-    expect(kanazawa.exits.some((e) => e.to === 'world')).toBe(false);
+  it('金沢へは第 7 章を終える（chapter7Cleared）までワールドマップの印から入れず（北前船で渡る）、東の北国街道への出口は番人がふさぐ', () => {
+    const world = MAPS.world!;
+    const town = world.towns!.find((t) => t.name === '金沢')!;
+    expect(townAction(world, town.x, town.y, 'ok', {})).toMatchObject({ kind: 'info' });
+    expect(townAction(world, town.x, town.y, 'ok', { chapter7Cleared: true })).toEqual({ kind: 'enter', to: town.to });
+    const out = exitTo(kanazawa, 'world');
+    expect(Math.abs(out.toX - town.x) + Math.abs(out.toY - town.y)).toBe(1);
+    const start = { x: 4, y: 22 };
+    expect(reachable(kanazawa, start, { sakonHeard: true }, true).has(`${out.x},${out.y}`)).toBe(false);
+    expect(reachable(kanazawa, start, { chapter7Cleared: true }, true).has(`${out.x},${out.y}`)).toBe(true);
   });
 
   it('北前船の甲板は、乗った場所から船首の船幽霊の場所へ行け、そこを通らなければ船首に出られない。全滅したら長崎へ', () => {
@@ -1216,7 +1230,8 @@ describe('マップの広さと使い回し（テストプレイの指摘: ど�
       const start = entrance(m);
       expect(start, m.id).toBeDefined();
       if (!start) continue;
-      const later = Object.fromEntries(m.npcs.filter((n) => n.hideFlag).map((n) => [n.hideFlag!, true]));
+      // あとから現れる人（showFlag）も、見張りがどいたあとの区別で確かめる
+      const later = Object.fromEntries(m.npcs.flatMap((n) => [n.hideFlag, n.showFlag]).filter((f) => f !== undefined).map((f) => [f, true]));
       for (const flags of [{}, later]) {
         const area = reachable(m, start, flags, true);
         for (const npc of m.npcs.filter((n) => npcVisible(n, flags))) expect(near(area, npc.x, npc.y), `${m.id}/${npc.id}`).toBe(true);
@@ -1233,5 +1248,125 @@ describe('マップの広さと使い回し（テストプレイの指摘: ど�
       const lost = open.filter((p) => !area.has(`${p.x},${p.y}`));
       expect(lost.slice(0, 5), `${m.id}: ${lost.length} マスが離れている`).toEqual([]);
     }
+  });
+});
+
+describe('第 8 章のマップ（北国街道・仙台・江戸・神田の大火）', () => {
+  const world = MAPS.world!;
+  const townOf = (name: string) => world.towns!.find((t) => t.name === name)!;
+  const sendai = MAPS.sendai!;
+  const edo = MAPS.edo!;
+  const taika = MAPS.edoTaika!;
+  const exitTo = (m: MapDef, to: string) => m.exits.find((e) => e.to === to)!;
+
+  it('仙台・江戸から街道へ出ると、それぞれの印の隣に出る。江戸は仙台で重臣の話を聞く（sendaiHeard）まで入れない', () => {
+    for (const [m, name] of [[sendai, '仙台'], [edo, '江戸']] as const) {
+      const out = exitTo(m, 'world');
+      const town = townOf(name);
+      expect(Math.abs(out.toX - town.x) + Math.abs(out.toY - town.y), name).toBe(1);
+    }
+    const e = townOf('江戸');
+    expect(townAction(world, e.x, e.y, 'ok', { chapter7Cleared: true })).toMatchObject({ kind: 'info' });
+    expect(townAction(world, e.x, e.y, 'ok', { sendaiHeard: true })).toEqual({ kind: 'enter', to: e.to });
+    const s = townOf('仙台');
+    expect(townAction(world, s.x, s.y, 'ok', {})).toEqual({ kind: 'enter', to: s.to });
+  });
+
+  it('箱根の関所は加賀の殿様の手形（kagaTegata）で通れる', () => {
+    const hakone = world.gates!.find((g) => g.x === 119 && g.y === 28)!;
+    expect(closedGateAt(world, hakone.x, hakone.y, {})).toBeDefined();
+    expect(closedGateAt(world, hakone.x, hakone.y, { kagaTegata: true })).toBeUndefined();
+  });
+
+  it('北国街道（金沢〜仙台）と箱根の東では奥州街道の敵（Lv25）が出る。全滅したら近くの町へ戻る', () => {
+    expect(ENCOUNTERS.oshu!.level).toBe(25);
+    expect(ENCOUNTERS.edo!.level).toBe(25);
+    for (const [x, y] of [[90, 14], [115, 8], [136, 7], [136, 20], [123, 28]] as const) {
+      expect(tileAt(world, x, y)?.blocked, `${x},${y}`).toBe(false);
+      expect(encounterAt(world, x, y, {}), `${x},${y}`).toBe('oshu');
+    }
+    expect(encounterAt(world, 114, 30, {})).toBe('suruga');
+    expect(respawnPoint('world', 90, 14)).toEqual({ mapId: 'kanazawa', ...MAPS.kanazawa!.respawn });
+    expect(respawnPoint('world', 130, 5, { sendaiIntro: true })).toEqual({ mapId: 'sendai', ...sendai.respawn });
+    expect(respawnPoint('world', 123, 28, { sendaiIntro: true })).toEqual({ mapId: 'sendai', ...sendai.respawn });
+    expect(respawnPoint('world', 123, 28, { sendaiIntro: true, edoIntro: true })).toEqual({ mapId: 'edo', ...edo.respawn });
+  });
+
+  it('金沢の印から仙台までは街道を 40 歩以上歩く', () => {
+    const steps = (from: { x: number; y: number }, to: { x: number; y: number }): number => {
+      const dist = new Map<string, number>([[`${from.x},${from.y}`, 0]]);
+      const queue = [from];
+      while (queue.length > 0) {
+        const p = queue.shift()!;
+        const d = dist.get(`${p.x},${p.y}`)!;
+        if (p.x === to.x && p.y === to.y) return d;
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+          const n = { x: p.x + dx, y: p.y + dy };
+          if (dist.has(`${n.x},${n.y}`) || tileAt(world, n.x, n.y)?.blocked !== false) continue;
+          dist.set(`${n.x},${n.y}`, d + 1);
+          queue.push(n);
+        }
+      }
+      return -1;
+    };
+    expect(steps(townOf('金沢'), townOf('仙台'))).toBeGreaterThanOrEqual(40);
+  });
+
+  it('仙台の入口から町の人・葛籠に話しかけられ、全滅したら仙台の旅籠の前に戻る', () => {
+    const area = reachable(sendai, townOf('仙台').to!, {}, true);
+    for (const npc of sendai.npcs) expect(near(area, npc.x, npc.y), npc.id).toBe(true);
+    expect(sendai.onEnter).toEqual({ event: 'sendaiEnter', unless: 'sendaiIntro' });
+  });
+
+  it('江戸の町木戸（神田の大火への出口）は火事が起きる（taikaStarted）まで木戸番がふさぎ、大手門は門番がふさいで通れない', () => {
+    const start = townOf('江戸').to!;
+    const gate = exitTo(edo, 'edoTaika');
+    expect(reachable(edo, start, {}, true).has(`${gate.x},${gate.y}`)).toBe(false);
+    expect(reachable(edo, start, { taikaStarted: true }, true).has(`${gate.x},${gate.y}`)).toBe(true);
+    // 大手門の先（江戸城）へは行けない（終章で入る）
+    const later = { taikaStarted: true, edoHideout: true, kokichiReport: true, chapter8Cleared: true };
+    const area = reachable(edo, start, later, true);
+    expect(area.has('32,7')).toBe(false);
+    for (const npc of edo.npcs.filter((n) => npcVisible(n, later))) expect(near(area, npc.x, npc.y), npc.id).toBe(true);
+  });
+
+  it('神田の大火の入口から火車からくりの場所へ行け、そこを通らなければ火の見櫓の下の火元に入れない。全滅したら江戸へ', () => {
+    const enter = exitTo(edo, 'edoTaika');
+    const landing = { x: enter.toX, y: enter.toY };
+    const area = reachable(taika, landing, {}, true);
+    for (const t of taika.triggers!) {
+      expect(area.has(`${t.x},${t.y}`)).toBe(true);
+      expect(t.unless).toBe('kashaDefeated');
+    }
+    for (const npc of taika.npcs) expect(near(area, npc.x, npc.y), npc.id).toBe(true);
+    const last = taika.npcs.find((n) => n.id === 'taikaChest5')!;
+    expect(near(reachable(wallTriggers(taika), landing, {}, true), last.x, last.y)).toBe(false);
+    expect(taika.encounter).toBe('edo');
+    expect(respawnPoint('edoTaika')).toEqual({ mapId: 'edo', ...edo.respawn });
+  });
+
+  it('火車からくりを倒して戻る長屋の場所は、通れて人のいない場所', () => {
+    const steps = EVENTS.kashaKarakuri!.steps;
+    const warp = steps.find((s) => s.type === 'warp');
+    expect(warp).toMatchObject({ mapId: 'edo' });
+    if (warp?.type !== 'warp') return;
+    expect(tileAt(edo, warp.x, warp.y)?.blocked).toBe(false);
+    expect(edo.npcs.some((n) => n.x === warp.x && n.y === warp.y)).toBe(false);
+  });
+
+  it('showFlag はどこかのイベントの setFlag で立つ', () => {
+    const set = new Set<string>();
+    const walk = (steps: readonly EventStep[]): void => {
+      for (const st of steps) {
+        if (st.type === 'setFlag' && st.value !== false) set.add(st.flag);
+        if (st.type === 'if') {
+          walk(st.then);
+          walk(st.else ?? []);
+        }
+        if (st.type === 'choice') for (const o of st.options) walk(o.steps);
+      }
+    };
+    for (const ev of Object.values(EVENTS)) walk(ev.steps);
+    for (const m of Object.values(MAPS)) for (const n of m.npcs) if (n.showFlag) expect(set.has(n.showFlag), `${m.id}/${n.id}`).toBe(true);
   });
 });

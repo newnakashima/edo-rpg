@@ -19,6 +19,7 @@ export const FACES = [
   'ranzai',
   'sakon',
   'kagaTono',
+  'kokichi',
 ] as const;
 export type FaceId = (typeof FACES)[number];
 
@@ -42,6 +43,7 @@ export const SPEAKER_FACES: Readonly<Record<string, FaceId>> = {
   蘭斎: 'ranzai',
   長瀬左近: 'sakon',
   殿様: 'kagaTono',
+  小吉: 'kokichi',
 };
 
 export function faceKey(id: FaceId): string {

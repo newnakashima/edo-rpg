@@ -42,6 +42,8 @@ export const ITEMS: Record<string, ItemDef> = {
   kintsuba: { id: 'kintsuba', name: '金創膏', price: 60, effect: { kind: 'healHp', amount: 120 }, target: 'ally', field: true, description: '体力を 120 回復する' },
   kasutera: { id: 'kasutera', name: 'カステラ', price: 110, effect: { kind: 'healHp', amount: 200 }, target: 'ally', field: true, description: '長崎の南蛮菓子。体力を 200 回復する' },
   shibafune: { id: 'shibafune', name: '柴舟', price: 130, effect: { kind: 'healHp', amount: 240 }, target: 'ally', field: true, description: '金沢の生姜の煎餅。体力を 240 回復する' },
+  zundaMochi: { id: 'zundaMochi', name: 'ずんだ餅', price: 150, effect: { kind: 'healHp', amount: 270 }, target: 'ally', field: true, description: '仙台の枝豆の餡の餅。体力を 270 回復する' },
+  sakuraMochi: { id: 'sakuraMochi', name: '桜餅', price: 170, effect: { kind: 'healHp', amount: 300 }, target: 'ally', field: true, description: '江戸向島の桜の葉の餅。体力を 300 回復する' },
   // 気力
   amazake: { id: 'amazake', name: '甘酒', price: 20, effect: { kind: 'healMp', amount: 8 }, target: 'ally', field: true, description: '体の温まる甘酒。気力を 8 回復する' },
   mankintan: { id: 'mankintan', name: '万金丹', price: 40, effect: { kind: 'healMp', amount: 15 }, target: 'ally', field: true, description: '気力を 15 回復する' },

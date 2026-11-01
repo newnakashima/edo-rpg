@@ -47,7 +47,7 @@ export class FieldScene extends Phaser.Scene {
    * 振り向いたあとはそのまま（マップに入り直したり戦闘から戻ったりすると、最初の向きに戻る）。
    */
   private npcSprites = new Map<string, Phaser.GameObjects.Sprite>();
-  /** NPC の表示（画像のない NPC の仮の人も含む）。hideFlag が立ったら隠す。 */
+  /** NPC の表示（画像のない NPC の仮の人も含む）。showFlag が立つまでと、hideFlag が立ったら隠す。 */
   private npcObjects = new Map<string, Phaser.GameObjects.Image | Phaser.GameObjects.Sprite>();
   private moving = false;
   /** 行っている途中のイベント。 */
@@ -308,7 +308,7 @@ export class FieldScene extends Phaser.Scene {
     return this.map.npcs.find((n) => n.x === x && n.y === y && npcVisible(n, flags));
   }
 
-  /** hideFlag の立った NPC を隠し、開けた葛籠を開いた姿にする。 */
+  /** いない NPC（showFlag がまだ・hideFlag が立った）を隠し、開けた葛籠を開いた姿にする。 */
   private refreshNpcs(): void {
     const flags = getState().flags;
     for (const npc of this.map.npcs) {

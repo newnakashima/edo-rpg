@@ -39,5 +39,11 @@ export const SHOPS: Record<string, ShopDef> = {
   kanazawaYorozu: { id: 'kanazawaYorozu', name: 'よろず屋', goods: ['kintsuba', 'shibafune', 'mankintan', 'bocha', 'hyorogan', 'dokukeshi', 'hakka', 'hangontan', 'kitsukegusuri', 'ninjin'] },
   kanazawaKaji: { id: 'kanazawaKaji', name: '刀鍛冶', goods: ['kanewaka', 'yukiKodachi', 'hakusanShakujo', 'kagaZutsu', 'kagaGusoku', 'yukiShozoku', 'hachigane'] },
   kanazawaKinpaku: { id: 'kanazawaKinpaku', name: '金箔屋', goods: ['kinpakuMamori', 'shibafune', 'bocha'] },
+  // 仙台（第 8 章）
+  sendaiYorozu: { id: 'sendaiYorozu', name: 'よろず屋', goods: ['kintsuba', 'zundaMochi', 'mankintan', 'bocha', 'hyorogan', 'dokukeshi', 'kumanoi', 'hangontan', 'kitsukegusuri', 'ninjin'] },
+  sendaiKaji: { id: 'sendaiKaji', name: '刀鍛冶', goods: ['kunikane', 'yukiKodachi', 'hakusanShakujo', 'kagaZutsu', 'yukinoshitaDo', 'yukiShozoku', 'hachigane'] },
+  // 江戸（第 8 章）
+  edoYorozu: { id: 'edoYorozu', name: 'よろず屋', goods: ['kintsuba', 'sakuraMochi', 'mankintan', 'konpeito', 'hyorogan', 'dokukeshi', 'kumanoi', 'hakka', 'hangontan', 'kitsukegusuri', 'ninjin', 'kiseru'] },
+  edoKaji: { id: 'edoKaji', name: '刀鍛冶', goods: ['kiyomaro', 'hibanaKodachi', 'fudoShakujo', 'kunitomoZutsu', 'sashikoBanten', 'kuroShozoku', 'hachigane', 'inro'] },
   nagoyaKaji: { id: 'nagoyaKaji', name: '刀鍛冶', goods: ['magoroku', 'kusarigama', 'kusarikatabira', 'shinobishozoku', 'hachigane', 'inro'] },
 };

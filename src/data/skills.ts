@@ -202,6 +202,15 @@ export const SKILLS: Record<string, SkillDef> = {
   yojutsu: { id: 'yojutsu', name: '妖術・鬼火車', mp: 0, target: 'allEnemies', effect: { kind: 'physical', multiplier: 0.8 }, elements: ['fire'], description: '' },
   noroi: { id: 'noroi', name: '呪い', mp: 0, target: 'allEnemies', effect: { kind: 'status', status: 'atkDown', turns: 3, chance: 0.6 }, description: '' },
   yashaBunshin: { id: 'yashaBunshin', name: '分身', mp: 0, target: 'self', effect: { kind: 'status', status: 'evade', turns: 3 }, description: '' },
+  // 奥州街道・江戸の町（第 8 章）
+  taimatsu: { id: 'taimatsu', name: '松明', mp: 0, target: 'enemy', effect: { kind: 'magic', power: 12 }, elements: ['fire'], description: '' },
+  jigokuBi: { id: 'jigokuBi', name: '地獄の炎', mp: 0, target: 'allEnemies', effect: { kind: 'magic', power: 9 }, elements: ['fire'], description: '' },
+  jutte: { id: 'jutte', name: '十手捕り', mp: 0, target: 'enemy', effect: { kind: 'status', status: 'paralysis', turns: 2, chance: 0.35 }, description: '' },
+  kenkaZappo: { id: 'kenkaZappo', name: '喧嘩殺法', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.3 }, description: '' },
+  hinoko: { id: 'hinoko', name: '火の粉', mp: 0, target: 'randomEnemies', effect: { kind: 'physical', multiplier: 0.5, hits: 2, maxHits: 3 }, elements: ['fire'], description: '' },
+  okuriKiba: { id: 'okuriKiba', name: '送り牙', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.3 }, description: '' },
+  kaenGuruma: { id: 'kaenGuruma', name: '火炎車', mp: 0, target: 'allEnemies', effect: { kind: 'physical', multiplier: 0.7 }, elements: ['fire'], description: '' },
+  mojaNoTe: { id: 'mojaNoTe', name: '亡者の手', mp: 0, target: 'enemy', effect: { kind: 'status', status: 'paralysis', turns: 2, chance: 0.5 }, description: '' },
 };
 
 /** 仲間ごとに覚える技と習得レベル（docs/characters.md）。 */

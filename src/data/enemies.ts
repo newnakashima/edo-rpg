@@ -1,4 +1,4 @@
-// docs/balance.md の「敵とボスの一覧」。章を実装するごとに、その地域の敵を足す（今は序章〜第 7 章）。
+// docs/balance.md の「敵とボスの一覧」。章を実装するごとに、その地域の敵を足す（今は序章〜第 8 章）。
 import type { EnemyFactors } from '../systems/stats';
 import type { Element } from './skills';
 
@@ -817,6 +817,98 @@ export const ENEMIES: Record<string, EnemyDef> = {
     ],
     rewardScale: 6,
   },
+  // 奥州街道・江戸の町（第 8 章）。docs/balance.md の「江戸の町」。火付け盗賊・旗本奴は江戸の町なかだけに出る
+  hitsukeTozoku: {
+    id: 'hitsukeTozoku',
+    name: '火付け盗賊',
+    color: 0x6a3a2a,
+    image: true,
+    factors: { hp: 1.0, atk: 1.3, def: 1.0, spd: 1.2 },
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'taimatsu', weight: 1 },
+    ],
+  },
+  kasha: {
+    id: 'kasha',
+    name: '火車',
+    color: 0xc0502a,
+    image: true,
+    factors: { hp: 1.2, atk: 1.3, def: 1.1, spd: 1.1 },
+    weak: ['holy'],
+    resist: ['fire'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'jigokuBi', weight: 1 },
+    ],
+  },
+  karakuriDoshin: {
+    id: 'karakuriDoshin',
+    name: 'からくり同心',
+    color: 0x4a4a5a,
+    image: true,
+    factors: { hp: 1.2, atk: 1.2, def: 1.4, spd: 1.0 },
+    weak: ['mech', 'thunder'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'jutte', weight: 1 },
+    ],
+  },
+  hatamotoYakko: {
+    id: 'hatamotoYakko',
+    name: '旗本奴',
+    color: 0x7a3a6a,
+    image: true,
+    factors: { hp: 1.2, atk: 1.4, def: 1.1, spd: 1.0 },
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'kenkaZappo', weight: 1 },
+      { skill: 'odoshi', weight: 1 },
+    ],
+  },
+  /** 表にない追加（どの出現表も 5 種類以上にするため）。大火の町に出る、火の中に棲む鼠。 */
+  hinezumi: {
+    id: 'hinezumi',
+    name: '火鼠',
+    color: 0xd06030,
+    image: true,
+    factors: { hp: 0.8, atk: 1.1, def: 0.8, spd: 1.4 },
+    weak: ['holy'],
+    resist: ['fire'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'hinoko', weight: 1 },
+    ],
+  },
+  /** 表にない追加。奥州街道の夜道で旅人のあとをつける狼。 */
+  okuriOkami: {
+    id: 'okuriOkami',
+    name: '送り狼',
+    color: 0x6a6a7a,
+    image: true,
+    factors: { hp: 1.1, atk: 1.3, def: 0.9, spd: 1.3 },
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'okuriKiba', weight: 1 },
+      { skill: 'toboe', weight: 1 },
+    ],
+  },
+  /** 第 8 章のボス。鷲尾が江戸の町に火を放つために作った、炎の車輪のからくり。火炎車（全体・火）と亡者の手（麻痺）。 */
+  kashaKarakuri: {
+    id: 'kashaKarakuri',
+    name: '火車からくり',
+    color: 0xa03020,
+    image: true,
+    factors: { hp: 13, atk: 1.05, def: 1.2, spd: 1.1 },
+    weak: ['holy', 'mech'],
+    resist: ['fire'],
+    actions: [
+      { skill: 'attack', weight: 3 },
+      { skill: 'kaenGuruma', weight: 2 },
+      { skill: 'mojaNoTe', weight: 1 },
+    ],
+    rewardScale: 6,
+  },
 };
 
 export interface EnemyGroup {
@@ -1042,6 +1134,33 @@ const KARAKURI_GURA: EncounterTable = {
   ],
 };
 
+/** 北国街道・奥州街道（金沢〜仙台〜江戸）の敵の組。江戸の町の敵のうち、町なかに出る火付け盗賊・旗本奴の代わりに、雪女・加賀の忍びと送り狼が出る。 */
+const OSHU: EncounterTable = {
+  level: 25,
+  groups: [
+    { members: ['okuriOkami', 'okuriOkami'], weight: 2 },
+    { members: ['kasha', 'yukiOnna'], weight: 2 },
+    { members: ['karakuriDoshin', 'kagaShinobi'], weight: 2 },
+    { members: ['yukiOnna', 'yukiOnna', 'okuriOkami'], weight: 2 },
+    { members: ['kasha', 'kagaShinobi', 'kagaShinobi'], weight: 1 },
+    { members: ['karakuriDoshin', 'okuriOkami', 'okuriOkami', 'yukiOnna'], weight: 1 },
+  ],
+};
+
+/** 江戸の大火の町の敵の組。鷲尾の放った火付け盗賊とからくり同心、火に寄ってくる火車・火鼠、どさくさに暴れる旗本奴。 */
+const EDO: EncounterTable = {
+  level: 25,
+  groups: [
+    { members: ['hitsukeTozoku', 'hitsukeTozoku'], weight: 2 },
+    { members: ['kasha', 'hinezumi'], weight: 2 },
+    { members: ['karakuriDoshin', 'hitsukeTozoku'], weight: 2 },
+    { members: ['hatamotoYakko', 'hatamotoYakko'], weight: 2 },
+    { members: ['hinezumi', 'hinezumi', 'hinezumi'], weight: 1 },
+    { members: ['kasha', 'karakuriDoshin', 'hitsukeTozoku'], weight: 1 },
+    { members: ['hatamotoYakko', 'hitsukeTozoku', 'hinezumi', 'hinezumi'], weight: 1 },
+  ],
+};
+
 export const ENCOUNTERS: Record<string, EncounterTable> = {
   /** 清水湊の裏山。 */
   urayama: PROLOGUE,
@@ -1071,4 +1190,8 @@ export const ENCOUNTERS: Record<string, EncounterTable> = {
   kenrokuen: KENROKUEN,
   /** 金沢城の地下のからくり蔵。 */
   karakuriGura: KARAKURI_GURA,
+  /** 北国街道・奥州街道（ワールドマップの金沢の東〜仙台〜江戸、箱根の関所の東）。 */
+  oshu: OSHU,
+  /** 江戸の大火の町。 */
+  edo: EDO,
 };
