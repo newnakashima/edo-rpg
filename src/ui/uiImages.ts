@@ -1,4 +1,4 @@
-// ウィンドウ枠とカーソルの画像（public/assets/ui/。生成の記録は public/assets/README.md）。
+// ウィンドウ枠・カーソル・タイトルの背景の画像（public/assets/ui/。生成の記録は public/assets/README.md）。
 
 /** ウィンドウ枠のテクスチャ。16 × 16 を 9 つに分け、四隅はそのまま、辺と中央は引き伸ばす。 */
 export const WINDOW_TEXTURE = 'ui-window';
@@ -16,6 +16,9 @@ export const CURSOR_IMAGE_SIZE = 32;
  * 実際のキャンバス（RENDER_SCALE 3 倍）では元の絵の 1 ドットが 1 px になり、細部が潰れない。
  */
 export const CURSOR_SCALE = 1 / 3;
+
+/** タイトル画面の背景（富士と街道の松並木）のテクスチャ。画面と同じ大きさ。 */
+export const TITLE_TEXTURE = 'ui-title';
 
 /** 9 分割の枠の名前（行: 上・中・下、列: 左・中・右）。 */
 export const WINDOW_SLICES = ['tl', 'tc', 'tr', 'ml', 'mc', 'mr', 'bl', 'bc', 'br'] as const;

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CURSOR_IMAGE_SIZE, CURSOR_SCALE, WINDOW_CORNER, WINDOW_IMAGE_SIZE, windowSliceRects } from './uiImages';
 import { MENU_LINE_HEIGHT } from './widgets';
+import { GAME_HEIGHT, GAME_WIDTH } from './theme';
 
 /** PNG の幅と高さ（IHDR）。data URL の画像から読む。 */
 function pngSize(dataUrl: string): { w: number; h: number } {
@@ -53,6 +54,10 @@ describe('ウィンドウ枠とカーソルの画像', () => {
   it('ウィンドウ枠とカーソルの画像があり、大きさが定数と合う', () => {
     expect(pngSize(inlined['../../public/assets/ui/window.png']!)).toEqual({ w: WINDOW_IMAGE_SIZE, h: WINDOW_IMAGE_SIZE });
     expect(pngSize(inlined['../../public/assets/ui/cursor.png']!)).toEqual({ w: CURSOR_IMAGE_SIZE, h: CURSOR_IMAGE_SIZE });
+  });
+
+  it('タイトルの背景は画面と同じ大きさ', () => {
+    expect(pngSize(inlined['../../public/assets/ui/title.png']!)).toEqual({ w: GAME_WIDTH, h: GAME_HEIGHT });
   });
 
   it('カーソルは表示したときに 1 行の高さに収まる', () => {
