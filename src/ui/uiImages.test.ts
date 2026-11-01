@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CURSOR_IMAGE_SIZE, CURSOR_SCALE, WINDOW_CORNER, WINDOW_IMAGE_SIZE, windowSliceRects } from './uiImages';
+import { CURSOR_IMAGE_SIZE, CURSOR_SCALE, SUBTITLE_TEXT, TITLE_SKY_BAND, TITLE_TEXT, WINDOW_CORNER, WINDOW_IMAGE_SIZE, windowSliceRects } from './uiImages';
 import { MENU_LINE_HEIGHT } from './widgets';
 import { GAME_HEIGHT, GAME_WIDTH } from './theme';
 
@@ -112,10 +112,19 @@ describe('タイトルの背景の画像', () => {
     expect(pngSize(inlined['../../public/assets/ui/title.png']!)).toEqual({ w: GAME_WIDTH, h: GAME_HEIGHT });
   });
 
-  it('題字（y 28）・副題（y 50）の行 y 8〜55 は 1 色の不透明な空（生成りの文字が絵に重ならない）', async () => {
+  it('題字・副題は無地の空の帯に収まる', () => {
+    for (const t of [TITLE_TEXT, SUBTITLE_TEXT]) {
+      expect(t.y - t.size / 2).toBeGreaterThanOrEqual(TITLE_SKY_BAND.top);
+      expect(t.y + t.size / 2).toBeLessThanOrEqual(TITLE_SKY_BAND.bottom);
+    }
+  });
+
+  it('無地の空の帯は 1 色の不透明な藍（生成りの文字が絵に重ならない）', async () => {
     const px = await decodePng(inlined['../../public/assets/ui/title.png']!);
-    const sky = px[8]![0]!.join(',');
-    for (let y = 8; y <= 55; y++) for (let x = 0; x < GAME_WIDTH; x++) expect(px[y]![x]!.join(','), `${x},${y}`).toBe(sky);
+    const sky = px[TITLE_SKY_BAND.top]![0]!.join(',');
+    for (let y = TITLE_SKY_BAND.top; y <= TITLE_SKY_BAND.bottom; y++) {
+      for (let x = 0; x < GAME_WIDTH; x++) expect(px[y]![x]!.join(','), `${x},${y}`).toBe(sky);
+    }
     expect(sky).toBe('22,40,73,255');
   });
 });

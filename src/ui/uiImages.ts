@@ -19,6 +19,11 @@ export const CURSOR_SCALE = 1 / 3;
 
 /** タイトル画面の背景（富士と街道の松並木）のテクスチャ。画面と同じ大きさ。 */
 export const TITLE_TEXTURE = 'ui-title';
+/** タイトル画面の題字・副題の中心の y と文字の大きさ（TitleScene が使い、背景の無地の帯に収まるかをテストで確かめる）。 */
+export const TITLE_TEXT = { y: 28, size: 22 } as const;
+export const SUBTITLE_TEXT = { y: 50, size: 9 } as const;
+/** タイトルの背景の、無地の藍の空の帯（y の上端と下端。両端を含む）。題字・副題はこの中に置く。 */
+export const TITLE_SKY_BAND = { top: 8, bottom: 55 } as const;
 
 /** 9 分割の枠の名前（行: 上・中・下、列: 左・中・右）。 */
 export const WINDOW_SLICES = ['tl', 'tc', 'tr', 'ml', 'mc', 'mr', 'bl', 'bc', 'br'] as const;
