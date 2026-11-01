@@ -1487,8 +1487,15 @@ describe('寄り道の会津若松', () => {
     expect(encounterAt(world, 130, 17, {})).toBe('oshu');
     expect(respawnPoint('world', 130, 17, { sendaiIntro: true })).toEqual({ mapId: 'sendai', ...MAPS.sendai!.respawn });
     expect(respawnPoint('world', 130, 17, { sendaiIntro: true, aizuIntro: true })).toEqual({ mapId: 'aizu', ...aizu.respawn });
-    // 奥州街道の本道は、会津若松に着いたあとも仙台・江戸へ戻る
+    // 脇道の両端（印の隣 x 124 と、本道の手前 x 135）まで会津若松へ戻る
+    for (const x of [124, 135]) {
+      expect(tileAt(world, x, 17)?.kind, `${x},17`).toBe('road');
+      expect(respawnPoint('world', x, 17, { sendaiIntro: true, aizuIntro: true }), `${x},17`).toEqual({ mapId: 'aizu', ...aizu.respawn });
+      expect(encounterAt(world, x, 17, {}), `${x},17`).toBe('oshu');
+    }
+    // 奥州街道の本道（x 136）と、脇道の外の江戸のまわり（y 20〜）は、会津若松に着いたあとも仙台・江戸へ戻る
     expect(respawnPoint('world', 136, 17, { sendaiIntro: true, aizuIntro: true })).toEqual({ mapId: 'sendai', ...MAPS.sendai!.respawn });
+    expect(respawnPoint('world', 136, 20, { sendaiIntro: true, aizuIntro: true, edoIntro: true })).toEqual({ mapId: 'edo', ...MAPS.edo!.respawn });
   });
 
   it('町に入ると aizuEnter を行い、着いたあとは行わない。旅籠・茶屋・店・寺・飛脚がそろう', () => {
@@ -1506,5 +1513,10 @@ describe('寄り道の会津若松', () => {
     }
     // 鶴ヶ城の中へは、門番がふさいで入れない
     expect(area.has('24,7')).toBe(false);
+  });
+
+  it('町の人の台詞は、平太が戻る（heitaFound）・什の一件が済む（aizuJuuDone）と変わる', () => {
+    const want: Record<string, string> = { aizuTeahouse: 'heitaFound', oyakuenBannin: 'heitaFound', juuBoy2: 'aizuJuuDone', heitaHome: 'aizuJuuDone', aizuOkami: 'aizuJuuDone' };
+    for (const [id, flag] of Object.entries(want)) expect(aizu.npcs.find((n) => n.id === id)?.after?.flag, id).toBe(flag);
   });
 });
