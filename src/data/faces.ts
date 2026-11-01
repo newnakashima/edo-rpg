@@ -91,11 +91,6 @@ export function speakerOf(page: string): string | undefined {
   return parsePage(page).speaker;
 }
 
-/** ページの表情の印（〈怒〉なら「怒」）。印がなければ undefined。 */
-export function expressionMarkOf(page: string): string | undefined {
-  return parsePage(page).mark;
-}
-
 /** 画面に出す文（表情の印を外したもの）。 */
 export function pageText(page: string): string {
   return parsePage(page).text;

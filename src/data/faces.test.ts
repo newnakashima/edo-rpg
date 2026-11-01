@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CHARACTERS } from './characters';
-import { EXPRESSION_FACES, EXPRESSIONS, expressionMarkOf, FACE_IMAGES, FACE_SIZE, FACES, faceForPage, pageText, SPEAKER_FACES, speakerOf } from './faces';
+import { EXPRESSION_FACES, EXPRESSIONS, FACE_IMAGES, FACE_SIZE, FACES, faceForPage, pageText, SPEAKER_FACES, speakerOf } from './faces';
 
 /** PNG の幅と高さ（IHDR）。data URL の画像から読む。 */
 function pngSize(dataUrl: string): { w: number; h: number } {
@@ -74,8 +74,7 @@ describe('話し手の名前', () => {
 
   it('名前の後ろの表情の印は、話し手の名前に含めない', () => {
     expect(speakerOf('霞〈怒〉「許さない」')).toBe('霞');
-    expect(expressionMarkOf('霞〈怒〉「許さない」')).toBe('怒');
-    expect(expressionMarkOf('霞「行こう」')).toBeUndefined();
+    expect(speakerOf('{hero}〈悲〉「……親分が」')).toBe('{hero}');
   });
 
   it('顔のある人だけ顔を引く', () => {
@@ -111,6 +110,11 @@ describe('表情差分', () => {
     const source = Object.values(import.meta.glob<string>('./{events,maps}.ts', { eager: true, query: '?raw', import: 'default' })).join('\n');
     const marked = [...source.matchAll(/'([^'「」\s]{1,8})〈([^〉]*)〉「/g)];
     expect(marked.length).toBeGreaterThan(20);
+    // 書き損じ（名前と印の間の空白、半角の <>、9 字以上の名前など）は印として読まれず画面に出てしまうので、
+    // 台詞の文字列の中の〈は、どれも「'名前〈印〉「」の形で使われていること
+    const strings = [...source.matchAll(/'((?:[^'\\]|\\.)*)'|"((?:[^"\\]|\\.)*)"|`((?:[^`\\]|\\.)*)`/g)].map((m) => m[1] ?? m[2] ?? m[3]!);
+    const brackets = strings.reduce((n, str) => n + [...str.matchAll(/〈/g)].length, 0);
+    expect(brackets).toBe(marked.length);
     for (const [whole, speaker, mark] of marked) {
       expect(Object.keys(EXPRESSIONS), whole).toContain(mark);
       // 主人公は {hero} のまま書いてあり、男女どちらの顔にも差分がある
