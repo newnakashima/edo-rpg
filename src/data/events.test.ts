@@ -962,22 +962,6 @@ describe('終章の流れ', () => {
   });
 });
 
-describe('イベントの warp', () => {
-  it('warp の直後に battle を置かない（戦闘から戻ったときに移動先の onEnter が行われない既知の制限のため。FieldScene.ts）', () => {
-    const check = (steps: readonly EventStep[], where: string): void => {
-      steps.forEach((st, i) => {
-        if (st.type === 'warp') expect(steps[i + 1]?.type, where).not.toBe('battle');
-        if (st.type === 'if') {
-          check(st.then, where);
-          check(st.else ?? [], where);
-        }
-        if (st.type === 'choice') for (const o of st.options) check(o.steps, where);
-      });
-    };
-    for (const ev of Object.values(EVENTS)) check(ev.steps, ev.id);
-  });
-});
-
 describe('寄り道の会津若松（什の掟を守る少年たち）', () => {
   const base = newGame('f', { mapId: 'aizu', x: 50, y: 13 });
   const heard = {

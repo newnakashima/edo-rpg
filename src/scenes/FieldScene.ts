@@ -10,7 +10,7 @@ import { memberLevel } from '../systems/party';
 import { defaultRng } from '../systems/random';
 import { playBgm } from '../systems/audio';
 import { browserStorage } from '../systems/save';
-import { getState, setPendingEvent, setState, takePendingEvent } from '../state';
+import { getState, holdEventWhileAway, setState, shouldRunEnterEvent, takePendingEvent } from '../state';
 import { EVENTS } from '../data/events';
 import { CHAR_DISPLAY_ORIGIN, heroSprite, idleFrame, objectDepth, objectDisplayOrigin, objectKey, oppositeFacing, personDepth, shouldStandStill, spriteKey, walkAnimKey, walkDepthRow, type CharacterSpriteId } from '../data/sprites';
 import { EventRunner, type EventInput } from '../systems/eventScript';
@@ -141,9 +141,9 @@ export class FieldScene extends Phaser.Scene {
 
     // 戦闘や移動から戻ってきたら、途中のイベントの続きを行う。なければ、マップに入ったときのイベントを行う
     // 移動・全滅で別のマップに来たときは、途中のイベントが終わってから、このマップに入ったときのイベントを行う
+    // warp で来たマップのイベントの続きで戦闘に入ったときも、戦闘から戻ってイベントが終わったら onEnter を行う（enterPending を引き継ぐ）
     const pending = takePendingEvent();
-    const cameFrom = pending?.fromMapId ?? data.fromMapId;
-    this.enterPending = cameFrom !== map.id;
+    this.enterPending = shouldRunEnterEvent(map.id, pending, data.fromMapId);
     if (pending) {
       this.runner = pending.runner;
       this.advanceEvent(pending.resume);
@@ -196,11 +196,8 @@ export class FieldScene extends Phaser.Scene {
         return;
       }
       case 'battle':
-        // 戦闘から戻ってきたフィールドが続きを行う
-        // 既知の制限（見送り）: warp の直後に battle が続くと、このとき fromMapId が移動先のマップになり、
-        // 戦闘から戻ったときに移動先の onEnter が行われない。今の warp（金太の大凧、第 7 章の北前船・殿様の救出など）は、どれも直後に battle が続かないので見送る（warp の直後に battle を置かないこと。events.test.ts で確かめている）。
-        // 本来は PendingEvent に enterPending を持たせ、ここで this.enterPending を引き継ぎ、create で復元する（フェーズ 4 で直す）。
-        setPendingEvent({ runner, fromMapId });
+        // 戦闘から戻ってきたフィールドが続きを行う。まだ行っていない onEnter があれば（warp の直後など）、戻ったあとに行う
+        holdEventWhileAway(runner, fromMapId, this.enterPending);
         this.runner = null;
         this.moving = true;
         this.standStill();
@@ -210,7 +207,7 @@ export class FieldScene extends Phaser.Scene {
         );
         return;
       case 'warp':
-        setPendingEvent({ runner, fromMapId });
+        holdEventWhileAway(runner, fromMapId, this.enterPending);
         this.runner = null;
         this.moving = true;
         this.standStill();
