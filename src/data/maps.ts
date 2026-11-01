@@ -31,6 +31,21 @@ export const TILESETS = {
   kura: ['wall', 'floor'],
   /** 大火の町（神田の大火）。燃える長屋の屋根、焦げた板塀、焼け跡の地面、燃え落ちた材木のがれき。 */
   fire: ['roof', 'wall', 'ground', 'rock'],
+  // 町ごとの建物（屋根・壁・戸）。通れる地面・道・草は共通のまま
+  /** 港町（清水湊・広島）。石を載せた板屋根、潮で白んだ板壁、縞の暖簾の戸。 */
+  minato: ['roof', 'wall', 'door'],
+  /** 武家の城下（駿府・与力の屋敷・仙台）。黒い瓦、なまこ壁、鋲を打った門の戸。 */
+  bushi: ['roof', 'wall', 'door'],
+  /** 商人の町（名古屋・大坂）。黒い瓦、格子の店構え、藍の暖簾。 */
+  shoka: ['roof', 'wall', 'door'],
+  /** 京の町家（京）。丸みのある瓦、紅殻格子、白い暖簾。 */
+  miyako: ['roof', 'wall', 'door'],
+  /** 山里（伊賀上野・鍵屋の辻・伊賀者の里）。茅葺き、土壁、板戸。 */
+  sato: ['roof', 'wall', 'door'],
+  /** 南蛮の町（長崎・出島）。赤い洋瓦、白壁と煉瓦の腰（窓なし。出島を囲む塀にも使うため）、緑の洋風の扉。 */
+  nanban: ['roof', 'wall', 'door'],
+  /** 江戸の長屋（江戸）。板葺きの屋根、板壁、障子の戸。 */
+  nagaya: ['roof', 'wall', 'door'],
 } as const satisfies Record<string, readonly TileKind[]>;
 export type TilesetId = keyof typeof TILESETS;
 
@@ -163,6 +178,7 @@ export const MAPS: Record<string, MapDef> = {
   shimizu: {
     id: 'shimizu',
     name: '駿河・清水湊',
+    tileset: 'minato',
     areaLevel: 1,
     rows: [
       'TTTTTTTTTTTTTTTTTTTTTTT==TTTTTTTTTTTTTTTTTTTTTTT',
@@ -673,6 +689,7 @@ export const START_POSITION = { mapId: 'shimizu', x: 20, y: 9 };
 MAPS.sunpu = {
   id: 'sunpu',
   name: '駿府城下',
+  tileset: 'bushi',
   areaLevel: 4,
   rows: [
     'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
@@ -975,6 +992,7 @@ MAPS.kobo = {
 MAPS.yoriki = {
   id: 'yoriki',
   name: '与力・黒田の屋敷',
+  tileset: 'bushi',
   areaLevel: 4,
   rows: [
     'WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW',
@@ -1150,6 +1168,7 @@ MAPS.karakuriYashiki = {
 MAPS.nagoya = {
   id: 'nagoya',
   name: '尾張名古屋',
+  tileset: 'shoka',
   areaLevel: 7,
   rows: [
     'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
@@ -1600,6 +1619,7 @@ MAPS.tenshu = {
 MAPS.kyo = {
   id: 'kyo',
   name: '京',
+  tileset: 'miyako',
   areaLevel: 10,
   rows: [
     'TTTTTTTTTTTTTTTTTT..TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
@@ -2007,6 +2027,7 @@ MAPS.oninosu = {
 MAPS.iga = {
   id: 'iga',
   name: '伊賀上野',
+  tileset: 'sato',
   areaLevel: 13,
   rows: [
     'TTTTTTTTTTT..TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
@@ -2195,6 +2216,7 @@ MAPS.iga = {
 MAPS.igaSato = {
   id: 'igaSato',
   name: '伊賀者の里',
+  tileset: 'sato',
   areaLevel: 13,
   rows: [
     'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
@@ -2306,6 +2328,7 @@ MAPS.igaSato = {
 MAPS.kagiya = {
   id: 'kagiya',
   name: '鍵屋の辻',
+  tileset: 'sato',
   areaLevel: 13,
   rows: [
     'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
@@ -2390,6 +2413,7 @@ MAPS.kagiya = {
 MAPS.osaka = {
   id: 'osaka',
   name: '大坂',
+  tileset: 'shoka',
   areaLevel: 16,
   rows: [
     'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
@@ -2732,6 +2756,7 @@ MAPS.komeKura = {
 MAPS.hiroshima = {
   id: 'hiroshima',
   name: '安芸広島',
+  tileset: 'minato',
   areaLevel: 19,
   rows: [
     'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
@@ -2913,6 +2938,7 @@ MAPS.hiroshima = {
 MAPS.nagasaki = {
   id: 'nagasaki',
   name: '長崎',
+  tileset: 'nanban',
   areaLevel: 19,
   rows: [
     'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
@@ -3115,6 +3141,7 @@ MAPS.nagasaki = {
 MAPS.dejima = {
   id: 'dejima',
   name: '出島',
+  tileset: 'nanban',
   areaLevel: 19,
   rows: [
     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',
@@ -3984,6 +4011,7 @@ MAPS.karakuriGura = {
 MAPS.sendai = {
   id: 'sendai',
   name: '仙台城下',
+  tileset: 'bushi',
   areaLevel: 25,
   rows: [
     'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
@@ -4435,6 +4463,7 @@ MAPS.aizu = {
 MAPS.edo = {
   id: 'edo',
   name: '江戸',
+  tileset: 'nagaya',
   areaLevel: 25,
   rows: [
     'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
