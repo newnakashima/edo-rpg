@@ -34,18 +34,22 @@ describe('タイルの画像', () => {
     expect(tileTextureKey(undefined, 'roof')).toBe('tile-roof');
   });
 
-  it('タイルセットの割り当ては決めたとおり（ダンジョン・屋内・船は地域の見た目、町は雪国の金沢・会津若松のほかは共通の見た目）', () => {
+  it('タイルセットの割り当ては決めたとおり（ダンジョン・屋内・船は地域の見た目、町は建物を町ごとの見た目に。雪国の金沢・会津若松は雪の見た目）', () => {
     const expected: Record<string, string> = {
       kanazawa: 'snow', kenrokuen: 'snow', aizu: 'snow', kitsunebiCave: 'cave',
       karakuriYashiki: 'karakuri', komeKura: 'karakuri', kenkyujo: 'karakuri', karakuriGura: 'karakuri',
       kobo: 'interior', takoya: 'interior', tenshu: 'castle', rashomon: 'ruins', oninosu: 'ruins', nanbanji: 'ruins',
       kitamaebune: 'ship', horikawaKura: 'kura', edoTaika: 'fire', edojo: 'castle', matsuNoRoka: 'castle',
+      // 町ごとの建物
+      shimizu: 'minato', hiroshima: 'minato', sunpu: 'bushi', yoriki: 'bushi', sendai: 'bushi',
+      nagoya: 'shoka', osaka: 'shoka', kyo: 'miyako', iga: 'sato', kagiya: 'sato', igaSato: 'sato',
+      nagasaki: 'nanban', dejima: 'nanban', edo: 'nagaya',
     };
     const actual = Object.fromEntries(Object.values(MAPS).filter((m) => m.tileset).map((m) => [m.id, m.tileset]));
     expect(actual).toEqual(expected);
-    // 町と外の野山・ワールドマップのほかに、共通の見た目のままのマップを増やさない
-    const outdoor = ['world', 'urayama', 'yoriki', 'igaSato', 'kagiya', 'harajo', 'dejima'];
-    for (const m of Object.values(MAPS)) if (!m.respawn && !outdoor.includes(m.id)) expect(m.tileset, m.id).toBeDefined();
+    // 外の野山・ワールドマップのほかに、共通の見た目のままのマップを増やさない（町も建物を町ごとの見た目にした）
+    const outdoor = ['world', 'urayama', 'harajo'];
+    for (const m of Object.values(MAPS)) if (!outdoor.includes(m.id)) expect(m.tileset, m.id).toBeDefined();
   });
 });
 
