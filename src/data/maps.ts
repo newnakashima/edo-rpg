@@ -4432,7 +4432,7 @@ MAPS.hamamatsu = {
       color: 0x6a5a4a,
       sprite: 'npc_ninsoku',
       lines: ['隣町の若衆「今年の合戦も、おれたちの町が糸を切ってやるぜ。……初凧が揚がらねえんじゃ、張り合いがねえけどな」'],
-      after: { flag: 'hamamatsuTakoDone', lines: ['隣町の若衆「ちくしょう、あの初凧の糸、えらく強かったぜ。……まあ、めでてえ凧だ。来年は負けねえぞ」'] },
+      after: { flag: 'hamamatsuTakoDone', lines: ['隣町の若衆「あの初凧、砂丘の空でいちばん高く揚がってやがったな。……まあ、めでてえ凧だ。来年こそ決着をつけるぞ」'] },
     },
     // 砂丘の西の松林の奥
     { id: 'takoRonin', name: '浪人', x: 8, y: 31, color: 0x5a5a5a, sprite: 'npc_ronin', event: 'hamamatsuTako', hideFlag: 'hamamatsuTakoFound' },
