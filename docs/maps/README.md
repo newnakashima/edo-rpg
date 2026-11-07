@@ -6,4 +6,5 @@
 - `urayama.png`・`harajo.png`: 野山（yama）
 - `kitsunebiCave.png`・`kiyomasaIdo.png`: 洞窟（cave）
 - `sunpu.png`・`yoriki.png`・`sendai.png`・`hikone.png`・`kumamoto.png`: 武家の城下（bushi）
+- `nagoya.png`・`hamamatsu.png`・`osaka.png`: 商人の町（shoka）。部品は前から使っていて、通れるマスの地面・草・道の配置だけを整えた
 - `world.png`: ワールドマップ（field）。大きいので、変える前（上）と後（下）に並べた
