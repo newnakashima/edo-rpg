@@ -115,6 +115,21 @@ export const TILE_PARTS: Partial<Record<TilesetId, Partial<Record<TileKind, Part
     wall: { rule: 'edge', under: 'ground', joins: ['door'] },
   },
   /**
+   * 雪の町と庭（加賀金沢・兼六園・会津若松）。地面の雪（ground。5 組の lower と同じ絵に差し替えた）の上に、
+   * 雪から冬枯れの草がのぞく草地 → 踏み固めた雪道 → 石の縁の川・堀 → 雪をかぶった岩 → 雪の針葉樹の森 の順に重ねる。
+   * 森・岩の下も雪なので、草の joins には入れない。屋根・壁は雪の積もった町家の絵から切り出した（壁は兼六園の外周の塀にも使う）。
+   * 記録は public/assets/README.md。
+   */
+  snow: {
+    grass: { rule: 'dual', under: 'ground' },
+    road: { rule: 'dual', under: 'ground' },
+    water: { rule: 'dual', under: 'ground' },
+    rock: { rule: 'dual', under: 'ground' },
+    tree: { rule: 'dual', under: 'ground' },
+    roof: { rule: 'edge', under: 'ground' },
+    wall: { rule: 'edge', under: 'ground', joins: ['door'] },
+  },
+  /**
    * 野山（清水湊の裏山・原城跡）。草・森は shoka と同じ部品。水は川石の岸の沢（原城跡では海にも使う）、
    * 岩は草の上の岩場（原城跡では崩れた石垣の列）。水・岩・森の下にも草を敷いて、縁を草でつなぐ。記録は public/assets/README.md。
    */

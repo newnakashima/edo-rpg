@@ -10,4 +10,5 @@
 - `kyo.png`: 京の町家（miyako）
 - `iga.png`・`igaSato.png`・`kagiya.png`: 山里（sato）
 - `nagasaki.png`・`dejima.png`: 南蛮の町（nanban）
+- `kanazawa.png`・`kenrokuen.png`・`aizu.png`: 雪の町（snow）。会津若松は家の前と間の草を雪の地面にした
 - `world.png`: ワールドマップ（field）。大きいので、変える前（上）と後（下）に並べた
