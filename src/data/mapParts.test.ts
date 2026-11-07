@@ -265,6 +265,36 @@ describe('部品で描くタイル', () => {
     expect(town).toContainEqual({ key: 'tile-snow-door', x: 2 * T, y: T });
   });
 
+  it('屋内（interior）は 板の間 → 畳 の順に土間の上へ重ね、畳の下に板の間を敷いて板の間の縁を畳の外にだけ出し、壁は端の部品', () => {
+    // 上の行が壁、左が土間、中が板の間、右が畳
+    const rows = ['WWWW', '.__,', '.__,'];
+    const images = mapTileImages(map(rows, 'interior'), T);
+    const order = images.map((i) => i.key).filter((k) => k.startsWith('parts-'));
+    const key = (kind: TileKind) => partsTextureKey('interior', kind);
+    expect(order.lastIndexOf(key('floor'))).toBeLessThan(order.indexOf(key('grass')));
+    // 土間は土間の 1 枚、板の間のマスの下は土間、畳のマスの下は板の間の 1 枚
+    expect(images).toContainEqual({ key: 'tile-interior-ground', x: 0, y: T });
+    expect(images).toContainEqual({ key: 'tile-interior-ground', x: T, y: T });
+    expect(images).toContainEqual({ key: 'tile-interior-floor', x: 3 * T, y: T });
+    // 板の間と畳の間（x = 2 と 3 の境目）は板の間がつながる（畳を仲間とみなす）。土間との境目（x = 0 と 1）は縁が出る
+    const dualAt = (kind: TileKind, x: number, y: number) =>
+      images.find((i) => i.key === key(kind) && i.x === x * T + T / 2 && i.y === y * T + T / 2)?.frame;
+    expect(dualAt('floor', 2, 1)).toBe(dualMask(true, true, true, true));
+    expect(dualAt('floor', 0, 1)).toBe(dualMask(false, true, false, true));
+    expect(dualAt('grass', 2, 1)).toBe(dualMask(false, true, false, true));
+    // 壁は上の行の 1 段で、マップの外（上・左右）を仲間とみなす
+    expect(images.find((i) => i.key === key('wall') && i.x === T && i.y === 0)?.frame).toBe(edgeMask(true, true, false, true));
+    expect(TILESETS.interior).toContain('ground');
+    expect(TILESETS.interior).toContain('floor');
+    // 畳が土間に直に接する所では、畳の外側に板の間の縁（框）が出る（畳の下も板の間とみなす）
+    const tatami = mapTileImages(map(['....', '.,,.', '.,,.', '....'], 'interior'), T);
+    const at = (kind: TileKind, x: number, y: number) =>
+      tatami.find((i) => i.key === key(kind) && i.x === x * T + T / 2 && i.y === y * T + T / 2)?.frame;
+    expect(at('floor', 0, 1)).toBe(dualMask(false, true, false, true));
+    expect(at('floor', 1, 1)).toBe(dualMask(true, true, true, true));
+    expect(at('grass', 0, 1)).toBe(dualMask(false, true, false, true));
+  });
+
   it('洞窟（cave）は 水 → 岩 の順に床の上へ重ね、橋（道）は川と岩壁の側にだけ欄干を出す', () => {
     // 上下が川、左右が床の 2 マス幅の橋。下の行の右は岩壁
     const images = mapTileImages(map(['.~~.', '.==.', '.==^', '.~~.'], 'cave'), T);
