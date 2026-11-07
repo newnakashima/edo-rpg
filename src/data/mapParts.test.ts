@@ -118,8 +118,13 @@ describe('部品で描くタイル', () => {
     expect(order.lastIndexOf(key('grass'))).toBeLessThan(order.indexOf(key('water')));
     expect(order.lastIndexOf(key('water'))).toBeLessThan(order.indexOf(key('rock')));
     expect(order.lastIndexOf(key('rock'))).toBeLessThan(order.indexOf(key('tree')));
-    // 岩・森のマスの下には草
+    // 岩と森の間（x = 2 と 3 の間）は全面が草、水と岩の間は右半分だけ草
+    const grassAt = (px: number) => images.find((i) => i.key === key('grass') && i.x === px && i.y === T / 2);
+    expect(grassAt(2 * T + T / 2)?.frame).toBe(15);
+    expect(grassAt(T + T / 2)?.frame).toBe(dualMask(false, true, false, true));
+    // 岩・森のマスの下には草、水のマスの下には地面
     for (const x of [2, 3]) expect(images).toContainEqual({ key: 'tile-grass', x: x * T, y: 0 });
+    expect(images).toContainEqual({ key: 'tile-ground', x: T, y: 0 });
 
     const town = mapTileImages(map([',=~RR', ',=~WD'], 'miyako'), T);
     const townOrder = town.map((i) => i.key).filter((k) => k.startsWith('parts-'));
