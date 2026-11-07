@@ -313,6 +313,34 @@ describe('部品で描くタイル', () => {
     expect(bridge(2, 2)).toBe(edgeMask(true, false, false, true));
   });
 
+  it('蔵（kura）は 板敷き → 堀川 の順に土間の上へ重ね、橋（道）は土間・板敷きを仲間にして堀川の側にだけ欄干を出し、壁は端の部品', () => {
+    // 上の行が壁。2 行目は板敷きと土間、3 行目は堀川を渡る橋（上下が土間）、4 行目は上が堀川で左右が土間と板敷きの橋
+    const rows = ['WWWW', '_.._', '~=~~', '_.=_'];
+    const images = mapTileImages(map(rows, 'kura'), T);
+    const order = images.map((i) => i.key).filter((k) => k.startsWith('parts-'));
+    const key = (kind: TileKind) => partsTextureKey('kura', kind);
+    expect(order.lastIndexOf(key('floor'))).toBeLessThan(order.indexOf(key('water')));
+    // 板敷き・堀川のマスの下は土間の 1 枚
+    expect(images).toContainEqual({ key: 'tile-kura-ground', x: 0, y: T });
+    expect(images).toContainEqual({ key: 'tile-kura-ground', x: 0, y: 2 * T });
+    expect(TILESETS.kura).toContain('ground');
+    expect(TILESETS.kura).toContain('floor');
+    // 板敷きの縁は、土間・堀川・橋の側に出る
+    const dualAt = (kind: TileKind, x: number, y: number) =>
+      images.find((i) => i.key === key(kind) && i.x === x * T + T / 2 && i.y === y * T + T / 2)?.frame;
+    expect(dualAt('floor', 0, 1)).toBe(dualMask(true, false, false, false));
+    // 堀川の縁（石の護岸）は、土間・板敷き・橋の側に出る
+    expect(dualAt('water', 0, 1)).toBe(dualMask(false, false, true, false));
+    expect(dualAt('water', 2, 1)).toBe(dualMask(false, false, true, true));
+    // 橋は土間・板敷き（とマップの外）を仲間とみなすので、欄干は堀川の側にだけ出る
+    const bridge = (x: number, y: number) => images.find((i) => i.key === key('road') && i.x === x * T && i.y === y * T)?.frame;
+    expect(bridge(1, 2)).toBe(edgeMask(true, false, true, false));
+    expect(bridge(2, 3)).toBe(edgeMask(false, true, true, true));
+    // 壁は上の行の 1 段で、マップの外（上・左右）を仲間とみなす
+    const wall = (x: number) => images.find((i) => i.key === key('wall') && i.x === x * T && i.y === 0)?.frame;
+    for (const x of [0, 1, 3]) expect(wall(x), `x = ${x}`).toBe(edgeMask(true, true, false, true));
+  });
+
   it('ワールドマップ（field）は 街道 → 海 → 山 → 森 の順に野の上へ重ね、町・関所の印は街道の上に描いて、街道を印の下まで続ける', () => {
     // 左から野・街道・町・街道・関所・海・山・森
     const images = mapTileImages(map(['"=O=G~^T', '"=O=G~^T'], 'field'), T);

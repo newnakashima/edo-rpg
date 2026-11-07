@@ -152,6 +152,17 @@ export const TILE_PARTS: Partial<Record<TilesetId, Partial<Record<TileKind, Part
     wall: { rule: 'edge' },
   },
   /**
+   * 蔵（堀川の荷蔵）。土間（ground。板敷きの組の lower と同じ絵に差し替えた）の上に、一段高い板敷き（floor）→ 石の護岸の堀川（water）
+   * の順に重ねる。道（=）は堀川を渡る欄干付きの板橋で、土間・板敷きを仲間とみなすので、欄干は堀川の側にだけ出る。
+   * 壁は黒い板の天端と、漆喰と腰板の正面を、土蔵の壁の絵から切り出した。記録は public/assets/README.md。
+   */
+  kura: {
+    floor: { rule: 'dual', under: 'ground' },
+    water: { rule: 'dual', under: 'ground' },
+    road: { rule: 'edge', joins: ['ground', 'floor'] },
+    wall: { rule: 'edge' },
+  },
+  /**
    * 野山（清水湊の裏山・原城跡）。草・森は shoka と同じ部品。水は川石の岸の沢（原城跡では海にも使う）、
    * 岩は草の上の岩場（原城跡では崩れた石垣の列）。水・岩・森の下にも草を敷いて、縁を草でつなぐ。記録は public/assets/README.md。
    */
