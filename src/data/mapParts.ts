@@ -10,7 +10,6 @@ import { TILE_KINDS, tileAt, tileTextureKey, type MapDef, type TileKind, type Ti
  *   画像は 4 × 4 枚のシート（public/assets/tiles/<タイルセット>/<種類>_dual.png。scripts/mapkit/wang_sheet.py で作る）。
  * - edge: 構造物（辺の自動タイル）。マスごとに、上下左右が同じ仲間かどうか（N=1, E=2, S=4, W=8）で 16 枚から選ぶ。
  *   屋根の棟・軒先・端、壁の端の柱など。画像は 4 × 4 枚のシート（<種類>_edge.png。scripts/mapkit/slice_parts.py で 9 分割の絵から作る）。
- * - variants: 同じ種類を数枚の柄から、場所で決まる順に選んで並べ、同じ柄の繰り返しを崩す。画像は横に並べたシート（<種類>_var.png）。
  */
 export type PartsDef =
   | {
@@ -24,15 +23,8 @@ export type PartsDef =
       rule: 'edge';
       /** 部品の透明な所（屋根の端の斜めなど）から見える地面。省くと何も敷かない。 */
       under?: TileKind;
-      /** 同じ仲間として扱うほかの種類（例: 壁と戸をひと続きの壁にする）。 */
+      /** 同じ仲間として扱うほかの種類（例: 壁と戸をひと続きの壁にする）。マップの外も仲間とみなす（端で切れて見えるように）。 */
       joins?: readonly TileKind[];
-      /** マップの外を同じ仲間とみなすか（マップの端で切れる塀など）。既定は true。 */
-      edgeOutside?: boolean;
-    }
-  | {
-      rule: 'variants';
-      /** 柄の枚数。 */
-      count: number;
     };
 
 /**
@@ -56,17 +48,16 @@ export function partsTextureKey(tileset: TilesetId, kind: TileKind): string {
 }
 
 export function partsFile(tileset: TilesetId, kind: TileKind, def: PartsDef): string {
-  const suffix = def.rule === 'dual' ? 'dual' : def.rule === 'edge' ? 'edge' : 'var';
-  return `assets/tiles/${tileset}/${kind}_${suffix}.png`;
+  return `assets/tiles/${tileset}/${kind}_${def.rule}.png`;
 }
 
-/** 読み込む部品の画像の一覧（BootScene が使う）。 */
-export function allPartsImages(): { key: string; file: string; frames: number }[] {
-  const list: { key: string; file: string; frames: number }[] = [];
+/** 読み込む部品の画像の一覧（BootScene が使う）。どれも 16 × 16 のコマを 4 × 4 に並べたシート。 */
+export function allPartsImages(): { key: string; file: string }[] {
+  const list: { key: string; file: string }[] = [];
   for (const [set, defs] of Object.entries(TILE_PARTS) as [TilesetId, Partial<Record<TileKind, PartsDef>>][]) {
     for (const kind of TILE_KINDS) {
       const def = defs[kind];
-      if (def) list.push({ key: partsTextureKey(set, kind), file: partsFile(set, kind, def), frames: def.rule === 'variants' ? def.count : 16 });
+      if (def) list.push({ key: partsTextureKey(set, kind), file: partsFile(set, kind, def) });
     }
   }
   return list;
@@ -90,17 +81,12 @@ export function edgeMask(n: boolean, e: boolean, s: boolean, w: boolean): number
   return (n ? 1 : 0) | (e ? 2 : 0) | (s ? 4 : 0) | (w ? 8 : 0);
 }
 
-/** 場所で決まる 0 以上の整数（variants の柄を選ぶ。毎回同じ柄になるように乱数は使わない）。 */
-export function cellHash(x: number, y: number): number {
-  let h = (x * 374761393 + y * 668265263) | 0;
-  h = Math.imul(h ^ (h >>> 13), 1274126177);
-  return (h ^ (h >>> 16)) >>> 0;
-}
-
 /**
  * マップの地形を描く画像を、下から描く順に返す。
- * 1. マスごとの地面（dual の地形のマスは under の種類、edge・variants はその部品、ほかは 1 枚の画像）
+ * 1. マスごとの地面（dual の地形のマスは under の種類、edge はその部品、ほかは 1 枚の画像）
  * 2. dual の地形を、TILE_PARTS に書いた順に重ねる（半マスずらした位置）
+ * dual はマップの外へ半マスはみ出して描く（カメラはマップの内側しか映さないので見えない。
+ * 端のマスの外側半分を描くため）。マップの行の長さはそろっている前提（そろわないと、短い行の外にも dual を描く）。
  */
 export function mapTileImages(map: MapDef, tile: number): TileImage[] {
   const set = map.tileset;
@@ -121,17 +107,14 @@ export function mapTileImages(map: MapDef, tile: number): TileImage[] {
         images.push({ key: tileTextureKey(set, kind), x: px, y: py });
       } else if (def.rule === 'dual') {
         images.push({ key: tileTextureKey(set, def.under), x: px, y: py });
-      } else if (def.rule === 'edge') {
+      } else {
         if (def.under) images.push({ key: tileTextureKey(set, def.under), x: px, y: py });
         const group = new Set<TileKind>([kind, ...(def.joins ?? [])]);
-        const outside = def.edgeOutside ?? true;
         const same = (nx: number, ny: number): boolean => {
           const k = kindAt(nx, ny);
-          return k === undefined ? outside : group.has(k);
+          return k === undefined || group.has(k);
         };
         images.push({ key: partsTextureKey(set, kind), frame: edgeMask(same(x, y - 1), same(x + 1, y), same(x, y + 1), same(x - 1, y)), x: px, y: py });
-      } else {
-        images.push({ key: partsTextureKey(set, kind), frame: cellHash(x, y) % def.count, x: px, y: py });
       }
     }
   }

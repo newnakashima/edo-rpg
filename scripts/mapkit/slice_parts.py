@@ -73,7 +73,12 @@ if __name__ == '__main__':
     a = p.parse_args()
     src = Image.open(a.image).convert('RGBA')
     ints = lambda v: [int(n) for n in v.split(',')]
-    sheet = build(src, ints(a.cols), ints(a.rows))
+    cols, rows = ints(a.cols), ints(a.rows)
+    if len(cols) != 3 or len(rows) != 3:
+        p.error('--cols と --rows は 3 つずつ（左・中・右、上・中・下）')
+    if any(c < 0 or c + T > src.width for c in cols) or any(r < 0 or r + T > src.height for r in rows):
+        p.error(f'切り出す 16 px が絵（{src.width} × {src.height}）からはみ出す')
+    sheet = build(src, cols, rows)
     sheet.save(a.out)
     if a.preview:
         preview(sheet, a.pattern.split(',')).save(a.preview)

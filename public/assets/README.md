@@ -249,6 +249,7 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 | shoka/tree_dual | 98061687-6852-4eff-9798-f09e969d38d7 | muted green grass lawn with small darker tufts, Edo period Japanese town / dense forest of dark green Japanese pine and cedar trees seen from above, overlapping round tree crowns, dark outline and shadow at the edge | boundary_amplitude 0.15 |
 
 構造物（edge）: `create_image_pro`（64 × 48、透過、16 候補）で町家を 1 軒まるごと描き、`scripts/mapkit/slice_parts.py` で屋根・壁を 9 分割して 16 枚に組んだ。戸は同じ絵の戸口を 16 × 16 で切り出し、`shoka/door.png` を差し替えた。
+これで `shoka/roof.png`・`shoka/wall.png` はマップの描画に使われなくなった（`TILESETS` の shoka に残っているので読み込みは続く。部品を外して元の見た目に戻すときのために残している）。
 
 | 部品 | ジョブ ID と候補 | 切り方 |
 | --- | --- | --- |

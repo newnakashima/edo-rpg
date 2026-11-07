@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { MAPS, TILES, TILESETS, type MapDef, type TileKind, type TilesetId } from './maps';
-import { allPartsImages, cellHash, dualMask, edgeMask, mapTileImages, partsTextureKey, TILE_PARTS } from './mapParts';
+import { allPartsImages, dualMask, edgeMask, mapTileImages, partsTextureKey, TILE_PARTS } from './mapParts';
 
 const T = 16;
 
@@ -9,10 +9,18 @@ function map(rows: string[], tileset: TilesetId = 'shoka'): MapDef {
 }
 
 describe('部品で描くタイル', () => {
-  it('部品の画像がそろっている', () => {
-    const files = import.meta.glob('../../public/assets/tiles/*/*.png');
-    const names = Object.keys(files).map((f) => f.replace('../../public/', ''));
-    for (const parts of allPartsImages()) expect(names, parts.file).toContain(parts.file);
+  it('部品の画像がそろい、どれも 16 × 16 のコマを 4 × 4 に並べた 64 × 64 のシート', () => {
+    const files = import.meta.glob<string>('../../public/assets/tiles/*/*_{dual,edge}.png', { eager: true, query: '?inline', import: 'default' });
+    const sizes = new Map(
+      Object.entries(files).map(([f, url]) => {
+        // PNG の IHDR（16 バイト目から幅と高さ）
+        const bytes = Uint8Array.from(atob(url.split(',')[1]!).slice(0, 24), (c) => c.charCodeAt(0));
+        const view = new DataView(bytes.buffer);
+        return [f.replace('../../public/', ''), [view.getUint32(16), view.getUint32(20)]];
+      }),
+    );
+    expect(allPartsImages().length).toBeGreaterThan(0);
+    for (const parts of allPartsImages()) expect(sizes.get(parts.file), parts.file).toEqual([T * 4, T * 4]);
   });
 
   it('部品で描く種類は、そのタイルセットのマップに出てくる種類だけ（使わない部品を作らない）', () => {
@@ -32,9 +40,22 @@ describe('部品で描くタイル', () => {
     expect(edgeMask(false, true, false, true)).toBe(10);
   });
 
-  it('場所で決まる柄の番号は、同じ場所なら毎回同じ', () => {
-    expect(cellHash(3, 5)).toBe(cellHash(3, 5));
-    expect(new Set(Array.from({ length: 20 }, (_, i) => cellHash(i, 0) % 4)).size).toBeGreaterThan(1);
+  it('dual は TILE_PARTS に書いた順（草 → 道 → 水 → 森）に下から重ね、草は森のマスも草として縁取る', () => {
+    // 左から草・森・道・水
+    const images = mapTileImages(map([',T=~', ',T=~']), T);
+    const order = images.map((i) => i.key).filter((k) => k.startsWith('parts-'));
+    const first = (kind: TileKind) => order.indexOf(partsTextureKey('shoka', kind));
+    const last = (kind: TileKind) => order.lastIndexOf(partsTextureKey('shoka', kind));
+    expect(last('grass')).toBeLessThan(first('road'));
+    expect(last('road')).toBeLessThan(first('water'));
+    expect(last('water')).toBeLessThan(first('tree'));
+    // 草と森の境目（x = 0 と 1 の間）は、草の dual では全面が草
+    const grassAt = (px: number) => images.find((i) => i.key === partsTextureKey('shoka', 'grass') && i.x === px && i.y === T / 2);
+    expect(grassAt(T / 2)?.frame).toBe(15);
+    // 森と道の境目（x = 1 と 2 の間）は、左半分だけ草
+    expect(grassAt(T + T / 2)?.frame).toBe(dualMask(true, false, true, false));
+    // 森のマスの下には草を敷く
+    expect(images).toContainEqual({ key: 'tile-grass', x: T, y: 0 });
   });
 
   it('dual の地形は、マスに下の地面を敷き、境目に半マスずらして重ねる', () => {
@@ -73,6 +94,12 @@ describe('部品で描くタイル', () => {
     expect(wall.map((i) => i.frame)).toEqual([edgeMask(false, true, false, false), edgeMask(false, false, false, true)]);
     // 戸は今までどおり 1 枚の画像
     expect(images).toContainEqual({ key: 'tile-shoka-door', x: 2 * T, y: 3 * T });
+  });
+
+  it('edge は、マップの外を同じ仲間とみなす（マップの端に接する塀や屋根は、端で切れて見える）', () => {
+    const images = mapTileImages(map(['RR', '..']), T);
+    const roof = images.filter((i) => i.key === partsTextureKey('shoka', 'roof'));
+    expect(roof.map((i) => i.frame)).toEqual([edgeMask(true, true, false, true), edgeMask(true, true, false, true)]);
   });
 
   it('部品の決まりがないタイルセットは、今までどおり 1 種類 1 枚で描く', () => {

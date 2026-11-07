@@ -26,12 +26,14 @@ BIT = {'NW': 8, 'NE': 4, 'SW': 2, 'SE': 1}
 
 def fetch(url: str) -> bytes:
     try:
-        with urllib.request.urlopen(url) as r:
+        with urllib.request.urlopen(url, timeout=60) as r:
             return r.read()
     except urllib.error.HTTPError as e:
         if e.code == 423:
             sys.exit('まだ生成中（423）。mcp__PixelLab__wait_for_jobs で待ってからやり直す')
-        raise
+        sys.exit(f'{url} の取得に失敗した（HTTP {e.code}）。タイルセット ID を確かめる')
+    except (urllib.error.URLError, TimeoutError) as e:
+        sys.exit(f'{url} につながらない（{e}）')
 
 
 def cutout(tile: Image.Image, lower: Image.Image, upper: Image.Image, mask: int) -> Image.Image:
