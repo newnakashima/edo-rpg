@@ -261,6 +261,22 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 
 試して使わなかったもの: `create_topdown_tileset` の standard モード（森が網目の模様になった。420c5c42… の pro は雪の森として良い出来だったが、まだ使っていない: 420c5c42-488d-4a8c-a742-20862b409683）、`create_building_kit`（square_topdown でも 24 × 30 の斜めの壁の部品になり、正面向きの家に組めない: 762b0c9e-c68e-4c06-8a1f-dae4b0f712da）。
 
+#### 港町（minato: 清水湊・広島）
+
+草・道・森は shoka の `grass_dual`・`road_dual`・`tree_dual` をそのまま複製した（地面と草はどちらも共通の画像なので、境目がそろう）。マップの文字は、見た目のために次だけを変えた（通れるかどうかは変えていない）: 森の外周の内側にあった 1 マスの草の帯を森にした、家の前を地面にして草と入り組ませた、等間隔の 1 本の木を 2 × 2 のかたまりにまとめた、岩（共通の画像は草の四角に見える）を木にした。
+
+| 部品 | ID と設定 | 判定 |
+| --- | --- | --- |
+| minato/water_dual | 01b29fc4-0a58-4339-90ae-c68abafdf85e（lower_base_tile_id ce6725c7…＝shoka と同じ地面、roundness 0）。upper: open calm medium blue harbour sea water with small white ripples, bordered by a grey stone block embankment drawn equally on all four sides: the top edge, bottom edge, left edge and right edge each have the same 2 pixel wide row of grey stone blocks | 5 回目で採用。4 回目のこの組は水の中に石の切れ端が出たので、陸の四分の一から 4 px 以上離れたピクセルを全面が水のタイル（マスク 15）の同じ位置で置き換えた。縁のそばの小さな石の出っ張りは残っている |
+| minato/roof_edge | 8cc416ba-ad30-4f65-8cf3-2ad9126f6258 の候補 0 | `--cols 3,30,45 --rows 2,9,10`（屋根は y = 2〜25。中の列 x = 24 は重し石が半分に切れたので 30 にした） |
+| minato/wall_edge | 同じ候補 0 | `--cols 6,42,43 --rows 27,27,27`（中の列 x = 10 は暖簾の青が端に入ったので 42 にした） |
+| minato/door | 同じ候補 0 | (24, 27) から 16 × 16（青と白の縞の暖簾） |
+
+プロンプト（家）: JRPG town map tile art, 16-bit SNES style, front view seen from above at a 3/4 angle: an Edo period Japanese fisherman's house of a harbour town that fills the whole canvas edge to edge. Top two thirds: grey weathered wooden plank roof in neat horizontal rows with several round light grey stones sitting on top as weights, a darker roof ridge along the top edge, a straight eave line with a dark shadow at the bottom of the roof. Bottom third: silver-grey salt-bleached vertical wooden plank front wall with dark brown wooden pillars at both ends, a doorway with a blue-and-white striped noren curtain, dark base board. Straight horizontal rows, symmetric, no ground, no sky, no background, muted ukiyo-e palette, 1px dark outline.
+
+使わなかった水: 362f217d-ca11-49ca-99cd-4bee8427e0be（上の岸に石垣がなく点だけが残った）、ffa70b2a-edfc-4c9c-b51d-bf32824618da（水の中に石の格子が入った）、9e8ed195-c426-4301-ad36-648140fbab67（下の岸の石垣はよいが、上の岸が点だけ）。
+`minato/roof.png`・`wall.png`・`water.png` は描画に使われなくなった（shoka と同じく、`TILESETS` に残して読み込みは続ける）。
+
 ## 敵（`enemies/`）
 
 `create_image_pixflux`（64 × 64、`no_background: true`、黒の 1px 輪郭、view `side`、medium detail）で 1 体ずつ作る（1 体 1 回）。ボスは 96 × 96 で作る。
