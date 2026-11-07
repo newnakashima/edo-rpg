@@ -17,3 +17,4 @@
 - `karakuriYashiki.png`・`komeKura.png`・`kenkyujo.png`・`karakuriGura.png`: からくりの工場（karakuri）。2 マス幅の廊下と米蔵の地下の中央の蔵を石畳、部屋を板の床にした
 - `world.png`: ワールドマップ（field）。大きいので、変える前（上）と後（下）に並べた
 - `rashomon.png`・`oninosu.png`・`nanbanji.png`: 廃墟（ruins）。羅生門跡の荒れ寺のまわりの草を地面の庭にした
+- `kitamaebune.png`: 船の上（ship）。マップの文字は変えていない

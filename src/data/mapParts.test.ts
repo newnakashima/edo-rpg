@@ -516,6 +516,32 @@ describe('部品で描くタイル', () => {
     expect(roof.map((i) => i.frame)).toEqual([edgeMask(true, true, false, true), edgeMask(true, true, false, true)]);
   });
 
+  it('船の上（ship）は 船べり → 海 の順に重ね、船べりの下に甲板を敷き、斜めの段も 1 枚でつなぎ、戸は船べりの切れ目に 1 枚で描く', () => {
+    // 船べり（W）が斜めの段で続き、戸（D）がその列に入る。下の行は屋形の屋根（R）
+    const rows = ['~~~~', '~~W~', '~W__', '~WD_', '~RR_'];
+    const images = mapTileImages(map(rows, 'ship'), T);
+    const order = images.map((i) => i.key).filter((k) => k.startsWith('parts-'));
+    const key = (kind: TileKind) => partsTextureKey('ship', kind);
+    expect(order.lastIndexOf(key('wall'))).toBeLessThan(order.indexOf(key('water')));
+    // 船べりのマスの下は甲板、海のマスの下は海の 1 枚、屋根の下も甲板
+    expect(images).toContainEqual({ key: 'tile-ship-floor', x: 2 * T, y: T });
+    expect(images).toContainEqual({ key: 'tile-ship-water', x: 0, y: 0 });
+    expect(images).toContainEqual({ key: 'tile-ship-floor', x: T, y: 4 * T });
+    const dualAt = (kind: TileKind, x: number, y: number) =>
+      images.find((i) => i.key === key(kind) && i.x === x * T + T / 2 && i.y === y * T + T / 2)?.frame;
+    // 斜めの段（NE と SW が船べり）は、斜めのコマ 6 で描く（このコマは帯でつないである）
+    expect(dualAt('wall', 1, 1)).toBe(dualMask(false, true, true, false));
+    // 海の縁は、船べり・甲板の側に出る
+    expect(dualAt('water', 1, 1)).toBe(dualMask(true, false, false, false));
+    // 戸は船べりの仲間ではないので、船べりは戸の手前で切れ、戸は ship の 1 枚の画像
+    expect(dualAt('wall', 1, 2)).toBe(dualMask(true, false, true, false));
+    expect(images).toContainEqual({ key: 'tile-ship-door', x: 2 * T, y: 3 * T });
+    expect(TILESETS.ship).toContain('door');
+    // 屋根は端の部品で、マップの外（下）を仲間とみなす
+    const roof = images.find((i) => i.key === key('roof') && i.x === T && i.y === 4 * T)?.frame;
+    expect(roof).toBe(edgeMask(false, true, true, false));
+  });
+
   it('部品の決まりがないタイルセットは、今までどおり 1 種類 1 枚で描く', () => {
     const images = mapTileImages(map(['.T~', 'RWD'], 'fire'), T);
     expect(images.map((i) => i.key)).toEqual(['tile-fire-ground', 'tile-tree', 'tile-water', 'tile-fire-roof', 'tile-fire-wall', 'tile-door']);

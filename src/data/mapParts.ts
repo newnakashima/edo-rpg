@@ -189,6 +189,17 @@ export const TILE_PARTS: Partial<Record<TilesetId, Partial<Record<TileKind, Part
     wall: { rule: 'edge', under: 'ground' },
   },
   /**
+   * 船の上（北前船）。甲板（floor。船べりの組の lower と同じ絵に差し替えた）の上に、船べり（wall）→ 海（water）の順に重ねる。
+   * 船べりは厚い板の縁で、船の外形の斜めの段も dual で丸くつなぐ（edge では段ごとに切れて見えるため）。
+   * 海は船体に寄せた白い波の縁を持ち、船べりの外側の角を丸く覆う（船べりの下に敷いた甲板が外に見えないように）。
+   * 屋形の屋根と積み荷（roof）は苫（とま）をかけた屋根の部品で、戸は屋形の絵の戸口。記録は public/assets/README.md。
+   */
+  ship: {
+    wall: { rule: 'dual', under: 'floor' },
+    water: { rule: 'dual', under: 'water' },
+    roof: { rule: 'edge', under: 'floor' },
+  },
+  /**
    * 野山（清水湊の裏山・原城跡）。草・森は shoka と同じ部品。水は川石の岸の沢（原城跡では海にも使う）、
    * 岩は草の上の岩場（原城跡では崩れた石垣の列）。水・岩・森の下にも草を敷いて、縁を草でつなぐ。記録は public/assets/README.md。
    */
