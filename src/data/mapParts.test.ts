@@ -171,6 +171,47 @@ describe('部品で描くタイル', () => {
     expect(townOrder).toContain(key('grass'));
   });
 
+  it('南蛮の町（nanban）は 草 → 道 → 水 → 岩 → 森 の順に重ね、山の岩の下に草を敷き、出島の塀（壁の縦の列と、扇形の階段の角）を描く', () => {
+    const key = (kind: TileKind) => partsTextureKey('nanban', kind);
+    const images = mapTileImages(map(['.~^T,', '.~^T,'], 'nanban'), T);
+    const order = images.map((i) => i.key).filter((k) => k.startsWith('parts-'));
+    for (const kind of ['grass', 'water', 'rock', 'tree'] as const) expect(order.indexOf(key(kind)), kind).toBeGreaterThanOrEqual(0);
+    expect(order.lastIndexOf(key('grass'))).toBeLessThan(order.indexOf(key('water')));
+    expect(order.lastIndexOf(key('water'))).toBeLessThan(order.indexOf(key('rock')));
+    expect(order.lastIndexOf(key('rock'))).toBeLessThan(order.indexOf(key('tree')));
+    // 岩と森の間は全面が草（草の joins に岩・森）、水と岩の間は右半分だけ草
+    const grassAt = (px: number) => images.find((i) => i.key === key('grass') && i.x === px && i.y === T / 2);
+    expect(grassAt(2 * T + T / 2)?.frame).toBe(15);
+    expect(grassAt(T + T / 2)?.frame).toBe(dualMask(false, true, false, true));
+    // 岩・森のマスの下には草、水のマスの下には地面
+    for (const x of [2, 3]) expect(images).toContainEqual({ key: 'tile-grass', x: x * T, y: 0 });
+    expect(images).toContainEqual({ key: 'tile-ground', x: T, y: 0 });
+
+    // 道は草の後、水の前に重ねる
+    const roads = mapTileImages(map([',=~', ',=~'], 'nanban'), T);
+    const roadOrder = roads.map((i) => i.key).filter((k) => k.startsWith('parts-'));
+    expect(roadOrder.indexOf(key('road'))).toBeGreaterThanOrEqual(0);
+    expect(roadOrder.lastIndexOf(key('grass'))).toBeLessThan(roadOrder.indexOf(key('road')));
+    expect(roadOrder.lastIndexOf(key('road'))).toBeLessThan(roadOrder.indexOf(key('water')));
+
+    // 出島の塀: 縦の列の (1,1) は上下だけがつながる。家の屋根・壁・戸と、門の床（_）は共通の 1 枚の画像
+    const town = mapTileImages(map(['~W.RR~', '~W.WD~', '~WW_W~'], 'nanban'), T);
+    const at = (k: string, x: number, y: number) => town.find((i) => i.key === k && i.x === x * T && i.y === y * T)?.frame;
+    expect(at(key('wall'), 1, 1)).toBe(edgeMask(true, false, true, false));
+    expect(at(key('wall'), 1, 2)).toBe(edgeMask(true, true, true, false)); // 右は (2,2) の壁、下はマップの外（仲間とみなす）
+    expect(at(key('roof'), 3, 0)).toBe(edgeMask(true, true, false, false));
+    expect(at(key('wall'), 3, 1)).toBe(edgeMask(false, true, false, false));
+    expect(town).toContainEqual({ key: 'tile-floor', x: 3 * T, y: 2 * T });
+    expect(town).toContainEqual({ key: 'tile-nanban-door', x: 4 * T, y: T });
+
+    // 扇形の塀の階段: マップの外に頼らない角。段の角は右と下、段の内側は上と左がつながる
+    const fan = mapTileImages(map(['~~~~~', '~~WWW', '~WW..', '~W...', '~~~~~'], 'nanban'), T);
+    const fanAt = (x: number, y: number) => fan.find((i) => i.key === key('wall') && i.x === x * T && i.y === y * T)?.frame;
+    expect(fanAt(2, 1)).toBe(edgeMask(false, true, true, false));
+    expect(fanAt(1, 2)).toBe(edgeMask(false, true, true, false));
+    expect(fanAt(2, 2)).toBe(edgeMask(true, false, false, true));
+  });
+
   it('洞窟（cave）は 水 → 岩 の順に床の上へ重ね、橋（道）は川と岩壁の側にだけ欄干を出す', () => {
     // 上下が川、左右が床の 2 マス幅の橋。下の行の右は岩壁
     const images = mapTileImages(map(['.~~.', '.==.', '.==^', '.~~.'], 'cave'), T);

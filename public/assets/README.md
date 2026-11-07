@@ -357,6 +357,25 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 
 プロンプト（家、3 回目）: JRPG town map tile art, 16-bit SNES style. A flat straight-on FRONT ELEVATION of a long Iga mountain village farmhouse filling the entire 64x48 canvas edge to edge with no background anywhere: no perspective, no side wall, no gable, perfectly rectangular silhouette, the left and right edges are straight vertical lines. Top 22 pixels: golden-brown thatched straw roof (kayabuki) in straight horizontal layered rows, a dark bound ridge with small rope knots along the very top edge, a straight trimmed eave with a dark shadow line at the bottom of the roof. Bottom 26 pixels: a solid front wall running the full canvas width, painted with textured warm ochre-brown earthen clay plaster (solid colour, clearly visible mud texture) between dark brown wooden posts, a thick dark brown wooden pillar exactly at the far left edge and exactly at the far right edge, a dark wooden base board along the bottom. One dark wooden plank door 14 pixels wide on the left side; the whole right half of the wall is a long plain uninterrupted ochre clay wall. No ground, no sky, no signs, no lanterns, no plants, muted palette, 1px dark outline.（`no_background: false`、参照画像: 2 回目の候補 0）
 
+#### 南蛮の町（nanban: 長崎、出島）
+
+草・道・森は shoka の `grass_dual`・`road_dual`・`tree_dual` を、岩は yama の `rock_dual` を、水は minato の `water_dual`（石の護岸で囲んだ港の海）をそのまま複製した。
+岩（`^`）は長崎の東の山の斜面に、水は湊・中島川・出島を囲む海に使う。岩の下には草を敷き（`under: 'grass'`）、草の `joins` に岩を入れた。湊の船（屋根の形）と出島の囲いは石の護岸で縁取られ、船着き場に見える。
+屋根・壁・戸は、赤い洋瓦と白壁・煉瓦の腰の商館 1 軒の絵（`create_image_pro`、64 × 48、16 候補、10 generations × 2 回）から切り出した。壁は出島を囲む塀（縦の列・L 字の角）と長崎の唐人屋敷の囲いにも使う。床（`_`）は共通の 1 枚の画像のまま。
+`nanban/roof.png`・`wall.png` は描画に使われなくなった（`TILESETS` に残して読み込みは続ける）。`nanban/water.png` も部品の下には使われないが、同じく残した。`nanban/door.png` は同じ絵の戸口に差し替えた。
+
+2 回目で採用。作り直しの理由: 1 回目（aef1603a-8194-4463-acad-afb4c89a5bd2）はどの候補も扉が壁の真ん中にあり、「扉は左寄り、右半分は無地」を満たさなかった。2 回目（c98cfb31-48d6-4e91-8f89-1fb8836203f6、1 回目の候補 8 を参照）は扉の位置を座標（x = 6〜18）で書いた。sato の経験から、最初から `no_background: false` にした（白壁が透明に抜けなかった）。
+
+マップの文字は、長崎の通れるマス（草 `,` → 地面 `.`）だけを塗り直した（17 マス。全マスの blocked が変わらないことを確かめた）: 家と家の間の 1 マスの草、壁・戸の真下の草、家の前の地面の左右の草を地面にした。出島は前から家の前が地面なので、地面・草は変えていない。出島の扇形の斜めの塀は、`W` が 1 マスずつ離れた階段で、辺の部品では孤立した短い柱の欠片に見えたので、段と段の間の海（`~`）を塀（`W`）にしてつないだ（14 マス。どちらも通れないので blocked は変わらない）。
+
+| 部品 | ジョブ ID と候補 | 切り方 |
+| --- | --- | --- |
+| nanban/roof_edge | c98cfb31-48d6-4e91-8f89-1fb8836203f6 の候補 5 | `--cols 0,24,48 --rows 0,2,5`（屋根は y = 0〜20、棟は y = 0〜2、軒の影は y = 17〜20。中の行を 4 にすると、2 段以上の屋根の中ほどに軒の黒い帯が出た） |
+| nanban/wall_edge | 同じ候補 5（x = 7 の扉の縁を x = 6 の色で塗りつぶした写し） | `--cols 0,32,48 --rows 21,23,32`（壁は y = 21〜47 の 1 段、煉瓦の腰は y = 39〜。中の行を白壁だけの 23 にして、出島の縦の塀が白と煉瓦の縞にならないようにした。中の列は扉の右の無地 x = 32 から） |
+| nanban/door | 同じ候補 5 | x = 7〜22 の縦を y = 21〜34（壁の上の線・扉の上半分）・46〜47（煉瓦の土台）でつないだ 16 × 16 |
+
+プロンプト（家、2 回目）: JRPG town map tile art, 16-bit SNES style, same house as the reference but with the door moved to the far left. A flat straight-on FRONT ELEVATION of a long Dutch-Japanese trading house in Edo-period Nagasaki, filling the entire 64x48 canvas edge to edge with no background: no perspective, no side wall, perfectly rectangular silhouette. Top 22 pixels: terracotta red western clay roof tiles in straight horizontal rows, a dark ridge line along the very top edge, a straight eave with a dark shadow line at the bottom of the roof. Bottom 26 pixels: smooth white plaster front wall running the full canvas width, a dark brown wooden pillar exactly at the far left edge and exactly at the far right edge, a red brick wainscot band along the bottom of the wall. The only door is a dark green western wooden door placed at the LEFT, from x=6 to x=18, right next to the left pillar. Everything right of the door, from x=20 to x=62, is one long plain uninterrupted stretch of white plaster over red brick with nothing on it. No ground, no sky, no signs, no lanterns, no plants, no windows, muted palette, 1px dark outline.（`no_background: false`、参照画像: 1 回目の候補 8）
+
 #### ワールドマップ（field: 日本）
 
 野（`field/plain.png`）を 4 組で共通の lower のタイル（ad7f8912-40fa-4df5-bb38-d8f2765c9181、マスク 0）に差し替え、その上に街道 → 海 → 山 → 森 の順に境目の部品（dual）を重ねる。4 組とも `lower_base_tile_id` ad7f8912… でつないだ（lower: muted green grassy plain of an old Japanese world map, even flat green field with a few tiny darker green specks, no pattern）。マップの文字は変えていない。

@@ -9,4 +9,5 @@
 - `nagoya.png`・`hamamatsu.png`・`osaka.png`: 商人の町（shoka）。部品は前から使っていて、通れるマスの地面・草・道の配置だけを整えた
 - `kyo.png`: 京の町家（miyako）
 - `iga.png`・`igaSato.png`・`kagiya.png`: 山里（sato）
+- `nagasaki.png`・`dejima.png`: 南蛮の町（nanban）
 - `world.png`: ワールドマップ（field）。大きいので、変える前（上）と後（下）に並べた

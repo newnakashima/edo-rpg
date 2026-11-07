@@ -101,6 +101,20 @@ export const TILE_PARTS: Partial<Record<TilesetId, Partial<Record<TileKind, Part
     wall: { rule: 'edge', under: 'ground', joins: ['door'] },
   },
   /**
+   * 南蛮の町（長崎・出島）。草・道・森は shoka、水は minato の石の護岸で囲んだ港の海、岩（東の山の斜面）は yama の岩場の部品で、
+   * 岩の下に草を敷いて草の縁でつなぐ。屋根・壁は赤い洋瓦と白壁・煉瓦の腰の商館の絵から切り出した（壁は出島を囲む塀にも使う）。
+   * 記録は public/assets/README.md。
+   */
+  nanban: {
+    grass: { rule: 'dual', under: 'ground', joins: ['tree', 'rock'] },
+    road: { rule: 'dual', under: 'ground' },
+    water: { rule: 'dual', under: 'ground' },
+    rock: { rule: 'dual', under: 'grass' },
+    tree: { rule: 'dual', under: 'grass' },
+    roof: { rule: 'edge', under: 'ground' },
+    wall: { rule: 'edge', under: 'ground', joins: ['door'] },
+  },
+  /**
    * 野山（清水湊の裏山・原城跡）。草・森は shoka と同じ部品。水は川石の岸の沢（原城跡では海にも使う）、
    * 岩は草の上の岩場（原城跡では崩れた石垣の列）。水・岩・森の下にも草を敷いて、縁を草でつなぐ。記録は public/assets/README.md。
    */
