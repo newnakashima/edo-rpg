@@ -58,6 +58,24 @@ describe('部品で描くタイル', () => {
     expect(images).toContainEqual({ key: 'tile-grass', x: T, y: 0 });
   });
 
+  it('商人の町（shoka）の岩（石垣・庭石）は 水 と 森 の間に重ね、下に草を敷いて草の縁でつなぐ', () => {
+    // 左から地面・水・岩・森
+    const images = mapTileImages(map(['.~^T', '.~^T']), T);
+    const order = images.map((i) => i.key).filter((k) => k.startsWith('parts-'));
+    const first = (kind: TileKind) => order.indexOf(partsTextureKey('shoka', kind));
+    const last = (kind: TileKind) => order.lastIndexOf(partsTextureKey('shoka', kind));
+    expect(first('rock')).toBeGreaterThanOrEqual(0);
+    expect(last('water')).toBeLessThan(first('rock'));
+    expect(last('rock')).toBeLessThan(first('tree'));
+    // 岩と森の間（x = 2 と 3 の間）は全面が草、水と岩の間は右半分だけ草
+    const grassAt = (px: number) => images.find((i) => i.key === partsTextureKey('shoka', 'grass') && i.x === px && i.y === T / 2);
+    expect(grassAt(2 * T + T / 2)?.frame).toBe(15);
+    expect(grassAt(T + T / 2)?.frame).toBe(dualMask(false, true, false, true));
+    // 岩のマスの下には草を敷き、共通の岩の 1 枚の画像は使わない
+    expect(images).toContainEqual({ key: 'tile-grass', x: 2 * T, y: 0 });
+    expect(images.some((i) => i.key === 'tile-rock')).toBe(false);
+  });
+
   it('野山（yama）は 草 → 水 → 岩 → 森 の順に重ね、草は水・岩・森のマスも草として縁取り、その下に草を敷く', () => {
     // 左から地面・水・岩・森
     const images = mapTileImages(map(['.~^T', '.~^T'], 'yama'), T);
