@@ -288,6 +288,21 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 | yama/rock_dual | f3ddb73f-1eb3-49f4-b52e-8ca2ffce20b5（lower_base_tile_id 4d504dfb…＝shoka の森と同じ草、roundness 0.8、boundary_amplitude 0.15、raggedness 0.4）。upper: rocky mountain outcrop of large rough grey granite boulders seen from above, lit light grey tops with darker grey cracks, dark outline and a dark shadow at the edge | 1 回目で採用。1 マスの岩も岩の山に、原城跡の 1 マス幅の `^` の列は崩れた石垣に見える |
 | yama/water_dual | 9626abf6-e2ab-40da-a935-cb2efcbc5e9b（lower_base_tile_id 同上、roundness 0.6、boundary_amplitude 0.12）。upper: clear deep indigo blue mountain stream water with small white ripples, the whole water surface is open water, bordered on all four sides by a natural shore of small rounded grey river stones with a dark outline | 1 回目で採用。4 方向とも同じ川石の岸。原城跡の海にも使う（波の点が格子に並ぶのは、広い水面の柄違いがまだないため） |
 
+#### 洞窟（cave: 狐火の洞、清正の古井戸の底）
+
+岩壁と地の下の水を境目の部品（dual）にし、床（`cave/ground.png`）を岩の組の lower のタイル（マスク 0）に差し替えた（境目の透明な所と床の色がぴったり合うように。もとの床は菱形の柄が格子に並んで目立っていた）。水の組は `lower_base_tile_id` で同じ床をつないだ。
+清正の古井戸の底で地の下の川を渡る道（`=`）は、板の橋の端の部品（edge）にした。床を仲間（`joins: ['ground']`）とみなすので、欄干は川と岩壁に接する辺にだけ出て、床の側へはそのまま続く。マップの文字は変えていない。
+`cave/rock.png`・`water.png` は描画に使われなくなった（`TILESETS` に残して読み込みは続ける）。
+
+| 部品 | ID と設定 | 判定 |
+| --- | --- | --- |
+| cave/rock_dual | 50d69d01-e0e3-4e10-b499-3690b1d7e160（lower_base_tile_id f1d4385c-0e2b-4afd-ad72-086055b4f617、roundness 0.7、boundary_amplitude 0.15、raggedness 0.4）。lower: dark brown packed earth floor of an underground cave, smooth and even with a few tiny dark pebbles, subtle texture, no pattern / upper: solid dark grey cave bedrock seen from above, a uniform rough stone surface of many small irregular stones and fine dark cracks, even texture with no large boulders and no repeating shapes, the edge where it meets the floor has a black outline and a dark shadow | 2 回目で採用。1 回目（e0abcc87-bdac-4269-aecf-67fb2671fd8f、upper: irregular large boulders…）は中の大きな岩が 16 px ごとに同じ形で格子に並んだので、細かく均一な岩肌にした |
+| cave/ground | 同じ組の lower（f1d4385c…、マスク 0 のタイル） | 岩・水の組と同じ床 |
+| cave/water_dual | 6c158e62-0dc3-42e3-9c08-73112278669e（lower_base_tile_id f1d4385c…、roundness 0.6、boundary_amplitude 0.12）。upper: still dark teal blue underground spring water with faint pale ripples, the whole water surface is open water, bordered on all four sides by a shore of small rounded grey cave stones with a dark outline | 1 回目で採用 |
+| cave/road_edge | `create_image_pro`（48 × 48、透過、25 候補）049aa254-ffb4-4688-acfc-c7325b8dbdcc の候補 20 | 1 回目で採用。絵の橋は y = 10〜38 で 16 px の段にそろわないので、上の欄干（y = 10〜17）・板（y = 18〜31 に、縦に同じ柄の y = 22〜23 を足して 16 行）・下の欄干と柱（y = 32〜39）を縦につないだ 48 × 32 の絵にし、柱の間の透明を暗い影（#18161a）で埋めてから `--cols 3,16,29 --rows 0,8,16` で切った |
+
+プロンプト（橋）: JRPG map tile art, 16-bit SNES style, seen from directly above: a straight Edo period Japanese wooden plank footbridge that fills the whole square canvas edge to edge, the bridge runs left to right, weathered brown wooden boards laid side by side running from top to bottom, a dark brown wooden handrail beam along the entire top edge and along the entire bottom edge, symmetric, no water, no ground, no background, muted ukiyo-e palette, 1px dark outline.
+
 ## 敵（`enemies/`）
 
 `create_image_pixflux`（64 × 64、`no_background: true`、黒の 1px 輪郭、view `side`、medium detail）で 1 体ずつ作る（1 体 1 回）。ボスは 96 × 96 で作る。

@@ -15,7 +15,7 @@ export type TileKind = (typeof TILE_KINDS)[number];
 export const TILESETS = {
   /** 雪の町と庭（金沢・兼六園）。 */
   snow: ['ground', 'grass', 'road', 'tree', 'roof', 'rock'],
-  /** 洞窟（狐火の洞）。岩は洞窟の壁、地面は洞窟の床。 */
+  /** 洞窟（狐火の洞・清正の古井戸の底）。岩は洞窟の壁、地面は洞窟の床。岩・水・道（板の橋）は部品（src/data/mapParts.ts）で描く。 */
   cave: ['rock', 'ground', 'water'],
   /** からくりの工場（からくり屋敷・米蔵の地下・研究所・からくり蔵）。屋根の文字は機械に使う。 */
   karakuri: ['wall', 'floor', 'roof'],
