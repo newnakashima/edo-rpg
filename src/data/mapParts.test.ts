@@ -120,8 +120,8 @@ describe('部品で描くタイル', () => {
     expect(allPartsImages().map((p) => p.key)).not.toContain(parts('town'));
   });
 
-  it('over の印（ワールドマップの町・関所）の画像は、背景が透明（不透明だと街道の上に四角が出る）', async () => {
-    const files = import.meta.glob<string>('../../public/assets/tiles/field/{town,gate}.png', { eager: true, query: '?inline', import: 'default' });
+  it('over の印（ワールドマップの町・関所など）の画像は、背景が透明（不透明だと街道の上に四角が出る）', async () => {
+    const files = import.meta.glob<string>('../../public/assets/tiles/*/*.png', { eager: true, query: '?inline', import: 'default' });
     // 8 bit の RGBA の PNG を展開して、アルファが 0 の画素の数を数える
     const transparentPixels = async (url: string): Promise<number> => {
       const bytes = Uint8Array.from(atob(url.split(',')[1]!), (c) => c.charCodeAt(0));
@@ -153,9 +153,16 @@ describe('部品で描くタイル', () => {
       for (let i = 3; i < out.length; i += 4) if (out[i] === 0) count++;
       return count;
     };
-    expect(Object.keys(files)).toHaveLength(2);
+    // TILE_PARTS で over にした種類の画像を、すべて調べる
+    const overFiles = (Object.entries(TILE_PARTS) as [TilesetId, Partial<Record<TileKind, { rule: string }>>][]).flatMap(([set, defs]) =>
+      Object.entries(defs).filter(([, def]) => def?.rule === 'over').map(([kind]) => `../../public/assets/tiles/${set}/${kind}.png`),
+    );
+    expect(overFiles.length).toBeGreaterThan(0);
     // 16 × 16 のうち、印のまわりの半分以上が透明
-    for (const [file, url] of Object.entries(files)) expect(await transparentPixels(url), file).toBeGreaterThan(128);
+    for (const file of overFiles) {
+      expect(files[file], file).toBeDefined();
+      expect(await transparentPixels(files[file]!), file).toBeGreaterThan(128);
+    }
   });
 
   it('dual の地形は、マスに下の地面を敷き、境目に半マスずらして重ねる', () => {
