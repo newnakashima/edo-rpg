@@ -78,6 +78,24 @@ describe('部品で描くタイル', () => {
     expect(images).toContainEqual({ key: 'tile-ground', x: 0, y: 0 });
   });
 
+  it('洞窟（cave）は 水 → 岩 の順に床の上へ重ね、橋（道）は川と岩壁の側にだけ欄干を出す', () => {
+    // 上下が川、左右が床の 2 マス幅の橋。下の行の右は岩壁
+    const images = mapTileImages(map(['.~~.', '.==.', '.==^', '.~~.'], 'cave'), T);
+    const order = images.map((i) => i.key).filter((k) => k.startsWith('parts-'));
+    const first = (kind: TileKind) => order.indexOf(partsTextureKey('cave', kind));
+    const last = (kind: TileKind) => order.lastIndexOf(partsTextureKey('cave', kind));
+    expect(last('water')).toBeLessThan(first('rock'));
+    // 水・岩のマスの下には洞窟の床
+    expect(images).toContainEqual({ key: 'tile-cave-ground', x: T, y: 0 });
+    expect(images).toContainEqual({ key: 'tile-cave-ground', x: 3 * T, y: 2 * T });
+    // 橋は床を仲間とみなすので、左右の床の側には欄干が出ない。上下の川の側と、右下の岩壁の側には出る
+    const bridge = (x: number, y: number) => images.find((i) => i.key === partsTextureKey('cave', 'road') && i.x === x * T && i.y === y * T)?.frame;
+    expect(bridge(1, 1)).toBe(edgeMask(false, true, true, true));
+    expect(bridge(2, 1)).toBe(edgeMask(false, true, true, true));
+    expect(bridge(1, 2)).toBe(edgeMask(true, true, false, true));
+    expect(bridge(2, 2)).toBe(edgeMask(true, false, false, true));
+  });
+
   it('dual の地形は、マスに下の地面を敷き、境目に半マスずらして重ねる', () => {
     // 3 × 3 の真ん中だけ水
     const images = mapTileImages(map(['...', '.~.', '...']), T);

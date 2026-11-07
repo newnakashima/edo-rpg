@@ -63,6 +63,16 @@ export const TILE_PARTS: Partial<Record<TilesetId, Partial<Record<TileKind, Part
     rock: { rule: 'dual', under: 'grass' },
     tree: { rule: 'dual', under: 'grass' },
   },
+  /**
+   * 洞窟（狐火の洞・清正の古井戸の底）。岩壁と地の下の水を、洞窟の床（ground。岩の組の lower と同じ絵に差し替えた）の上に重ねる。
+   * 道（=）は清正の古井戸の底で地の下の川を渡る板の橋で、川や岩壁に接する辺にだけ欄干が出る（床は仲間とみなし、床へはそのまま続く）。
+   * 記録は public/assets/README.md。
+   */
+  cave: {
+    water: { rule: 'dual', under: 'ground' },
+    rock: { rule: 'dual', under: 'ground' },
+    road: { rule: 'edge', joins: ['ground'] },
+  },
 };
 
 export function partsTextureKey(tileset: TilesetId, kind: TileKind): string {
