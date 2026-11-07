@@ -40,7 +40,18 @@ def track_instrument(mid, note) -> str:
     return instrument_for_program(note.program)
 
 
-PART_ENERGY = {}  # トラック名 → 鳴らした音の二乗和（パートごとの音量の報告に使う）
+PART_ENERGY = {}  # トラック名 → 鳴らした音を K 特性で重み付けした二乗和（パートごとの音量の報告に使う）
+
+
+def k_weight(x: np.ndarray) -> np.ndarray:
+    """耳の感じ方に近づける重み付け（ITU-R BS.1770 の K 特性に近い形）。1.5 kHz より上を 4 dB 持ち上げ、
+    40 Hz より下を削る。素の実効値で比べると、高い音域の楽器（三味線・篠笛など）が実際より小さく、
+    低い音（ベース・大太鼓）が実際より大きく出るため、パートの音量はこの重みで比べる。"""
+    spec = np.fft.rfft(x)
+    f = np.maximum(np.fft.rfftfreq(len(x), 1 / SR), 1e-3)
+    s = (f / 1500) ** 2
+    spec *= np.sqrt((1 + s * 10 ** 0.4) / (1 + s)) * f ** 2 / np.sqrt(f ** 4 + 38.0 ** 4)
+    return np.fft.irfft(spec, len(x))
 
 
 def render_notes(notes, total: int, mid, brr: bool, echo_cfg):
@@ -85,7 +96,7 @@ def render_notes(notes, total: int, mid, brr: bool, echo_cfg):
             dr[seg] += sig * vol * gr
             el[seg] += sig * vol * gl * patch.echo
             er[seg] += sig * vol * gr * patch.echo
-        PART_ENERGY[tname] = PART_ENERGY.get(tname, 0.0) + float(np.sum(tbuf ** 2))
+        PART_ENERGY[tname] = PART_ENERGY.get(tname, 0.0) + float(np.sum(k_weight(tbuf) ** 2))
     delay, fb, mix = echo_cfg
     if mix > 0:
         # 右のエコーだけ 16 ms 遅らせて、左右に少し広げる
@@ -287,7 +298,7 @@ def main():
     print(f"使った楽器: {', '.join(insts)}")
     if PART_ENERGY:
         ref = max(PART_ENERGY.values())
-        print("パートごとの音量（いちばん大きいパートとの差）:")
+        print("パートごとの音量（耳の感じ方に近い K 特性で重み付け。いちばん大きいパートとの差）:")
         for name, e in sorted(PART_ENERGY.items(), key=lambda kv: -kv[1]):
             print(f"  {name:24} {10 * np.log10(e / ref + 1e-12):6.1f} dB")
         melodic = {k: v for k, v in PART_ENERGY.items() if not k.startswith("drums")}
@@ -296,6 +307,12 @@ def main():
             top = max(melodic, key=melodic.get)
             if melodic[mel[0]] < melodic[top] * 10 ** (-3 / 10):
                 print(f"警告: 旋律（{mel[0]}）が {top} より 3 dB 以上小さい。旋律が埋もれている。旋律の vol= を上げるか、ほかを下げる")
+            others = {k: v for k, v in PART_ENERGY.items() if k != mel[0]}
+            if others:
+                second = max(others, key=others.get)
+                if melodic[mel[0]] > others[second] * 10 ** (3 / 10):
+                    print(f"警告: 旋律（{mel[0]}）が 2 番目に大きい {second} より 3 dB 以上大きい。旋律だけが浮いて聞こえる。"
+                          "旋律の vol= を下げるか、低音・打楽器を上げる")
         elif melodic:
             print("（旋律のパートの名前を melody にすると、旋律が埋もれていないかも確かめる）")
     # 無音の区間（1 小節以上ほぼ無音）が途中にないか

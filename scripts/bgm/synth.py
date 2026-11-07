@@ -513,6 +513,12 @@ def get_patch(name: str, brr: bool = True) -> Patch:
         patch = _drum(name, seed) if name in DRUM_NAMES else BUILDERS[name](seed)
         x = patch.sample.data
         x = x / (np.max(np.abs(x)) + 1e-9) * 0.95
+        if patch.sample.loop_start is None and patch.sample.base_freq > 0:
+            # 音程のある 1 回読み切りのサンプル（撥弦など）は、最後の 25% でなめらかに 0 まで下げる。
+            # 鳴り切る前にサンプルが終わると、長い音の終わりで「ぷつっ」と切れて聞こえるため
+            n_f = len(x) // 4
+            x = x.copy()
+            x[-n_f:] *= 0.5 + 0.5 * np.cos(np.linspace(0, np.pi, n_f))
         if brr:
             x = brr_roundtrip(x)
         patch.sample = Sample(x.astype(np.float64), patch.sample.loop_start, patch.sample.base_freq)
