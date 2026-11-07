@@ -237,7 +237,7 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 ### 部品で描くタイル（`tiles/<タイルセット>/<種類>_dual.png`・`_edge.png`）
 
 1 種類 1 枚の画像を敷き詰めるのをやめ、境目や端の部品を組み合わせて描く（仕組みは `src/data/mapParts.ts`、作り方は [`map-composition` スキル](../../.claude/skills/map-composition/SKILL.md)）。
-最初に商人の町（shoka: 名古屋・浜松・大坂）で作った。マップの文字（rows）は変えていない。
+最初に商人の町（shoka: 名古屋・浜松・大坂）で作った。部品を作ったときはマップの文字（rows）を変えず、後で通れるマス（地面・草・道）だけを塗り直して配置を整えた（家の前と間を地面に、裏庭の草を互い違いのかたまりにした。浜松は南の河原に草地を足して街道を 2 マス延ばし、大坂は船場の空き地と道頓堀の南の草地の一部を地面にした。通れるかの形は変えていない）。
 
 地形の境目（dual）: `create_topdown_tileset`（mode `pro`、tile_size 16、transition_size 0、view high top-down）。`scripts/mapkit/wang_sheet.py <ID> <出力>` で 4 × 4 のシートに並べ、下の地形を透明にした。4 組とも 1 回目で採用。
 
