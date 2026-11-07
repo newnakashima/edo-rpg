@@ -136,6 +136,31 @@ describe('部品で描くタイル', () => {
     expect(town).toContainEqual({ key: 'tile-miyako-door', x: 4 * T, y: T });
   });
 
+  it('江戸の長屋（nagaya）は 草 → 道 → 水 → 森 の順に重ね、森の下に草を敷き、屋根・壁は端の部品、戸は nagaya の 1 枚の画像', () => {
+    const key = (kind: TileKind) => partsTextureKey('nagaya', kind);
+    const images = mapTileImages(map(['.~,T', '.~,T'], 'nagaya'), T);
+    const order = images.map((i) => i.key).filter((k) => k.startsWith('parts-'));
+    for (const kind of ['grass', 'water', 'tree'] as const) expect(order.indexOf(key(kind)), kind).toBeGreaterThanOrEqual(0);
+    expect(order.lastIndexOf(key('grass'))).toBeLessThan(order.indexOf(key('water')));
+    expect(order.lastIndexOf(key('water'))).toBeLessThan(order.indexOf(key('tree')));
+    // 草と森の間（x = 2 と 3 の間）は全面が草（草の joins に森）、水と草の間は右半分だけ草
+    const grassAt = (px: number) => images.find((i) => i.key === key('grass') && i.x === px && i.y === T / 2);
+    expect(grassAt(2 * T + T / 2)?.frame).toBe(15);
+    expect(grassAt(T + T / 2)?.frame).toBe(dualMask(false, true, false, true));
+    // 森のマスの下には草、水のマスの下には地面
+    expect(images).toContainEqual({ key: 'tile-grass', x: 3 * T, y: 0 });
+    expect(images).toContainEqual({ key: 'tile-ground', x: T, y: 0 });
+
+    const town = mapTileImages(map([',=~RR', ',=~WD'], 'nagaya'), T);
+    const townOrder = town.map((i) => i.key).filter((k) => k.startsWith('parts-'));
+    expect(townOrder.lastIndexOf(key('grass'))).toBeLessThan(townOrder.indexOf(key('road')));
+    expect(townOrder.lastIndexOf(key('road'))).toBeLessThan(townOrder.indexOf(key('water')));
+    const at = (k: string, x: number, y: number) => town.find((i) => i.key === k && i.x === x * T && i.y === y * T)?.frame;
+    expect(at(key('roof'), 3, 0)).toBe(edgeMask(true, true, false, false));
+    expect(at(key('wall'), 3, 1)).toBe(edgeMask(false, true, true, false));
+    expect(town).toContainEqual({ key: 'tile-nagaya-door', x: 4 * T, y: T });
+  });
+
   it('山里（sato）は 草 → 道 → 水 → 岩 → 森 の順に重ね、修練場の岩の下に草を敷き、板塀（壁の縦の列）と道場の床を描く', () => {
     const key = (kind: TileKind) => partsTextureKey('sato', kind);
     const images = mapTileImages(map(['.~^T,', '.~^T,'], 'sato'), T);
