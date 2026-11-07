@@ -163,6 +163,18 @@ export const TILE_PARTS: Partial<Record<TilesetId, Partial<Record<TileKind, Part
     wall: { rule: 'edge' },
   },
   /**
+   * からくりの工場（からくり屋敷・米蔵の地下・地下の研究所・からくり蔵）。廊下の石畳（ground。板の床の組の lower と同じ絵に差し替えた）の上に、
+   * 部屋の一段高い板の床（floor）→ 石の縁の水路（water）の順に重ねる。道（=）は米蔵の地下で水路を渡る欄干付きの板橋（kura と同じ部品）。
+   * 壁は鋲を打った鉄の帯の板壁、機械（roof の文字）は歯車の見える箱で、どちらも天端と正面を 1 枚の絵から切り出した。記録は public/assets/README.md。
+   */
+  karakuri: {
+    floor: { rule: 'dual', under: 'ground' },
+    water: { rule: 'dual', under: 'ground' },
+    road: { rule: 'edge', joins: ['ground', 'floor'] },
+    wall: { rule: 'edge' },
+    roof: { rule: 'edge' },
+  },
+  /**
    * 野山（清水湊の裏山・原城跡）。草・森は shoka と同じ部品。水は川石の岸の沢（原城跡では海にも使う）、
    * 岩は草の上の岩場（原城跡では崩れた石垣の列）。水・岩・森の下にも草を敷いて、縁を草でつなぐ。記録は public/assets/README.md。
    */

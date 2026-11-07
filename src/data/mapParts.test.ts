@@ -341,6 +341,34 @@ describe('部品で描くタイル', () => {
     for (const x of [0, 1, 3]) expect(wall(x), `x = ${x}`).toBe(edgeMask(true, true, false, true));
   });
 
+  it('からくりの工場（karakuri）は 板の床 → 水路 の順に石畳の上へ重ね、橋は石畳・板の床を仲間にし、壁と機械は端の部品', () => {
+    // 上の行が壁。2 行目は板の床と石畳、3 行目は水路を渡る橋（上は板の床、下は石畳）、4 行目は 1 マスの機械と、右端の縦 2 マスの機械（下は 5 行目）
+    const rows = ['WWWWW', '__._.', '~=~~.', '..R.R', '....R'];
+    const images = mapTileImages(map(rows, 'karakuri'), T);
+    const order = images.map((i) => i.key).filter((k) => k.startsWith('parts-'));
+    const key = (kind: TileKind) => partsTextureKey('karakuri', kind);
+    expect(order.indexOf(key('floor'))).toBeGreaterThanOrEqual(0);
+    expect(order.lastIndexOf(key('floor'))).toBeLessThan(order.indexOf(key('water')));
+    // 板の床・水路のマスの下は石畳の 1 枚
+    expect(images).toContainEqual({ key: 'tile-karakuri-ground', x: 0, y: T });
+    expect(images).toContainEqual({ key: 'tile-karakuri-ground', x: 0, y: 2 * T });
+    expect(TILESETS.karakuri).toContain('ground');
+    const dualAt = (kind: TileKind, x: number, y: number) =>
+      images.find((i) => i.key === key(kind) && i.x === x * T + T / 2 && i.y === y * T + T / 2)?.frame;
+    // 水路の縁は石畳・板の床・橋の側に出る
+    expect(dualAt('water', 2, 1)).toBe(dualMask(false, false, true, true));
+    expect(dualAt('water', 1, 1)).toBe(dualMask(false, false, false, true));
+    // 橋は上の板の床・下の石畳を仲間とみなすので、欄干は水路の側（左右）にだけ出る
+    const edgeAt = (kind: TileKind, x: number, y: number) => images.find((i) => i.key === key(kind) && i.x === x * T && i.y === y * T)?.frame;
+    expect(edgeAt('road', 1, 2)).toBe(edgeMask(true, false, true, false));
+    // 壁の左右の端はマップの外を仲間とみなし、南（板の床・石畳の側）に正面が出る
+    for (const x of [0, 4]) expect(edgeAt('wall', x, 0), `x = ${x}`).toBe(edgeMask(true, true, false, true));
+    // 機械は 1 マスなら四辺すべてが端、縦 2 マスなら上下でつながる（右はマップの外なので仲間）
+    expect(edgeAt('roof', 2, 3)).toBe(edgeMask(false, false, false, false));
+    expect(edgeAt('roof', 4, 3)).toBe(edgeMask(false, true, true, false));
+    expect(edgeAt('roof', 4, 4)).toBe(edgeMask(true, true, true, false));
+  });
+
   it('ワールドマップ（field）は 街道 → 海 → 山 → 森 の順に野の上へ重ね、町・関所の印は街道の上に描いて、街道を印の下まで続ける', () => {
     // 左から野・街道・町・街道・関所・海・山・森
     const images = mapTileImages(map(['"=O=G~^T', '"=O=G~^T'], 'field'), T);
