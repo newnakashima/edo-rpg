@@ -212,7 +212,7 @@ describe('部品で描くタイル', () => {
     expect(fanAt(2, 2)).toBe(edgeMask(true, false, false, true));
   });
 
-  it('雪の町（snow）は 草 → 道 → 水 → 岩 → 森 の順に雪の地面の上へ重ね、岩・森の下も雪で、屋根・壁は端の部品、戸は snow の 1 枚の画像', () => {
+  it('雪の町（snow）は 草 → 道 → 水 → 岩 → 森 の順に雪の地面の上へ重ね、岩・森の下も雪で、草は道・岩・森を仲間にしない', () => {
     const key = (kind: TileKind) => partsTextureKey('snow', kind);
     const images = mapTileImages(map([',=~^T', ',=~^T'], 'snow'), T);
     const order = images.map((i) => i.key).filter((k) => k.startsWith('parts-'));
@@ -223,8 +223,15 @@ describe('部品で描くタイル', () => {
     expect(order.lastIndexOf(key('rock'))).toBeLessThan(order.indexOf(key('tree')));
     // どのマスの下にも雪の地面（草は岩・森を仲間にしないので、岩と森の間に草の縁は出ない）
     for (const x of [0, 1, 2, 3, 4]) expect(images).toContainEqual({ key: 'tile-snow-ground', x: x * T, y: 0 });
-    expect(images.some((i) => i.key === key('grass') && i.x === 3 * T + T / 2)).toBe(false);
+    // 草は道も仲間にしないので、草と道の境目では左半分だけが草。岩と森の間には草の縁が出ない
+    const grassAt = (px: number) => images.find((i) => i.key === key('grass') && i.x === px && i.y === T / 2);
+    expect(grassAt(T / 2)?.frame).toBe(dualMask(true, false, true, false));
+    expect(grassAt(T + T / 2)).toBeUndefined();
+    expect(grassAt(3 * T + T / 2)).toBeUndefined();
+  });
 
+  it('雪の町（snow）の屋根・壁は端の部品で、壁は戸を仲間にし、戸は snow の 1 枚の画像', () => {
+    const key = (kind: TileKind) => partsTextureKey('snow', kind);
     const town = mapTileImages(map(['.RRR.', '.WDW.', '.....'], 'snow'), T);
     const at = (k: string, x: number, y: number) => town.find((i) => i.key === k && i.x === x * T && i.y === y * T)?.frame;
     expect(at(key('roof'), 1, 0)).toBe(edgeMask(true, true, false, false)); // 上はマップの外（仲間とみなす）
