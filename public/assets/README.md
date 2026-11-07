@@ -518,6 +518,23 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 
 残る点: 甲板の広い面は同じ板の柄の繰り返し（柄違いの仕組みがまだない）。船の外形は rows の形どおりの階段で、外側の縁は段のまま（斜めの段は船べりの帯でつないだ）。屋根の苫の中の段には縄の帯がなく、縄は棟の上にだけ見える。
 
+#### 大火の町（fire: 神田の大火）
+
+屋根・壁・地面・がれきがすべて 1 枚の柄の敷き詰めで、炎の屋根が格子に並び、地面とがれき・屋根の境に縁がなかった。焼け跡の地面（`fire/ground.png`。がれきの組の lower のタイル ebea3dbf-6c90-496c-b530-001bec2ae730 に差し替えた。`wang_sheet.py <ID> <出力> --keep-lower` で並べたシートのマスク 0 のコマ（左上の 16 × 16）を切り出した。透明にしたシートのマスク 0 は全面が透明）の上に がれき（岩の文字）を境目の部品（dual）で重ね、燃える長屋の屋根・焦げた板壁を端の部品（edge）で描く。壁は外周の塀にも使う。
+`fire/roof.png`・`wall.png`・`rock.png` は描画に使われなくなった（`TILESETS` に残して読み込みは続ける）。
+
+マップの文字は、高さ 3 段以上の屋根の、下が屋根でない横の並び（3 マス以上で、どのマスも上に屋根が 2 段以上続くもの）を壁にしただけ（134 マス。屋根も壁も通れないので、通れるかは変わらない）。5 段の屋根が壁 1 段の上に載り、炎の柄が広い面に並んで見えたため、家を屋根 2〜4 段・壁 1〜2 段に分けた。
+
+| 部品 | ID と設定 | 判定 |
+| --- | --- | --- |
+| fire/rock_dual（がれき） | 4070d6a8-b607-4f1f-8284-98828a6dfa6f（pro、boundary_amplitude 0.2、raggedness 0.5）。lower: scorched ash-grey burnt ground of an Edo period town after a great fire, dark grey packed earth with soft lighter ash patches and a few tiny black cinders, plain and even, seen from above。upper: pile of collapsed charred black wooden beams and burnt timber rubble seen from above, crossed blackened planks with a few small glowing orange embers in the cracks, irregular heap with a dark outline and dark shadow at the edge | 3 回目（部分修正）で採用。1 回目は山のまわりの透明な側に黒い点が多く散らばった。2 回目は Pillow で、角の象限から 3 px より離れた画素、4 方向のうち 3 方向以上が透明な画素（2 回）、upper の象限の辺に接しない 8 画素未満のかたまりを消したが、小さな欠片が残った。3 回目は距離を 2 px、かたまりを 24 画素未満にして消した（山につながった灰色の影は残る） |
+| fire/roof_edge（燃える板葺き） | `create_image_pro`（64 × 48、不透明、16 候補）e3aacd7b-d3fb-4888-a7f7-7d0b36b47fc3 の候補 3 を加工した写し（64 × 47）: 上の空の帯（y = 0〜4）を落として y = 5〜47 を y = 4 から置き、残った空の色の画素を下の板の色で埋め、y = 0〜3 に棟（輪郭・明るい上面・梁・影、火の粉を 5 点）を描き、屋根の左右の 3 列を破風の輪郭と暗い色にした | `--cols 0,24,48 --rows 0,6,9`（写しの座標。屋根は y = 0〜24）。2 回目（部分修正）で採用。1 回目は棟がなく上に暗い空が入り、壁の両端に柱がなかった。中の列は x = 16・24・32 を並べて比べ、炎が最もまばらで並んで見えにくい 24 にした |
+| fire/wall_edge（焦げた板壁） | 同じ写し。壁の左右の 4 列に柱（輪郭・明るい面・暗い面・影）を描いた | `--cols 0,24,48 --rows 25,27,31`（壁は y = 25〜46 の 1 段） |
+
+プロンプト（燃える長屋）: JRPG town map tile art, 16-bit SNES style. A flat straight-on FRONT ELEVATION of a long Edo period Japanese nagaya row house that is ON FIRE during a great fire, drawn as a perfect rectangle filling the entire 64x48 canvas: every row of pixels touches the left and right canvas edges, no perspective, no side wall, no slanted sides. Top 30 pixel rows: dark charred grey-brown wooden shingle board roof in clearly visible straight horizontal rows, with orange and yellow flames licking up from the roof boards and glowing red embers between the boards, a dark straight ridge line along the full width of the very top row, a straight eave with a dark shadow line along the full width at the bottom of the roof. Bottom 18 pixel rows: scorched blackened vertical wooden plank front wall with faint red glowing cracks, a dark wooden pillar exactly at the far left edge and exactly at the far right edge, a dark base board along the bottom. The wall is one long plain stretch of planks with no door and no window. No ground, no sky, no smoke cloud, no background, muted ukiyo-e palette with fire orange, 1px dark outline.（`no_background: false`）
+
+残る点: 屋根の広い面（南の端の 4 段など）は、同じ炎の柄の繰り返し（柄違いの仕組みがまだない）。焼け跡の地面も同じ柄の繰り返し。がれきの中の材木の模様は 16 px ごとに並ぶ（このマップのがれきはどれも 1 マスなので目立たない）。
+
 #### ワールドマップ（field: 日本）
 
 野（`field/plain.png`）を 4 組で共通の lower のタイル（ad7f8912-40fa-4df5-bb38-d8f2765c9181、マスク 0）に差し替え、その上に街道 → 海 → 山 → 森 の順に境目の部品（dual）を重ねる。4 組とも `lower_base_tile_id` ad7f8912… でつないだ（lower: muted green grassy plain of an old Japanese world map, even flat green field with a few tiny darker green specks, no pattern）。マップの文字は変えていない。

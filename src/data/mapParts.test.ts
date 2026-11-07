@@ -544,9 +544,28 @@ describe('部品で描くタイル', () => {
     expect(images.some((i) => i.key === 'tile-ship-wall' || i.key === 'tile-ship-roof')).toBe(false);
   });
 
+  it('大火の町（fire）は、焼け跡の地面の上にがれきを重ね、燃える屋根と焦げた板壁を端の部品で描き、1 枚の画像を使わない', () => {
+    // 屋根 2 段・壁 1 段の長屋が左の外周の塀に接し、前の焼け跡にがれきが 1 つ
+    const rows = ['WRR.', 'WRR.', 'WWW.', 'W.^.', 'W...'];
+    const images = mapTileImages(map(rows, 'fire'), T);
+    const key = (kind: TileKind) => partsTextureKey('fire', kind);
+    // がれき・屋根・壁のマスの下は焼け跡の地面
+    for (const [x, y] of [[2, 3], [1, 0], [0, 2]] as const) expect(images).toContainEqual({ key: 'tile-fire-ground', x: x * T, y: y * T });
+    // がれきは 1 マスでも 4 枚の角のコマで縁取る
+    expect(images.filter((i) => i.key === key('rock')).map((i) => i.frame).sort((a, b) => a! - b!)).toEqual([1, 2, 4, 8]);
+    const edgeAt = (kind: TileKind, x: number, y: number) => images.find((i) => i.key === key(kind) && i.x === x * T && i.y === y * T)?.frame;
+    // 屋根の右上は、上（マップの外）と左だけが仲間。壁は屋根を仲間とみなさず、屋根の下で棟と軒が切れる
+    expect(edgeAt('roof', 2, 0)).toBe(edgeMask(true, false, true, true));
+    expect(edgeAt('roof', 1, 1)).toBe(edgeMask(true, true, false, false));
+    // 外周の塀の縦の列は、壁の段とつながる
+    expect(edgeAt('wall', 0, 2)).toBe(edgeMask(true, true, true, true));
+    expect(edgeAt('wall', 2, 2)).toBe(edgeMask(false, false, false, true));
+    expect(images.some((i) => ['tile-fire-roof', 'tile-fire-wall', 'tile-fire-rock'].includes(i.key))).toBe(false);
+  });
+
   it('部品の決まりがないタイルセットは、今までどおり 1 種類 1 枚で描く', () => {
-    const images = mapTileImages(map(['.T~', 'RWD'], 'fire'), T);
-    expect(images.map((i) => i.key)).toEqual(['tile-fire-ground', 'tile-tree', 'tile-water', 'tile-fire-roof', 'tile-fire-wall', 'tile-door']);
+    const images = mapTileImages(map(['.T~', 'RWD'], 'castle'), T);
+    expect(images.map((i) => i.key)).toEqual(['tile-ground', 'tile-tree', 'tile-water', 'tile-roof', 'tile-castle-wall', 'tile-door']);
     expect(images.every((i) => i.frame === undefined)).toBe(true);
   });
 });

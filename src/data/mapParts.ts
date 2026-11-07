@@ -200,6 +200,15 @@ export const TILE_PARTS: Partial<Record<TilesetId, Partial<Record<TileKind, Part
     roof: { rule: 'edge', under: 'floor' },
   },
   /**
+   * 大火の町（神田の大火）。焼け跡の地面（ground。がれきの組の lower と同じ絵に差し替えた）の上に、焼け落ちた材木のがれき（rock）を重ねる。
+   * 屋根・壁は燃える長屋の絵から切り出した（屋根は炎の上がる板葺き、壁は焦げた板壁で、外周の塀にも使う）。記録は public/assets/README.md。
+   */
+  fire: {
+    rock: { rule: 'dual', under: 'ground' },
+    roof: { rule: 'edge', under: 'ground' },
+    wall: { rule: 'edge', under: 'ground' },
+  },
+  /**
    * 野山（清水湊の裏山・原城跡）。草・森は shoka と同じ部品。水は川石の岸の沢（原城跡では海にも使う）、
    * 岩は草の上の岩場（原城跡では崩れた石垣の列）。水・岩・森の下にも草を敷いて、縁を草でつなぐ。記録は public/assets/README.md。
    */
