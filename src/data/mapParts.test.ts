@@ -120,6 +120,44 @@ describe('部品で描くタイル', () => {
     expect(allPartsImages().map((p) => p.key)).not.toContain(parts('town'));
   });
 
+  it('over の印（ワールドマップの町・関所）の画像は、背景が透明（不透明だと街道の上に四角が出る）', async () => {
+    const files = import.meta.glob<string>('../../public/assets/tiles/field/{town,gate}.png', { eager: true, query: '?inline', import: 'default' });
+    // 8 bit の RGBA の PNG を展開して、アルファが 0 の画素の数を数える
+    const transparentPixels = async (url: string): Promise<number> => {
+      const bytes = Uint8Array.from(atob(url.split(',')[1]!), (c) => c.charCodeAt(0));
+      const view = new DataView(bytes.buffer);
+      const [width, height, depth, colorType] = [view.getUint32(16), view.getUint32(20), bytes[24], bytes[25]];
+      expect([depth, colorType]).toEqual([8, 6]);
+      const idat: Uint8Array[] = [];
+      for (let p = 8; p < bytes.length; ) {
+        const len = view.getUint32(p);
+        if (String.fromCharCode(...bytes.slice(p + 4, p + 8)) === 'IDAT') idat.push(bytes.slice(p + 8, p + 8 + len));
+        p += 12 + len;
+      }
+      const raw = new Uint8Array(await new Response(new Blob(idat as BlobPart[]).stream().pipeThrough(new DecompressionStream('deflate'))).arrayBuffer());
+      const stride = width * 4;
+      const out = new Uint8Array(stride * height);
+      for (let y = 0; y < height; y++) {
+        const filter = raw[y * (stride + 1)]!;
+        for (let i = 0; i < stride; i++) {
+          const x = raw[y * (stride + 1) + 1 + i]!;
+          const a = i >= 4 ? out[y * stride + i - 4]! : 0;
+          const b = y > 0 ? out[(y - 1) * stride + i]! : 0;
+          const c = i >= 4 && y > 0 ? out[(y - 1) * stride + i - 4]! : 0;
+          const pa = Math.abs(b - c), pb = Math.abs(a - c), pc = Math.abs(a + b - 2 * c);
+          const pred = [0, a, b, (a + b) >> 1, pa <= pb && pa <= pc ? a : pb <= pc ? b : c][filter]!;
+          out[y * stride + i] = (x + pred) & 0xff;
+        }
+      }
+      let count = 0;
+      for (let i = 3; i < out.length; i += 4) if (out[i] === 0) count++;
+      return count;
+    };
+    expect(Object.keys(files)).toHaveLength(2);
+    // 16 × 16 のうち、印のまわりの半分以上が透明
+    for (const [file, url] of Object.entries(files)) expect(await transparentPixels(url), file).toBeGreaterThan(128);
+  });
+
   it('dual の地形は、マスに下の地面を敷き、境目に半マスずらして重ねる', () => {
     // 3 × 3 の真ん中だけ水
     const images = mapTileImages(map(['...', '.~.', '...']), T);
