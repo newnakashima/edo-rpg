@@ -175,6 +175,20 @@ export const TILE_PARTS: Partial<Record<TilesetId, Partial<Record<TileKind, Part
     roof: { rule: 'edge' },
   },
   /**
+   * 廃墟（羅生門跡・鬼の巣・南蛮寺跡）。共通の地面の上に、草 → 石畳（floor）→ 池 → がれき（rock）→ 森 の順に重ねる。
+   * 草・森は shoka、池・がれきは yama と同じ部品（池・がれき・森の下と縁は草）。石畳は割れて苔の生えた寺の敷石で、地面との境に縁石がある。
+   * 屋根・壁は荒れ寺の絵から切り出した（壁は築地塀にも使う）。記録は public/assets/README.md。
+   */
+  ruins: {
+    grass: { rule: 'dual', under: 'ground', joins: ['tree', 'rock', 'water'] },
+    floor: { rule: 'dual', under: 'ground' },
+    water: { rule: 'dual', under: 'grass' },
+    rock: { rule: 'dual', under: 'grass' },
+    tree: { rule: 'dual', under: 'grass' },
+    roof: { rule: 'edge', under: 'ground' },
+    wall: { rule: 'edge', under: 'ground' },
+  },
+  /**
    * 野山（清水湊の裏山・原城跡）。草・森は shoka と同じ部品。水は川石の岸の沢（原城跡では海にも使う）、
    * 岩は草の上の岩場（原城跡では崩れた石垣の列）。水・岩・森の下にも草を敷いて、縁を草でつなぐ。記録は public/assets/README.md。
    */
