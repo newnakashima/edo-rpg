@@ -218,7 +218,7 @@ export const TILE_PARTS: Partial<Record<TilesetId, Partial<Record<TileKind, Part
     grass: { rule: 'dual', under: 'floor', joins: ['tree', 'water'] },
     water: { rule: 'dual', under: 'grass' },
     tree: { rule: 'dual', under: 'grass' },
-    roof: { rule: 'edge', under: 'floor' },
+    roof: { rule: 'edge' },
     wall: { rule: 'edge' },
   },
   /**

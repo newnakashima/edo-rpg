@@ -568,9 +568,10 @@ describe('部品で描くタイル', () => {
     const rows = ['RR_RR', 'WWWWW', 'W,~,W', 'W,T,W', 'W___W'];
     const images = mapTileImages(map(rows, 'castle'), T);
     const key = (kind: TileKind) => partsTextureKey('castle', kind);
-    // 屋根の下は板の間（端の透明な所から見える）、草の下も板の間、池・森の下は草
-    for (const [x, y] of [[0, 0], [1, 2], [2, 4]] as const) expect(images).toContainEqual({ key: 'tile-castle-floor', x: x * T, y: y * T });
-    expect(images).toContainEqual({ key: 'tile-castle-floor', x: 2 * T, y: 0 });
+    // 板の道と草の下は板の間、池・森の下は草（castle に草の 1 枚の画像はないので共通の草）。屋根の部品は不透明なので下に何も敷かない
+    for (const [x, y] of [[2, 0], [1, 2], [2, 4]] as const) expect(images).toContainEqual({ key: 'tile-castle-floor', x: x * T, y: y * T });
+    for (const [x, y] of [[2, 2], [2, 3]] as const) expect(images).toContainEqual({ key: 'tile-grass', x: x * T, y: y * T });
+    expect(images.some((i) => i.x === 0 && i.y === 0 && i.key !== key('roof'))).toBe(false);
     const edgeAt = (kind: TileKind, x: number, y: number) => images.find((i) => i.key === key(kind) && i.x === x * T && i.y === y * T)?.frame;
     // 屋根は板の道の側で端が出て、下の壁を仲間とみなさない。壁は屋根を仲間とみなさず、外周の列と横の段がつながる
     expect(edgeAt('roof', 1, 0)).toBe(edgeMask(true, false, false, true));
