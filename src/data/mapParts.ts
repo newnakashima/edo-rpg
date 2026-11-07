@@ -75,6 +75,19 @@ export const TILE_PARTS: Partial<Record<TilesetId, Partial<Record<TileKind, Part
     wall: { rule: 'edge', under: 'ground', joins: ['door'] },
   },
   /**
+   * 京の町家（京）。草・道・水・森は shoka と同じ部品（鴨川は石の護岸の川）、岩（寺の庭石・北の山の岩）は yama の岩場の部品で、
+   * 下に草を敷いて草の縁でつなぐ。屋根・壁は灰の瓦と紅殻格子の町家の絵から切り出した。記録は public/assets/README.md。
+   */
+  miyako: {
+    grass: { rule: 'dual', under: 'ground', joins: ['tree', 'rock'] },
+    road: { rule: 'dual', under: 'ground' },
+    water: { rule: 'dual', under: 'ground' },
+    rock: { rule: 'dual', under: 'grass' },
+    tree: { rule: 'dual', under: 'grass' },
+    roof: { rule: 'edge', under: 'ground' },
+    wall: { rule: 'edge', under: 'ground', joins: ['door'] },
+  },
+  /**
    * 野山（清水湊の裏山・原城跡）。草・森は shoka と同じ部品。水は川石の岸の沢（原城跡では海にも使う）、
    * 岩は草の上の岩場（原城跡では崩れた石垣の列）。水・岩・森の下にも草を敷いて、縁を草でつなぐ。記録は public/assets/README.md。
    */

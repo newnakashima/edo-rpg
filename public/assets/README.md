@@ -321,6 +321,23 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 5 回の上限で 5 回目を採用した。残った ×: 左右対称でない（戸を左に寄せたため。切り出しには影響しない）。作り直しの理由:
 1 回目（22fd3457-59f2-4bcf-9ad9-9a09f95374f6、heavy gate door を指定）は長屋門の絵になり、屋根が上の 4 割しかなく壁の両端に柱がなかった。2 回目（4aaac744-511e-456c-ae6d-e9c707114644、1 回目の候補 14 を参照）は屋根が黒くつぶれて棟と瓦の段が読めず、なまこ壁の白が透明に抜けた候補が多かった。3 回目（0355fd22-5b08-4555-876a-f9ebc0666953、棟・瓦の段・明るい灰を指定）は候補 10 の屋根と壁がよかったが、壁の左右 3 px が透明で、戸の両脇の壁が 14 px しかなく中の部品（16 px）が取れなかった。4 回目（3d91886a-01b9-4344-b0e3-c0b5bdd490b0、3 回目の候補 10 を参照）も同じだったので、5 回目は戸を左に寄せて右半分を無地の壁にした（白い漆喰が透明に抜けなかったのは候補 12 だけ）。
 
+#### 京の町家（miyako: 京）
+
+草・道・水・森は shoka の `grass_dual`・`road_dual`・`water_dual`・`tree_dual` を、岩は yama の `rock_dual` をそのまま複製した（bushi と同じ組み合わせ。地面・草・水はどれも共通の画像なので、境目がそろう）。
+鴨川は石の護岸の川に、岩（`^`）は北の山の岩と寺の庭石に見える。岩の下には草を敷き（`under: 'grass'`）、草の `joins` に岩を入れた。
+屋根・壁・戸は、京町家 1 軒の絵（`create_image_pro`、64 × 48、透過、16 候補、10 generations）から切り出した。1 回目で採用（bushi で分かった「戸を左に寄せて右半分を無地の壁にする」書き方を最初から使った）。
+`miyako/roof.png`・`wall.png` は描画に使われなくなった（`TILESETS` に残して読み込みは続ける）。`miyako/door.png` は同じ絵の戸口に差し替えた。
+
+マップの文字は、通れるマス（草 `,` → 地面 `.`）だけを塗り直した（194 マス。全マスの blocked が変わらないことを確かめた）: 壁・戸の真下の草（家の前）を地面にし、その次の行の草は、家ごとに右・左・中に寄せた 1 つのかたまり（区間の 6 割、3 マス以上）を残して地面にした。寺の五重塔（`RRR`／`RWR`）はそのまま。
+
+| 部品 | ジョブ ID と候補 | 切り方 |
+| --- | --- | --- |
+| miyako/roof_edge | f61358f4-a791-4db3-98db-c0183472a8c4 の候補 0 | `--cols 0,24,48 --rows 0,4,5`（屋根は y = 0〜20。下の行を 6 にすると軒先の下に壁の赤が 1 px 入った） |
+| miyako/wall_edge | 同じ候補 0 | `--cols 0,32,48 --rows 21,27,31`（壁は y = 21〜46 の 1 段。1 段の壁は上の四分の一を y = 21〜28（鴨居）、下の四分の一を y = 39〜46（土台）から取る。中の列は戸の右の無地の紅殻格子 x = 32 から） |
+| miyako/door | 同じ候補 0 | x = 10〜25 の縦を y = 21〜22（鴨居）・25〜36（白い暖簾）・44〜45（土台）でつないだ 16 × 16 |
+
+プロンプト（家）: JRPG town map tile art, 16-bit SNES style, front view seen from above at a 3/4 angle: a long Kyoto machiya townhouse of the Edo period, filling the whole 64x48 canvas edge to edge, fully opaque, no transparent margins on the left or right. Top 22 pixels: dark slate grey rounded kawara roof tiles in clearly visible straight horizontal rows with lighter grey highlights, a ridge line along the very top edge, a straight eave with a dark shadow at the bottom of the roof. Bottom 26 pixels: a long front wall running the full canvas width made of reddish-brown bengara painted fine vertical wooden lattice (bengara-goshi), a dark brown wooden pillar at the far left edge and at the far right edge, dark base board. Only one doorway, 14 pixels wide, near the left side, with a white noren curtain hanging in it; the whole right half of the wall is a long plain uninterrupted stretch of fine red-brown lattice with nothing on it. Straight horizontal rows, no ground, no sky, no background, no signs, no lanterns, no plants, muted ukiyo-e palette, 1px dark outline.
+
 #### ワールドマップ（field: 日本）
 
 野（`field/plain.png`）を 4 組で共通の lower のタイル（ad7f8912-40fa-4df5-bb38-d8f2765c9181、マスク 0）に差し替え、その上に街道 → 海 → 山 → 森 の順に境目の部品（dual）を重ねる。4 組とも `lower_base_tile_id` ad7f8912… でつないだ（lower: muted green grassy plain of an old Japanese world map, even flat green field with a few tiny darker green specks, no pattern）。マップの文字は変えていない。
