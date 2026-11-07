@@ -3,15 +3,6 @@
 今回は音楽・音声を実装しません。後のフェーズで追加するときのために、必要な曲と効果音をまとめます。
 実装時は、ここに挙げたキー（ID）でシーンから再生できるよう、`src/systems/audio.ts` に空の呼び出し口だけ用意しておきます。
 
-## 曲の作り方
-
-スーパーファミコン期の雰囲気を出すため、曲は音楽生成 AI を使わず、AI エージェントが自分で作曲します。
-
-1. [bgm-composition スキル](../.claude/skills/bgm-composition/SKILL.md): コード進行と旋律を曲の設計図（`audio-src/bgm/<ID>.song`）に書き、`scripts/bgm/song.py` で音楽理論の検査を通して MIDI（`audio-src/bgm/<ID>.mid`）に書き出す
-2. [bgm-render スキル](../.claude/skills/bgm-render/SKILL.md): MIDI を `scripts/bgm/render.py` のスーパーファミコン風の音源で鳴らし、Ogg Opus（`public/assets/bgm/<ID>.opus`）に書き出す。ループの位置は Opus のタグ `LOOPSTART` / `LOOPLENGTH` に入る
-
-必要なもの: Python 3.10 以上、numpy、Pillow、ffmpeg（libopus 付き）。
-
 ## 曲（BGM）
 
 | ID | 場面 | 雰囲気 | ループ |
