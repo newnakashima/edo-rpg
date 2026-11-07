@@ -96,6 +96,75 @@ describe('部品で描くタイル', () => {
     expect(bridge(2, 2)).toBe(edgeMask(true, false, false, true));
   });
 
+  it('ワールドマップ（field）は 街道 → 海 → 山 → 森 の順に野の上へ重ね、町・関所の印は街道の上に描いて、街道を印の下まで続ける', () => {
+    // 左から野・街道・町・街道・関所・海・山・森
+    const images = mapTileImages(map(['"=O=G~^T', '"=O=G~^T'], 'field'), T);
+    const order = images.map((i) => i.key);
+    const first = (key: string) => order.indexOf(key);
+    const last = (key: string) => order.lastIndexOf(key);
+    const parts = (kind: TileKind) => partsTextureKey('field', kind);
+    for (const kind of ['road', 'water', 'rock', 'tree'] as const) expect(first(parts(kind)), kind).toBeGreaterThanOrEqual(0);
+    expect(last(parts('road'))).toBeLessThan(first(parts('water')));
+    expect(last(parts('water'))).toBeLessThan(first(parts('rock')));
+    expect(last(parts('rock'))).toBeLessThan(first(parts('tree')));
+    // 印は dual をすべて重ねた後に描き、マスには野を敷く
+    expect(first('tile-field-town')).toBeGreaterThan(last(parts('tree')));
+    expect(first('tile-field-gate')).toBeGreaterThan(last(parts('tree')));
+    for (const x of [1, 2, 4, 5, 6, 7]) expect(images).toContainEqual({ key: 'tile-field-plain', x: x * T, y: 0 });
+    // 街道と町・関所の間は全面が街道（印の手前で道が切れない）。関所と海の間は左半分だけ
+    const roadAt = (px: number) => images.find((i) => i.key === parts('road') && i.x === px && i.y === T / 2)?.frame;
+    expect(roadAt(T + T / 2)).toBe(15);
+    expect(roadAt(3 * T + T / 2)).toBe(15);
+    expect(roadAt(4 * T + T / 2)).toBe(dualMask(true, false, true, false));
+    // 印は部品のシートを持たない（今までどおりの 1 枚の画像）
+    expect(allPartsImages().map((p) => p.key)).not.toContain(parts('town'));
+  });
+
+  it('over の印（ワールドマップの町・関所など）の画像は、背景が透明（不透明だと街道の上に四角が出る）', async () => {
+    const files = import.meta.glob<string>('../../public/assets/tiles/*/*.png', { eager: true, query: '?inline', import: 'default' });
+    // 8 bit の RGBA の PNG を展開して、アルファが 0 の画素の数を数える
+    const transparentPixels = async (url: string): Promise<number> => {
+      const bytes = Uint8Array.from(atob(url.split(',')[1]!), (c) => c.charCodeAt(0));
+      const view = new DataView(bytes.buffer);
+      const [width, height, depth, colorType] = [view.getUint32(16), view.getUint32(20), bytes[24], bytes[25]];
+      expect([depth, colorType]).toEqual([8, 6]);
+      const idat: Uint8Array[] = [];
+      for (let p = 8; p < bytes.length; ) {
+        const len = view.getUint32(p);
+        if (String.fromCharCode(...bytes.slice(p + 4, p + 8)) === 'IDAT') idat.push(bytes.slice(p + 8, p + 8 + len));
+        p += 12 + len;
+      }
+      const raw = new Uint8Array(await new Response(new Blob(idat as BlobPart[]).stream().pipeThrough(new DecompressionStream('deflate'))).arrayBuffer());
+      const stride = width * 4;
+      const out = new Uint8Array(stride * height);
+      for (let y = 0; y < height; y++) {
+        const filter = raw[y * (stride + 1)]!;
+        for (let i = 0; i < stride; i++) {
+          const x = raw[y * (stride + 1) + 1 + i]!;
+          const a = i >= 4 ? out[y * stride + i - 4]! : 0;
+          const b = y > 0 ? out[(y - 1) * stride + i]! : 0;
+          const c = i >= 4 && y > 0 ? out[(y - 1) * stride + i - 4]! : 0;
+          const pa = Math.abs(b - c), pb = Math.abs(a - c), pc = Math.abs(a + b - 2 * c);
+          const pred = [0, a, b, (a + b) >> 1, pa <= pb && pa <= pc ? a : pb <= pc ? b : c][filter]!;
+          out[y * stride + i] = (x + pred) & 0xff;
+        }
+      }
+      let count = 0;
+      for (let i = 3; i < out.length; i += 4) if (out[i] === 0) count++;
+      return count;
+    };
+    // TILE_PARTS で over にした種類の画像を、すべて調べる
+    const overFiles = (Object.entries(TILE_PARTS) as [TilesetId, Partial<Record<TileKind, { rule: string }>>][]).flatMap(([set, defs]) =>
+      Object.entries(defs).filter(([, def]) => def?.rule === 'over').map(([kind]) => `../../public/assets/tiles/${set}/${kind}.png`),
+    );
+    expect(overFiles.length).toBeGreaterThan(0);
+    // 16 × 16 のうち、印のまわりの半分以上が透明
+    for (const file of overFiles) {
+      expect(files[file], file).toBeDefined();
+      expect(await transparentPixels(files[file]!), file).toBeGreaterThan(128);
+    }
+  });
+
   it('dual の地形は、マスに下の地面を敷き、境目に半マスずらして重ねる', () => {
     // 3 × 3 の真ん中だけ水
     const images = mapTileImages(map(['...', '.~.', '...']), T);
