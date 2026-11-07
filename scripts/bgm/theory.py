@@ -172,6 +172,10 @@ def set_spelling(key: "Key") -> None:
     major_tonic = (key.tonic + offset) % 12
     flats = major_tonic in (5, 10, 3, 8, 1, 6)
     PC_NAMES[:] = FLAT_NAMES if flats else SHARP_NAMES
+    if key.mode in ("minor", "minyo", "dorian"):
+        # 短調の導音（D 短調の C#）は # で書く
+        lead = (key.tonic + 11) % 12
+        PC_NAMES[lead] = SHARP_NAMES[lead]
 
 
 def parse_key(text: str) -> Key:
