@@ -10,6 +10,8 @@ import { TILE_KINDS, tileAt, tileTextureKey, type MapDef, type TileKind, type Ti
  *   画像は 4 × 4 枚のシート（public/assets/tiles/<タイルセット>/<種類>_dual.png。scripts/mapkit/wang_sheet.py で作る）。
  * - edge: 構造物（辺の自動タイル）。マスごとに、上下左右が同じ仲間かどうか（N=1, E=2, S=4, W=8）で 16 枚から選ぶ。
  *   屋根の棟・軒先・端、壁の端の柱など。画像は 4 × 4 枚のシート（<種類>_edge.png。scripts/mapkit/slice_parts.py で 9 分割の絵から作る）。
+ * - over: 背景が透明な 1 枚の印（ワールドマップの町・関所）。マスには under を敷き、印は dual をすべて重ねた後に上から描く。
+ *   画像は今までどおりの 1 枚（tiles/<タイルセット>/<種類>.png）。
  */
 export type PartsDef =
   | {
@@ -25,6 +27,11 @@ export type PartsDef =
       under?: TileKind;
       /** 同じ仲間として扱うほかの種類（例: 壁と戸をひと続きの壁にする）。マップの外も仲間とみなす（端で切れて見えるように）。 */
       joins?: readonly TileKind[];
+    }
+  | {
+      rule: 'over';
+      /** このマスに敷く種類。印の透明な所から見える（dual の joins に入れれば、その地形が印の下まで続く）。 */
+      under: TileKind;
     };
 
 /**
@@ -73,13 +80,26 @@ export const TILE_PARTS: Partial<Record<TilesetId, Partial<Record<TileKind, Part
     rock: { rule: 'dual', under: 'ground' },
     road: { rule: 'edge', joins: ['ground'] },
   },
+  /**
+   * ワールドマップ。野（plain。4 組の lower と同じ絵に差し替えた）の上に、街道 → 海 → 山 → 森 の順に重ねる。
+   * 海は砂浜と波打ち際の白い線で陸と分け、山・森は縁に影を落とす。町と関所の印は背景を透明にして街道の上に描き、
+   * 街道は印の下まで続ける（街道の行き止まりの町で、道が印の手前で切れないように）。記録は public/assets/README.md。
+   */
+  field: {
+    road: { rule: 'dual', under: 'plain', joins: ['town', 'gate'] },
+    water: { rule: 'dual', under: 'plain' },
+    rock: { rule: 'dual', under: 'plain' },
+    tree: { rule: 'dual', under: 'plain' },
+    town: { rule: 'over', under: 'plain' },
+    gate: { rule: 'over', under: 'plain' },
+  },
 };
 
 export function partsTextureKey(tileset: TilesetId, kind: TileKind): string {
   return `parts-${tileset}-${kind}`;
 }
 
-export function partsFile(tileset: TilesetId, kind: TileKind, def: PartsDef): string {
+export function partsFile(tileset: TilesetId, kind: TileKind, def: Extract<PartsDef, { rule: 'dual' | 'edge' }>): string {
   return `assets/tiles/${tileset}/${kind}_${def.rule}.png`;
 }
 
@@ -89,7 +109,8 @@ export function allPartsImages(): { key: string; file: string }[] {
   for (const [set, defs] of Object.entries(TILE_PARTS) as [TilesetId, Partial<Record<TileKind, PartsDef>>][]) {
     for (const kind of TILE_KINDS) {
       const def = defs[kind];
-      if (def) list.push({ key: partsTextureKey(set, kind), file: partsFile(set, kind, def) });
+      // over は今までどおりの 1 枚の画像（TILESETS の差し替えで読み込む）なので、部品のシートはない
+      if (def && def.rule !== 'over') list.push({ key: partsTextureKey(set, kind), file: partsFile(set, kind, def) });
     }
   }
   return list;
@@ -137,7 +158,7 @@ export function mapTileImages(map: MapDef, tile: number): TileImage[] {
       const py = y * tile;
       if (!def || !set) {
         images.push({ key: tileTextureKey(set, kind), x: px, y: py });
-      } else if (def.rule === 'dual') {
+      } else if (def.rule === 'dual' || def.rule === 'over') {
         images.push({ key: tileTextureKey(set, def.under), x: px, y: py });
       } else {
         if (def.under) images.push({ key: tileTextureKey(set, def.under), x: px, y: py });
@@ -170,6 +191,13 @@ export function mapTileImages(map: MapDef, tile: number): TileImage[] {
         if (mask === 0) continue;
         images.push({ key: partsTextureKey(set, kind), frame: mask, x: x * tile + tile / 2, y: y * tile + tile / 2 });
       }
+    }
+  }
+  // over の印は、dual をすべて重ねた後に上から描く
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < (map.rows[y]?.length ?? 0); x++) {
+      const kind = kindAt(x, y);
+      if (kind && defs[kind]?.rule === 'over') images.push({ key: tileTextureKey(set, kind), x: x * tile, y: y * tile });
     }
   }
   return images;

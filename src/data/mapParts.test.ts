@@ -96,6 +96,30 @@ describe('部品で描くタイル', () => {
     expect(bridge(2, 2)).toBe(edgeMask(true, false, false, true));
   });
 
+  it('ワールドマップ（field）は 街道 → 海 → 山 → 森 の順に野の上へ重ね、町・関所の印は街道の上に描いて、街道を印の下まで続ける', () => {
+    // 左から野・街道・町・街道・関所・海・山・森
+    const images = mapTileImages(map(['"=O=G~^T', '"=O=G~^T'], 'field'), T);
+    const order = images.map((i) => i.key);
+    const first = (key: string) => order.indexOf(key);
+    const last = (key: string) => order.lastIndexOf(key);
+    const parts = (kind: TileKind) => partsTextureKey('field', kind);
+    for (const kind of ['road', 'water', 'rock', 'tree'] as const) expect(first(parts(kind)), kind).toBeGreaterThanOrEqual(0);
+    expect(last(parts('road'))).toBeLessThan(first(parts('water')));
+    expect(last(parts('water'))).toBeLessThan(first(parts('rock')));
+    expect(last(parts('rock'))).toBeLessThan(first(parts('tree')));
+    // 印は dual をすべて重ねた後に描き、マスには野を敷く
+    expect(first('tile-field-town')).toBeGreaterThan(last(parts('tree')));
+    expect(first('tile-field-gate')).toBeGreaterThan(last(parts('tree')));
+    for (const x of [1, 2, 4, 5, 6, 7]) expect(images).toContainEqual({ key: 'tile-field-plain', x: x * T, y: 0 });
+    // 街道と町・関所の間は全面が街道（印の手前で道が切れない）。関所と海の間は左半分だけ
+    const roadAt = (px: number) => images.find((i) => i.key === parts('road') && i.x === px && i.y === T / 2)?.frame;
+    expect(roadAt(T + T / 2)).toBe(15);
+    expect(roadAt(3 * T + T / 2)).toBe(15);
+    expect(roadAt(4 * T + T / 2)).toBe(dualMask(true, false, true, false));
+    // 印は部品のシートを持たない（今までどおりの 1 枚の画像）
+    expect(allPartsImages().map((p) => p.key)).not.toContain(parts('town'));
+  });
+
   it('dual の地形は、マスに下の地面を敷き、境目に半マスずらして重ねる', () => {
     // 3 × 3 の真ん中だけ水
     const images = mapTileImages(map(['...', '.~.', '...']), T);

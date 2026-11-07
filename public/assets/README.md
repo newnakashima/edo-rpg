@@ -303,6 +303,21 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 
 プロンプト（橋）: JRPG map tile art, 16-bit SNES style, seen from directly above: a straight Edo period Japanese wooden plank footbridge that fills the whole square canvas edge to edge, the bridge runs left to right, weathered brown wooden boards laid side by side running from top to bottom, a dark brown wooden handrail beam along the entire top edge and along the entire bottom edge, symmetric, no water, no ground, no background, muted ukiyo-e palette, 1px dark outline.
 
+#### ワールドマップ（field: 日本）
+
+野（`field/plain.png`）を 4 組で共通の lower のタイル（ad7f8912-40fa-4df5-bb38-d8f2765c9181、マスク 0）に差し替え、その上に街道 → 海 → 山 → 森 の順に境目の部品（dual）を重ねる。4 組とも `lower_base_tile_id` ad7f8912… でつないだ（lower: muted green grassy plain of an old Japanese world map, even flat green field with a few tiny darker green specks, no pattern）。マップの文字は変えていない。
+町（`O`）と関所（`G`）の印は、背景の土色（町 #ae8e68 と草の点、関所はもとの `field/road.png` と同じ画素）を透明にし、新しい決まり `over`（dual をすべて重ねた後に 1 枚の画像を上から描く）で描く。街道の `joins` に町・関所を入れて、道が印の下まで続く（行き止まりの町で道が印の手前で切れない）。
+`field/water.png`・`rock.png`・`tree.png`・`road.png` は描画に使われなくなった（`TILESETS` に残して読み込みは続ける）。
+
+| 部品 | ID と設定 | 判定 |
+| --- | --- | --- |
+| field/water_dual | ef2659d0-70e0-41e2-9c7d-d516aa4fd319（roundness 0.6、boundary_amplitude 0.15、raggedness 0.2）。upper: calm deep indigo blue sea seen from above, a flat even blue water surface with only a very few faint thin pale ripples placed irregularly, the whole sea surface is open water, bordered on all four sides by a narrow pale sandy beach coastline with a thin white foam line | 2 回目で採用。1 回目（0c0fb2d4-596d-4791-8b49-eadf8ec9116f、small scattered white wave crests）は波の印が格子に並び、陸側に濃い緑の点が残ったので、波をかすかにした |
+| field/road_dual | 5c94e6ec-15c8-42ec-85d6-3d3fc9c7ac69（roundness 0.3、boundary_amplitude 0.05）。upper: smooth packed light tan dirt highway road seen from above, a flat even tan earth surface with subtle soft shading and no dots or pebbles, edged by a thin darker brown border line where it meets the grass | 3 回目で採用。1 回目（8276537f-e22e-4d12-a435-711c3a6be728、a few tiny pebbles）は小石の点が格子に並んだ。2 回目（この組）は入り隅（マスク 14）の内側に緑の点が 6 px 残ったので、全面が道のタイル（マスク 15）の同じ位置の画素で置き換えた（3 回目） |
+| field/tree_dual | 9a74de62-86a5-4f5f-8c88-0c99696f0baa（roundness 0.85、boundary_amplitude 0.15、raggedness 0.5）。upper: dense forest of dark green Japanese pine and cedar trees seen from above, many small overlapping round tree crowns of varied sizes, dark outline and shadow at the edge | 1 回目で採用 |
+| field/rock_dual | 65927aed-8c98-4761-925f-840e3914e1b9（roundness 0.8、boundary_amplitude 0.15、raggedness 0.4）。upper: rocky grey-brown mountain highland seen from directly above, an even rough surface of many small irregular crags, little ridges and fine dark cracks, no single large peak and no repeating shapes, dark outline and a dark shadow at the foot where it meets the plain | 5 回の上限で 2 回目を採用。残った ×: 中の丸い岩のかたまりが 16 px ごとに並ぶ（全面が山のタイルが 1 枚なので、どの回も峰が格子に並んだ）。1 回目（d24e7628-1f0b-49ac-8924-e621bd9c6de0、峰が菱形の格子）、3 回目（1fcd95a6-9592-409b-ab0d-8dd5c5d66907、丸いかたまりの格子）、4 回目（a12c271c-b61e-4e18-9163-e9f5642fc5d6、格子は消えたが平らな灰色の台地で山に見えない）、5 回目（12888c3e-1cc2-4d6e-983e-e25ae020c276、小さな峰が列に並び細かすぎる）と比べ、マップに当てはめて山に見えて格子が最も目立たない 2 回目にした。柄違いの仕組みができたら作り直す |
+| field/plain | 4 組で共通の lower（ad7f8912…、マスク 0 のタイル） | 境目の透明な所と野の色がそろう |
+| field/town・gate | もとの画像の背景を透明にしたもの（町は右端の土色の 1 px も消した） | 街道の上に印だけが乗る |
+
 ## 敵（`enemies/`）
 
 `create_image_pixflux`（64 × 64、`no_background: true`、黒の 1px 輪郭、view `side`、medium detail）で 1 体ずつ作る（1 体 1 回）。ボスは 96 × 96 で作る。
