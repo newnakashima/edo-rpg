@@ -338,6 +338,25 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 
 プロンプト（家）: JRPG town map tile art, 16-bit SNES style, front view seen from above at a 3/4 angle: a long Kyoto machiya townhouse of the Edo period, filling the whole 64x48 canvas edge to edge, fully opaque, no transparent margins on the left or right. Top 22 pixels: dark slate grey rounded kawara roof tiles in clearly visible straight horizontal rows with lighter grey highlights, a ridge line along the very top edge, a straight eave with a dark shadow at the bottom of the roof. Bottom 26 pixels: a long front wall running the full canvas width made of reddish-brown bengara painted fine vertical wooden lattice (bengara-goshi), a dark brown wooden pillar at the far left edge and at the far right edge, dark base board. Only one doorway, 14 pixels wide, near the left side, with a white noren curtain hanging in it; the whole right half of the wall is a long plain uninterrupted stretch of fine red-brown lattice with nothing on it. Straight horizontal rows, no ground, no sky, no background, no signs, no lanterns, no plants, muted ukiyo-e palette, 1px dark outline.
 
+#### 山里（sato: 伊賀上野、伊賀者の里、鍵屋の辻）
+
+草・道・水・森は shoka の `grass_dual`・`road_dual`・`water_dual`・`tree_dual` を、岩は yama の `rock_dual` をそのまま複製した（bushi・miyako と同じ組み合わせ）。
+岩（`^`）は伊賀上野では屋敷を囲む石垣、伊賀者の里では修練場の岩に見える。岩の下には草を敷き（`under: 'grass'`）、草の `joins` に岩を入れた（修練場の土の上の岩は、草の縁のついた岩になる）。
+屋根・壁・戸は、茅葺きの農家 1 軒の絵（`create_image_pro`、64 × 48、16 候補、10 generations × 3 回）から切り出した。壁は鍵屋の辻の縦の板塀（壁 1 列）にも使う。伊賀者の里の道場の床（`_`）は共通の 1 枚の画像のまま。
+`sato/roof.png`・`wall.png` は描画に使われなくなった（`TILESETS` に残して読み込みは続ける）。`sato/door.png` は同じ絵の戸口に差し替えた。
+
+3 回目で採用。作り直しの理由: 1 回目（b2adb85c-c609-4d36-9ef8-5e12f6f43554）はどの候補も斜めから見た家で、左に側面の壁と透明な余白が出て、壁の左端に柱がなかった。2 回目（6992a124-914f-4dfd-9553-48ab0948ddd1、1 回目の候補 2 を参照し、正面の立面図と書いた）は正面になったが、黄土色の土壁が背景として透明に抜けた（bushi の白い漆喰と同じ）。3 回目（f2b193d2-3a38-4d44-89dd-79b878a3da55、2 回目の候補 0 を参照）は `no_background: false` にして全面を不透明にした。
+
+マップの文字は、通れるマス（草 `,` → 地面 `.`）だけを塗り直した（123 マス。全マスの blocked が変わらないことを確かめた）: 屋根の下の壁・戸の真下の草（家の前）を、左右に 1 マスはみ出して地面にし、戸の下の草は 4 マス以内で道か地面に届くときだけ地面の小道にした。
+
+| 部品 | ジョブ ID と候補 | 切り方 |
+| --- | --- | --- |
+| sato/roof_edge | f2b193d2-3a38-4d44-89dd-79b878a3da55 の候補 3 | `--cols 0,24,48 --rows 0,8,11`（屋根は y = 0〜25、棟は y = 0〜6。下の行を 11 にして y = 26 の軒の影まで入れる） |
+| sato/wall_edge | 同じ候補 3 | `--cols 0,32,48 --rows 26,28,32`（壁は y = 26〜47 の 1 段。中の行を 29 にすると y = 29 の影の線が板塀の途中に繰り返し出た。中の列は戸の右の無地の土壁 x = 32 から） |
+| sato/door | 同じ候補 3 | x = 15〜30 の縦を y = 26〜27（鴨居）・32〜43（板戸）・46〜47（土台）でつないだ 16 × 16 |
+
+プロンプト（家、3 回目）: JRPG town map tile art, 16-bit SNES style. A flat straight-on FRONT ELEVATION of a long Iga mountain village farmhouse filling the entire 64x48 canvas edge to edge with no background anywhere: no perspective, no side wall, no gable, perfectly rectangular silhouette, the left and right edges are straight vertical lines. Top 22 pixels: golden-brown thatched straw roof (kayabuki) in straight horizontal layered rows, a dark bound ridge with small rope knots along the very top edge, a straight trimmed eave with a dark shadow line at the bottom of the roof. Bottom 26 pixels: a solid front wall running the full canvas width, painted with textured warm ochre-brown earthen clay plaster (solid colour, clearly visible mud texture) between dark brown wooden posts, a thick dark brown wooden pillar exactly at the far left edge and exactly at the far right edge, a dark wooden base board along the bottom. One dark wooden plank door 14 pixels wide on the left side; the whole right half of the wall is a long plain uninterrupted ochre clay wall. No ground, no sky, no signs, no lanterns, no plants, muted palette, 1px dark outline.（`no_background: false`、参照画像: 2 回目の候補 0）
+
 #### ワールドマップ（field: 日本）
 
 野（`field/plain.png`）を 4 組で共通の lower のタイル（ad7f8912-40fa-4df5-bb38-d8f2765c9181、マスク 0）に差し替え、その上に街道 → 海 → 山 → 森 の順に境目の部品（dual）を重ねる。4 組とも `lower_base_tile_id` ad7f8912… でつないだ（lower: muted green grassy plain of an old Japanese world map, even flat green field with a few tiny darker green specks, no pattern）。マップの文字は変えていない。

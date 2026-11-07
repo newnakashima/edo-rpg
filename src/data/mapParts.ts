@@ -88,6 +88,19 @@ export const TILE_PARTS: Partial<Record<TilesetId, Partial<Record<TileKind, Part
     wall: { rule: 'edge', under: 'ground', joins: ['door'] },
   },
   /**
+   * 山里（伊賀上野・伊賀者の里・鍵屋の辻）。草・道・水・森は shoka と同じ部品、岩（屋敷を囲む石垣・修練場の岩）は yama の岩場の部品で、
+   * 下に草を敷いて草の縁でつなぐ。屋根・壁は茅葺きと土壁の農家の絵から切り出した（壁は鍵屋の辻の板塀にも使う）。記録は public/assets/README.md。
+   */
+  sato: {
+    grass: { rule: 'dual', under: 'ground', joins: ['tree', 'rock'] },
+    road: { rule: 'dual', under: 'ground' },
+    water: { rule: 'dual', under: 'ground' },
+    rock: { rule: 'dual', under: 'grass' },
+    tree: { rule: 'dual', under: 'grass' },
+    roof: { rule: 'edge', under: 'ground' },
+    wall: { rule: 'edge', under: 'ground', joins: ['door'] },
+  },
+  /**
    * 野山（清水湊の裏山・原城跡）。草・森は shoka と同じ部品。水は川石の岸の沢（原城跡では海にも使う）、
    * 岩は草の上の岩場（原城跡では崩れた石垣の列）。水・岩・森の下にも草を敷いて、縁を草でつなぐ。記録は public/assets/README.md。
    */
