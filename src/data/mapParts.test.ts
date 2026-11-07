@@ -286,6 +286,13 @@ describe('部品で描くタイル', () => {
     expect(images.find((i) => i.key === key('wall') && i.x === T && i.y === 0)?.frame).toBe(edgeMask(true, true, false, true));
     expect(TILESETS.interior).toContain('ground');
     expect(TILESETS.interior).toContain('floor');
+    // 畳が土間に直に接する所では、畳の外側に板の間の縁（框）が出る（畳の下も板の間とみなす）
+    const tatami = mapTileImages(map(['....', '.,,.', '.,,.', '....'], 'interior'), T);
+    const at = (kind: TileKind, x: number, y: number) =>
+      tatami.find((i) => i.key === key(kind) && i.x === x * T + T / 2 && i.y === y * T + T / 2)?.frame;
+    expect(at('floor', 0, 1)).toBe(dualMask(false, true, false, true));
+    expect(at('floor', 1, 1)).toBe(dualMask(true, true, true, true));
+    expect(at('grass', 0, 1)).toBe(dualMask(false, true, false, true));
   });
 
   it('洞窟（cave）は 水 → 岩 の順に床の上へ重ね、橋（道）は川と岩壁の側にだけ欄干を出す', () => {
