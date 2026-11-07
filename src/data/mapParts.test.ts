@@ -563,9 +563,31 @@ describe('部品で描くタイル', () => {
     expect(images.some((i) => ['tile-fire-roof', 'tile-fire-wall', 'tile-fire-rock'].includes(i.key))).toBe(false);
   });
 
-  it('部品の決まりがないタイルセットは、今までどおり 1 種類 1 枚で描く', () => {
-    const images = mapTileImages(map(['.T~', 'RWD'], 'castle'), T);
-    expect(images.map((i) => i.key)).toEqual(['tile-ground', 'tile-tree', 'tile-water', 'tile-roof', 'tile-castle-wall', 'tile-door']);
+  it('城の中（castle）は、板の間の上に中庭の草・池・森を重ね、天守の屋根と御殿の壁を端の部品で描き、板の間は 1 枚の画像のまま', () => {
+    // 上の段は屋根の上の板の道、下の段は御殿の壁に囲まれた中庭（草の中に池と木が 1 つずつ）
+    const rows = ['RR_RR', 'WWWWW', 'W,~,W', 'W,T,W', 'W___W'];
+    const images = mapTileImages(map(rows, 'castle'), T);
+    const key = (kind: TileKind) => partsTextureKey('castle', kind);
+    // 板の道と草の下は板の間、池・森の下は草（castle に草の 1 枚の画像はないので共通の草）。屋根の部品は不透明なので下に何も敷かない
+    for (const [x, y] of [[2, 0], [1, 2], [2, 4]] as const) expect(images).toContainEqual({ key: 'tile-castle-floor', x: x * T, y: y * T });
+    for (const [x, y] of [[2, 2], [2, 3]] as const) expect(images).toContainEqual({ key: 'tile-grass', x: x * T, y: y * T });
+    expect(images.some((i) => i.x === 0 && i.y === 0 && i.key !== key('roof'))).toBe(false);
+    const edgeAt = (kind: TileKind, x: number, y: number) => images.find((i) => i.key === key(kind) && i.x === x * T && i.y === y * T)?.frame;
+    // 屋根は板の道の側で端が出て、下の壁を仲間とみなさない。壁は屋根を仲間とみなさず、外周の列と横の段がつながる
+    expect(edgeAt('roof', 1, 0)).toBe(edgeMask(true, false, false, true));
+    expect(edgeAt('wall', 0, 1)).toBe(edgeMask(false, true, true, true));
+    expect(edgeAt('wall', 2, 1)).toBe(edgeMask(false, true, false, true));
+    // 草は池・森を仲間にして縁取るので、中庭の中ほど（池と森の間の角）は草で埋まる
+    const dualAt = (kind: TileKind, x: number, y: number) => images.find((i) => i.key === key(kind) && i.x === x * T + T / 2 && i.y === y * T + T / 2)?.frame;
+    expect(dualAt('grass', 1, 2)).toBe(15);
+    expect(images.some((i) => i.key === key('water'))).toBe(true);
+    expect(images.some((i) => i.key === key('tree'))).toBe(true);
+    expect(images.some((i) => ['tile-roof', 'tile-castle-wall', 'tile-ground', 'tile-water', 'tile-tree'].includes(i.key))).toBe(false);
+  });
+
+  it('タイルセットのないマップは、今までどおり 1 種類 1 枚で描く', () => {
+    const images = mapTileImages({ ...map(['.T~', 'RWD']), tileset: undefined }, T);
+    expect(images.map((i) => i.key)).toEqual(['tile-ground', 'tile-tree', 'tile-water', 'tile-roof', 'tile-wall', 'tile-door']);
     expect(images.every((i) => i.frame === undefined)).toBe(true);
   });
 });
