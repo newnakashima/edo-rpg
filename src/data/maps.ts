@@ -23,8 +23,8 @@ export const TILESETS = {
   cave: ['rock', 'ground', 'water'],
   /**
    * からくりの工場（からくり屋敷・米蔵の地下・研究所・からくり蔵）。地面（.）は廊下の石畳、床（_）は部屋の一段高い板の床、
-   * 屋根の文字は機械の箱に使う。ground・floor は部品（src/data/mapParts.ts）の組の lower・upper と同じ絵に差し替えた。
-   * 壁と機械は部品で描くので、ここに残した wall・roof の 1 枚の画像は描画に使われない（読み込みは続ける）。
+   * 機械（屋根の文字）は歯車の見える箱の部品で描く。ground・floor は部品（src/data/mapParts.ts）の組の lower・upper と同じ絵に差し替えた。
+   * 板の床・壁・機械は部品で描くので、ここに残した floor・wall・roof の 1 枚の画像は描画に使われない（読み込みは続ける）。
    */
   karakuri: ['wall', 'floor', 'roof', 'ground'],
   /**

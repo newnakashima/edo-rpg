@@ -342,11 +342,12 @@ describe('部品で描くタイル', () => {
   });
 
   it('からくりの工場（karakuri）は 板の床 → 水路 の順に石畳の上へ重ね、橋は石畳・板の床を仲間にし、壁と機械は端の部品', () => {
-    // 上の行が壁。2 行目は板の床と石畳、3 行目は水路を渡る橋、4 行目は 1 マスの機械と、右端の縦 2 マスの機械（下は 5 行目）
-    const rows = ['WWWWW', '_.._.', '~=~~.', '..R.R', '....R'];
+    // 上の行が壁。2 行目は板の床と石畳、3 行目は水路を渡る橋（上は板の床、下は石畳）、4 行目は 1 マスの機械と、右端の縦 2 マスの機械（下は 5 行目）
+    const rows = ['WWWWW', '__._.', '~=~~.', '..R.R', '....R'];
     const images = mapTileImages(map(rows, 'karakuri'), T);
     const order = images.map((i) => i.key).filter((k) => k.startsWith('parts-'));
     const key = (kind: TileKind) => partsTextureKey('karakuri', kind);
+    expect(order.indexOf(key('floor'))).toBeGreaterThanOrEqual(0);
     expect(order.lastIndexOf(key('floor'))).toBeLessThan(order.indexOf(key('water')));
     // 板の床・水路のマスの下は石畳の 1 枚
     expect(images).toContainEqual({ key: 'tile-karakuri-ground', x: 0, y: T });
@@ -356,7 +357,8 @@ describe('部品で描くタイル', () => {
       images.find((i) => i.key === key(kind) && i.x === x * T + T / 2 && i.y === y * T + T / 2)?.frame;
     // 水路の縁は石畳・板の床・橋の側に出る
     expect(dualAt('water', 2, 1)).toBe(dualMask(false, false, true, true));
-    // 橋は上下の石畳を仲間とみなすので、欄干は水路の側（左右）にだけ出る
+    expect(dualAt('water', 1, 1)).toBe(dualMask(false, false, false, true));
+    // 橋は上の板の床・下の石畳を仲間とみなすので、欄干は水路の側（左右）にだけ出る
     const edgeAt = (kind: TileKind, x: number, y: number) => images.find((i) => i.key === key(kind) && i.x === x * T && i.y === y * T)?.frame;
     expect(edgeAt('road', 1, 2)).toBe(edgeMask(true, false, true, false));
     // 壁の左右の端はマップの外を仲間とみなし、南（板の床・石畳の側）に正面が出る
