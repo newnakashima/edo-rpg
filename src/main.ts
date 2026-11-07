@@ -5,7 +5,9 @@ import { CharacterSelectScene } from './scenes/CharacterSelectScene';
 import { EndingScene } from './scenes/EndingScene';
 import { FieldScene } from './scenes/FieldScene';
 import { TitleScene } from './scenes/TitleScene';
-import { getState } from './state';
+import { getState, setState } from './state';
+import { MAPS } from './data/maps';
+import { newGame } from './systems/gameState';
 import { bindVirtualPad } from './ui/input';
 import { preventZoomGestures, resetZoomWhenScaled } from './ui/preventZoom';
 import { GAME_HEIGHT, GAME_WIDTH, RENDER_SCALE } from './ui/theme';
@@ -34,5 +36,6 @@ const game = new Phaser.Game({
 
 // 動作確認用: 開発サーバーで ?debug を付けて開いたときだけ、コンソールからゲームを触れるようにする
 if (import.meta.env.DEV && new URLSearchParams(window.location.search).has('debug')) {
-  Object.assign(window, { __game: game, __getState: getState });
+  // __setState・__newGame・__MAPS は scripts/mapkit/map_shot.mjs（マップ全体の撮影）が使う
+  Object.assign(window, { __game: game, __getState: getState, __setState: setState, __newGame: newGame, __MAPS: MAPS });
 }

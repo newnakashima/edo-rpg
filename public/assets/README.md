@@ -234,6 +234,32 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 | 340fba81-a3c9-45e3-bfc2-4452542290f9 | 1). deep indigo blue open sea with small white curling wave crests … 2). calm muted green grassland meadow, very little detail … 3). small mountain seen from above: a pointed brown and grey-green peak with dark ridge lines and a tiny white snow tip … 4). dense forest: several round dark green pine tree crowns packed together … 5). plain packed light brown dirt highway surface … same in every direction … 6). tiny Japanese castle town icon …（不採用） 7). tiny wooden checkpoint barrier gate (sekisho) … 8). harbour water: medium blue water with gentle short white ripples, calmer than the open sea … | 0 → field/water、3 → field/plain、4 → field/rock、6 → field/tree、9 → field/road、13 → field/gate、15 → minato/water・nanban/water・ship/water |
 | e657a957-345a-4032-9db6-42f7159c07da | （頭は overworld map icons … on light brown dirt ground）1). castle town icon: a small white Japanese castle keep (tenshu) in the center with two dark grey roof tiers, clear white walls, bold black outline 2)–4). 天守・家並みの別案（1 回目の町の印は黒っぽい塊で町と読めなかったため作り直した。field/road と共通の town を参照に） | 2 → field/town |
 
+### 部品で描くタイル（`tiles/<タイルセット>/<種類>_dual.png`・`_edge.png`）
+
+1 種類 1 枚の画像を敷き詰めるのをやめ、境目や端の部品を組み合わせて描く（仕組みは `src/data/mapParts.ts`、作り方は [`map-composition` スキル](../../.claude/skills/map-composition/SKILL.md)）。
+最初に商人の町（shoka: 名古屋・浜松・大坂）で作った。マップの文字（rows）は変えていない。
+
+地形の境目（dual）: `create_topdown_tileset`（mode `pro`、tile_size 16、transition_size 0、view high top-down）。`scripts/mapkit/wang_sheet.py <ID> <出力>` で 4 × 4 のシートに並べ、下の地形を透明にした。4 組とも 1 回目で採用。
+
+| 種類 | タイルセット ID | lower / upper（プロンプト） | 設定 |
+| --- | --- | --- | --- |
+| shoka/grass_dual | b6cd5453-8da9-4e5b-990e-c7b923285f34 | packed brown earth ground of a Japanese town, warm brown dirt with a few small dark pebbles / muted green grass lawn with small darker tufts, Edo period Japanese town | boundary_amplitude 0.2、raggedness 0.6 |
+| shoka/road_dual | ae9ba13c-08ed-4119-a937-05de46ebbee0 | （lower 同上）/ light sandy beige main street road of an Edo period town, smooth packed sand with tiny pebbles, slightly raised with a thin darker border | roundness 0.4 |
+| shoka/water_dual | 8bafbe8b-7fc3-48d0-9d28-2fdd2752ce09 | （lower 同上）/ deep indigo blue canal water with small white ripples, edged by a grey stone block embankment wall along the shore | roundness 0.2 |
+| shoka/tree_dual | 98061687-6852-4eff-9798-f09e969d38d7 | muted green grass lawn with small darker tufts, Edo period Japanese town / dense forest of dark green Japanese pine and cedar trees seen from above, overlapping round tree crowns, dark outline and shadow at the edge | boundary_amplitude 0.15 |
+
+構造物（edge）: `create_image_pro`（64 × 48、透過、16 候補）で町家を 1 軒まるごと描き、`scripts/mapkit/slice_parts.py` で屋根・壁を 9 分割して 16 枚に組んだ。戸は同じ絵の戸口を 16 × 16 で切り出し、`shoka/door.png` を差し替えた。
+
+| 部品 | ジョブ ID と候補 | 切り方 |
+| --- | --- | --- |
+| shoka/roof_edge | 0010e2ed-7ddd-4fdd-a5ce-baae41650ef6 の候補 7 | `--cols 0,24,48 --rows 0,4,8`（屋根は y = 0〜23。中の列 x = 24 が横に並べて継ぎ目が出なかった） |
+| shoka/wall_edge | 同じジョブの候補 13 | `--cols 0,40,48 --rows 26,26,26`（漆喰と格子窓が交互に並ぶ。候補 7 の壁は窓ばかりが続いて電車のように見えたため不採用） |
+| shoka/door | 同じジョブの候補 13 | (16, 26) から 16 × 16（藍の暖簾の戸口） |
+
+プロンプト（家）: JRPG town map tile art, 16-bit SNES style, front view seen from above at a 3/4 angle: an Edo period Japanese townhouse that fills the whole canvas edge to edge. Top two thirds: dark charcoal grey kawara roof tiles in neat horizontal rows, a darker roof ridge along the top edge, a straight eave line with a dark shadow at the bottom of the roof. Bottom third: white plaster front wall with dark brown wooden pillars at both ends and a dark wooden lattice window in the middle, dark base board. Straight horizontal rows, symmetric, no ground, no sky, no background, muted ukiyo-e palette, 1px dark outline.
+
+試して使わなかったもの: `create_topdown_tileset` の standard モード（森が網目の模様になった。420c5c42… の pro は雪の森として良い出来だったが、まだ使っていない: 420c5c42-488d-4a8c-a742-20862b409683）、`create_building_kit`（square_topdown でも 24 × 30 の斜めの壁の部品になり、正面向きの家に組めない: 762b0c9e-c68e-4c06-8a1f-dae4b0f712da）。
+
 ## 敵（`enemies/`）
 
 `create_image_pixflux`（64 × 64、`no_background: true`、黒の 1px 輪郭、view `side`、medium detail）で 1 体ずつ作る（1 体 1 回）。ボスは 96 × 96 で作る。

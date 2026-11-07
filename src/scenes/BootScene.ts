@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import { ENEMIES, enemyImageKey } from '../data/enemies';
 import { FACE_IMAGES, faceKey } from '../data/faces';
 import { TILE_KINDS, TILESETS, tileTextureKey, type TilesetId } from '../data/maps';
+import { allPartsImages } from '../data/mapParts';
+import { TILE } from '../ui/theme';
 import { CHAR_FRAME, CHARACTER_SPRITES, FACINGS, OBJECT_DEFS, OBJECT_SPRITES, objectKey, spriteKey, walkAnimKey, walkFrame, WALK_FPS, WALK_FRAMES } from '../data/sprites';
 import { CURSOR_TEXTURE, ICON_IMAGE_SIZE, ICON_TEXTURE, TITLE_TEXTURE, WINDOW_IMAGE_SIZE, WINDOW_SLICES, WINDOW_TEXTURE, windowSliceRects } from '../ui/uiImages';
 
@@ -19,6 +21,8 @@ export class BootScene extends Phaser.Scene {
     for (const [set, kinds] of Object.entries(TILESETS) as [TilesetId, readonly (typeof TILE_KINDS)[number][]][]) {
       for (const kind of kinds) this.load.image(tileTextureKey(set, kind), `assets/tiles/${set}/${kind}.png`);
     }
+    // 部品で描くタイル（src/data/mapParts.ts の TILE_PARTS）。どれも 16 × 16 のコマを並べたシート
+    for (const parts of allPartsImages()) this.load.spritesheet(parts.key, parts.file, { frameWidth: TILE, frameHeight: TILE });
     for (const enemy of Object.values(ENEMIES)) {
       if (enemy.image) this.load.image(enemyImageKey(enemy.id), `assets/enemies/${enemy.id}.png`);
     }
