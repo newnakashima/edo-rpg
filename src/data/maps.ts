@@ -40,8 +40,11 @@ export const TILESETS = {
    * ここに残した wall・floor・rock の 1 枚の画像は描画に使われない（読み込みは続ける。public/assets/README.md の方針どおり残した）。
    */
   ruins: ['wall', 'floor', 'rock'],
-  /** 船の上（北前船）。甲板、船べり、積み荷の俵。水は港の海。 */
-  ship: ['floor', 'wall', 'roof', 'water'],
+  /**
+   * 船の上（北前船）。甲板は船べりの組の lower と同じ絵、戸は屋形の絵の戸口、水は港の海（海の部品の中の柄にも使う）。
+   * 船べり・海・屋形の屋根と積み荷は部品（src/data/mapParts.ts）で描くので、ここに残した wall・roof の 1 枚の画像は描画に使われない（読み込みは続ける）。
+   */
+  ship: ['floor', 'wall', 'roof', 'water', 'door'],
   /**
    * 蔵（堀川の荷蔵）。地面（.）は土間、床（_）は一段高い板敷き。ground・floor は部品（src/data/mapParts.ts）の組の lower・upper と
    * 同じ絵に差し替えた。壁は黒い板の天端と漆喰・腰板の正面の部品で描くので、ここに残した wall の 1 枚の画像は描画に使われない（読み込みは続ける）。

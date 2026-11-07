@@ -498,6 +498,26 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 
 残る点: 南蛮寺跡を囲む岩山・鬼の巣の森の広い面は、全面のタイルの繰り返し（柄違いの仕組みがまだない）。南蛮寺跡の礼拝堂の厚い壁の切れ込み（通れる `_` のくぼみ）は、通れるかが変わるので形を変えていない。
 
+#### 船の上（ship: 北前船）
+
+甲板（`ship/floor.png`）を船べりの組の lower のタイル（1634236d-80ba-4638-82a9-358cc11fe064、マスク 0）に差し替え、その上に 船べり（壁の文字）→ 海 の順に境目の部品（dual）を重ねる。屋形の屋根と積み荷（屋根の文字）は端の部品（edge）、戸（`ship/door.png`。`TILESETS.ship` に足した）は屋形の絵の戸口。マップの文字は変えていない。
+船の外形は斜めの段なので、船べりを edge にすると段ごとに切れて見える。dual にして、斜めのコマ（マスク 6・9）の真ん中を全面のタイル（マスク 15）の画素で幅 11 px の斜めの帯につなぎ、帯の縁を暗い輪郭（#28180e）にした。
+船べりの下には甲板を敷くので、船べりの外側の凸角を丸めると甲板が海の側に見える。海は船べりの後に重ね、船体側の凸角（半径 3 px）と海側の凸角を丸く覆うようにした。
+`ship/wall.png`・`roof.png` は描画に使われなくなった（`TILESETS` に残して読み込みは続ける）。`ship/water.png` は海のマスの下地と、海の部品の中の柄に使う。
+
+| 部品 | ID と設定 | 判定 |
+| --- | --- | --- |
+| ship/wall_dual（船べり） | 85891b8b-88c5-4379-88c1-1c6c8d629a2f（pro、roundness 0.3）。lower: wooden ship deck: long light brown planks running horizontally, thin dark seams, few nail dots, plain and even, seen from above。upper: raised thick dark brown wooden ship gunwale bulwark rail, heavy timber beam seen from above with a lighter top edge highlight, edged by a dark outline and a dark shadow line where it meets the deck | 2 回目（部分修正）で採用。1 回目は透明な側に 1 px の点と、船べりの中に 1 px の穴が残った。Pillow で、透明に 3 方向を囲まれた画素と 4 画素以下のかたまりを消し、3 方向を不透明に囲まれた穴を隣の色で埋め、斜めのコマを帯でつないだ |
+| ship/water_dual（海） | PixelLab を使わず、Pillow で作った。角の組み合わせから船体の形を半マスで決め、凸角を丸め（半径 3 px の opening と closing）、海の側を `ship/water.png` の柄（半マスずらして海のマスの下地とそろえる）で塗り、船体に接する 1 px を白い波（#ecf4f6）、その外の 1 px を白と淡い青（#96bed6）の点にした | 縁は角から幾何学的に描く（pro の水の縁が 1 px の点線になりやすかったため。karakuri の水路で、角の組み合わせから水の形を決め直して縁を描いたのと同じ考え方。ただし karakuri は PixelLab の組を手直ししたもので、ship の海は PixelLab を使っていない） |
+| ship/roof_edge（苫の屋根） | `create_image_pro`（64 × 48、不透明、16 候補）457d2fd6-e805-4b1f-b150-bf9ac733536b の候補 6 を加工した写し（58 × 40）: 左右の灰色の背景を落として x = 3〜60 を切り、棟の y = 0〜4、苫の 1 段の y = 12〜19 を 4 回、軒先の y = 25〜27 を重ね、上の 1 行と左右の 1 列を暗い輪郭にした | `--cols 0,21,42 --rows 0,8,24`（写しの座標。写しの x は元の候補の x − 3）。3 回目（2 回目の候補 6 の部分修正）で採用。1 回目（de62feef-0f8e-4a66-9427-8c944b75d61d、プロンプトは下の「屋形、1 回目」）は全候補で屋根の左右が斜めで、戸が真ん中だった。2 回目（457d2fd6…、下のプロンプト）は戸が左に寄り屋根もほぼ四角になったが、左右の端にまだ背景の灰色が残った |
+| ship/door | 同じ候補 6 の、元の候補（64 × 48）の座標で x = 16〜31、y = 28〜43（屋根の写しとは別に、元の候補から切った） | 引き戸の右の板と取っ手、右の柱 |
+
+プロンプト（屋形、1 回目）: Front view pixel art of a small Japanese wooden deckhouse cabin (yakata) on an Edo period cargo ship, filling the whole canvas edge to edge, no ground and no sky. The upper two thirds is a roof covered with woven straw mats (toma): a dark wooden ridge beam along the very top, straight horizontal rows of golden straw mat with dark rope bands, a dark eave line and shadow at the bottom of the roof. The lower third is a dark brown plank wall with a wooden post at each end; a small dark sliding wooden door is on the left side (x 6 to 18), the right half of the wall is plain planks. Straight horizontal rows, flat frontal view, muted Edo colours, 1px dark outline.
+
+プロンプト（屋形、2 回目）: Front view pixel art of a Japanese wooden deckhouse cabin on an Edo period cargo ship, drawn as a perfect rectangle that fills the whole canvas: every row of pixels touches the left and right canvas edges, no background, no sky, no ground, no slanted sides. Top 32 pixel rows: roof of woven golden straw mats (toma) in straight horizontal rows tied with dark rope bands, a thick dark wooden ridge beam along the full width of the very top row, and a dark eave line with a shadow along the full width at the bottom of the roof. Bottom 16 pixel rows: dark brown plank wall with a wooden post at the far left and far right; one dark sliding wooden door placed at the far left of the wall (x 4 to 18); the whole right half of the wall is plain planks with no door and no window. Flat frontal view, muted Edo colours, 1px dark outline.
+
+残る点: 甲板の広い面は同じ板の柄の繰り返し（柄違いの仕組みがまだない）。船の外形は rows の形どおりの階段で、外側の縁は段のまま（斜めの段は船べりの帯でつないだ）。屋根の苫の中の段には縄の帯がなく、縄は棟の上にだけ見える。
+
 #### ワールドマップ（field: 日本）
 
 野（`field/plain.png`）を 4 組で共通の lower のタイル（ad7f8912-40fa-4df5-bb38-d8f2765c9181、マスク 0）に差し替え、その上に街道 → 海 → 山 → 森 の順に境目の部品（dual）を重ねる。4 組とも `lower_base_tile_id` ad7f8912… でつないだ（lower: muted green grassy plain of an old Japanese world map, even flat green field with a few tiny darker green specks, no pattern）。マップの文字は変えていない。
