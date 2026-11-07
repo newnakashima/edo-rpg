@@ -194,11 +194,11 @@ describe('部品で描くタイル', () => {
     expect(roadOrder.lastIndexOf(key('grass'))).toBeLessThan(roadOrder.indexOf(key('road')));
     expect(roadOrder.lastIndexOf(key('road'))).toBeLessThan(roadOrder.indexOf(key('water')));
 
-    // 出島の塀: 縦の列は上下だけがつながる（左下の (1,2) の下はマップの外で、仲間とみなす）。家の屋根・壁・戸と、門の床（_）は共通の 1 枚の画像
+    // 出島の塀: 縦の列の (1,1) は上下だけがつながる。家の屋根・壁・戸と、門の床（_）は共通の 1 枚の画像
     const town = mapTileImages(map(['~W.RR~', '~W.WD~', '~WW_W~'], 'nanban'), T);
     const at = (k: string, x: number, y: number) => town.find((i) => i.key === k && i.x === x * T && i.y === y * T)?.frame;
     expect(at(key('wall'), 1, 1)).toBe(edgeMask(true, false, true, false));
-    expect(at(key('wall'), 1, 2)).toBe(edgeMask(true, true, true, false)); // 下はマップの外（仲間とみなす）
+    expect(at(key('wall'), 1, 2)).toBe(edgeMask(true, true, true, false)); // 右は (2,2) の壁、下はマップの外（仲間とみなす）
     expect(at(key('roof'), 3, 0)).toBe(edgeMask(true, true, false, false));
     expect(at(key('wall'), 3, 1)).toBe(edgeMask(false, true, false, false));
     expect(town).toContainEqual({ key: 'tile-floor', x: 3 * T, y: 2 * T });
