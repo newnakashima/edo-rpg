@@ -540,6 +540,8 @@ describe('部品で描くタイル', () => {
     // 屋根は端の部品で、マップの外（下）を仲間とみなす
     const roof = images.find((i) => i.key === key('roof') && i.x === T && i.y === 4 * T)?.frame;
     expect(roof).toBe(edgeMask(false, true, true, false));
+    // 船べり・屋根の 1 枚の画像（tile-ship-wall・tile-ship-roof）は描画に使わない
+    expect(images.some((i) => i.key === 'tile-ship-wall' || i.key === 'tile-ship-roof')).toBe(false);
   });
 
   it('部品の決まりがないタイルセットは、今までどおり 1 種類 1 枚で描く', () => {
