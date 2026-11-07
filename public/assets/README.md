@@ -408,6 +408,22 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 
 マップの文字は、会津若松の通れるマス（草 `,` ↔ 地面 `.`）だけを塗り直した（356 マス。全マスで通れるかが変わらないことを確かめた）: 町の中（15〜30 行）の草を雪の地面にし、家並みの間の通りに互い違いの草のかたまりと、南東の屋敷の脇の草地を残した。北の屋敷の周りも地面にし、西の縁と南西に草を残した。南の外れは街道のそばを地面にした。金沢・兼六園の文字は変えていない。
 
+#### 江戸の長屋（nagaya: 江戸）
+
+草・道・水・森は shoka の `grass_dual`・`road_dual`・`water_dual`・`tree_dual` をそのまま複製した（地面・草・水はどれも共通の画像なので、境目がそろう）。水は北の外堀と日本橋川、長屋の脇の小さな水溜め（1 × 2 マス）に使い、どれも石の護岸で縁取られる。
+屋根・壁・戸は、江戸の長屋 1 軒の絵（`create_image_pro`、64 × 48、16 候補、10 generations）から切り出した。1 回目（778225c8-450f-4a4c-a8e6-432818bc1bb6）の候補 4 で全項目 ○。ほかの町で分かった「戸を左に寄せて右半分を無地の壁にする」「`no_background: false`」を最初から使った。壁は大手門の左右の櫓（壁 2 列）にも使う。
+`nagaya/roof.png`・`wall.png` は描画に使われなくなった（`TILESETS` に残して読み込みは続ける）。`nagaya/door.png` は同じ絵の戸口に差し替えた。
+
+マップの文字は、通れるマス（地面 `.` → 草 `,`）だけを塗り直した（194 マス。地面と草はどちらも通れるので、通れるかは変わらない）: 長屋の裏（屋根の上の行）の一部、井戸の脇・大通りの脇の空き地、火消しの番屋の前の広場の南、南の外れに、形と大きさの違う草のかたまりを作った。家の前（壁・戸の真下の行）は地面のまま。
+
+| 部品 | ジョブ ID と候補 | 切り方 |
+| --- | --- | --- |
+| nagaya/roof_edge | 778225c8-450f-4a4c-a8e6-432818bc1bb6 の候補 4 を加工した写し（屋根 y = 0〜20 の左右の端に、1 px の黒い輪郭と、内側 2 px を暗くした破風を描き足した。そのままでは端が中と同じ板の段で、左右の端に見えなかった） | `--cols 0,24,48 --rows 0,4,5`（屋根は y = 0〜20、棟は y = 0〜1、軒の影は y = 19〜20） |
+| nagaya/wall_edge | 同じ候補 4（x = 3〜22 の戸を右の板壁 x = 24〜43 で塗りつぶした写し。そのままでは左端の部品に障子の白い縁が入った） | `--cols 0,32,48 --rows 21,27,32`（壁は y = 21〜47 の 1 段、下の四分の一は土台の y = 40〜47） |
+| nagaya/door | 同じ候補 4 | x = 5〜20 の縦を y = 21〜22（鴨居）・26〜37（障子）・42〜43（敷居）でつないだ 16 × 16 |
+
+プロンプト（家）: JRPG town map tile art, 16-bit SNES style. A flat straight-on FRONT ELEVATION of a long Edo period Japanese nagaya row house in the Kanda district, filling the entire 64x48 canvas edge to edge: no perspective, no side wall, perfectly rectangular silhouette, the roof reaches all four corners of the canvas. Top 22 pixels: grey-brown weathered wooden shingle board roof (itabuki) in clearly visible straight horizontal rows of thin boards with lighter highlights, a dark straight ridge line along the very top edge, a straight eave with a dark shadow line at the bottom of the roof. Bottom 26 pixels: dark brown weathered vertical wooden plank front wall running the full canvas width, a dark wooden pillar exactly at the far left edge and exactly at the far right edge, a dark base board along the bottom. The only door is a white paper shoji sliding door with a thin wooden grid placed at the LEFT, from x=6 to x=18, right next to the left pillar. Everything right of the door, from x=20 to x=62, is one long plain uninterrupted stretch of dark brown vertical wooden planks with nothing on it. No ground, no sky, no signs, no lanterns, no plants, no windows, muted ukiyo-e palette, 1px dark outline.（`no_background: false`）
+
 #### ワールドマップ（field: 日本）
 
 野（`field/plain.png`）を 4 組で共通の lower のタイル（ad7f8912-40fa-4df5-bb38-d8f2765c9181、マスク 0）に差し替え、その上に街道 → 海 → 山 → 森 の順に境目の部品（dual）を重ねる。4 組とも `lower_base_tile_id` ad7f8912… でつないだ（lower: muted green grassy plain of an old Japanese world map, even flat green field with a few tiny darker green specks, no pattern）。マップの文字は変えていない。

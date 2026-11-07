@@ -115,6 +115,18 @@ export const TILE_PARTS: Partial<Record<TilesetId, Partial<Record<TileKind, Part
     wall: { rule: 'edge', under: 'ground', joins: ['door'] },
   },
   /**
+   * 江戸の長屋（江戸）。草・道・水・森は shoka と同じ部品（外堀と日本橋川は石の護岸の堀・川）。
+   * 屋根・壁は灰の板葺きと暗い板壁の長屋の絵から切り出した（壁は大手門の左右の櫓にも使う）。記録は public/assets/README.md。
+   */
+  nagaya: {
+    grass: { rule: 'dual', under: 'ground', joins: ['tree'] },
+    road: { rule: 'dual', under: 'ground' },
+    water: { rule: 'dual', under: 'ground' },
+    tree: { rule: 'dual', under: 'grass' },
+    roof: { rule: 'edge', under: 'ground' },
+    wall: { rule: 'edge', under: 'ground', joins: ['door'] },
+  },
+  /**
    * 雪の町と庭（加賀金沢・兼六園・会津若松）。地面の雪（ground。5 組の lower と同じ絵に差し替えた）の上に、
    * 雪から冬枯れの草がのぞく草地 → 踏み固めた雪道 → 石の縁の川・堀 → 雪をかぶった岩 → 雪の針葉樹の森 の順に重ねる。
    * 森・岩の下も雪なので、草の joins には入れない。屋根・壁は雪の積もった町家の絵から切り出した（壁は兼六園の外周の塀にも使う）。
