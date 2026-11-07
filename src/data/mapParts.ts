@@ -1,0 +1,144 @@
+// マップの見た目を、1 種類 1 枚のタイルではなく、複数の部品を組み合わせて描くための決まり。
+// 通れるかどうか（TILES の blocked）とマップの文字（rows）は変えず、描き方だけを変える。
+// 作り方と使い方は .claude/skills/map-composition/SKILL.md。
+import { TILE_KINDS, tileAt, tileTextureKey, type MapDef, type TileKind, type TilesetId } from './maps';
+
+/**
+ * 部品の組み方。
+ * - dual: 地形の境目（角の自動タイル）。表示のタイルをマスの境目に半マスずらして置き、4 隅の 4 マスがその地形かどうか
+ *   （NW*8 + NE*4 + SW*2 + SE*1）で 16 枚から選ぶ。境目以外の部分は透明で、下の地形の上に重ねる。森・池・山・草むらなど。
+ *   画像は 4 × 4 枚のシート（public/assets/tiles/<タイルセット>/<種類>_dual.png。scripts/mapkit/wang_sheet.py で作る）。
+ * - edge: 構造物（辺の自動タイル）。マスごとに、上下左右が同じ仲間かどうか（N=1, E=2, S=4, W=8）で 16 枚から選ぶ。
+ *   屋根の棟・軒先・端、壁の端の柱など。画像は 4 × 4 枚のシート（<種類>_edge.png。scripts/mapkit/slice_parts.py で 9 分割の絵から作る）。
+ */
+export type PartsDef =
+  | {
+      rule: 'dual';
+      /** この地形のマスの下に敷く種類（境目の透明な部分から見える地面）。 */
+      under: TileKind;
+      /** この地形として扱うほかの種類（例: 森の中の岩も森として縁取る）。 */
+      joins?: readonly TileKind[];
+    }
+  | {
+      rule: 'edge';
+      /** 部品の透明な所（屋根の端の斜めなど）から見える地面。省くと何も敷かない。 */
+      under?: TileKind;
+      /** 同じ仲間として扱うほかの種類（例: 壁と戸をひと続きの壁にする）。マップの外も仲間とみなす（端で切れて見えるように）。 */
+      joins?: readonly TileKind[];
+    };
+
+/**
+ * タイルセットごとに、部品で描く種類。ここにない種類は、今までどおり 1 枚の画像で描く。
+ * dual は書いた順に下から重ねる（例: 草むら → 池 → 森）。
+ */
+export const TILE_PARTS: Partial<Record<TilesetId, Partial<Record<TileKind, PartsDef>>>> = {
+  /** 商人の町（名古屋・浜松・大坂）。記録は public/assets/README.md の「部品で描くタイル」。 */
+  shoka: {
+    grass: { rule: 'dual', under: 'ground', joins: ['tree'] },
+    road: { rule: 'dual', under: 'ground' },
+    water: { rule: 'dual', under: 'ground' },
+    tree: { rule: 'dual', under: 'grass' },
+    roof: { rule: 'edge', under: 'ground' },
+    wall: { rule: 'edge', under: 'ground', joins: ['door'] },
+  },
+};
+
+export function partsTextureKey(tileset: TilesetId, kind: TileKind): string {
+  return `parts-${tileset}-${kind}`;
+}
+
+export function partsFile(tileset: TilesetId, kind: TileKind, def: PartsDef): string {
+  return `assets/tiles/${tileset}/${kind}_${def.rule}.png`;
+}
+
+/** 読み込む部品の画像の一覧（BootScene が使う）。どれも 16 × 16 のコマを 4 × 4 に並べたシート。 */
+export function allPartsImages(): { key: string; file: string }[] {
+  const list: { key: string; file: string }[] = [];
+  for (const [set, defs] of Object.entries(TILE_PARTS) as [TilesetId, Partial<Record<TileKind, PartsDef>>][]) {
+    for (const kind of TILE_KINDS) {
+      const def = defs[kind];
+      if (def) list.push({ key: partsTextureKey(set, kind), file: partsFile(set, kind, def) });
+    }
+  }
+  return list;
+}
+
+/** 描く 1 枚。x, y は左上のピクセル座標。frame がなければ 1 枚の画像。 */
+export interface TileImage {
+  key: string;
+  frame?: number;
+  x: number;
+  y: number;
+}
+
+/** 4 隅（NW, NE, SW, SE）がその地形かどうかから、dual のシートのコマ番号。 */
+export function dualMask(nw: boolean, ne: boolean, sw: boolean, se: boolean): number {
+  return (nw ? 8 : 0) | (ne ? 4 : 0) | (sw ? 2 : 0) | (se ? 1 : 0);
+}
+
+/** 上下左右（N, E, S, W）が同じ仲間かどうかから、edge のシートのコマ番号。 */
+export function edgeMask(n: boolean, e: boolean, s: boolean, w: boolean): number {
+  return (n ? 1 : 0) | (e ? 2 : 0) | (s ? 4 : 0) | (w ? 8 : 0);
+}
+
+/**
+ * マップの地形を描く画像を、下から描く順に返す。
+ * 1. マスごとの地面（dual の地形のマスは under の種類、edge はその部品、ほかは 1 枚の画像）
+ * 2. dual の地形を、TILE_PARTS に書いた順に重ねる（半マスずらした位置）
+ * dual はマップの外へ半マスはみ出して描く（カメラはマップの内側しか映さないので見えない。
+ * 端のマスの外側半分を描くため）。マップの行の長さはそろっている前提（そろわないと、短い行の外にも dual を描く）。
+ */
+export function mapTileImages(map: MapDef, tile: number): TileImage[] {
+  const set = map.tileset;
+  const defs = (set && TILE_PARTS[set]) || {};
+  const kindAt = (x: number, y: number): TileKind | undefined => tileAt(map, x, y)?.kind;
+  const height = map.rows.length;
+  const width = Math.max(...map.rows.map((r) => r.length));
+  const images: TileImage[] = [];
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < (map.rows[y]?.length ?? 0); x++) {
+      const kind = kindAt(x, y);
+      if (!kind) continue;
+      const def = defs[kind];
+      const px = x * tile;
+      const py = y * tile;
+      if (!def || !set) {
+        images.push({ key: tileTextureKey(set, kind), x: px, y: py });
+      } else if (def.rule === 'dual') {
+        images.push({ key: tileTextureKey(set, def.under), x: px, y: py });
+      } else {
+        if (def.under) images.push({ key: tileTextureKey(set, def.under), x: px, y: py });
+        const group = new Set<TileKind>([kind, ...(def.joins ?? [])]);
+        const same = (nx: number, ny: number): boolean => {
+          const k = kindAt(nx, ny);
+          return k === undefined || group.has(k);
+        };
+        images.push({ key: partsTextureKey(set, kind), frame: edgeMask(same(x, y - 1), same(x + 1, y), same(x, y + 1), same(x - 1, y)), x: px, y: py });
+      }
+    }
+  }
+
+  if (!set) return images;
+  // dual は TILE_PARTS に書いた順に下から重ねる
+  for (const [kind, def] of Object.entries(defs) as [TileKind, PartsDef][]) {
+    if (def.rule !== 'dual') continue;
+    const group = new Set<TileKind>([kind, ...(def.joins ?? [])]);
+    // マップの外は、いちばん近い端のマスと同じとみなす（端で森や池が切れて見えないように）
+    const inside = (x: number, y: number): boolean => {
+      const cy = Math.min(Math.max(y, 0), height - 1);
+      const row = map.rows[cy] ?? '';
+      const cx = Math.min(Math.max(x, 0), row.length - 1);
+      const k = kindAt(cx, cy);
+      return k !== undefined && group.has(k);
+    };
+    for (let y = -1; y < height; y++) {
+      for (let x = -1; x < width; x++) {
+        const mask = dualMask(inside(x, y), inside(x + 1, y), inside(x, y + 1), inside(x + 1, y + 1));
+        if (mask === 0) continue;
+        images.push({ key: partsTextureKey(set, kind), frame: mask, x: x * tile + tile / 2, y: y * tile + tile / 2 });
+      }
+    }
+  }
+  return images;
+}
