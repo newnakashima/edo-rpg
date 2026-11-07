@@ -39,11 +39,15 @@ export type PartsDef =
  * dual は書いた順に下から重ねる（例: 草むら → 池 → 森）。
  */
 export const TILE_PARTS: Partial<Record<TilesetId, Partial<Record<TileKind, PartsDef>>>> = {
-  /** 商人の町（名古屋・浜松・大坂）。記録は public/assets/README.md の「部品で描くタイル」。 */
+  /**
+   * 商人の町（名古屋・浜松・大坂）。記録は public/assets/README.md の「部品で描くタイル」。
+   * 岩（城の石垣・庭石）は yama の岩場の部品を複製したもので、bushi と同じく下に草を敷き、草の縁でつなぐ。
+   */
   shoka: {
-    grass: { rule: 'dual', under: 'ground', joins: ['tree'] },
+    grass: { rule: 'dual', under: 'ground', joins: ['tree', 'rock'] },
     road: { rule: 'dual', under: 'ground' },
     water: { rule: 'dual', under: 'ground' },
+    rock: { rule: 'dual', under: 'grass' },
     tree: { rule: 'dual', under: 'grass' },
     roof: { rule: 'edge', under: 'ground' },
     wall: { rule: 'edge', under: 'ground', joins: ['door'] },

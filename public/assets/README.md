@@ -247,6 +247,7 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 | shoka/road_dual | ae9ba13c-08ed-4119-a937-05de46ebbee0 | （lower 同上）/ light sandy beige main street road of an Edo period town, smooth packed sand with tiny pebbles, slightly raised with a thin darker border | roundness 0.4 |
 | shoka/water_dual | 8bafbe8b-7fc3-48d0-9d28-2fdd2752ce09 | （lower 同上）/ deep indigo blue canal water with small white ripples, edged by a grey stone block embankment wall along the shore | roundness 0.2 |
 | shoka/tree_dual | 98061687-6852-4eff-9798-f09e969d38d7 | muted green grass lawn with small darker tufts, Edo period Japanese town / dense forest of dark green Japanese pine and cedar trees seen from above, overlapping round tree crowns, dark outline and shadow at the edge | boundary_amplitude 0.15 |
+| shoka/rock_dual | yama/rock_dual の複製（下の「野山」を参照） | 城の石垣・庭石。全 40 マップの通しの確認で 1 枚の画像のままと分かり、bushi と同じく yama の部品を複製した（下に草を敷き、草の joins に岩を入れる） | （同左） |
 
 構造物（edge）: `create_image_pro`（64 × 48、透過、16 候補）で町家を 1 軒まるごと描き、`scripts/mapkit/slice_parts.py` で屋根・壁を 9 分割して 16 枚に組んだ。戸は同じ絵の戸口を 16 × 16 で切り出し、`shoka/door.png` を差し替えた。
 これで `shoka/roof.png`・`shoka/wall.png` はマップの描画に使われなくなった（`TILESETS` の shoka に残っているので読み込みは続く。部品を外して元の見た目に戻すときのために残している）。
