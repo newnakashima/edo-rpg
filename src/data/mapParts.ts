@@ -41,6 +41,18 @@ export const TILE_PARTS: Partial<Record<TilesetId, Partial<Record<TileKind, Part
     roof: { rule: 'edge', under: 'ground' },
     wall: { rule: 'edge', under: 'ground', joins: ['door'] },
   },
+  /**
+   * 港町（清水湊・広島）。草・道・森は shoka と同じ部品（地面と草が共通の画像なので、そのまま使える）。
+   * 水は港の海を石の護岸で囲んだもの、屋根・壁は漁師の家の絵から切り出した。記録は public/assets/README.md。
+   */
+  minato: {
+    grass: { rule: 'dual', under: 'ground', joins: ['tree'] },
+    road: { rule: 'dual', under: 'ground' },
+    water: { rule: 'dual', under: 'ground' },
+    tree: { rule: 'dual', under: 'grass' },
+    roof: { rule: 'edge', under: 'ground' },
+    wall: { rule: 'edge', under: 'ground', joins: ['door'] },
+  },
 };
 
 export function partsTextureKey(tileset: TilesetId, kind: TileKind): string {
