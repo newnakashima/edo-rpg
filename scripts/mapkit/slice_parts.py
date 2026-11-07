@@ -72,8 +72,10 @@ if __name__ == '__main__':
                    help='確認用の並び（1 = この部品のマス。カンマで行を区切る）')
     a = p.parse_args()
     src = Image.open(a.image).convert('RGBA')
-    ints = lambda v: [int(n) for n in v.split(',')]
-    cols, rows = ints(a.cols), ints(a.rows)
+    try:
+        cols, rows = [[int(n) for n in v.split(',')] for v in (a.cols, a.rows)]
+    except ValueError:
+        p.error('--cols と --rows は整数のカンマ区切り（空白を入れない。例: --cols 0,24,48）')
     if len(cols) != 3 or len(rows) != 3:
         p.error('--cols と --rows は 3 つずつ（左・中・右、上・中・下）')
     if any(c < 0 or c + T > src.width for c in cols) or any(r < 0 or r + T > src.height for r in rows):

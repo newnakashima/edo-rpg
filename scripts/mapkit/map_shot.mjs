@@ -29,10 +29,13 @@ if (!url || url.startsWith('--')) {
 
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1152, height: 648 }, deviceScaleFactor: 1 });
-await page.goto(`${url}?debug`);
-await page.waitForFunction(() => window.__game?.scene?.isActive('Title'), null, { timeout: 30000 });
-if (!(await page.evaluate(() => Boolean(window.__MAPS)))) {
-  console.error(`${url} は ?debug の公開がない（npm run dev の開発サーバーに向ける）`);
+const opened = await page.goto(`${url}?debug`).then(() => true, () => false);
+// __game・__MAPS などは開発サーバー（npm run dev）で ?debug を付けたときだけ公開される
+const ready = opened && await page
+  .waitForFunction(() => window.__MAPS && window.__game?.scene?.isActive('Title'), null, { timeout: 30000 })
+  .then(() => true, () => false);
+if (!ready) {
+  console.error(`${url} でゲームの ?debug の公開が見つからない（npm run dev の開発サーバーに向けているか、起動しているかを確かめる）`);
   await browser.close();
   process.exit(1);
 }
