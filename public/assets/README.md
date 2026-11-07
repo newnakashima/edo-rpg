@@ -376,6 +376,38 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 
 プロンプト（家、2 回目）: JRPG town map tile art, 16-bit SNES style, same house as the reference but with the door moved to the far left. A flat straight-on FRONT ELEVATION of a long Dutch-Japanese trading house in Edo-period Nagasaki, filling the entire 64x48 canvas edge to edge with no background: no perspective, no side wall, perfectly rectangular silhouette. Top 22 pixels: terracotta red western clay roof tiles in straight horizontal rows, a dark ridge line along the very top edge, a straight eave with a dark shadow line at the bottom of the roof. Bottom 26 pixels: smooth white plaster front wall running the full canvas width, a dark brown wooden pillar exactly at the far left edge and exactly at the far right edge, a red brick wainscot band along the bottom of the wall. The only door is a dark green western wooden door placed at the LEFT, from x=6 to x=18, right next to the left pillar. Everything right of the door, from x=20 to x=62, is one long plain uninterrupted stretch of white plaster over red brick with nothing on it. No ground, no sky, no signs, no lanterns, no plants, no windows, muted palette, 1px dark outline.（`no_background: false`、参照画像: 1 回目の候補 8）
 
+#### 雪の町（snow: 加賀金沢、兼六園、会津若松）
+
+地面（`snow/ground.png`）を 5 組で共通の lower のタイル（4ea960ee-9f77-434c-bc22-af4e3e2e8b7b、マスク 0。もとのクリーム色の雪より青白い）に差し替え、その上に草 → 道 → 水 → 岩 → 森 の順に境目の部品（dual）を重ねる。どれも雪の上の地形なので、下はすべて雪（`under: 'ground'`）で、草の `joins` には何も入れない。
+ほかの町の草・道・森は緑の草と砂の道の上の絵で雪に合わないので、5 組とも新しく作った（`create_topdown_tileset` の pro、15 generations × 7 回。lower: soft white fresh snow covering the ground of an Edo period snowy town, smooth even pale white snow with faint light blue-grey shading specks, subtle texture, no pattern）。
+屋根・壁・戸は、雪の積もった屋根と格子の壁の町家 1 軒の絵（`create_image_pro`、64 × 48、16 候補、10 generations × 2 回）から切り出した。壁は兼六園の外周の塀と、金沢城・長町の屋敷の囲いにも使う。床（`_`）は共通の 1 枚の画像のまま。
+`snow/grass.png`・`road.png`・`tree.png`・`rock.png`・`roof.png` は描画に使われなくなった（`TILESETS` に残して読み込みは続ける）。`snow/door.png` は同じ絵の戸口で新しく足した（`TILESETS` の snow に `door` を足した）。
+
+| 部品 | タイルセット ID と設定 | 結果 |
+| --- | --- | --- |
+| snow/grass_dual | 12fa17d3-2d98-4f46-996d-e1bda54d9d37（roundness 0.8、boundary_amplitude 0.18、raggedness 0.4）。upper: patch of muted dark olive green winter grass and dry yellow-brown tufts poking through thin snow, clearly darker than the snow, with a thin darker green border and small snow lumps at the edge | 1 回目で採用 |
+| snow/road_dual | a4461add-cc26-446b-907d-99a0eaa3dbbe（lower_base_tile_id 4ea960ee…、roundness 0.4）。upper: trodden snow street of an Edo period town, packed grey-brown slushy snow with faint wheel ruts and footprints, clearly darker than the fresh snow, slightly sunken with a thin darker grey border | 1 回目で採用 |
+| snow/water_dual | e031ae68-7b6c-47e8-8deb-bfc4c8d317b2（lower_base_tile_id 同上、roundness 0.3、boundary_amplitude 0.08）。upper: open cold dark indigo blue river water seen from above, the interior is plain water with a few small pale ripples and no stones at all; only along the shoreline where the water meets the snow there is a narrow rim of small grey stones with a dark outline | 2 回目で採用。1 回目（73d45e18-6e3f-4d17-919d-dee854b02d6a、upper: …bordered on all four sides by a grey stone block embankment with white snow on top…）は水面の中に雪をかぶった石の帯が 1 マスごとに横縞で出たので、中は水だけ、岸だけに石と書いた |
+| snow/rock_dual | 727e4e79-d8bd-4e03-8ea7-0b6860ec1526（lower_base_tile_id 同上、roundness 0.8、boundary_amplitude 0.15、raggedness 0.4）。upper: pile of large rough grey granite stones seen from above, each stone capped with white snow on top, darker grey cracks between the stones, dark outline and a dark shadow at the edge | 1 回目で採用。会津の鶴ヶ城を囲む石垣、飯盛山の岩に見える |
+| snow/tree_dual | a7918126-fd9f-4baa-9cbc-4cee25a2754f（lower_base_tile_id 同上、roundness 0.8、boundary_amplitude 0.18、raggedness 0.4）。upper: dense dark green conifer woodland seen from directly above, an irregular clumpy canopy of overlapping tree crowns of varied sizes, patches of white snow resting unevenly on the dark green needles, no regular rows, no repeated identical trees, dark outline and a dark blue-grey shadow at the edge | 2 回目で採用。1 回目（dfd3aea8-2354-491e-a5ea-0466ed6fd774、upper: dense forest of dark green Japanese pine trees…）は同じ形の木が格子に並んで見えたので、不ぞろいな樹冠と書いた |
+| snow/ground | 5 組で共通の lower（4ea960ee…、マスク 0 のタイル） | 境目の透明な所と雪の色がそろう |
+
+構造物（edge）:
+
+| 部品 | ジョブ ID と候補 | 切り方 |
+| --- | --- | --- |
+| snow/roof_edge | 1902abfd-5443-4e9b-a71e-38b8c40a5086 の候補 10 を加工した写し（下に記す） | `--cols 0,24,48 --rows 0,5,14` |
+| snow/wall_edge | 同じ候補 10（屋根を高くした写しの、x = 3〜22 の戸を右の格子 x = 24〜43 で塗りつぶした写し） | `--cols 0,32,48 --rows 25,30,39`（屋根を高くした写しの座標。壁は y = 25〜55 の 1 段、上に梁、下に石の土台） |
+| snow/door | 同じ候補 10（屋根を高くした写し） | x = 3〜18 の縦を y = 27〜34（梁と藍の暖簾）・45〜52（格子戸の下半分）でつないだ 16 × 16 |
+
+屋根の加工: 生成した屋根は y = 1〜17 と低く、雪の中の行が 10 px しかないので、2 段以上の屋根の中ほどに軒の帯が出る。そこで、(1) 背景の灰色（#aeb0b3。屋根の上の左右の角）を透明にし、(2) 雪の行 y = 3〜10 を複製して屋根を 8 px 高くした写しを作った。さらに、そのままでは雪の屋根が雪の地面とほぼ同じ白で、棟と左右の端が見分けられなかったので、(3) 屋根の部品の元を組み直した: 上端に黒い輪郭の 1 行と、軒先の瓦の行（y = 22〜24）を写した 3 行の棟、左右の端に暗い瓦の縁（3 px）、その内側に雪の影の 1 列を描き足し、雪の中の右寄り（x = 44〜59）の汚れの点を消した（右端の列で点が縦に並んだため）。
+
+家の判定: 1 回目（69a58456-d9b2-46ae-a5ba-39fe42417025）はどの候補も戸が真ん中で、屋根の上の左右の角に背景の灰色が残った。2 回目（候補 8 を参照、戸の位置を x = 6〜18 と書いた）で戸は左に寄ったが、灰色の角は残った（× のまま採用。角は透明にして屋根の丸い端として見せた）。
+
+プロンプト（家、2 回目）: JRPG town map tile art, 16-bit SNES style, same house as the reference but with the door moved to the far left. A flat straight-on FRONT ELEVATION of a long Edo period Japanese townhouse in snowy Kanazawa, filling the entire 64x48 canvas edge to edge: no perspective, no side wall, perfectly rectangular silhouette, the roof reaches all four corners of the canvas with no grey or empty corners. Top 22 pixels: roof covered with a thick even layer of white snow, a straight ridge along the very top edge, a straight eave with dark grey tile ends and a dark shadow line at the bottom of the roof. Bottom 26 pixels: dark brown wooden lattice front wall running the full canvas width, a dark brown wooden pillar exactly at the far left edge and exactly at the far right edge, a dark stone foundation band along the bottom. The only door is a dark wooden sliding door with an indigo noren curtain placed at the LEFT, from x=6 to x=18, right next to the left pillar. Everything right of the door, from x=20 to x=62, is one long plain uninterrupted stretch of dark brown vertical wooden lattice wall with nothing on it. No ground, no snow on the ground, no sky, no signs, no lanterns, no plants, no windows, muted palette, 1px dark outline.（`no_background: false`、参照画像: 1 回目の候補 8）
+
+マップの文字は、会津若松の通れるマス（草 `,` ↔ 地面 `.`）だけを塗り直した（356 マス。全マスで通れるかが変わらないことを確かめた）: 町の中（15〜30 行）の草を雪の地面にし、家並みの間の通りに互い違いの草のかたまりと、南東の屋敷の脇の草地を残した。北の屋敷の周りも地面にし、西の縁と南西に草を残した。南の外れは街道のそばを地面にした。金沢・兼六園の文字は変えていない。
+
 #### ワールドマップ（field: 日本）
 
 野（`field/plain.png`）を 4 組で共通の lower のタイル（ad7f8912-40fa-4df5-bb38-d8f2765c9181、マスク 0）に差し替え、その上に街道 → 海 → 山 → 森 の順に境目の部品（dual）を重ねる。4 組とも `lower_base_tile_id` ad7f8912… でつないだ（lower: muted green grassy plain of an old Japanese world map, even flat green field with a few tiny darker green specks, no pattern）。マップの文字は変えていない。

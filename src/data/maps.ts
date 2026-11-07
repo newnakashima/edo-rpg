@@ -13,8 +13,12 @@ export type TileKind = (typeof TILE_KINDS)[number];
  * 通れるかどうか（TILES の blocked）は変えない。
  */
 export const TILESETS = {
-  /** 雪の町と庭（金沢・兼六園）。 */
-  snow: ['ground', 'grass', 'road', 'tree', 'roof', 'rock'],
+  /**
+   * 雪の町と庭（金沢・兼六園・会津若松）。地面は雪（部品の組の lower と同じ絵に差し替えた）、戸は雪国の町家の絵の戸口。
+   * 草・道・水・岩・森・屋根・壁は部品（src/data/mapParts.ts）で描くので、ここに残した grass・road・tree・roof・rock の
+   * 1 枚の画像は描画に使われない（読み込みは続ける。public/assets/README.md の方針どおり残した）。
+   */
+  snow: ['ground', 'grass', 'road', 'tree', 'roof', 'rock', 'door'],
   /** 洞窟（狐火の洞・清正の古井戸の底）。岩は洞窟の壁、地面は洞窟の床。岩・水・道（板の橋）は部品（src/data/mapParts.ts）で描く。 */
   cave: ['rock', 'ground', 'water'],
   /** からくりの工場（からくり屋敷・米蔵の地下・研究所・からくり蔵）。屋根の文字は機械に使う。 */
@@ -5074,42 +5078,41 @@ MAPS.aizu = {
   tileset: 'snow',
   rows: [
     'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
-    'T,,,,,,,,,,,,,~~~~~~~~~~~~~~~~~~~~~~,,,TTTT^^^^^TTTT',
-    'T,WWWWWWWWWW,,~~^^^^^^^^^^^^^^^^^^~~,,,TTT^^...^^TTT',
-    'T,WRRRRRRRRW,,~~^^WRRRRRRRRRRRRW^^~~,,,TTT^.....^TTT',
-    'T,WRRRRRRRRW,,~~^^WRRRRRRRRRRRRW^^~~,,,TTTTTTT.TTTTT',
-    'T,WRRRRRRRRW,,~~^^WRRRRRRRRRRRRW^^~~,,,TT......TTTTT',
-    'T,WWWWDWWWWW,,~~^^WWWWWWDWWWWWWW^^~~,,,TT.TTTTTTTTTT',
-    'T,..........,,~~^^..............^^~~,,,TT........TTT',
-    'T,..........,,~~^^^^^^^^..^^^^^^^^~~,,,TTTTTTTTT.TTT',
-    'T,,........,,,~~~~~~~~~~==~~~~~~~~~~,,,TT........TTT',
-    'T,,,,..,,,,,,,~~~~~~~~~~==~~~~~~~~~~,,,TT.TTTTTTTTTT',
-    'T,,,,..,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,TT.TTTTTTTTTT',
-    'T,,,,..,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,TT.TTTTTTTTTT',
+    'T,............~~~~~~~~~~~~~~~~~~~~~~,,,TTTT^^^^^TTTT',
+    'T,WWWWWWWWWW..~~^^^^^^^^^^^^^^^^^^~~,,,TTT^^...^^TTT',
+    'T,WRRRRRRRRW..~~^^WRRRRRRRRRRRRW^^~~,,,TTT^.....^TTT',
+    'T,WRRRRRRRRW..~~^^WRRRRRRRRRRRRW^^~~,,,TTTTTTT.TTTTT',
+    'T,WRRRRRRRRW..~~^^WRRRRRRRRRRRRW^^~~,,,TT......TTTTT',
+    'T,WWWWDWWWWW..~~^^WWWWWWDWWWWWWW^^~~,,,TT.TTTTTTTTTT',
+    'T,............~~^^..............^^~~,,,TT........TTT',
+    'T,............~~^^^^^^^^..^^^^^^^^~~,,,TTTTTTTTT.TTT',
+    'T,......,,,,,,~~~~~~~~~~==~~~~~~~~~~,,,TT........TTT',
+    'T,......,,,,,,~~~~~~~~~~==~~~~~~~~~~,,,TT.TTTTTTTTTT',
+    'T,......,,,,,,.............,,,,,,,,,,,,TT.TTTTTTTTTT',
+    'T,......,,,,,,.............,,,,,,,,,,,,TT.TTTTTTTTTT',
     'T===================================================',
     'T==================================================T',
-    'T,,,,,,,,,,,,,,,,,,,,,,,=,,,,,,,,,,,,,,,,RRRRRRRRR,T',
-    'T,RRRRRRRR,RRRRRR,RRRRR,=,RRRRRRR,RRRRRR,RRRRRRRRR,T',
-    'T,RRRRRRRR,RRRRRR,RRRRR,=,RRRRRRR,RRRRRR,RRRRRRRRR,T',
-    'T,RRRRRRRR,RRRRRR,RRRRR,=,RRRRRRR,RRRRRR,RRRRRRRRR,T',
-    'T,WWWDWWWW,WWDWWW,WWDWW,=,WWWDWWW,WWDWWW,WWWWDWWWW,T',
+    'T.......................=................RRRRRRRRR.T',
+    'T.RRRRRRRR.RRRRRR.RRRRR.=.RRRRRRR.RRRRRR.RRRRRRRRR.T',
+    'T.RRRRRRRR.RRRRRR.RRRRR.=.RRRRRRR.RRRRRR.RRRRRRRRR.T',
+    'T.RRRRRRRR.RRRRRR.RRRRR.=.RRRRRRR.RRRRRR.RRRRRRRRR.T',
+    'T.WWWDWWWW.WWDWWW.WWDWW.=.WWWDWWW.WWDWWW.WWWWDWWWW.T',
     'T.......................=..........................T',
-    'T,,,,,,,,,,,,,,,,,,,,,,,=,,,,,,,,,,,,,,,,,,,,,,,,,,T',
-    'T,,,,,,,,,,,,,,,,,,,,,,,=,,,,,,,,,,,,,,,,,,,,,,,,,,T',
+    'T..,,,,,,,..............=..,,,,,,,.......,,,,,,,,..T',
+    'T.,,,,,,,...............=...,,,,,,,.......,,,,,,,,.T',
     'T==================================================T',
-    'T,,,,,,,,,,,,,,,,,,,,,,,=,,,,,,,,,,,,,,,,,,,,,,,,,,T',
-    'T,RRRRRRRRR,RRRRRRRRRRR,=,RRRRRRRRRR,,RRRRRR,,,,,,,T',
-    'T,RRRRRRRRR,RRRRRRRRRRR,=,RRRRRRRRRR,,RRRRRR,,,,,,,T',
-    'T,RRRRRRRRR,RRRRRRRRRRR,=,RRRRRRRRRR,,RRRRRR,,,,,,,T',
-    'T,WWWWDWWWW,WWWDWWWDWWW,=,WWWWDWWWWW,,WWDWWW,,,,,,,T',
     'T.......................=..........................T',
-    'T,,,,,,,,,,,,,,,,,,,,,,,=,,,,,,,,,,,,,,,,,,,,,,,,,,T',
-    'T,,TTT,,,,,,,,TTT,,,,,,,=,TT,~~~~~~~,,TT,,,,TT,,,,,T',
-    'T,,TTT,,,,,,,,TTT,,,,,,,=,,,,~~~~~~~,,TT,,,,TT,,,,,T',
-    'T,,,,,,,,,,,,,,,,,,,,,,,=,,,,~~~~~~~,,,,,,,,,,,,,,,T',
-    'T,,,,,,,,,,,,,,,,,,,,,,,=,,,,,,,,,,,,,,,,,,,,,,,,,,T',
+    'T.RRRRRRRRR.RRRRRRRRRRR.=.RRRRRRRRRR..RRRRRR.,,,,,,T',
+    'T.RRRRRRRRR.RRRRRRRRRRR.=.RRRRRRRRRR..RRRRRR.,,,,,,T',
+    'T.RRRRRRRRR.RRRRRRRRRRR.=.RRRRRRRRRR..RRRRRR.,,,,,,T',
+    'T.WWWWDWWWW.WWWDWWWDWWW.=.WWWWDWWWWW..WWDWWW.,,,,,,T',
+    'T.......................=.....................,,,,,T',
+    'T.......................=.....................,,,,,T',
+    'T,,TTT,,,,,,,,TTT.......=,TT,~~~~~~~,,TT,,,,TT,,,,,T',
+    'T,,TTT,,,,,,,,TTT.......=,,,,~~~~~~~,,TT,,,,TT,,,,,T',
+    'T,,,,,,,,,,,,,,,,.......=....~~~~~~~,,,,,,,,,,,,,,,T',
+    'T,,,,,,,,,,,,,,,,.......=....,,,,,,,,,,,,,,,,,,,,,,T',
     'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
-
   ],
   npcs: [
     // 日新館の庭の什の少年たち
