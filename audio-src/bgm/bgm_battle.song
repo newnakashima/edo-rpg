@@ -14,12 +14,12 @@ echo  = 112 0.25 0.18
 
 [parts]
 # 名前   楽器      種類                 オプション
-melody   shamisen  notes                vol=100 pan=0
+melody   shamisen  notes                vol=122 pan=0
 double   brass     notes                follow=melody shift=-6d vol=98 pan=-26
 motion   koto      arp:up16             oct=4 vol=70 pan=30
 pad      strings   block:push8          oct=4 voices=2 vol=68 pan=-36
 bass     pickbass  bass:drive8          oct=2 vol=100
-drums    drums     drums                vol=80
+drums    drums     drums                vol=86
 
 # 区間 I（4 小節）: 低い三味線の刻みと太鼓で幕を開け、A7 で A の頭の Dm へ渡す
 [section I]
