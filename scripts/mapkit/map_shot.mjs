@@ -29,16 +29,19 @@ if (!url || url.startsWith('--')) {
 
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1152, height: 648 }, deviceScaleFactor: 1 });
-const opened = await page.goto(`${url}?debug`).then(() => true, () => false);
-// __game・__MAPS などは開発サーバー（npm run dev）で ?debug を付けたときだけ公開される
-const ready = opened && await page
-  .waitForFunction(() => window.__MAPS && window.__game?.scene?.isActive('Title'), null, { timeout: 30000 })
-  .then(() => true, () => false);
-if (!ready) {
-  console.error(`${url} でゲームの ?debug の公開が見つからない（npm run dev の開発サーバーに向けているか、起動しているかを確かめる）`);
+const fail = async (message) => {
+  console.error(message);
   await browser.close();
   process.exit(1);
-}
+};
+await page.goto(`${url}?debug`).catch((e) => fail(`${url} を開けない（npm run dev の開発サーバーが起動しているかを確かめる）: ${e.message.split('\n')[0]}`));
+// __game・__MAPS などは開発サーバー（npm run dev）で ?debug を付けたときだけ公開される
+await page.waitForFunction(() => window.__game, null, { timeout: 15000 }).catch(() =>
+  fail(`${url} に ?debug の公開（window.__game）がない（本番ビルドではなく npm run dev の開発サーバーに向ける）`),
+);
+await page.waitForFunction(() => window.__game.scene.isActive('Title'), null, { timeout: 30000 }).catch(() =>
+  fail('ゲームのタイトル画面が 30 秒たっても始まらない（ブラウザのコンソールで画像の読み込みの失敗などを確かめる）'),
+);
 const size = await page.evaluate(({ mapId, people }) => {
   const map = window.__MAPS[mapId];
   if (!map) throw new Error(`no map: ${mapId}`);
