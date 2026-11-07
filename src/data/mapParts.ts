@@ -142,6 +142,16 @@ export const TILE_PARTS: Partial<Record<TilesetId, Partial<Record<TileKind, Part
     wall: { rule: 'edge', under: 'ground', joins: ['door'] },
   },
   /**
+   * 屋内（一座の工房・金太の凧屋）。土間（ground。板の間の組の lower と同じ絵に差し替えた）の上に、一段高い板の間（floor）
+   * → 畳の間（grass を畳に使う）の順に重ねる。畳の下には板の間を敷き、板の間の joins に畳を入れて、畳の縁の外も板の間にする。
+   * 壁は梁の天端と漆喰の正面を、内装の壁の絵から切り出した。記録は public/assets/README.md。
+   */
+  interior: {
+    floor: { rule: 'dual', under: 'ground', joins: ['grass'] },
+    grass: { rule: 'dual', under: 'floor' },
+    wall: { rule: 'edge' },
+  },
+  /**
    * 野山（清水湊の裏山・原城跡）。草・森は shoka と同じ部品。水は川石の岸の沢（原城跡では海にも使う）、
    * 岩は草の上の岩場（原城跡では崩れた石垣の列）。水・岩・森の下にも草を敷いて、縁を草でつなぐ。記録は public/assets/README.md。
    */
