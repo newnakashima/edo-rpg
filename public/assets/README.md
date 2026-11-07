@@ -480,6 +480,24 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 
 残る点: 石畳と板の床の広い面は同じ柄の繰り返し（柄違いの仕組みがまだない）。からくり蔵の機械は文字の形どおり L 字・コの字に描かれる（入り隅の部品がない）。
 
+#### 廃墟（ruins: 羅生門跡・鬼の巣・南蛮寺跡）
+
+草・森・池・岩・塀・石畳・屋根がすべて 1 枚の柄の敷き詰めで、草と地面、石畳と地面の境に縁がなかった。共通の地面の上に、草 → 石畳 → 池 → がれき → 森 の順に境目の部品（dual）を重ね、屋根・壁（築地塀）を端の部品（edge）で描く。
+草・森は shoka の `grass_dual`・`tree_dual`、池・がれき（`^`）は yama の `water_dual`・`rock_dual` をそのまま複製した（池・がれき・森の下と縁は草。草の `joins` に森・岩・水を入れた）。羅生門跡の基壇の `^` の列は崩れた礎石、南蛮寺跡を囲む `^` は岩山に見える。
+`ruins/wall.png`・`floor.png`・`rock.png` は描画に使われなくなった（`TILESETS` に残して読み込みは続ける）。
+
+マップの文字は、羅生門跡の荒れ寺のまわり（y = 1〜5 の x = 1〜7 と、y = 6 の x = 1〜4。南の縁は草と段になるように残した）の草を地面にしただけ（どちらも通れるので、通れるかは変わらない。屋根の角の透明な所から見える地面が、草の上で茶色の欠片に見えたため）。
+
+| 部品 | ID と設定 | 判定 |
+| --- | --- | --- |
+| ruins/floor_dual（石畳） | 36b1c08d-3bcf-456f-af29-bf15b601d7c6（lower_base_tile_id ab062a8f-251f-4018-b8ff-c17c5f3e0c5f＝shoka の草の組の lower と同じ地面、roundness 0.2）。upper: old weathered paving of large irregular grey stone slabs of a ruined temple courtyard seen from above, cracked slabs of varied sizes with dark seams and small green moss and weed tufts growing in the cracks, the paved area has a straight border of darker grey curb stones with a dark outline where it meets the dirt | 2 回目（部分修正）で採用。1 回目のこの組は南・西の縁に土色の帯が残り、中の斜めの模様が 16 px ごとに並んで見えたので、Pillow で土色（彩度 0.35 超、色相 0.03〜0.14）の画素を同じ明るさの 0.75 倍の灰色にし、ほかの画素のコントラストを灰色（104）に向けて 0.7 倍に下げ、透明に接する画素を暗い輪郭（#28262a）にした |
+| ruins/roof_edge | `create_image_pro`（64 × 48、透過、16 候補）b99039be-1fcc-4ee2-a78f-6f0d00e6f684 の候補 5 | `--cols 0,24,48 --rows 0,8,12`（屋根は y = 1〜27。1 回目で全項目 ○） |
+| ruins/wall_edge（築地塀） | 同じ候補 5 を加工した写し（64 × 56）: y = 0〜39 のあとに漆喰の y = 32〜39 を複製し、台石の y = 40〜47 を続けた。漆喰の板（x = 10〜53、y = 31〜43）の染みは、いちばん多い漆喰の色に向けて 0.45 倍に薄めた | `--cols 4,16,44 --rows 28,32,40`。2 回目（部分修正）で採用。1 回目（`--cols 0,24,48 --rows 28,30,32`）は縦に続く塀で台石の暗い線が横縞になり、染みが 16 px ごとに歯のように並び、左右の端の列の透明な所から地面が見えて 1 マス幅の縦の塀が細い線になった |
+
+プロンプト（荒れ寺）: JRPG town map tile art, 16-bit SNES style, front view seen from above at a 3/4 angle: an abandoned, dilapidated Edo period Japanese temple hall that fills the whole canvas edge to edge. Top two thirds: old weathered dark grey kawara roof tiles in neat horizontal rows, a few tiles missing or cracked, patches of green moss on the tiles, a darker roof ridge along the top edge, a straight eave line with a dark shadow at the bottom of the roof. Bottom third: cracked and stained beige earthen plaster wall (tsuiji) with dark weathered wooden pillars at both ends, plain wall with a few cracks in the middle, dark stone base. Straight horizontal rows, rectangular, symmetric, no ground, no sky, no background, muted ukiyo-e palette, 1px dark outline.
+
+残る点: 南蛮寺跡を囲む岩山・鬼の巣の森の広い面は、全面のタイルの繰り返し（柄違いの仕組みがまだない）。南蛮寺跡の礼拝堂の厚い壁の切れ込み（通れる `_` のくぼみ）は、通れるかが変わるので形を変えていない。
+
 #### ワールドマップ（field: 日本）
 
 野（`field/plain.png`）を 4 組で共通の lower のタイル（ad7f8912-40fa-4df5-bb38-d8f2765c9181、マスク 0）に差し替え、その上に街道 → 海 → 山 → 森 の順に境目の部品（dual）を重ねる。4 組とも `lower_base_tile_id` ad7f8912… でつないだ（lower: muted green grassy plain of an old Japanese world map, even flat green field with a few tiny darker green specks, no pattern）。マップの文字は変えていない。

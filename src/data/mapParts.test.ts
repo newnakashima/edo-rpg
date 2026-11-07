@@ -341,6 +341,40 @@ describe('部品で描くタイル', () => {
     for (const x of [0, 1, 3]) expect(wall(x), `x = ${x}`).toBe(edgeMask(true, true, false, true));
   });
 
+  it('廃墟（ruins）は 草 → 石畳 → 池 → がれき → 森 の順に地面の上へ重ね、池・がれき・森の下に草を敷き、荒れ寺の屋根と築地塀は端の部品', () => {
+    // 1 行目は左から地面・石畳・草・池・がれき・森。2・3 行目は荒れ寺（屋根の下に壁）と、右の縦 2 マスの築地塀。4 行目は地面
+    const rows = ['._,~^T', 'RR..W.', 'WW..W.', '......'];
+    const images = mapTileImages(map(rows, 'ruins'), T);
+    const order = images.map((i) => i.key).filter((k) => k.startsWith('parts-'));
+    const key = (kind: TileKind) => partsTextureKey('ruins', kind);
+    const first = (kind: TileKind) => order.indexOf(key(kind));
+    const last = (kind: TileKind) => order.lastIndexOf(key(kind));
+    for (const kind of ['grass', 'floor', 'water', 'rock', 'tree'] as const) expect(first(kind), kind).toBeGreaterThanOrEqual(0);
+    expect(last('grass')).toBeLessThan(first('floor'));
+    expect(last('floor')).toBeLessThan(first('water'));
+    expect(last('water')).toBeLessThan(first('rock'));
+    expect(last('rock')).toBeLessThan(first('tree'));
+    // 石畳のマスの下は共通の地面、池・がれき・森のマスの下は草
+    expect(images).toContainEqual({ key: 'tile-ground', x: T, y: 0 });
+    for (const x of [3, 4, 5]) expect(images).toContainEqual({ key: 'tile-grass', x: x * T, y: 0 });
+    // 草は池・がれき・森を仲間として縁取る（池とがれき、がれきと森の間は、下の地面・壁の行を除いて上半分が草）
+    const dualAt = (kind: TileKind, x: number, y: number) =>
+      images.find((i) => i.key === key(kind) && i.x === x * T + T / 2 && i.y === y * T + T / 2)?.frame;
+    expect(dualAt('grass', 3, 0)).toBe(dualMask(true, true, false, false));
+    expect(dualAt('grass', 4, 0)).toBe(dualMask(true, true, false, false));
+    // 石畳の縁は地面・草の側に出る（石畳と草の間は左上だけが石畳）
+    expect(dualAt('floor', 1, 0)).toBe(dualMask(true, false, false, false));
+    // 荒れ寺は屋根の下の壁の側が軒先、壁は南の地面の側が正面（左はマップの外なので仲間）。築地塀の縦の列は上下でつながり、下の端は南が正面
+    const edgeAt = (kind: TileKind, x: number, y: number) => images.find((i) => i.key === key(kind) && i.x === x * T && i.y === y * T)?.frame;
+    expect(edgeAt('roof', 0, 1)).toBe(edgeMask(false, true, false, true));
+    expect(edgeAt('wall', 0, 2)).toBe(edgeMask(false, true, false, true));
+    expect(edgeAt('wall', 4, 1)).toBe(edgeMask(false, false, true, false));
+    expect(edgeAt('wall', 4, 2)).toBe(edgeMask(true, false, false, false));
+    // 屋根・壁のマスの下には地面を敷く（屋根の角や塀の端の透明な所から見える）
+    expect(images).toContainEqual({ key: 'tile-ground', x: 0, y: T });
+    expect(images).toContainEqual({ key: 'tile-ground', x: 0, y: 2 * T });
+  });
+
   it('からくりの工場（karakuri）は 板の床 → 水路 の順に石畳の上へ重ね、橋は石畳・板の床を仲間にし、壁と機械は端の部品', () => {
     // 上の行が壁。2 行目は板の床と石畳、3 行目は水路を渡る橋（上は板の床、下は石畳）、4 行目は 1 マスの機械と、右端の縦 2 マスの機械（下は 5 行目）
     const rows = ['WWWWW', '__._.', '~=~~.', '..R.R', '....R'];
