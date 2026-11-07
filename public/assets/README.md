@@ -277,6 +277,17 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 使わなかった水: 362f217d-ca11-49ca-99cd-4bee8427e0be（上の岸に石垣がなく点だけが残った）、ffa70b2a-edfc-4c9c-b51d-bf32824618da（水の中に石の格子が入った）、9e8ed195-c426-4301-ad36-648140fbab67（下の岸の石垣はよいが、上の岸が点だけ）。
 `minato/roof.png`・`wall.png`・`water.png` は描画に使われなくなった（shoka と同じく、`TILESETS` に残して読み込みは続ける）。
 
+#### 野山（yama: 清水湊・裏山、原城跡）
+
+タイルセットのなかった 2 つのマップのために新しく作った。1 枚の画像は差し替えず（`TILESETS` の yama は空）、草・森は shoka の `grass_dual`・`tree_dual` をそのまま複製し、岩と水を新しく作った。
+岩・水の下と縁には草を敷く（`grass` の `joins` に森・岩・水を入れ、岩・水の `under` を草にした）。山の中では岩や沢が草に接し、原城跡でも石垣の列と海が草に接するため。マップの文字は変えていない。
+裏山の沢を渡る道（`==`）は共通の道の画像 1 枚のまま（2 マスだけで、両側は草と水の縁で区切られる）。
+
+| 部品 | ID と設定 | 判定 |
+| --- | --- | --- |
+| yama/rock_dual | f3ddb73f-1eb3-49f4-b52e-8ca2ffce20b5（lower_base_tile_id 4d504dfb…＝shoka の森と同じ草、roundness 0.8、boundary_amplitude 0.15、raggedness 0.4）。upper: rocky mountain outcrop of large rough grey granite boulders seen from above, lit light grey tops with darker grey cracks, dark outline and a dark shadow at the edge | 1 回目で採用。1 マスの岩も岩の山に、原城跡の 1 マス幅の `^` の列は崩れた石垣に見える |
+| yama/water_dual | 9626abf6-e2ab-40da-a935-cb2efcbc5e9b（lower_base_tile_id 同上、roundness 0.6、boundary_amplitude 0.12）。upper: clear deep indigo blue mountain stream water with small white ripples, the whole water surface is open water, bordered on all four sides by a natural shore of small rounded grey river stones with a dark outline | 1 回目で採用。4 方向とも同じ川石の岸。原城跡の海にも使う（波の点が格子に並ぶのは、広い水面の柄違いがまだないため） |
+
 ## 敵（`enemies/`）
 
 `create_image_pixflux`（64 × 64、`no_background: true`、黒の 1px 輪郭、view `side`、medium detail）で 1 体ずつ作る（1 体 1 回）。ボスは 96 × 96 で作る。

@@ -48,6 +48,8 @@ export const TILESETS = {
   nagaya: ['roof', 'wall', 'door'],
   /** ワールドマップ（街道）。波頭の立つ海、緑の野、山、森、街道の土の道、城下町と関所の印。 */
   field: ['water', 'plain', 'rock', 'tree', 'road', 'town', 'gate'],
+  /** 野山（清水湊の裏山・原城跡）。1 枚の画像は差し替えず、草・森・岩・水を部品（src/data/mapParts.ts）で描く。 */
+  yama: [],
 } as const satisfies Record<string, readonly TileKind[]>;
 export type TilesetId = keyof typeof TILESETS;
 
@@ -379,6 +381,7 @@ export const MAPS: Record<string, MapDef> = {
   urayama: {
     id: 'urayama',
     name: '清水湊・裏山',
+    tileset: 'yama',
     areaLevel: 1,
     rows: [
       'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT,,TTTTTT',
@@ -3323,6 +3326,7 @@ MAPS.nanbanji = {
 MAPS.harajo = {
   id: 'harajo',
   name: '原城跡',
+  tileset: 'yama',
   areaLevel: 19,
   rows: [
     'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',

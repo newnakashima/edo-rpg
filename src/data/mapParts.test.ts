@@ -58,6 +58,26 @@ describe('部品で描くタイル', () => {
     expect(images).toContainEqual({ key: 'tile-grass', x: T, y: 0 });
   });
 
+  it('野山（yama）は 草 → 水 → 岩 → 森 の順に重ね、草は水・岩・森のマスも草として縁取り、その下に草を敷く', () => {
+    // 左から地面・水・岩・森
+    const images = mapTileImages(map(['.~^T', '.~^T'], 'yama'), T);
+    const order = images.map((i) => i.key).filter((k) => k.startsWith('parts-'));
+    const first = (kind: TileKind) => order.indexOf(partsTextureKey('yama', kind));
+    const last = (kind: TileKind) => order.lastIndexOf(partsTextureKey('yama', kind));
+    for (const kind of ['grass', 'water', 'rock', 'tree'] as const) expect(first(kind), kind).toBeGreaterThanOrEqual(0);
+    expect(last('grass')).toBeLessThan(first('water'));
+    expect(last('water')).toBeLessThan(first('rock'));
+    expect(last('rock')).toBeLessThan(first('tree'));
+    // 地面と水の境目（x = 0 と 1 の間）は右半分だけ草、水・岩・森の間は全面が草
+    const grassAt = (px: number) => images.find((i) => i.key === partsTextureKey('yama', 'grass') && i.x === px && i.y === T / 2);
+    expect(grassAt(T / 2)?.frame).toBe(dualMask(false, true, false, true));
+    expect(grassAt(T + T / 2)?.frame).toBe(15);
+    expect(grassAt(2 * T + T / 2)?.frame).toBe(15);
+    // 水・岩・森のマスの下には草、地面のマスは共通の地面
+    for (const x of [1, 2, 3]) expect(images).toContainEqual({ key: 'tile-grass', x: x * T, y: 0 });
+    expect(images).toContainEqual({ key: 'tile-ground', x: 0, y: 0 });
+  });
+
   it('dual の地形は、マスに下の地面を敷き、境目に半マスずらして重ねる', () => {
     // 3 × 3 の真ん中だけ水
     const images = mapTileImages(map(['...', '.~.', '...']), T);
