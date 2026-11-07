@@ -144,9 +144,20 @@ describe('部品で描くタイル', () => {
     expect(order.lastIndexOf(key('grass'))).toBeLessThan(order.indexOf(key('water')));
     expect(order.lastIndexOf(key('water'))).toBeLessThan(order.indexOf(key('rock')));
     expect(order.lastIndexOf(key('rock'))).toBeLessThan(order.indexOf(key('tree')));
+    // 岩と森の間（x = 2 と 3 の間）は全面が草（草の joins に岩・森）、水と岩の間は右半分だけ草
+    const grassAt = (px: number) => images.find((i) => i.key === key('grass') && i.x === px && i.y === T / 2);
+    expect(grassAt(2 * T + T / 2)?.frame).toBe(15);
+    expect(grassAt(T + T / 2)?.frame).toBe(dualMask(false, true, false, true));
     // 岩・森のマスの下には草、水のマスの下には地面
     for (const x of [2, 3]) expect(images).toContainEqual({ key: 'tile-grass', x: x * T, y: 0 });
     expect(images).toContainEqual({ key: 'tile-ground', x: T, y: 0 });
+
+    // 道は草の後、水の前に重ねる
+    const roads = mapTileImages(map([',=~', ',=~'], 'sato'), T);
+    const roadOrder = roads.map((i) => i.key).filter((k) => k.startsWith('parts-'));
+    expect(roadOrder.indexOf(key('road'))).toBeGreaterThanOrEqual(0);
+    expect(roadOrder.lastIndexOf(key('grass'))).toBeLessThan(roadOrder.indexOf(key('road')));
+    expect(roadOrder.lastIndexOf(key('road'))).toBeLessThan(roadOrder.indexOf(key('water')));
 
     // 鍵屋の辻の板塀（1 列の壁）は上下だけがつながり、伊賀者の里の道場の床（_）は共通の 1 枚の画像
     const town = mapTileImages(map([',W,RR', ',W_WD', ',W,,,'], 'sato'), T);
