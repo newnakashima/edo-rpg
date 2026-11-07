@@ -47,12 +47,13 @@ describe('タイルの画像', () => {
       nagasaki: 'nanban', dejima: 'nanban', edo: 'nagaya',
       // ワールドマップ（街道）
       world: 'field',
+      // 野山（清水湊の裏山・原城跡）
+      urayama: 'yama', harajo: 'yama',
     };
     const actual = Object.fromEntries(Object.values(MAPS).filter((m) => m.tileset).map((m) => [m.id, m.tileset]));
     expect(actual).toEqual(expected);
-    // 外の野山のほかに、共通の見た目のままのマップを増やさない（町も建物を町ごとの見た目にした）
-    const outdoor = ['urayama', 'harajo'];
-    for (const m of Object.values(MAPS)) if (!outdoor.includes(m.id)) expect(m.tileset, m.id).toBeDefined();
+    // 共通の見た目のままのマップを増やさない（町も建物を町ごとの見た目に、野山も部品で描くようにした）
+    for (const m of Object.values(MAPS)) expect(m.tileset, m.id).toBeDefined();
   });
 });
 

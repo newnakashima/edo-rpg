@@ -53,6 +53,16 @@ export const TILE_PARTS: Partial<Record<TilesetId, Partial<Record<TileKind, Part
     roof: { rule: 'edge', under: 'ground' },
     wall: { rule: 'edge', under: 'ground', joins: ['door'] },
   },
+  /**
+   * 野山（清水湊の裏山・原城跡）。草・森は shoka と同じ部品。水は川石の岸の沢（原城跡では海にも使う）、
+   * 岩は草の上の岩場（原城跡では崩れた石垣の列）。水・岩・森の下にも草を敷いて、縁を草でつなぐ。記録は public/assets/README.md。
+   */
+  yama: {
+    grass: { rule: 'dual', under: 'ground', joins: ['tree', 'rock', 'water'] },
+    water: { rule: 'dual', under: 'grass' },
+    rock: { rule: 'dual', under: 'grass' },
+    tree: { rule: 'dual', under: 'grass' },
+  },
 };
 
 export function partsTextureKey(tileset: TilesetId, kind: TileKind): string {
