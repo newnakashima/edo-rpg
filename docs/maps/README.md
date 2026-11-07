@@ -5,4 +5,5 @@
 - `shimizu.png`・`hiroshima.png`: 港町（minato）
 - `urayama.png`・`harajo.png`: 野山（yama）
 - `kitsunebiCave.png`・`kiyomasaIdo.png`: 洞窟（cave）
+- `sunpu.png`・`yoriki.png`・`sendai.png`・`hikone.png`・`kumamoto.png`: 武家の城下（bushi）
 - `world.png`: ワールドマップ（field）。大きいので、変える前（上）と後（下）に並べた

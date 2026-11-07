@@ -61,6 +61,20 @@ export const TILE_PARTS: Partial<Record<TilesetId, Partial<Record<TileKind, Part
     wall: { rule: 'edge', under: 'ground', joins: ['door'] },
   },
   /**
+   * 武家の城下（駿府・与力の屋敷・仙台・彦根・熊本）。草・道・水・森は shoka と同じ部品（水は堀の石の護岸）、
+   * 岩（城や屋敷を囲む石垣・庭石）は yama の岩場の部品で、下に草を敷いて草の縁でつなぐ。
+   * 屋根・壁は黒い瓦となまこ壁の武家屋敷の絵から切り出した（壁は屋敷を囲む塀にも使う）。記録は public/assets/README.md。
+   */
+  bushi: {
+    grass: { rule: 'dual', under: 'ground', joins: ['tree', 'rock'] },
+    road: { rule: 'dual', under: 'ground' },
+    water: { rule: 'dual', under: 'ground' },
+    rock: { rule: 'dual', under: 'grass' },
+    tree: { rule: 'dual', under: 'grass' },
+    roof: { rule: 'edge', under: 'ground' },
+    wall: { rule: 'edge', under: 'ground', joins: ['door'] },
+  },
+  /**
    * 野山（清水湊の裏山・原城跡）。草・森は shoka と同じ部品。水は川石の岸の沢（原城跡では海にも使う）、
    * 岩は草の上の岩場（原城跡では崩れた石垣の列）。水・岩・森の下にも草を敷いて、縁を草でつなぐ。記録は public/assets/README.md。
    */

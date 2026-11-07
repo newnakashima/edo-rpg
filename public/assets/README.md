@@ -303,6 +303,24 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 
 プロンプト（橋）: JRPG map tile art, 16-bit SNES style, seen from directly above: a straight Edo period Japanese wooden plank footbridge that fills the whole square canvas edge to edge, the bridge runs left to right, weathered brown wooden boards laid side by side running from top to bottom, a dark brown wooden handrail beam along the entire top edge and along the entire bottom edge, symmetric, no water, no ground, no background, muted ukiyo-e palette, 1px dark outline.
 
+#### 武家の城下（bushi: 駿府城下、与力・黒田の屋敷、仙台城下、近江・彦根、肥後・熊本）
+
+草・道・水・森は shoka の `grass_dual`・`road_dual`・`water_dual`・`tree_dual` を、岩は yama の `rock_dual` をそのまま複製した（地面・草・水はどれも共通の画像なので、境目がそろう。yama の岩の組の lower は shoka の森と同じ草）。
+水は石の護岸の堀に、岩（`^`）は城や屋敷を囲む石垣と庭石に見える。岩の下には草を敷き（`under: 'grass'`）、草の `joins` に岩を入れて、石垣の縁を草でつなぐ。マップの文字は変えていない。
+屋根・壁・戸は、武家屋敷 1 軒の絵（`create_image_pro`、64 × 48、透過、16 候補、各 10 generations）から切り出した。壁はなまこ壁で窓がなく、与力の屋敷の外周の塀にもそのまま使える。
+`bushi/roof.png`・`wall.png` は描画に使われなくなった（`TILESETS` に残して読み込みは続ける）。`bushi/door.png` は同じ絵の戸口に差し替えた。
+
+| 部品 | ジョブ ID と候補 | 切り方 |
+| --- | --- | --- |
+| bushi/roof_edge | 72cea87b-9206-4af6-9bc4-cd93ddee1c0b の候補 12 | `--cols 0,24,48 --rows 0,4,7`（屋根は y = 0〜23。下の行を 8 にすると軒先の下に壁の白が 1 px 入った） |
+| bushi/wall_edge | 同じ候補 12 | `--cols 21,30,48 --rows 31,31,31`（戸を左に寄せた絵なので、左端は戸の右の柱 x = 21 から、中は右半分の無地のなまこ壁 x = 30 から切った。右端は絵の右端の柱） |
+| bushi/door | 同じ候補 12 | (8, 31) から 16 × 16（鋲を打った焦げ茶の板戸） |
+
+プロンプト（家、5 回目）: JRPG town map tile art, 16-bit SNES style, front view seen from above at a 3/4 angle: a long Edo period Japanese samurai residence (buke yashiki), same style as the reference, filling the whole 64x48 canvas edge to edge, fully opaque, no transparent margins on the left or right. Top 20 pixels: dark slate grey kawara roof tiles in clearly visible straight horizontal rows with lighter grey highlights, a ridge line with tile ends along the very top edge, a straight eave with a dark shadow at the bottom of the roof. Bottom 28 pixels: a long front wall running the full canvas width: white plaster upper part and a lower band of grey square tiles crossed by white diagonal lattice lines (namako-kabe), a dark brown wooden pillar at the far left edge and at the far right edge. Only one small narrow dark brown wooden door with black iron studs, 14 pixels wide, placed near the left side; the whole right half of the wall is a long plain uninterrupted stretch of white plaster and namako tiles with nothing on it. Straight horizontal rows, no ground, no sky, no background, no windows, no signs, no lanterns, no plants, muted ukiyo-e palette, 1px dark outline.（参照画像: 3 回目の候補 10）
+
+5 回の上限で 5 回目を採用した。残った ×: 左右対称でない（戸を左に寄せたため。切り出しには影響しない）。作り直しの理由:
+1 回目（22fd3457-59f2-4bcf-9ad9-9a09f95374f6、heavy gate door を指定）は長屋門の絵になり、屋根が上の 4 割しかなく壁の両端に柱がなかった。2 回目（4aaac744-511e-456c-ae6d-e9c707114644、1 回目の候補 14 を参照）は屋根が黒くつぶれて棟と瓦の段が読めず、なまこ壁の白が透明に抜けた候補が多かった。3 回目（0355fd22-5b08-4555-876a-f9ebc0666953、棟・瓦の段・明るい灰を指定）は候補 10 の屋根と壁がよかったが、壁の左右 3 px が透明で、戸の両脇の壁が 14 px しかなく中の部品（16 px）が取れなかった。4 回目（3d91886a-01b9-4344-b0e3-c0b5bdd490b0、3 回目の候補 10 を参照）も同じだったので、5 回目は戸を左に寄せて右半分を無地の壁にした（白い漆喰が透明に抜けなかったのは候補 12 だけ）。
+
 #### ワールドマップ（field: 日本）
 
 野（`field/plain.png`）を 4 組で共通の lower のタイル（ad7f8912-40fa-4df5-bb38-d8f2765c9181、マスク 0）に差し替え、その上に街道 → 海 → 山 → 森 の順に境目の部品（dual）を重ねる。4 組とも `lower_base_tile_id` ad7f8912… でつないだ（lower: muted green grassy plain of an old Japanese world map, even flat green field with a few tiny darker green specks, no pattern）。マップの文字は変えていない。
