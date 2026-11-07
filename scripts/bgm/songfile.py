@@ -31,6 +31,10 @@ PATTERNS = {
     "bass:root8": "8 分音符で最低音を刻む",
     "bass:root-fifth": "拍ごとに最低音と 5 度を交互に",
     "bass:octave8": "8 分音符で最低音とその 1 オクターブ上を交互に",
+    "bass:drive8": "8 分音符で最低音を刻み、1 オクターブ上と 5 度を混ぜて走る（戦闘向き）",
+    "bass:gallop": "拍ごとに 8 分 + 16 分 + 16 分（タッ・タタ）で刻む（戦闘・行進向き）",
+    "block:stab": "3 + 3 + 2 の 8 分（1 拍目・2 拍目の裏・4 拍目）で短く和音を打つ（戦闘向き）",
+    "block:push8": "8 分音符で短く和音を刻み続ける（勢いを出す）",
 }
 
 NOTE_RE = re.compile(r"^(?P<p>[A-G](?:##|bb|#|b)?-?\d|r)(?::(?P<d>[0-9]+(?:[./][0-9]+)?))?(?P<flags>[~!>]*)$")
@@ -47,6 +51,9 @@ class PartDef:
     vel: int = 96
     gate: float | None = None
     role: str = ""  # "melody" | "counter" | "bass" | "harmony" | "drums"
+    voices: int = 0  # 和音のパターンで使う音の数の上限（上の音から残す。0 は制限なし）
+    follow: str = ""  # なぞるパート（重ねて厚くする）
+    shift: str = ""  # なぞるときのずらし方（-12 などの半音の数、-3d / +6d などの調の中の度数）
 
 
 @dataclass
@@ -302,8 +309,14 @@ def parse_song(path: Path) -> Song:
                 if not eq:
                     raise SongError(f"{no} 行目: オプションは 名前=値: {opt}")
                 try:
-                    if k in ("vol", "pan", "oct", "vel"):
+                    if k in ("vol", "pan", "oct", "vel", "voices"):
                         setattr(pd, k, int(v))
+                    elif k == "follow":
+                        pd.follow = v
+                    elif k == "shift":
+                        if not re.match(r"^[+-]?\d+$|^[+-]\d+d$", v):
+                            raise SongError(f"{no} 行目: shift は -12 のような半音の数か、-3d・+6d のような度数: {v}")
+                        pd.shift = v
                     elif k == "gate":
                         pd.gate = float(v)
                     elif k == "role":
@@ -340,6 +353,14 @@ def parse_song(path: Path) -> Song:
                 raise SongError(f"{no} 行目: [parts] にないパート: {pname}")
             pending_lines.setdefault((current.name, pname), []).append((no, body))
 
+    for pd in song.parts.values():
+        if pd.follow:
+            if pd.follow not in song.parts or song.parts[pd.follow].kind != "notes" or song.parts[pd.follow].follow:
+                raise SongError(f"パート {pd.name} の follow={pd.follow} は、[parts] にある notes のパート（follow でないもの）にする")
+            if pd.kind != "notes":
+                raise SongError(f"パート {pd.name}: follow を使うパートの種類は notes にする")
+            if not pd.shift:
+                pd.shift = "0"
     if song.key is None:
         raise SongError("key（調）がない")
     if not song.form:
@@ -372,7 +393,10 @@ def parse_song(path: Path) -> Song:
         for pname, pd in song.parts.items():
             plines = pending_lines.get((sec.name, pname))
             if not plines:
-                sec.parts[pname] = "off" if pd.kind in ("notes", "drums") else ("pattern", pd.kind)
+                if pd.follow:
+                    sec.parts[pname] = ("follow",)
+                else:
+                    sec.parts[pname] = "off" if pd.kind in ("notes", "drums") else ("pattern", pd.kind)
                 continue
             first = plines[0][1].strip()
             if first == "off":
@@ -495,6 +519,20 @@ def pattern_events(song: Song, pd: PartDef, pattern: str, spans: list, out: list
                 t += step
             return [(p, (pts[i + 1] if i + 1 < len(pts) else span.end) - p) for i, p in enumerate(pts)]
 
+        def rhythm(offsets):
+            # 小節の中の決まった位置（四分音符 = 1）で打つ。コードの変わり目には必ず 1 音置く
+            pts = []
+            b0 = bar_start
+            while b0 < span.end:
+                for off in offsets:
+                    t = b0 + off
+                    if span.start <= t < span.end and off < song.bar_len:
+                        pts.append(t)
+                b0 += song.bar_len
+            if not pts or pts[0] > span.start:
+                pts.insert(0, span.start)
+            return [(p, (pts[i + 1] if i + 1 < len(pts) else span.end) - p) for i, p in enumerate(pts)]
+
         if pattern.startswith("bass:"):
             bass = choose_bass(chord.bass, center, state.get("prev_bass"), low, high)
             state["prev_bass"] = bass
@@ -514,16 +552,42 @@ def pattern_events(song: Song, pd: PartDef, pattern: str, spans: list, out: list
                     else:
                         p = bass
                     out.append((t, du, p, 0))
+            elif kind in ("drive8", "gallop"):
+                octave = bass + 12 if bass + 12 <= high else bass
+                if kind == "drive8":
+                    seq = {"R": bass, "O": octave, "F": fifth}
+                    order = "RRORRFOR"
+                    for t, du in grid(Fraction(1, 2)):
+                        i = int((t - bar_start) / Fraction(1, 2)) % len(order)
+                        out.append((t, du, seq[order[i]], 0))
+                else:
+                    offs = []
+                    for b in range(int(song.bar_len)):
+                        offs += [(b, "R"), (b + Fraction(1, 2), "R"), (b + Fraction(3, 4), "O")]
+                    which = dict(offs)
+                    for t, du in rhythm([o for o, _ in offs]):
+                        w = which.get(t - bar_start - ((t - bar_start) // song.bar_len) * song.bar_len, "R")
+                        out.append((t, du, octave if w == "O" else bass, 0))
             continue
         top_extra = 12 if pattern.startswith("arp:") and len(chord.core()) == 3 else 0
         voicing = choose_voicing(chord, center, state.get("prev_voicing"), low, high, top_extra)
         voicing = [n for n in voicing if low <= n <= high] or voicing
         state["prev_voicing"] = voicing
+        if pd.voices and pattern.startswith("block:"):
+            voicing = voicing[-pd.voices:]
         family, kind = pattern.split(":")
         if family == "block":
             if kind == "hold":
                 for n in voicing:
                     out.append((span.start, span.end - span.start, n, 0))
+            elif kind == "stab":
+                for t, du in rhythm([Fraction(0), Fraction(3, 2), Fraction(3)]):
+                    for n in voicing:
+                        out.append((t, du, n, 0))
+            elif kind == "push8":
+                for t, du in grid(Fraction(1, 2)):
+                    for n in voicing:
+                        out.append((t, du, n, 0))
             else:
                 step = {"half": Fraction(2), "beat": song.beat_len, "off8": Fraction(1, 2)}[kind]
                 for t, du in grid(step, force_start=kind != "off8"):
@@ -544,6 +608,37 @@ def pattern_events(song: Song, pd: PartDef, pattern: str, spans: list, out: list
         for t, du in grid(step):
             idx = int((t - bar_start) / step) % len(seq)
             out.append((t, du, seq[idx], 0))
+
+
+def shift_pitch(song: Song, pitch: int, shift: str, chord: Chord | None, low: int, high: int) -> int:
+    """なぞるパートの音の高さ。度数（-3d など）は調の音階の中でずらし、コードに合わない音になるときは
+    すぐ隣のコードトーンに寄せる。楽器の音域に入るようオクターブを折り返す。"""
+    from theory import classify
+    m = re.match(r"^([+-])(\d+)d$", shift)
+    if not m:
+        p = pitch + int(shift)
+    else:
+        sign = 1 if m.group(1) == "+" else -1
+        steps = int(m.group(2)) - 1
+        parent = sorted(song.key.parent)
+        pc = pitch % 12
+        if pc in parent:
+            target = parent[(parent.index(pc) + sign * steps) % len(parent)]
+            k = next(k for k in range(1, 13) if (pc + sign * k) % 12 == target)
+            p = pitch + sign * k
+        else:
+            p = pitch + sign * round(steps * 1.75)
+        if chord is not None and classify(p % 12, chord, song.key).kind in ("AV", "CHR"):
+            for d in (1, -1, 2, -2):
+                q = p + d
+                if q % 12 in chord.pcs and (q - pitch) * sign > 0:
+                    p = q
+                    break
+    while p > high:
+        p -= 12
+    while p < low:
+        p += 12
+    return p
 
 
 def expand(song: Song) -> None:
@@ -574,7 +669,9 @@ def expand(song: Song) -> None:
             merged.append(cs)
     song.chords = merged
 
-    for pname, pd in song.parts.items():
+    ordered = [n for n, p in song.parts.items() if not p.follow] + [n for n, p in song.parts.items() if p.follow]
+    for pname in ordered:
+        pd = song.parts[pname]
         state = {}
         pending_tie = None
         for name, s_start, s_end in song.section_spans:
@@ -582,11 +679,26 @@ def expand(song: Song) -> None:
             val = sec.parts[pname]
             if val == "off":
                 continue
+            if isinstance(val, tuple) and val[0] == "follow":
+                low, high = INSTRUMENTS[pd.instrument][1:3]
+                for src in [e for e in song.events if e.part == pd.follow and s_start <= e.start < s_end]:
+                    cs = next((c for c in song.chords if c.start <= src.start < c.end), None)
+                    p = shift_pitch(song, src.pitch, pd.shift, cs.chord if cs else None, low, high)
+                    song.events.append(Event(pname, src.start, src.dur, p, pd.vel, src.intended,
+                                             gate=pd.gate if pd.gate is not None else src.gate, where=src.where))
+                continue
             if isinstance(val, tuple) and val[0] == "pattern":
                 spans = [c for c in song.chords if s_start <= c.start < s_end]
                 notes = []
                 pattern_events(song, pd, val[1], spans, notes, state)
-                gate = pd.gate if pd.gate is not None else (1.0 if val[1].endswith(("hold", ":root")) else 0.9)
+                if pd.gate is not None:
+                    gate = pd.gate
+                elif val[1].endswith(("hold", ":root")):
+                    gate = 1.0
+                elif val[1] in ("block:stab", "block:push8"):
+                    gate = 0.45
+                else:
+                    gate = 0.9
                 for (st, du, p, _) in notes:
                     song.events.append(Event(pname, st, du, p, pd.vel, generated=True, gate=gate, where=song.where(st)))
                 continue

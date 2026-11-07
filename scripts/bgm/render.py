@@ -40,8 +40,11 @@ def track_instrument(mid, note) -> str:
     return instrument_for_program(note.program)
 
 
+PART_ENERGY = {}  # トラック名 → 鳴らした音の二乗和（パートごとの音量の報告に使う）
+
+
 def render_notes(notes, total: int, mid, brr: bool, echo_cfg):
-    """音を鳴らして (dry 左, dry 右, エコー左, エコー右) を返す。"""
+    """音を鳴らして (左, 右) を返す。"""
     dl, dr = np.zeros(total), np.zeros(total)
     el, er = np.zeros(total), np.zeros(total)
     by_track = {}
@@ -50,6 +53,8 @@ def render_notes(notes, total: int, mid, brr: bool, echo_cfg):
     for (_tr, _ch), lst in by_track.items():
         lst.sort(key=lambda n: n.start)
         inst = track_instrument(mid, lst[0])
+        tname = mid.track_names.get(_tr, f"track{_tr}")
+        tbuf = np.zeros(total)
         # 1 音ずつのパート（旋律など）は、次の音が鳴ったら前の音の余韻を切る（SNES の 1 チャンネル 1 音と同じ）
         mono = inst != "drums" and all(lst[i + 1].start >= lst[i].end for i in range(len(lst) - 1))
         for i, n in enumerate(lst):
@@ -72,17 +77,20 @@ def render_notes(notes, total: int, mid, brr: bool, echo_cfg):
             sig = voice(patch, freq, max(1, s1 - s0), n.vel, max_len)
             sig = sig[: total - s0]
             vol = (n.volume / 127) ** 2 * (n.expression / 127) ** 2
-            p = np.clip((n.pan - 64) / 63, -1, 1)
+            p = np.clip((n.pan - 64) / 63 + patch.pan, -1, 1)
             gl, gr = np.cos((p + 1) * np.pi / 4), np.sin((p + 1) * np.pi / 4)
             seg = slice(s0, s0 + len(sig))
+            tbuf[seg] += sig * vol
             dl[seg] += sig * vol * gl
             dr[seg] += sig * vol * gr
             el[seg] += sig * vol * gl * patch.echo
             er[seg] += sig * vol * gr * patch.echo
+        PART_ENERGY[tname] = PART_ENERGY.get(tname, 0.0) + float(np.sum(tbuf ** 2))
     delay, fb, mix = echo_cfg
     if mix > 0:
+        # 右のエコーだけ 16 ms 遅らせて、左右に少し広げる
         el = echo(el, delay, fb) * mix
-        er = echo(er, delay, fb) * mix
+        er = echo(er, delay + 16, fb) * mix
     else:
         el[:] = 0
         er[:] = 0
@@ -104,6 +112,44 @@ def resample_segment(seg: np.ndarray, before: np.ndarray, after: np.ndarray) -> 
     y = fft_resample(x, len(x) * 3 // 2)
     a = len(before) * 3 // 2
     return y[a: a + len(seg) * 3 // 2]
+
+
+def limiter_gain(x: np.ndarray, threshold: float, release: float = 0.08) -> np.ndarray:
+    """ピークだけを抑える音量の係数（1 ms ごとに計算し、5 ms 先読みして、release 秒でもとに戻す）。"""
+    blk = OUT_SR // 1000
+    n = len(x) // blk + 1
+    pad = np.zeros(n * blk)
+    pad[: len(x)] = np.max(np.abs(x), axis=1)
+    peaks = pad.reshape(n, blk).max(axis=1)
+    want = np.minimum(1.0, threshold / np.maximum(peaks, 1e-9))
+    look = 5
+    want = np.array([want[i:i + look].min() for i in range(n)])  # 先読み
+    g = np.empty(n)
+    cur = 1.0
+    rel = np.exp(-1 / (release * 1000))
+    for i in range(n):
+        cur = want[i] if want[i] < cur else want[i] + (cur - want[i]) * rel
+        g[i] = cur
+    return np.repeat(g, blk)[: len(x)]
+
+
+def master(st: np.ndarray, loudness: float, ls: int | None) -> tuple:
+    """目標の実効値に合わせ、はみ出すピークはリミッターで抑える。ループ部分は輪にして処理し、つなぎ目で
+    音量が跳ばないようにする。"""
+    st = st - st.mean(axis=0, keepdims=True)
+    rms = float(np.sqrt(np.mean(st ** 2)))
+    gain = 10 ** (loudness / 20) / (rms + 1e-12)
+    st = st * gain
+    thr = 10 ** (-1.0 / 20)
+    if ls is None:
+        g = limiter_gain(st, thr)
+    else:
+        body = st[ls:]
+        g_body = limiter_gain(np.concatenate([body, body]), thr)[len(body):]
+        g_intro = limiter_gain(np.concatenate([st[:ls], body[: OUT_SR]]), thr)[:ls] if ls else np.zeros(0)
+        g = np.concatenate([g_intro, g_body])
+    st = st * g[:, None]
+    return st, gain, float(np.min(g))
 
 
 def even(n: int) -> int:
@@ -188,12 +234,9 @@ def main():
             chans.append(resample_segment(y, np.zeros(2048), np.zeros(2048)))
         ls48 = len48 = None
 
-    st = np.stack(chans, axis=1)
-    st -= st.mean(axis=0, keepdims=True)
+    st, gain, min_g = master(np.stack(chans, axis=1), args.loudness, ls48 if looping else None)
     rms = float(np.sqrt(np.mean(st ** 2)))
     peak_v = float(np.max(np.abs(st)))
-    gain = min(10 ** (args.loudness / 20) / (rms + 1e-12), 10 ** (-1.0 / 20) / (peak_v + 1e-12))
-    st *= gain
     pcm = np.clip(np.round(st * 32767), -32768, 32767).astype("<i2")
 
     out = Path(args.output) if args.output else Path("public/assets/bgm") / (Path(args.midi).stem + ".opus")
@@ -233,12 +276,28 @@ def main():
     else:
         print("ループしない曲として書き出した")
     db = lambda v: 20 * np.log10(max(v, 1e-9))  # noqa: E731
-    print(f"音量: 実効値 {db(rms * gain):.1f} dBFS、最大 {db(peak_v * gain):.1f} dBFS（音量の補正 {db(gain):+.1f} dB）")
-    if peak_v * gain > 0.95:
+    print(f"音量: 実効値 {db(rms):.1f} dBFS、最大 {db(peak_v):.1f} dBFS（音量の補正 {db(gain):+.1f} dB、"
+          f"リミッターで最も下げた所 {db(min_g):.1f} dB）")
+    if min_g < 10 ** (-6 / 20):
+        print("警告: リミッターが 6 dB より大きく効いている所がある。打楽器などの一部の音が大きすぎるので、そのパートの vol= を下げる")
+    if peak_v > 0.95:
         print("警告: 最大値が 0 dBFS に近い。音割れのおそれがある")
     print(f"同時発音数の最大: {peak}" + (f"（警告: SNES の {MAX_VOICES} 音を超えている）" if peak > MAX_VOICES else f"（上限 {MAX_VOICES}）"))
     insts = sorted({track_instrument(mid, n_) for n_ in mid.notes})
     print(f"使った楽器: {', '.join(insts)}")
+    if PART_ENERGY:
+        ref = max(PART_ENERGY.values())
+        print("パートごとの音量（いちばん大きいパートとの差）:")
+        for name, e in sorted(PART_ENERGY.items(), key=lambda kv: -kv[1]):
+            print(f"  {name:24} {10 * np.log10(e / ref + 1e-12):6.1f} dB")
+        melodic = {k: v for k, v in PART_ENERGY.items() if not k.startswith("drums")}
+        mel = [k for k in melodic if k.endswith(":melody")]
+        if mel and melodic:
+            top = max(melodic, key=melodic.get)
+            if melodic[mel[0]] < melodic[top] * 10 ** (-3 / 10):
+                print(f"警告: 旋律（{mel[0]}）が {top} より 3 dB 以上小さい。旋律が埋もれている。旋律の vol= を上げるか、ほかを下げる")
+        elif melodic:
+            print("（旋律のパートの名前を melody にすると、旋律が埋もれていないかも確かめる）")
     # 無音の区間（1 小節以上ほぼ無音）が途中にないか
     frame = OUT_SR // 10
     lv = np.sqrt(np.mean((pcm[: len(pcm) // frame * frame].astype(float) / 32768) ** 2, axis=1).reshape(-1, frame).mean(axis=1))

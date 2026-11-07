@@ -66,7 +66,8 @@ class Checker:
         for pname, pd in song.parts.items():
             if pd.kind == "notes":
                 self.check_melodic_line(pname)
-                self.check_contour(pname)
+                if not pd.follow:  # なぞるパートの跳躍は旋律の跳躍をなぞったものなので見ない（ぶつかりは見る）
+                    self.check_contour(pname)
         self.check_bass()
         self.check_outer_voices()
         self.check_part_clashes()
@@ -74,6 +75,7 @@ class Checker:
         self.check_accompaniment_above_melody()
         self.check_rhythm_variety()
         self.check_scale_flavor()
+        self.check_texture()
         order = {"error": 0, "warn": 1, "info": 2}
         self.issues.sort(key=lambda i: order[i.level])
         return self.issues
@@ -436,6 +438,32 @@ class Checker:
                 self.add("warn" if ratio > 0.2 else "info", "曲全体", pname,
                          f"旋律のうち {key.describe()} の外の音は {ratio:.0%}（{len(outside)}/{len(evs)}）" +
                          ("。和の雰囲気が薄れる。外の音は経過音などにとどめる" if ratio > 0.2 else ""))
+
+
+    def check_texture(self):
+        """編成の厚み。SNES の JRPG の BGM は、8 音を使い切るくらいに音を重ねる。"""
+        song = self.song
+        if not song.loop:
+            return
+        counts = []
+        for i, (b0, _name, _n) in enumerate(song.bars):
+            if b0 < song.loop_start:
+                continue
+            b1 = b0 + song.bar_len
+            parts = {e.part for e in song.events if e.start < b1 and e.start + e.dur > b0 and song.parts[e.part].kind != "drums"}
+            counts.append(len(parts))
+        if not counts:
+            return
+        mean = sum(counts) / len(counts)
+        has_drums = any(p.kind == "drums" for p in song.parts.values())
+        msg = f"打楽器以外で同時に鳴っているパートは、1 小節あたり平均 {mean:.1f}"
+        if mean < 3.5:
+            self.add("warn", "曲全体", "", msg + "。薄くてファミコンのように聞こえる。和音の持続（弦・合唱・笙）、"
+                     "刻み、対旋律、旋律の 3 度・オクターブ重ね（follow=）を足して 4 パート以上にする")
+        else:
+            self.add("info", "曲全体", "", msg)
+        if not has_drums:
+            self.add("info", "曲全体", "", "打楽器がない（静かな曲なら問題ない）")
 
 
 def harmony_chart(song: Song) -> str:

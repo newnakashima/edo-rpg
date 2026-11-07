@@ -37,6 +37,7 @@ class Patch:
     gain: float = 1.0
     echo: float = 0.4  # エコーへ送る量
     pitched: bool = True
+    pan: float = 0.0  # 楽器そのものの定位（-1〜1。打楽器のキットの並びなど）。パートの pan に足す
 
 
 # ---- 波形を作る道具 ----
@@ -155,6 +156,41 @@ def noise(n, seed):
     return _rng(seed).standard_normal(n)
 
 
+def room(x: np.ndarray, tau: float, mix: float, seed: int, tone: float = 5000.0) -> np.ndarray:
+    """録音した部屋の響きをサンプルに焼き込む（SNES のサンプルは、響きごと録った生の音が多い）。
+    tau は響きの減衰の時定数（秒）、mix は響きの量。サンプルは響きの分だけ長くなる。"""
+    n_ir = int(tau * 5 * SR)
+    t = np.arange(n_ir) / SR
+    ir = noise(n_ir, seed + 99) * np.exp(-t / tau)
+    gap = int(0.004 * SR)
+    ir[:gap] *= np.linspace(0, 1, gap)  # 初期反射の前のすきま
+    ir = fft_filter(ir, lowpass(tone))
+    ir /= np.sqrt(np.sum(ir ** 2)) + 1e-12
+    n = len(x) + n_ir
+    wet = np.fft.irfft(np.fft.rfft(x, 2 * n) * np.fft.rfft(ir, 2 * n), 2 * n)[:n]
+    dry = np.concatenate([x, np.zeros(n_ir)])
+    wet *= np.sqrt(np.sum(dry ** 2)) / (np.sqrt(np.sum(wet ** 2)) + 1e-12)
+    return dry * (1 - mix * 0.5) + wet * mix
+
+
+def metal(freqs, n, seed):
+    """矩形波を重ねた金属音（ハイハット・シンバルの芯）。"""
+    t = np.arange(n) / SR
+    rng = _rng(seed)
+    return sum(np.sign(np.sin(2 * np.pi * f * t + rng.uniform(0, 6.28))) for f in freqs) / len(freqs)
+
+
+def membrane(f0, n, taus, amps, seed, drop=1.0, drop_tau=0.03):
+    """太鼓の膜の振動（円形の膜の倍音 1, 1.59, 2.14, 2.30, 2.65）。drop は打った直後の音程の上がり方。"""
+    t = np.arange(n) / SR
+    rng = _rng(seed)
+    x = np.zeros(n)
+    for ratio, tau, a in zip((1.0, 1.59, 2.14, 2.30, 2.65), taus, amps):
+        f = f0 * ratio * (1 + (drop - 1) * np.exp(-t / drop_tau))
+        x += a * np.sin(2 * np.pi * np.cumsum(f) / SR + rng.uniform(0, 6.28)) * np.exp(-t / tau)
+    return x
+
+
 # ---- BRR ----
 
 BRR_FILTERS = [(0.0, 0.0), (15 / 16, 0.0), (61 / 32, -15 / 16), (115 / 64, -13 / 16)]
@@ -261,19 +297,30 @@ def _sho(seed):
 def _strings(seed):
     L, k0 = 32768, 256
     f0 = k0 * SR / L
-    amps = [float((1 / n) * lowpass(3200)(n * f0)) for n in range(1, 50)]
-    loop = periodic(L, k0, amps, seed=seed, detune_bins=(-1, 0, 1))
-    return Patch(sustained(loop, k0, 1024), attack=0.18, decay=0.0, sustain=1.0, release=0.38,
-                 vib_delay=0.4, vib_rate=5.0, vib_depth=8, gain=0.65, echo=0.6)
+
+    def body(f):
+        return 0.7 + 0.5 * bandpass(450, 200)(f) + 0.4 * bandpass(1500, 500)(f) + 0.3 * bandpass(3000, 700)(f)
+
+    amps = [float((1 / n) * lowpass(4500)(n * f0) * body(n * f0)) for n in range(1, 60)]
+    loop = periodic(L, k0, amps, seed=seed, detune_bins=(-2, -1, 0, 1, 2), noise=0.03, noise_shape=highpass(2000))
+    return Patch(sustained(loop, k0, 1024), attack=0.05, decay=0.0, sustain=1.0, release=0.32,
+                 vib_delay=0.35, vib_rate=5.2, vib_depth=9, gain=0.65, echo=0.65)
 
 
 def _brass(seed):
-    L, k0 = 8192, 64
+    # 金管の合奏。ラッパの共鳴（1200 Hz 付近）を持ち、吹き始めが明るい。3 本分ずらして重ねる
+    L, k0 = 32768, 256
     f0 = k0 * SR / L
-    soft = periodic(L, k0, [float((1 / n) * lowpass(1800)(n * f0)) for n in range(1, 60)], seed=seed)
-    bright = periodic(L, k0, [float((1 / n) * lowpass(4500)(n * f0)) for n in range(1, 60)], seed=seed)
-    return Patch(sustained(soft, k0, 4096, bright_loop=bright, bright_len=4000), attack=0.03, decay=0.3, sustain=0.85,
-                 release=0.12, vib_delay=0.35, vib_rate=5.0, vib_depth=10, gain=0.7, echo=0.4)
+
+    def horn(f):
+        return 0.6 + bandpass(1200, 450)(f) + 0.4 * bandpass(2600, 600)(f)
+
+    soft = periodic(L, k0, [float((1 / n) * lowpass(2400)(n * f0) * horn(n * f0)) for n in range(1, 60)], seed=seed,
+                    detune_bins=(-1, 0, 1))
+    bright = periodic(L, k0, [float((1 / n ** 0.8) * lowpass(6000)(n * f0) * horn(n * f0)) for n in range(1, 60)],
+                      seed=seed, detune_bins=(-1, 0, 1))
+    return Patch(sustained(soft, k0, 4096, bright_loop=bright, bright_len=3600), attack=0.025, decay=0.35, sustain=0.85,
+                 release=0.12, vib_delay=0.35, vib_rate=5.0, vib_depth=10, gain=0.7, echo=0.45)
 
 
 def _pluck_excite(period, seed, smooth, click=0.0):
@@ -305,9 +352,60 @@ def _biwa(seed):
 
 
 def _bass(seed):
+    # 指弾きのベース。丸い弦の音に、基音を支える低い正弦波を重ねる
     p = 256
-    s = karplus(p, 1.8, 0.9985, _pluck_excite(p, seed, 10, 0.5))
-    return Patch(s, attack=0.002, release=0.06, gain=0.95, echo=0.08)
+    s = karplus(p, 2.0, 0.9988, _pluck_excite(p, seed, 6, 0.8), blend=0.6)
+    t = np.arange(len(s.data)) / SR
+    sub = np.sin(2 * np.pi * s.base_freq * t) * np.exp(-t / 0.9)
+    s.data = np.tanh(1.4 * (s.data / np.max(np.abs(s.data)) + 0.55 * sub))  # 少し歪ませて輪郭を出す
+    return Patch(s, attack=0.002, release=0.07, gain=0.369, echo=0.06)
+
+
+def _pickbass(seed):
+    # ピック弾きのベース。明るく硬い。戦闘の刻み向き
+    p = 256
+    s = karplus(p, 1.6, 0.9982, _pluck_excite(p, seed, 2, 2.0), blend=0.78)
+    t = np.arange(len(s.data)) / SR
+    sub = np.sin(2 * np.pi * s.base_freq * t) * np.exp(-t / 0.6)
+    s.data = np.tanh(1.8 * (s.data / np.max(np.abs(s.data)) + 0.45 * sub))
+    return Patch(s, attack=0.001, release=0.05, gain=0.352, echo=0.06)
+
+
+def _harp(seed):
+    p = 64
+    s = karplus(p, 2.6, 0.9993, _pluck_excite(p, seed, 2, 0.5), blend=0.6)
+    s.data = room(s.data, 0.25, 0.35, seed)
+    return Patch(s, attack=0.001, release=0.4, gain=1.5, echo=0.55)
+
+
+def _pizz(seed):
+    p = 128
+    s = karplus(p, 0.7, 0.992, _pluck_excite(p, seed, 4, 0.5), blend=0.55)
+    s.data = room(s.data, 0.2, 0.45, seed)
+    return Patch(s, attack=0.001, release=0.15, gain=1.2, echo=0.5)
+
+
+def _timpani(seed):
+    n = int(2.2 * SR)
+    f0 = 110.0
+    x = membrane(f0, n, (0.9, 0.7, 0.5, 0.35, 0.25), (1, 0.55, 0.35, 0.2, 0.12), seed, drop=1.04, drop_tau=0.05)
+    x += fft_filter(noise(n, seed), lowpass(1200)) * decay_env(n, 0.012) * 0.6
+    x = room(x, 0.35, 0.4, seed)
+    return Patch(Sample(x / np.max(np.abs(x)), None, f0), attack=0.001, release=0.5, gain=0.85, echo=0.35)
+
+
+def _choir(seed):
+    # 「あー」と歌う合唱。声帯の音を母音の共鳴（800・1150・2900 Hz）で形づくり、3 人分ずらして重ねる
+    L, k0 = 32768, 256
+    f0 = k0 * SR / L
+
+    def form(f):
+        return bandpass(800, 180)(f) + 0.6 * bandpass(1150, 200)(f) + 0.25 * bandpass(2900, 400)(f) + 0.08
+
+    amps = [float(n ** -1.0 * form(n * f0) * lowpass(4000)(n * f0)) for n in range(1, 60)]
+    loop = periodic(L, k0, amps, noise=0.04, noise_shape=bandpass(2500, 1500), seed=seed, detune_bins=(-1, 0, 1))
+    return Patch(sustained(loop, k0, 1024), attack=0.28, decay=0.0, sustain=1.0, release=0.5,
+                 vib_delay=0.3, vib_rate=5.2, vib_depth=10, gain=0.75, echo=0.7)
 
 
 def _bell(seed):
@@ -320,67 +418,90 @@ def _bell(seed):
 
 
 def _drum(name, seed):
-    n_of = lambda sec: int(sec * SR)  # noqa: E731
+    """打楽器。どれも部屋の響きを焼き込み、キットの中の位置（定位）を持つ。"""
+    def n_of(sec):
+        return int(sec * SR)
+
+    def stick(n, cut, tau):
+        return fft_filter(noise(n, seed + 7), highpass(cut)) * decay_env(n, tau)
+
     if name == "odaiko":
-        n = n_of(1.4)
-        x = sweep_sine(110, 52, 0.12, n) * decay_env(n, 0.45) + 0.3 * sweep_sine(190, 105, 0.1, n) * decay_env(n, 0.12)
-        x += fft_filter(noise(n, seed), lowpass(600)) * decay_env(n, 0.03) * 0.6
-        return Patch(one_shot(x), gain=1.15, echo=0.15, pitched=False)
+        n = n_of(1.6)
+        x = membrane(62, n, (0.75, 0.4, 0.25, 0.2, 0.15), (1, 0.5, 0.3, 0.2, 0.15), seed, drop=1.5, drop_tau=0.04)
+        x += fft_filter(noise(n, seed), lowpass(1800)) * decay_env(n, 0.02) * 0.7
+        return Patch(one_shot(room(x, 0.32, 0.45, seed, 3000)), gain=0.562, echo=0.2, pitched=False)
     if name == "okedo":
-        n = n_of(0.7)
-        x = sweep_sine(190, 130, 0.05, n) * decay_env(n, 0.17)
-        x += fft_filter(noise(n, seed), bandpass(900, 600)) * decay_env(n, 0.02) * 0.5
-        return Patch(one_shot(x), gain=0.85, echo=0.2, pitched=False)
+        n = n_of(0.8)
+        x = membrane(120, n, (0.3, 0.2, 0.14, 0.12, 0.1), (1, 0.6, 0.4, 0.3, 0.2), seed, drop=1.25, drop_tau=0.03)
+        x += fft_filter(noise(n, seed), bandpass(1200, 800)) * decay_env(n, 0.015) * 0.6
+        return Patch(one_shot(room(x, 0.22, 0.4, seed)), gain=0.45, echo=0.25, pitched=False, pan=0.15)
     if name == "shime":
-        n = n_of(0.3)
-        x = sweep_sine(470, 400, 0.01, n) * decay_env(n, 0.06)
-        x += fft_filter(noise(n, seed), bandpass(3000, 1500)) * decay_env(n, 0.012) * 0.9
-        return Patch(one_shot(x), gain=0.65, echo=0.25, pitched=False)
+        n = n_of(0.35)
+        x = membrane(430, n, (0.07, 0.05, 0.04, 0.03, 0.03), (1, 0.7, 0.5, 0.4, 0.3), seed, drop=1.08, drop_tau=0.01)
+        x += fft_filter(noise(n, seed), bandpass(3200, 1500)) * decay_env(n, 0.018) * 1.1
+        return Patch(one_shot(room(x, 0.16, 0.35, seed)), gain=0.585, echo=0.3, pitched=False, pan=-0.2)
     if name == "kane":
-        n = n_of(0.5)
-        x = partials([1450, 2320, 3340, 4510, 5900], [0.2, 0.15, 0.1, 0.07, 0.05], [1, 0.8, 0.6, 0.4, 0.3], n, seed)
-        x += fft_filter(noise(n, seed), highpass(4000)) * decay_env(n, 0.01) * 0.5
-        return Patch(one_shot(x), gain=0.45, echo=0.3, pitched=False)
+        n = n_of(0.6)
+        x = partials([1450, 2320, 3340, 4510, 5900], [0.25, 0.18, 0.12, 0.08, 0.06], [1, 0.8, 0.6, 0.4, 0.3], n, seed)
+        x += stick(n, 4000, 0.008) * 0.6
+        return Patch(one_shot(room(x, 0.15, 0.3, seed, 8000)), gain=0.225, echo=0.3, pitched=False, pan=0.3)
     if name == "hyoshigi":
-        n = n_of(0.25)
-        x = partials([1850, 2950, 4400], [0.05, 0.03, 0.02], [1, 0.6, 0.3], n, seed)
+        n = n_of(0.3)
+        x = partials([1850, 2950, 4400], [0.06, 0.035, 0.02], [1, 0.6, 0.3], n, seed)
         x[:40] += fft_filter(noise(40, seed), highpass(3000)) * 1.5
-        return Patch(one_shot(x), gain=0.9, echo=0.45, pitched=False)
+        return Patch(one_shot(room(x, 0.3, 0.5, seed, 7000)), gain=0.405, echo=0.45, pitched=False)
     if name == "woodblock":
-        n = n_of(0.2)
+        n = n_of(0.25)
         x = partials([820, 1290], [0.06, 0.03], [1, 0.4], n, seed)
-        return Patch(one_shot(x), gain=0.55, echo=0.3, pitched=False)
+        return Patch(one_shot(room(x, 0.15, 0.3, seed)), gain=0.27, echo=0.3, pitched=False, pan=0.25)
     if name == "kick":
-        n = n_of(0.5)
-        x = sweep_sine(150, 48, 0.03, n) * decay_env(n, 0.18)
-        x[:80] += noise(80, seed) * 0.3
-        return Patch(one_shot(x), gain=1.0, echo=0.05, pitched=False)
+        n = n_of(0.6)
+        x = sweep_sine(170, 50, 0.035, n) * decay_env(n, 0.3)
+        x += np.sin(2 * np.pi * 1600 * np.arange(n) / SR) * decay_env(n, 0.004) * 0.4  # ビーターの当たり
+        x += stick(n, 2500, 0.003) * 0.4
+        return Patch(one_shot(room(x, 0.12, 0.25, seed, 2500)), gain=0.562, echo=0.05, pitched=False)
     if name == "snare":
-        n = n_of(0.4)
-        x = sweep_sine(220, 185, 0.02, n) * decay_env(n, 0.07) * 0.6
-        x += fft_filter(noise(n, seed), bandpass(4000, 3000)) * decay_env(n, 0.11)
-        return Patch(one_shot(x), gain=0.65, echo=0.25, pitched=False)
+        n = n_of(0.5)
+        x = membrane(185, n, (0.08, 0.06, 0.05, 0.04, 0.03), (1, 0.6, 0.4, 0.3, 0.2), seed, drop=1.1, drop_tau=0.01) * 0.7
+        x += fft_filter(noise(n, seed), bandpass(5000, 3500)) * decay_env(n, 0.15)  # 響き線
+        x += fft_filter(noise(n, seed + 1), bandpass(1500, 700)) * decay_env(n, 0.05) * 0.6
+        return Patch(one_shot(room(x, 0.2, 0.45, seed)), gain=0.765, echo=0.3, pitched=False, pan=-0.08)
     if name == "rim":
-        n = n_of(0.15)
-        x = partials([520, 1700], [0.02, 0.015], [1, 0.7], n, seed) + fft_filter(noise(n, seed), highpass(2500)) * decay_env(n, 0.01)
-        return Patch(one_shot(x), gain=0.5, echo=0.3, pitched=False)
+        n = n_of(0.2)
+        x = partials([520, 1700], [0.02, 0.015], [1, 0.7], n, seed) + stick(n, 2500, 0.01)
+        return Patch(one_shot(room(x, 0.15, 0.35, seed)), gain=0.54, echo=0.3, pitched=False, pan=-0.08)
+    if name in ("tom_hi", "tom_mid", "tom_low"):
+        f0, pan = {"tom_hi": (190, -0.35), "tom_mid": (140, 0.0), "tom_low": (95, 0.35)}[name]
+        n = n_of(0.9)
+        x = membrane(f0, n, (0.3, 0.15, 0.1, 0.08, 0.06), (1, 0.45, 0.3, 0.2, 0.12), seed, drop=1.35, drop_tau=0.04)
+        x += stick(n, 2000, 0.006) * 0.5
+        return Patch(one_shot(room(x, 0.22, 0.4, seed)), gain=0.45, echo=0.25, pitched=False, pan=pan)
+    hat_freqs = [205.3 * 2.5, 304.4 * 2.5, 369.6 * 2.5, 522.7 * 2.5, 540 * 2.5, 800 * 2.5]
     if name in ("hat", "openhat"):
-        n = n_of(0.15 if name == "hat" else 0.6)
-        x = fft_filter(noise(n, seed), highpass(7000)) * decay_env(n, 0.035 if name == "hat" else 0.22)
-        return Patch(one_shot(x), gain=0.6, echo=0.2, pitched=False)
+        n = n_of(0.2 if name == "hat" else 0.7)
+        tau = 0.04 if name == "hat" else 0.28
+        x = fft_filter(metal(hat_freqs, n, seed) + 0.5 * noise(n, seed), bandpass(9000, 3500)) * decay_env(n, tau)
+        return Patch(one_shot(room(x, 0.12, 0.25, seed, 10000)), gain=0.473, echo=0.2, pitched=False, pan=0.35)
     if name == "crash":
-        n = n_of(2.0)
-        x = fft_filter(noise(n, seed), highpass(4500)) * decay_env(n, 0.7)
-        return Patch(one_shot(x), gain=0.5, echo=0.3, pitched=False)
+        n = n_of(2.4)
+        x = fft_filter(metal(hat_freqs, n, seed) + 0.8 * noise(n, seed), highpass(3500)) * decay_env(n, 0.9)
+        x[: n_of(0.004)] *= np.linspace(0, 1, n_of(0.004))
+        return Patch(one_shot(room(x, 0.3, 0.3, seed, 10000)), gain=0.338, echo=0.3, pitched=False, pan=-0.3)
+    if name == "ride":
+        n = n_of(1.4)
+        x = fft_filter(metal(hat_freqs, n, seed) + 0.3 * noise(n, seed), highpass(5000)) * decay_env(n, 0.6) * 0.6
+        x += partials([3100, 4700], [0.5, 0.3], [0.5, 0.3], n, seed)
+        return Patch(one_shot(room(x, 0.2, 0.25, seed, 10000)), gain=0.225, echo=0.2, pitched=False, pan=0.4)
     raise KeyError(name)
 
 
 BUILDERS = {
     "shakuhachi": _shakuhachi, "shinobue": _shinobue, "hichiriki": _hichiriki, "kokyu": _kokyu, "sho": _sho,
     "strings": _strings, "brass": _brass, "shamisen": _shamisen, "koto": _koto, "biwa": _biwa, "bass": _bass,
-    "bell": _bell,
+    "bell": _bell, "pickbass": _pickbass, "harp": _harp, "pizz": _pizz, "timpani": _timpani, "choir": _choir,
 }
-DRUM_NAMES = ["odaiko", "okedo", "shime", "kane", "hyoshigi", "woodblock", "kick", "snare", "rim", "hat", "openhat", "crash"]
+DRUM_NAMES = ["odaiko", "okedo", "shime", "kane", "hyoshigi", "woodblock", "kick", "snare", "rim", "hat", "openhat", "crash",
+              "ride", "tom_hi", "tom_mid", "tom_low"]
 
 _cache = {}
 
