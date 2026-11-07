@@ -209,6 +209,19 @@ export const TILE_PARTS: Partial<Record<TilesetId, Partial<Record<TileKind, Part
     wall: { rule: 'edge', under: 'ground' },
   },
   /**
+   * 城の中（名古屋城 天守・江戸城 本丸御殿・松の廊下）。板の間（floor）の上に、本丸御殿の中庭の草 → 池 → 植え込みの森 の順に重ねる。
+   * 草・森は shoka、池は yama の沢と同じ部品（池・森の下と縁は草、草の縁の外は板の間）。屋根（天守の屋根の上の道のまわり）は
+   * 白い棟と破風の縁で囲んだ黒い本瓦の部品、壁は黒漆の天端と、黒漆の長押・腰板にはさまれた金の襖の正面を、御殿の壁の絵から切り出した。
+   * 記録は public/assets/README.md。
+   */
+  castle: {
+    grass: { rule: 'dual', under: 'floor', joins: ['tree', 'water'] },
+    water: { rule: 'dual', under: 'grass' },
+    tree: { rule: 'dual', under: 'grass' },
+    roof: { rule: 'edge', under: 'floor' },
+    wall: { rule: 'edge' },
+  },
+  /**
    * 野山（清水湊の裏山・原城跡）。草・森は shoka と同じ部品。水は川石の岸の沢（原城跡では海にも使う）、
    * 岩は草の上の岩場（原城跡では崩れた石垣の列）。水・岩・森の下にも草を敷いて、縁を草でつなぐ。記録は public/assets/README.md。
    */

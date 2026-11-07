@@ -535,6 +535,24 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 
 残る点: 屋根の広い面（南の端の 4 段など）は、同じ炎の柄の繰り返し（柄違いの仕組みがまだない）。焼け跡の地面も同じ柄の繰り返し。がれきの中の材木の模様は 16 px ごとに並ぶ（このマップのがれきはどれも 1 マスなので目立たない）。
 
+#### 城の中（castle: 名古屋城 天守・江戸城 本丸御殿・松の廊下）
+
+壁は灰色の石垣の 1 枚が全面に繰り返し（御殿の部屋の壁も石垣に見えた）、天守の屋根（`R`）は共通の屋根の 1 枚、本丸御殿の中庭は縁のない草・池・木の 1 枚だった。板の間（`_`）は 1 枚の画像（`castle/floor.png`）のまま下地にし、その上に中庭の草 → 池 → 森 を境目の部品（dual）で重ね、天守の屋根と御殿の壁を端の部品（edge）で描く。
+草・森は shoka、池は yama の沢の部品を複製した（池・森の下と縁は草、草の縁の外は板の間）。`castle/wall.png` は描画に使われなくなった（`TILESETS` に残して読み込みは続ける）。マップの文字は変えていない。
+
+| 部品 | ジョブ ID と候補 | 切り方・判定 |
+| --- | --- | --- |
+| castle/grass_dual・tree_dual | shoka/grass_dual.png・tree_dual.png の複製 | 中庭の草は板の間の上に縁取られる |
+| castle/water_dual | yama/water_dual.png の複製 | 中庭の池 |
+| castle/roof_edge | `create_image_pro`（64 × 48、`no_background: false`、16 候補）9f6a9af3-7e33-46ae-972d-9cfb3577d2f0 の候補 0 | `--cols 0,24,48 --rows 0,16,32`。1 回目で全項目 ○（白い棟・左右の白い破風の縁・軒先の瓦の列と影がある） |
+| castle/wall_edge | `create_image_pro`（64 × 48、`no_background: false`、16 候補）48a15fbb-35d8-4231-b377-e09767c7f88c の候補 0 を加工した写し: 天端は y = 0〜2 のあと、y = 13〜20 の 8 行（黒漆の板）をくり返して 40 行に、真ん中の柱（x = 26〜39）は 16 px 左の同じ行で埋めた。正面を y = 22（黒い長押）・24・28・32・37・42（金の襖。引き手の行を含む）・46・47（黒い腰板）の 8 行に詰め、右の襖の松の緑は 16 px 左の襖で埋めた。天端の左右に 1 px の暗い輪郭を足し、天端の縞のコントラストを 0.45 倍にして少し明るくした | `--cols 0,24,48 --rows 0,8,32`。2 回目（部分修正）で採用。1 回目は天端の真ん中に柱があり、右の襖の松が中の列に入った。撮ると天端の黒い縞が強く、広い壁が黒い穴の横縞に見えたのでコントラストを下げた |
+
+プロンプト（屋根）: JRPG map tile art, 16-bit SNES style, flat orthographic texture sheet seen from directly above. A rectangular piece of a Japanese castle keep (tenshu) roof filling the entire 64x48 canvas edge to edge on every row, perfectly rectangular, no slanted sides, no empty corners, no sky, no background visible anywhere. Rows 0 to 7: the ridge along the top: a straight horizontal white plaster ridge cap with a dark grey tile cap and a thin black outline. Rows 8 to 39: the roof surface: dark blue-grey kawara roof tiles in straight vertical rows of round channel tiles with thin darker grooves, evenly repeating across the whole width, no objects. Rows 40 to 47: the eaves along the bottom: a row of round tile ends with tiny white plaster dots, then a dark shadow line at the very bottom. A 3 pixel wide straight vertical white plaster gable border with a black outline exactly along the far left edge and exactly along the far right edge. Symmetric, muted ukiyo-e palette, 1px dark outline.
+
+プロンプト（壁）: JRPG indoor castle map tile art, 16-bit SNES style, flat orthographic texture sheet. The canvas is divided into exactly two horizontal rectangular bands that each span the full 64 pixel width from the left edge to the right edge on every row, no slanted sides, no grey or empty corners, no background visible anywhere. Upper band, rows 0 to 29: the flat top of a thick palace wall seen straight from above, like a floor texture: glossy black lacquered wood running horizontally with a thin gold metal trim line along the very top edge and a thin black outline, almost uniform, no objects. Lower band, rows 30 to 47: the front face of an interior wall of an Edo period shogun's palace (honmaru goten): a black lacquered horizontal lintel with a thin gold line at the top of the face, a black lacquered wooden pillar exactly at the far left edge and exactly at the far right edge, between them pale cream gold-leaf fusuma sliding panels with a faint green pine branch painting, a black lacquered baseboard along the bottom. No floor, no sky, no furniture, no lanterns, muted ukiyo-e palette, 1px dark outline.
+
+残る点: 板の間と壁の天端の広い面は同じ柄の繰り返し（柄違いの仕組みがまだない）。天守の 1 マスの柱・本丸御殿の 1 マスの仕切りも同じ襖の壁で描く。
+
 #### ワールドマップ（field: 日本）
 
 野（`field/plain.png`）を 4 組で共通の lower のタイル（ad7f8912-40fa-4df5-bb38-d8f2765c9181、マスク 0）に差し替え、その上に街道 → 海 → 山 → 森 の順に境目の部品（dual）を重ねる。4 組とも `lower_base_tile_id` ad7f8912… でつないだ（lower: muted green grassy plain of an old Japanese world map, even flat green field with a few tiny darker green specks, no pattern）。マップの文字は変えていない。
