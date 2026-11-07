@@ -8,7 +8,7 @@
 - [登場人物と職業](docs/characters.md)
 - [バランス設計](docs/balance.md): 敵レベル帯、成長、戦闘計算、プレイ時間の見積もり
 - [画像アセットの一覧](docs/assets.md)
-- [音楽・効果音の一覧](docs/audio.md)
+- [音楽・効果音の一覧](docs/audio.md): 曲の作り方（作曲と Ogg Opus への書き出し）も
 
 ## 開発
 
