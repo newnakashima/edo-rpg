@@ -78,6 +78,38 @@ describe('部品で描くタイル', () => {
     expect(images).toContainEqual({ key: 'tile-ground', x: 0, y: 0 });
   });
 
+  it('武家の城下（bushi）は 草 → 道 → 水 → 岩 → 森 の順に重ね、石垣（岩）の下に草を敷いて草の縁でつなぐ', () => {
+    // 左から地面・水・岩・森・草
+    const images = mapTileImages(map(['.~^T,', '.~^T,'], 'bushi'), T);
+    const order = images.map((i) => i.key).filter((k) => k.startsWith('parts-'));
+    const first = (kind: TileKind) => order.indexOf(partsTextureKey('bushi', kind));
+    const last = (kind: TileKind) => order.lastIndexOf(partsTextureKey('bushi', kind));
+    for (const kind of ['grass', 'water', 'rock', 'tree'] as const) expect(first(kind), kind).toBeGreaterThanOrEqual(0);
+    expect(last('grass')).toBeLessThan(first('water'));
+    expect(last('water')).toBeLessThan(first('rock'));
+    expect(last('rock')).toBeLessThan(first('tree'));
+    // 岩と森の間（x = 2 と 3 の間）は全面が草、水と岩の間は右半分だけ草
+    const grassAt = (px: number) => images.find((i) => i.key === partsTextureKey('bushi', 'grass') && i.x === px && i.y === T / 2);
+    expect(grassAt(2 * T + T / 2)?.frame).toBe(15);
+    expect(grassAt(T + T / 2)?.frame).toBe(dualMask(false, true, false, true));
+    // 岩・森のマスの下には草、水のマスの下には地面
+    for (const x of [2, 3]) expect(images).toContainEqual({ key: 'tile-grass', x: x * T, y: 0 });
+    expect(images).toContainEqual({ key: 'tile-ground', x: T, y: 0 });
+
+    // 左から草・道・水・家（上の行が屋根、下の行が壁と戸）
+    const town = mapTileImages(map([',=~RR', ',=~WD'], 'bushi'), T);
+    const townOrder = town.map((i) => i.key).filter((k) => k.startsWith('parts-'));
+    const key = (kind: TileKind) => partsTextureKey('bushi', kind);
+    expect(townOrder.lastIndexOf(key('grass'))).toBeLessThan(townOrder.indexOf(key('road')));
+    expect(townOrder.lastIndexOf(key('road'))).toBeLessThan(townOrder.indexOf(key('water')));
+    // 屋根・壁は端の部品。屋根は下の壁の側が軒先、壁は戸を仲間としてつなぐ（マップの外も仲間）
+    const at = (k: string, x: number, y: number) => town.find((i) => i.key === k && i.x === x * T && i.y === y * T)?.frame;
+    expect(at(key('roof'), 3, 0)).toBe(edgeMask(true, true, false, false));
+    expect(at(key('wall'), 3, 1)).toBe(edgeMask(false, true, true, false));
+    // 戸は bushi の 1 枚の画像
+    expect(town).toContainEqual({ key: 'tile-bushi-door', x: 4 * T, y: T });
+  });
+
   it('洞窟（cave）は 水 → 岩 の順に床の上へ重ね、橋（道）は川と岩壁の側にだけ欄干を出す', () => {
     // 上下が川、左右が床の 2 マス幅の橋。下の行の右は岩壁
     const images = mapTileImages(map(['.~~.', '.==.', '.==^', '.~~.'], 'cave'), T);
