@@ -10,6 +10,7 @@ import { EventRunner } from '../systems/eventScript';
 import { newGame } from '../systems/gameState';
 import { canStep, closedGateAt, encounterAt, escapePoint, isDungeon, MAPS, npcLines, npcObjectFrame, npcVisible, respawnPoint, START_POSITION, TILE_KINDS, tileAt, TILES, TILESETS, tileTextureKey, townAction, type MapDef } from './maps';
 import { isMinka } from './minka';
+import { buildingTown } from './buildings';
 
 describe('タイルの画像', () => {
   it('全ての種類の画像が public/assets/tiles/ にあり、全ての種類が使われている', () => {
@@ -51,10 +52,12 @@ describe('タイルの画像', () => {
       // 野山（清水湊の裏山・原城跡）
       urayama: 'yama', harajo: 'yama',
     };
-    // 民家の屋内（src/data/minka.ts）はすべて屋内の見た目
-    const minka = Object.values(MAPS).filter((m) => isMinka(m.id));
-    for (const m of minka) expect(m.tileset, m.id).toBe('interior');
-    const actual = Object.fromEntries(Object.values(MAPS).filter((m) => m.tileset && !isMinka(m.id)).map((m) => [m.id, m.tileset]));
+    // 民家の屋内（src/data/minka.ts）と、施設・民家以外の建物の屋内（src/data/buildings.ts）はすべて屋内の見た目
+    const inside = Object.values(MAPS).filter((m) => isMinka(m.id) || buildingTown(m.id));
+    for (const m of inside) expect(m.tileset, m.id).toBe('interior');
+    const actual = Object.fromEntries(
+      Object.values(MAPS).filter((m) => m.tileset && !isMinka(m.id) && !buildingTown(m.id)).map((m) => [m.id, m.tileset]),
+    );
     expect(actual).toEqual(expected);
     // 共通の見た目のままのマップを増やさない（町も建物を町ごとの見た目に、野山も部品で描くようにした）
     for (const m of Object.values(MAPS)) expect(m.tileset, m.id).toBeDefined();
@@ -556,7 +559,7 @@ describe('NPC の出入りと全滅時の戻り先', () => {
     const kasumi = MAPS.kobo!.npcs.find((n) => n.id === 'koboKasumi')!;
     expect(npcVisible(kasumi, {})).toBe(true);
     expect(npcVisible(kasumi, { kasumiJoined: true })).toBe(false);
-    const innkeeper = MAPS.shimizu!.npcs.find((n) => n.id === 'innkeeper')!;
+    const innkeeper = MAPS.shimizuYado!.npcs.find((n) => n.id === 'innkeeper')!;
     expect(npcVisible(innkeeper, { kasumiJoined: true })).toBe(true);
   });
 
@@ -833,8 +836,8 @@ describe('第 3 章の京', () => {
     for (const id of ['rashomon', 'oninosu']) expect(respawnPoint(id)).toEqual({ mapId: 'kyo', ...kyo.respawn });
   });
 
-  it('辰五郎は第 3 章を終えると清水湊から姿を消す', () => {
-    const tatsugoro = MAPS.shimizu!.npcs.find((n) => n.id === 'tatsugoro')!;
+  it('辰五郎は第 3 章を終えると清水湊（一家の屋敷）から姿を消す', () => {
+    const tatsugoro = MAPS.shimizuOyabun!.npcs.find((n) => n.id === 'tatsugoro')!;
     expect(npcVisible(tatsugoro, { chapter2Cleared: true })).toBe(true);
     expect(npcVisible(tatsugoro, { chapter3Cleared: true })).toBe(false);
   });
@@ -850,7 +853,7 @@ describe('第 4 章の清水湊と伊賀上野', () => {
   it('清水湊に入ると shimizuEnter を行い（序章の始まりと辰五郎の弔い）、お凛が加わったら行わない。お凛は加わると清水湊から消える', () => {
     const shimizu = MAPS.shimizu!;
     expect(shimizu.onEnter).toEqual({ event: 'shimizuEnter', unless: 'orinJoined' });
-    const orin = shimizu.npcs.find((n) => n.id === 'orin')!;
+    const orin = MAPS.shimizuOyabun!.npcs.find((n) => n.id === 'orin')!;
     expect(npcVisible(orin, { chapter3Cleared: true })).toBe(true);
     expect(npcVisible(orin, { orinJoined: true })).toBe(false);
   });
@@ -1204,9 +1207,10 @@ describe('マップの広さと使い回し（テストプレイの指摘: ど�
   const maps = Object.values(MAPS).filter((m) => m.id !== 'world' && !isMinka(m.id));
   const area = (m: MapDef) => m.rows.length * (m.rows[0]?.length ?? 0);
 
-  it('町は 1100 マス以上、ダンジョン・野山は 750 マス以上、建物の中・小さな区画は 400 マス以上', () => {
+  it('町は 1100 マス以上、ダンジョン・野山は 750 マス以上、建物の中・小さな区画は 400 マス以上、店や寺などの屋内は 80 マス以上', () => {
     for (const m of maps) {
-      const min = SMALL.includes(m.id) ? 400 : m.respawn ? 1100 : 750;
+      // 店や寺などの屋内（src/data/buildings.ts）は、外から見た建物の大きさに合わせて小さくてよい（形の使い回しは下で確かめる）
+      const min = buildingTown(m.id) ? 80 : SMALL.includes(m.id) ? 400 : m.respawn ? 1100 : 750;
       expect(area(m), m.id).toBeGreaterThanOrEqual(min);
     }
   });

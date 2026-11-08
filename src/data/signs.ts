@@ -1,5 +1,6 @@
 // 施設の看板（テストプレイで「看板がないと各施設を見分けることが非常に困難」と指摘されたため足した）。
 // 施設の人（maps.ts の NpcDef の action）が立つ戸口の隣の壁に、施設の種類ごとの看板（板の色と漢字 1 字）を掛ける。
+// 施設の人が建物の中にいる町（src/data/buildings.ts）では、屋内への入口（出口の sign）の戸の隣の壁に掛ける。
 // 画像は public/assets/signs/<種類>.png（16 × 16。scripts/draw_signs.py で描いた。記録は public/assets/README.md）。
 import type { MapDef, NpcDef } from './maps';
 
@@ -72,13 +73,29 @@ export function signPosition(map: MapDef, npc: NpcDef): { x: number; y: number }
   return x === undefined ? null : { x, y };
 }
 
-/** そのマップの看板（姿を消す人・あとから現れる人の施設は、マップの見た目を変えないよう常に掛けておく）。 */
+/**
+ * 屋内へ入る戸口（出口のある D のマス）の看板の位置。戸の左隣の壁、左が壁でなければ右隣の壁（施設の人は屋内にいて、戸の前に立たない）。
+ * 戸の隣に壁がなければ null。
+ */
+export function doorSignPosition(map: MapDef, door: { x: number; y: number }): { x: number; y: number } | null {
+  const x = [door.x - 1, door.x + 1].find((x) => cell(map, x, door.y) === 'W');
+  return x === undefined ? null : { x, y: door.y };
+}
+
+/**
+ * そのマップの看板（姿を消す人・あとから現れる人の施設は、マップの見た目を変えないよう常に掛けておく）。
+ * 施設の人の戸口のほか、屋内に施設のある建物の戸口（出口の sign。src/data/buildings.ts）にも掛ける。
+ */
 export function mapSigns(map: MapDef): SignDef[] {
   const signs: SignDef[] = [];
   for (const npc of map.npcs) {
     const kind = signKind(npc);
     const pos = kind && signPosition(map, npc);
     if (kind && pos) signs.push({ ...pos, kind });
+  }
+  for (const exit of map.exits) {
+    const pos = exit.sign && doorSignPosition(map, exit);
+    if (exit.sign && pos) signs.push({ ...pos, kind: exit.sign });
   }
   return signs;
 }

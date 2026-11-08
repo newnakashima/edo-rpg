@@ -1,6 +1,7 @@
 // 湯屋・賭場・居酒屋・妓楼（テストプレイで「施設を追加したほうが良い」と指摘されたため足した）。
 // 武器屋（刀鍛冶）か道具屋（よろず屋）のあるすべての町に、4 つの施設を 1 つずつ置く（ユーザーの決定、2026-11-07）。
-// 施設の人は戸口の真下に立ち、看板（src/data/signs.ts）は戸の隣の壁に掛かる。施設の処理は src/systems/facilities.ts。
+// 施設の人は戸口の真下（店先）に立つか、屋内のある町（src/data/buildings.ts）では建物の中に立つ。
+// 看板（src/data/signs.ts）はどちらも戸の隣の壁に掛かる。施設の処理は src/systems/facilities.ts。
 import type { CharacterSpriteId } from './sprites';
 import type { NpcDef } from './maps';
 
@@ -83,21 +84,26 @@ const TOWN_LINES: Record<string, Partial<Record<TownFacilityKind, string[]>>> = 
   edo: { gyoro: ['女将「吉原の大門をくぐったら、浮き世の憂さは忘れておくんなまし」'] },
 };
 
-/** その町の湯屋・賭場・居酒屋・妓楼の人（施設がない町は空）。 */
+/**
+ * その町の施設の人。at を省くと戸口の真下（店先）に立つ。屋内のある施設（src/data/buildings.ts）は、屋内の立つ場所を at に渡す。
+ */
+export function townFacilityNpc(town: string, kind: TownFacilityKind, at?: { x: number; y: number }): NpcDef {
+  const door = TOWN_FACILITY_DOORS[town]![kind];
+  const look = LOOKS[kind];
+  return {
+    id: `${town}${look.suffix}`,
+    name: look.name,
+    x: at?.x ?? door.x,
+    y: at?.y ?? door.y + 1,
+    color: look.color,
+    sprite: look.sprite,
+    lines: TOWN_LINES[town]?.[kind] ?? look.lines,
+    action: kind,
+  };
+}
+
+/** その町の湯屋・賭場・居酒屋・妓楼の人（施設がない町は空）。どれも戸口の真下に立つ。 */
 export function townFacilityNpcs(town: string): NpcDef[] {
-  const doors = TOWN_FACILITY_DOORS[town];
-  if (!doors) return [];
-  return TOWN_FACILITY_KINDS.map((kind) => {
-    const look = LOOKS[kind];
-    return {
-      id: `${town}${look.suffix}`,
-      name: look.name,
-      x: doors[kind].x,
-      y: doors[kind].y + 1,
-      color: look.color,
-      sprite: look.sprite,
-      lines: TOWN_LINES[town]?.[kind] ?? look.lines,
-      action: kind,
-    };
-  });
+  if (!TOWN_FACILITY_DOORS[town]) return [];
+  return TOWN_FACILITY_KINDS.map((kind) => townFacilityNpc(town, kind));
 }

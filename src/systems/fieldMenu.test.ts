@@ -29,10 +29,10 @@ describe('道具をメニューで使う', () => {
   });
 
   it('煙草の葉は、火のそばでキセルを付けた人だけが吸え、気力をすべて戻す', () => {
-    const teahouse = MAPS.shimizu!.npcs.find((n) => n.action === 'teahouse')!;
+    const teahouse = MAPS.shimizuChaya!.npcs.find((n) => n.action === 'teahouse')!;
     const smoker = { ...createMember('hero', 10), mp: 0, equip: { accessory: 'kiseru' } };
     const plain = { ...createMember('kasumi', 10), mp: 0 };
-    const nearby = game({ party: [smoker, plain], items: { tabako: 2 }, x: teahouse.x, y: teahouse.y + 1 });
+    const nearby = game({ party: [smoker, plain], items: { tabako: 2 }, mapId: 'shimizuChaya', x: teahouse.x, y: teahouse.y + 1 });
     const r = useItemInField(nearby, 'tabako', 0);
     expect(r.ok && r.state.party[0]?.mp).toBe(memberStats(smoker).maxMp);
     expect(r.ok && r.state.items).toEqual({ tabako: 1 });
@@ -50,10 +50,10 @@ describe('道具をメニューで使う', () => {
   });
 
   it('煙草の葉を吸えない理由: 火がなければ noFire を先に、キセルを付けた人がいなければ noKiseru', () => {
-    const teahouse = MAPS.shimizu!.npcs.find((n) => n.action === 'teahouse')!;
+    const teahouse = MAPS.shimizuChaya!.npcs.find((n) => n.action === 'teahouse')!;
     const smoker = { ...createMember('hero', 10), equip: { accessory: 'kiseru' } };
     const plain = createMember('kasumi', 10);
-    const nearby = game({ x: teahouse.x, y: teahouse.y + 1 });
+    const nearby = game({ mapId: 'shimizuChaya', x: teahouse.x, y: teahouse.y + 1 });
     expect(isSmoke('tabako')).toBe(true);
     expect(isSmoke('sake')).toBe(false);
     expect(smokeBlocked(nearby, [plain, smoker])).toBeNull();

@@ -3,10 +3,15 @@
 // 町家・長屋・農家の 3 つの間取りを用意し、民家の戸口ごとに間取りの写しを 1 つの屋内マップとして作る
 // （出口がその戸口の前に戻るよう、戸口ごとに別のマップにする。ID は minka_<町>_<x>_<y>）。
 // 戸口（町のマップの D のマス）は通れないままにし、出口を置いた戸口にだけ歩いて入れる（canStep）。
-// 前に町の人が立っている戸口（入れない）と、寺社・城・屋敷・店などの民家でない建物は、ここに入れない
-// （施設・民家以外の建物の屋内は、建物ごとに固有のマップを作る別の作業で扱う）。
+// 前に町の人が立っている戸口（入れない。屋内を足すときに人をずらして入口にする）と、寺社・城・屋敷・店などの民家でない建物は、
+// ここに入れない（施設・民家以外の建物の屋内は、建物ごとに固有のマップを src/data/buildings.ts で町ごとに作る）。
 import type { CharacterSpriteId } from './sprites';
 import type { ExitDef, MapDef, NpcDef } from './maps';
+
+/** 町の中の建物（民家・店など）で全滅したときに戻る町。町に戻り先があればその町、なければ町の戻り先に合わせる。 */
+export function townRespawnMap(town: MapDef): string | undefined {
+  return town.respawn ? town.id : town.respawnMap;
+}
 
 const MINKA_PREFIX = 'minka_';
 
@@ -26,7 +31,7 @@ interface MinkaPlan {
   furniture: Omit<NpcDef, 'id'>[];
 }
 
-const KAMADO_LINES = ['竈に釜が掛かっている。焚き口の火が、ちろちろと燃えている。'];
+export const KAMADO_LINES = ['竈に釜が掛かっている。焚き口の火が、ちろちろと燃えている。'];
 const TANSU_LINES = ['使い込まれた箪笥だ。黒い金具が、よく磨かれている。'];
 
 /**
@@ -139,8 +144,8 @@ const k = (x: number, y: number): MinkaDoor => ({ x, y, kind: 'noka' });
 const vacant = (door: MinkaDoor): MinkaDoor => ({ ...door, vacant: true });
 
 export const MINKA_DOORS: Record<string, MinkaDoor[]> = {
-  // 南の長屋の二棟（湯屋・賭場・居酒屋・妓楼と同じ棟に並ぶ家も長屋）
-  shimizu: [n(3, 20), n(9, 20), n(16, 20), n(19, 20), n(22, 20), n(6, 23), n(19, 23)],
+  // 南の長屋の二棟（湯屋・賭場・居酒屋・妓楼と同じ棟に並ぶ家も長屋）。6, 20 の戸口は、前に立っていた長屋のおかみを 1 マス左へずらして入口にした
+  shimizu: [n(3, 20), n(6, 20), n(9, 20), n(16, 20), n(19, 20), n(22, 20), n(6, 23), n(19, 23)],
   // 南の町家。北東の二つの戸口が並ぶ家（14, 27・15, 27）は、一軒として西の戸口だけを入口にする
   nagoya: [m(14, 27), m(19, 27), m(23, 27), m(37, 27), m(41, 27), m(15, 33), m(21, 33), m(31, 33), m(39, 33)],
   // 西の五重塔の寺の本堂（21, 28）は民家でないので入れない
@@ -178,7 +183,7 @@ export function minkaMap(town: MapDef, door: MinkaDoor, residentIndex: number): 
     ],
     exits: [{ x: plan.exit.x, y: plan.exit.y, to: town.id, toX: door.x, toY: door.y + 1 }],
     // 全滅したら町（の旅籠の前）へ戻る。ダンジョンの中の里（伊賀者の里）は、その里の戻り先に合わせる
-    respawnMap: town.respawn ? town.id : town.respawnMap,
+    respawnMap: townRespawnMap(town),
   };
 }
 

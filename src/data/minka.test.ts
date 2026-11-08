@@ -4,6 +4,7 @@ import { isMinka, MINKA_DOORS, MINKA_KINDS, minkaMapId } from './minka';
 import { TOWN_FACILITY_DOORS } from './townFacilities';
 import { OYABUN } from './oyabun';
 import { fireAmong } from '../systems/fire';
+import { buildingTown } from './buildings';
 
 const houses = Object.values(MAPS).filter((m) => isMinka(m.id));
 const doors = Object.entries(MINKA_DOORS).flatMap(([town, list]) => list.map((door) => ({ town, ...door })));
@@ -63,8 +64,8 @@ describe('民家の屋内（テストプレイの指摘: あらゆる建物に�
     }
   });
 
-  it('寺社・城の戸口は民家にしない（出口のない戸には、今までどおり入れない）', () => {
-    // 寺社・城の建物の中は、民家の使い回しでなく建物ごとに固有のマップを作る（別の作業）
+  it('寺社・城の戸口は民家にしない（出口のない戸には、今までどおり入れない。固有の屋内のある建物は、その屋内へ入る）', () => {
+    // 寺社・城の建物の中は、民家の使い回しでなく建物ごとに固有のマップを作る（src/data/buildings.ts。清水湊の寺は済み、ほかは町ごとに足していく）
     const notMinka: Record<string, [number, number][]> = {
       shimizu: [[9, 4]], // 寺
       sunpu: [[7, 6]], // 浅間神社
@@ -78,7 +79,9 @@ describe('民家の屋内（テストプレイの指摘: あらゆる建物に�
       for (const [x, y] of list) {
         expect(town.rows[y]?.[x], `${townId} ${x},${y}`).toBe('D');
         expect(MINKA_DOORS[townId]?.some((d) => d.x === x && d.y === y), `${townId} ${x},${y}`).toBeFalsy();
-        expect(canStep(town, x, y), `${townId} ${x},${y}`).toBe(false);
+        const entrance = town.exits.find((e) => e.x === x && e.y === y);
+        if (entrance) expect(buildingTown(entrance.to), `${townId} ${x},${y}`).toBe(townId);
+        else expect(canStep(town, x, y), `${townId} ${x},${y}`).toBe(false);
       }
     }
   });

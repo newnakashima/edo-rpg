@@ -842,6 +842,25 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 - tansu（畳の間の箪笥）: 候補 10（tall wooden tansu chest, warm brown, drawers of different sizes, black iron hardware）。1 回目で採用
 - 判定の観点: 囲炉裏は四角い木の炉縁・灰・中央の火と自在鉤の鉄瓶、竈は焚き口の火と釜、箪笥は段の引き出しと黒い金具。どれも背景が透過、32 × 32 に収まり幅 28px 以下で下端が床、濃い輪郭と落ち着いた色、焚き火・文机・葛籠と見分けがつく。長屋・町家・農家の屋内を撮り、住人と並べて大きさが釣り合うことを確かめた
 
+### 店・施設の家具（`objects/yubune.png`・`bongoza.png`・`sakadaru.png`・`kanatoko.png`・`byobu.png`・`shinadana.png`・`katanakake.png`・`andon.png`）
+
+施設・民家以外の建物の屋内（`src/data/buildings.ts`。清水湊は `buildingsShimizu.ts`）に置く家具。ほかの町の屋内でも使い回してよい（使い回さないのは間取り）。`create_1_direction_object`（size 32、view `top-down`、1 回で 64 候補）。`item_descriptions` に 8 種類を 4 通りずつ書いた（並びの 0〜31 が書いた順、32〜63 は共通の description からの候補）。候補は `get_object` のプレビュー（先頭 16 枚しか出ない）では足りないので、`pixelart_workbench` の `join` に候補の URL を渡して 1 枚のシートにし、`api.pixellab.ai/mcp/pixel-tools/<id>/image.png` から取った（backblaze.pixellab.ai はこの環境のプロキシで拒否される）。
+
+- 判定の観点（全種共通の必須）: 背景が透過、32 × 32 に収まり幅 28px 以下、下端が床（31 行目）、濃い輪郭と落ち着いた色、何の物かひと目で分かる
+- 1 回目（fd18998b-302d-40a7-b4cb-6f1e2a63792a。description: Edo period Japan RPG shop interior furniture prop, pixel art, dark outline, muted traditional colors, small isolated object with empty transparent space around it）
+  - yubune（湯屋の湯船）: 候補 0（square wooden Japanese bathtub seen from above, light wood rim, filled with pale blue hot water, white steam）。幅 28 で採用
+  - sakadaru（居酒屋・親分の屋敷の菰樽）: 候補 8（large sake barrel wrapped in straw mat with red and black brand label, rope around it）。幅 24 で採用
+  - shinadana（よろず屋の品棚）: 候補 21（brown wooden display shelf with medicine boxes and jars）。幅 28 で採用
+  - andon（行灯）: 候補 28（Japanese andon paper floor lantern, square wooden frame, glowing warm white paper）。幅 18 で採用
+  - 盆茣蓙・屏風・刀掛けはどれも幅 30 で ×。金床は槌のある候補が幅 29、幅の収まる候補（14・15）は槌がなく ×
+- 2 回目（9e196077-de44-4b1c-b80f-db4fcc615e89。description の終わりを narrow compact object only 22 pixels wide centered with wide empty transparent margin on the left and right にし、各品にも narrow・compact・22 pixels wide を書いた）
+  - kanatoko（刀鍛冶の金床）: 候補 4（narrow black iron anvil on a wooden stump with a small hammer leaning against the stump）。幅 25
+  - byobu（妓楼の屏風）: 候補 10（narrow two panel gold folding screen with plum blossom painting, black frame）。幅 24。下端が 2px 浮いていた
+  - katanakake（刀鍛冶・親分の屋敷の刀掛け）: 候補 13（small upright wooden sword rack with two katana standing vertically）。幅 16 で採用
+  - bongoza（賭場の盆茣蓙）: 候補 3（compact white gambling mat seen from above, dice cup and dice）。幅 26 で内容はよいが、下端が 4px 浮いていて ×
+- 3 回目: Pillow で盆茣蓙を 4px、屏風を 2px、金床を 1px 下へずらし、下端を 31 行目にそろえて採用（盆茣蓙・屏風は計 3 回、金床は計 3 回、刀掛けは計 2 回）
+- 清水湊の 11 の屋内を撮り、人物と並べて大きさが釣り合うこと、土間・板の間・畳の上で何の物か分かることを確かめた
+
 ## 施設の看板（`signs/`）
 
 テストプレイで「看板がないと各施設を見分けることが非常に困難」と指摘されたため足した。16 × 16 の 1 枚で、`src/data/signs.ts` が施設の人（マップの NPC の `action`）の戸口の隣の壁に掛ける（人より奥、depth 1）。
