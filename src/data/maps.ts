@@ -2537,7 +2537,7 @@ MAPS.osaka = {
       color: 0x6b8c5a,
       sprite: 'npc_merchant',
       lines: ['よろず屋「まいど！ 天下の台所や、品物だけはなんでもありまっせ。米のほかはな」'],
-      after: { flag: 'chapter5Cleared', lines: ['よろず屋「まいど！ 蔵の米が出回って、ようやく米も置けるようになりましたわ。天下の台所の面目が立ちます」'] },
+      after: { flag: 'chapter5Cleared', lines: ['よろず屋「まいど！ 蔵の米が出回って、町にも活気が戻りましたわ。これで天下の台所の面目が立ちます」'] },
       action: 'shop',
       shop: 'osakaYorozu',
     },

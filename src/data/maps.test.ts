@@ -292,7 +292,7 @@ describe('マップのデータ', () => {
     });
   }
 
-  it('NPC の after のフラグは、どこかの setsFlag かイベントの setFlag で立つ', () => {
+  it('NPC の after・later のフラグは、どこかの setsFlag かイベントの setFlag で立つ', () => {
     const set = new Set<string>();
     for (const map of Object.values(MAPS)) for (const npc of map.npcs) if (npc.setsFlag) set.add(npc.setsFlag);
     const walk = (steps: readonly EventStep[]): void => {
@@ -310,10 +310,20 @@ describe('マップのデータ', () => {
     for (const ev of Object.values(EVENTS)) walk(ev.steps);
     for (const map of Object.values(MAPS)) {
       for (const npc of map.npcs) if (npc.after) expect(set.has(npc.after.flag), `${map.id}/${npc.id}: ${npc.after.flag}`).toBe(true);
+      for (const npc of map.npcs) if (npc.later) expect(set.has(npc.later.flag), `${map.id}/${npc.id}: ${npc.later.flag}`).toBe(true);
       for (const t of [...(map.triggers ?? []), ...(map.onEnter ? [map.onEnter] : [])]) {
         if (t.unless) expect(set.has(t.unless), `${map.id}/${t.event}: ${t.unless}`).toBe(true);
       }
     }
+  });
+
+  it('話しかけたときの台詞は、later のフラグ → after のフラグ → lines の順に選ぶ', () => {
+    const npc = { id: 'x', name: 'x', x: 0, y: 0, color: 0, lines: ['前'], after: { flag: 'a', lines: ['後'] }, later: { flag: 'b', lines: ['さらに後'] } };
+    expect(npcLines(npc, {})).toEqual(['前']);
+    expect(npcLines(npc, { a: true })).toEqual(['後']);
+    expect(npcLines(npc, { a: true, b: true })).toEqual(['さらに後']);
+    expect(npcLines(npc, { b: true })).toEqual(['さらに後']);
+    expect(npcLines({ id: 'y', name: 'y', x: 0, y: 0, color: 0 }, {})).toEqual([]);
   });
 
   it('開始位置は通れる場所', () => {
@@ -969,11 +979,15 @@ describe('第 5 章の大坂', () => {
   });
 
   it('米が町に配られたあと（chapter5Cleared）は、米が無いという台詞を話さない', () => {
-    const short = /米のほか|麦がち|小さいお団子|小そうなって|小さなって/;
-    for (const id of ['osakaYorozu', 'osakaInn', 'osakaTeahouse']) {
+    const want: Record<string, string> = {
+      osakaYorozu: 'よろず屋「まいど！ 蔵の米が出回って、町にも活気が戻りましたわ。これで天下の台所の面目が立ちます」',
+      osakaInn: '旅籠の主人「お泊まりでっか。米が戻って、ようやく白い飯をお出しできますわ」',
+      osakaTeahouse: '茶屋の娘「おいでやす。米の粉が安うなって、お団子も元の大きさに戻りましたえ」',
+    };
+    for (const [id, line] of Object.entries(want)) {
       const npc = osaka.npcs.find((n) => n.id === id)!;
-      expect(npcLines(npc, { heardOsakaRumor: true }).some((l) => short.test(l)), id).toBe(true);
-      expect(npcLines(npc, { heardOsakaRumor: true, chapter5Cleared: true }).some((l) => short.test(l)), id).toBe(false);
+      expect(npcLines(npc, { heardOsakaRumor: true }), id).not.toEqual([line]);
+      expect(npcLines(npc, { heardOsakaRumor: true, chapter5Cleared: true }), id).toEqual([line]);
     }
   });
 
