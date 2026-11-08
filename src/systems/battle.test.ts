@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { aliveOf, availableItemCount, computeRewards, createBattle, partyAfterBattle, resolveTurn, type BattleEvent, type BattleState } from './battle';
+import { ENEMIES } from '../data/enemies';
 import { createMember } from './party';
 import { enemyExp, enemyMoney } from './stats';
 import { seededRng, seqRng } from './testUtils';
@@ -276,18 +277,22 @@ describe('レア装備の特性', () => {
 });
 
 describe('報酬', () => {
-  it('生き残った味方はそれぞれ全額、倒れた味方は 0', () => {
+  it('生き残った味方はそれぞれ全額、倒れた味方は 0。敵ごとの reward の倍率を掛ける', () => {
+    // 鬼火は経験値 0.8 倍・お金 0.5 倍、山犬は経験値 1 倍・お金 0.8 倍
+    expect(ENEMIES.onibi?.reward).toEqual({ exp: 0.8, money: 0.5 });
+    expect(ENEMIES.yamainu?.reward).toEqual({ exp: 1, money: 0.8 });
     const b = createBattle([createMember('hero', 1), createMember('kasumi', 1)], 'm', ['onibi', 'yamainu'], 1);
     const p1 = b.combatants.find((c) => c.key === 'p1');
     if (p1) p1.hp = 0;
     const rewards = computeRewards(b);
-    expect(rewards.exp).toEqual({ p0: enemyExp(1) * 2, p1: 0 });
-    expect(rewards.money).toBe(enemyMoney(1) * 2);
+    expect(rewards.exp).toEqual({ p0: Math.round(enemyExp(1) * 0.8) + enemyExp(1), p1: 0 });
+    expect(rewards.money).toBe(Math.round(enemyMoney(1) * 0.5 + enemyMoney(1) * 0.8));
   });
 
   it('味方が敵より 4 レベル以上高いと、その味方の経験値は半分', () => {
     const b = createBattle([createMember('hero', 5), createMember('kasumi', 4)], 'm', ['onibi'], 1);
-    expect(computeRewards(b).exp).toEqual({ p0: Math.floor(enemyExp(1) / 2), p1: enemyExp(1) });
+    const exp = Math.round(enemyExp(1) * 0.8);
+    expect(computeRewards(b).exp).toEqual({ p0: Math.floor(exp / 2), p1: exp });
   });
 
   it('ボスは経験値とお金が rewardScale 倍', () => {
@@ -301,8 +306,9 @@ describe('報酬', () => {
     const b = createBattle([createMember('hero', 7), createMember('kasumi', 11)], 'm', ['yako', 'onibi'], 7);
     expect(computeRewards(b)).toEqual({
       // Lv11 の霞は敵（Lv7）より 4 高いので半分
-      exp: { p0: enemyExp(7) * 3 + enemyExp(7), p1: Math.floor((enemyExp(7) * 3) / 2) + Math.floor(enemyExp(7) / 2) },
-      money: enemyMoney(7) * 3 + enemyMoney(7),
+      // 鬼火は経験値 0.8 倍・お金 0.5 倍
+      exp: { p0: enemyExp(7) * 3 + Math.round(enemyExp(7) * 0.8), p1: Math.floor((enemyExp(7) * 3) / 2) + Math.floor(Math.round(enemyExp(7) * 0.8) / 2) },
+      money: Math.round(enemyMoney(7) * 3 + enemyMoney(7) * 0.5),
     });
   });
 

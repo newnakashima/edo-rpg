@@ -33,7 +33,10 @@ export interface EnemyDef {
   missRate?: number;
   /** 味方の通常攻撃・物理の技をかわす確率（体力が極めて少ないが回避の高い敵。術と必中の技はかわせない）。省くと 0。 */
   evasion?: number;
-  /** 経験値とお金に掛ける倍率（逃げる高報酬の敵）。rewardScale と掛け合わせる。省くと 1。 */
+  /**
+   * 経験値とお金に掛ける倍率（docs/balance.md の「敵の報酬」）。雑魚敵はすべて持ち、経験値は手ごわさ、お金は懐具合（人は多く、獣・霊は少ない）で決める。
+   * 逃げる高報酬の敵は 4〜8 倍。rewardScale と掛け合わせる。省くと 1。
+   */
   reward?: { exp?: number; money?: number };
 }
 
@@ -49,6 +52,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     color: 0x6fb7ff,
     image: true,
     factors: { hp: 0.7, atk: 0.9, def: 0.6, spd: 1.2 },
+    reward: { exp: 0.8, money: 0.5 },
     weak: ['holy'],
     resist: ['fire'],
     actions: [
@@ -62,6 +66,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     color: 0x9b7653,
     image: true,
     factors: { hp: 1.0, atk: 1.0, def: 0.8, spd: 1.1 },
+    reward: { exp: 1.0, money: 0.8 },
     actions: [
       { skill: 'attack', weight: 5 },
       { skill: 'toboe', weight: 1 },
@@ -73,6 +78,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     color: 0x5f8f3e,
     image: true,
     factors: { hp: 1.3, atk: 0.9, def: 1.0, spd: 0.7 },
+    reward: { exp: 1.2, money: 0.8 },
     actions: [
       { skill: 'attack', weight: 4 },
       { skill: 'dokueki', weight: 1 },
@@ -85,6 +91,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     color: 0xb08a5a,
     image: true,
     factors: { hp: 1.0, atk: 1.0, def: 1.3, spd: 0.8 },
+    reward: { exp: 1.1, money: 1.3 },
     weak: ['mech', 'thunder'],
   },
   gorotsuki: {
@@ -93,6 +100,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     color: 0x7a6a5a,
     image: true,
     factors: { hp: 1.0, atk: 1.1, def: 0.9, spd: 1.0 },
+    reward: { exp: 0.9, money: 1.4 },
     actions: [
       { skill: 'attack', weight: 4 },
       { skill: 'aikuchi', weight: 1 },
@@ -105,6 +113,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     color: 0xe0b040,
     image: true,
     factors: { hp: 0.8, atk: 1.0, def: 0.7, spd: 1.1 },
+    reward: { exp: 0.9, money: 0.6 },
     weak: ['holy', 'fire'],
     actions: [
       { skill: 'attack', weight: 3 },
@@ -118,6 +127,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     color: 0x6a5a7a,
     image: true,
     factors: { hp: 1.1, atk: 1.2, def: 1.0, spd: 1.0 },
+    reward: { exp: 1.1, money: 1.6 },
     actions: [
       { skill: 'attack', weight: 4 },
       { skill: 'kesagiri', weight: 1 },
@@ -129,6 +139,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     color: 0x8a6a4a,
     image: true,
     factors: { hp: 0.9, atk: 1.0, def: 0.9, spd: 1.2 },
+    reward: { exp: 0.9, money: 0.6 },
     actions: [
       { skill: 'attack', weight: 4 },
       { skill: 'bakashi', weight: 1 },
@@ -140,6 +151,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     color: 0x9a8a5a,
     image: true,
     factors: { hp: 1.0, atk: 1.1, def: 1.2, spd: 1.1 },
+    reward: { exp: 1.1, money: 1 },
     weak: ['mech'],
     actions: [
       { skill: 'attack', weight: 3 },
@@ -152,6 +164,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     color: 0x7a5a4a,
     image: true,
     factors: { hp: 1.2, atk: 1.1, def: 1.0, spd: 0.8 },
+    reward: { exp: 1, money: 1.3 },
     actions: [
       { skill: 'attack', weight: 4 },
       { skill: 'ikizue', weight: 1 },
@@ -166,6 +179,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     image: true,
     // 攻撃は非常に高いが命中が低く、金棒を振り回して自分を打つ
     factors: { hp: 1.4, atk: 1.8, def: 1.0, spd: 0.8 },
+    reward: { exp: 1.4, money: 1.2 },
     weak: ['holy'],
     missRate: 0.35,
     actions: [
@@ -182,6 +196,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     image: true,
     // 体力は極めて少なく一撃で倒れるが、ひらひらとかわす
     factors: { hp: 0.35, atk: 1.0, def: 0.7, spd: 1.3 },
+    reward: { exp: 1.2, money: 0.4 },
     weak: ['fire'],
     evasion: 0.5,
     actions: [
@@ -196,6 +211,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     image: true,
     // 支え役。眠りの経と、仲間の守りを固める読経を繰り返す
     factors: { hp: 1.0, atk: 0.9, def: 1.0, spd: 0.9 },
+    reward: { exp: 1, money: 1.8 },
     actions: [
       { skill: 'attack', weight: 1 },
       { skill: 'jaho', weight: 1 },
@@ -210,6 +226,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     image: true,
     // 防御が非常に高い（術・機の技で崩す）
     factors: { hp: 1.3, atk: 1.1, def: 2.6, spd: 0.7 },
+    reward: { exp: 1.6, money: 1.5 },
     weak: ['mech'],
     actions: [
       { skill: 'attack', weight: 3 },
@@ -223,6 +240,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     color: 0x3a3a4a,
     image: true,
     factors: { hp: 0.9, atk: 1.2, def: 0.9, spd: 1.4 },
+    reward: { exp: 1.0, money: 1.2 },
     actions: [
       { skill: 'attack', weight: 3 },
       { skill: 'igaShuriken', weight: 2 },
@@ -234,6 +252,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     color: 0x5a3a6a,
     image: true,
     factors: { hp: 0.9, atk: 1.0, def: 0.9, spd: 1.1 },
+    reward: { exp: 0.9, money: 0.4 },
     weak: ['fire'],
     actions: [
       { skill: 'attack', weight: 3 },
@@ -263,6 +282,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     color: 0x5a4a3a,
     image: true,
     factors: { hp: 1.2, atk: 1.2, def: 1.1, spd: 0.9 },
+    reward: { exp: 1.1, money: 1.5 },
     actions: [
       { skill: 'attack', weight: 3 },
       { skill: 'kesagiri', weight: 1 },
@@ -274,6 +294,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     color: 0x4a5a6a,
     image: true,
     factors: { hp: 1.0, atk: 1.3, def: 1.0, spd: 0.9 },
+    reward: { exp: 1.1, money: 1.2 },
     actions: [
       { skill: 'attack', weight: 3 },
       { skill: 'teppo', weight: 1 },
@@ -286,6 +307,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     image: true,
     // 体力が半分を切ると、詰めた火薬に火がつき自爆する
     factors: { hp: 1.3, atk: 1.0, def: 1.4, spd: 0.7 },
+    reward: { exp: 1, money: 1.6 },
     weak: ['mech', 'fire'],
     actions: [
       { skill: 'attack', weight: 3 },
@@ -300,6 +322,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     image: true,
     // 仲間を呼んでばかりいる
     factors: { hp: 0.8, atk: 1.0, def: 0.8, spd: 1.3 },
+    reward: { exp: 0.7, money: 0.8 },
     actions: [
       { skill: 'attack', weight: 1 },
       { skill: 'kamitsuki', weight: 1 },
@@ -315,6 +338,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     image: true,
     // 鎧が非常に固い
     factors: { hp: 1.2, atk: 1.2, def: 2.4, spd: 0.9 },
+    reward: { exp: 1.5, money: 1.5 },
     weak: ['mech', 'thunder'],
     actions: [
       { skill: 'attack', weight: 3 },
@@ -328,6 +352,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     image: true,
     // 体力が非常に多い
     factors: { hp: 2.4, atk: 1.2, def: 1.0, spd: 0.8 },
+    reward: { exp: 1.6, money: 0.8 },
     weak: ['holy'],
     actions: [
       { skill: 'attack', weight: 3 },
@@ -340,6 +365,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     color: 0x6a7a8a,
     image: true,
     factors: { hp: 1.1, atk: 1.3, def: 1.1, spd: 1.0 },
+    reward: { exp: 1.1, money: 0.9 },
     weak: ['holy'],
     actions: [
       { skill: 'attack', weight: 3 },
@@ -353,6 +379,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     image: true,
     // 支え役。惑わしの香と縛りの呪を繰り返す
     factors: { hp: 0.9, atk: 1.0, def: 0.8, spd: 1.1 },
+    reward: { exp: 1.1, money: 1.1 },
     actions: [
       { skill: 'attack', weight: 1 },
       { skill: 'gehoHomura', weight: 1 },
@@ -368,6 +395,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     image: true,
     // 甲羅が非常に固い（雷・術で崩す）
     factors: { hp: 1.1, atk: 1.1, def: 2.8, spd: 0.8 },
+    reward: { exp: 1.3, money: 0.7 },
     weak: ['thunder'],
     actions: [
       { skill: 'attack', weight: 3 },
@@ -383,6 +411,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     color: 0xb0703a,
     image: true,
     factors: { hp: 0.7, atk: 1.0, def: 0.7, spd: 1.4 },
+    reward: { exp: 1.1, money: 0.8 },
     actions: [
       { skill: 'attack', weight: 3 },
       { skill: 'kamakaze', weight: 1 },
@@ -395,6 +424,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     color: 0x8a7a6a,
     image: true,
     factors: { hp: 1.1, atk: 0.8, def: 1.0, spd: 0.9 },
+    reward: { exp: 0.9, money: 3.0 },
     weak: ['holy'],
     actions: [
       { skill: 'attack', weight: 4 },
@@ -408,6 +438,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     color: 0x6a4a3a,
     image: true,
     factors: { hp: 1.2, atk: 1.2, def: 0.9, spd: 0.8 },
+    reward: { exp: 1.2, money: 0.6 },
     actions: [
       { skill: 'attack', weight: 3 },
       { skill: 'totsugeki', weight: 1 },
@@ -420,6 +451,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     color: 0xc04a3a,
     image: true,
     factors: { hp: 0.8, atk: 1.0, def: 0.8, spd: 1.2 },
+    reward: { exp: 0.9, money: 0.6 },
     weak: ['holy', 'fire'],
     actions: [
       { skill: 'attack', weight: 3 },
@@ -433,6 +465,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     color: 0x8a8a7a,
     image: true,
     factors: { hp: 0.9, atk: 1.1, def: 0.9, spd: 1.3 },
+    reward: { exp: 0.9, money: 2 },
     actions: [
       { skill: 'attack', weight: 3 },
       { skill: 'aikuchi', weight: 1 },
@@ -445,6 +478,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     color: 0x6a7a9a,
     image: true,
     factors: { hp: 0.8, atk: 0.9, def: 0.8, spd: 1.1 },
+    reward: { exp: 0.8, money: 0.5 },
     weak: ['holy'],
     actions: [
       { skill: 'attack', weight: 3 },
@@ -458,6 +492,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     color: 0xa0503a,
     image: true,
     factors: { hp: 1.0, atk: 1.0, def: 1.3, spd: 0.9 },
+    reward: { exp: 1, money: 1.2 },
     weak: ['mech', 'thunder'],
     actions: [
       { skill: 'attack', weight: 3 },
@@ -471,6 +506,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     color: 0x5a9a4a,
     image: true,
     factors: { hp: 1.1, atk: 1.1, def: 1.0, spd: 1.0 },
+    reward: { exp: 1, money: 0.7 },
     weak: ['thunder'],
     resist: ['fire'],
     actions: [
@@ -486,6 +522,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     image: true,
     // 体力が非常に多い（赤鬼は攻撃、青鬼は体力）
     factors: { hp: 2.4, atk: 1.2, def: 1.1, spd: 0.9 },
+    reward: { exp: 1.7, money: 1.2 },
     weak: ['holy'],
     actions: [
       { skill: 'attack', weight: 3 },
@@ -499,6 +536,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     color: 0xd06a2a,
     image: true,
     factors: { hp: 1.1, atk: 1.2, def: 1.0, spd: 1.1 },
+    reward: { exp: 1, money: 0.7 },
     weak: ['holy'],
     resist: ['fire'],
     actions: [
@@ -514,6 +552,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     color: 0x2a2a3a,
     image: true,
     factors: { hp: 1.0, atk: 1.2, def: 1.0, spd: 1.3 },
+    reward: { exp: 1.1, money: 0.9 },
     weak: ['thunder'],
     actions: [
       { skill: 'attack', weight: 3 },
@@ -528,6 +567,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     image: true,
     // 体力は少ないが、身軽にかわす
     factors: { hp: 0.45, atk: 1.1, def: 0.9, spd: 1.4 },
+    reward: { exp: 1.3, money: 0.9 },
     evasion: 0.45,
     actions: [
       { skill: 'attack', weight: 3 },
@@ -541,6 +581,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     color: 0x3a3a4a,
     image: true,
     factors: { hp: 1.0, atk: 1.2, def: 0.9, spd: 1.3 },
+    reward: { exp: 1, money: 0.8 },
     weak: ['holy'],
     actions: [
       { skill: 'attack', weight: 3 },
@@ -554,6 +595,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     color: 0x8a5a4a,
     image: true,
     factors: { hp: 1.1, atk: 1.2, def: 1.0, spd: 1.0 },
+    reward: { exp: 1, money: 1.9 },
     actions: [
       { skill: 'attack', weight: 3 },
       { skill: 'saikoro', weight: 1 },
@@ -566,6 +608,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     color: 0xb0c0d0,
     image: true,
     factors: { hp: 1.0, atk: 1.1, def: 0.9, spd: 1.1 },
+    reward: { exp: 1.0, money: 1.1 },
     weak: ['holy'],
     actions: [
       { skill: 'attack', weight: 3 },
@@ -580,6 +623,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     image: true,
     // 攻撃は非常に高いが命中が低く、岩をかじって遊ぶ
     factors: { hp: 1.4, atk: 1.9, def: 1.1, spd: 0.9 },
+    reward: { exp: 1.3, money: 0.8 },
     weak: ['holy'],
     missRate: 0.35,
     actions: [
@@ -595,6 +639,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     color: 0x8a6a4a,
     image: true,
     factors: { hp: 1.1, atk: 1.2, def: 1.0, spd: 1.1 },
+    reward: { exp: 1.0, money: 1.6 },
     actions: [
       { skill: 'attack', weight: 3 },
       { skill: 'kesagiri', weight: 1 },
@@ -608,6 +653,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     image: true,
     // 体力が非常に多い
     factors: { hp: 2.8, atk: 1.3, def: 1.2, spd: 0.7 },
+    reward: { exp: 2, money: 0.7 },
     weak: ['holy'],
     actions: [
       { skill: 'attack', weight: 3 },
@@ -622,6 +668,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     image: true,
     // 体力は極めて少ないが、刀がすり抜ける（祓・術で倒す）
     factors: { hp: 0.4, atk: 1.1, def: 0.8, spd: 1.2 },
+    reward: { exp: 1.3, money: 0.3 },
     weak: ['holy'],
     evasion: 0.5,
     actions: [
@@ -759,6 +806,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     color: 0x8aa0b0,
     image: true,
     factors: { hp: 1.0, atk: 1.1, def: 0.9, spd: 1.1 },
+    reward: { exp: 0.9, money: 0.8 },
     weak: ['holy'],
     actions: [
       { skill: 'attack', weight: 3 },
@@ -771,6 +819,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     color: 0x5a5a7a,
     image: true,
     factors: { hp: 1.2, atk: 1.3, def: 1.3, spd: 1.0 },
+    reward: { exp: 1.2, money: 1.3 },
     weak: ['mech'],
     actions: [
       { skill: 'attack', weight: 3 },
@@ -784,6 +833,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     image: true,
     // 凍える息で痺れさせ、雪化粧で仲間の姿をくらます
     factors: { hp: 0.9, atk: 1.2, def: 0.9, spd: 1.2 },
+    reward: { exp: 1.1, money: 1.0 },
     weak: ['fire'],
     actions: [
       { skill: 'attack', weight: 2 },
@@ -799,6 +849,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     image: true,
     // 体力は少ないが、身軽にかわす
     factors: { hp: 0.45, atk: 1.2, def: 0.9, spd: 1.4 },
+    reward: { exp: 1.3, money: 1 },
     evasion: 0.45,
     actions: [
       { skill: 'attack', weight: 3 },
@@ -813,6 +864,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     image: true,
     // 体力が非常に多い
     factors: { hp: 2.2, atk: 1.2, def: 1.0, spd: 0.7 },
+    reward: { exp: 1.8, money: 0.5 },
     weak: ['fire', 'holy'],
     actions: [
       { skill: 'attack', weight: 3 },
@@ -873,6 +925,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     color: 0x6a3a2a,
     image: true,
     factors: { hp: 1.0, atk: 1.3, def: 1.0, spd: 1.2 },
+    reward: { exp: 1.0, money: 1.6 },
     actions: [
       { skill: 'attack', weight: 3 },
       { skill: 'taimatsu', weight: 1 },
@@ -884,6 +937,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     color: 0xc0502a,
     image: true,
     factors: { hp: 1.2, atk: 1.3, def: 1.1, spd: 1.1 },
+    reward: { exp: 1.1, money: 1.1 },
     weak: ['holy'],
     resist: ['fire'],
     actions: [
@@ -897,6 +951,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     color: 0x4a4a5a,
     image: true,
     factors: { hp: 1.2, atk: 1.2, def: 1.4, spd: 1.0 },
+    reward: { exp: 1.2, money: 1.3 },
     weak: ['mech', 'thunder'],
     actions: [
       { skill: 'attack', weight: 3 },
@@ -910,6 +965,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     image: true,
     // 攻撃は非常に高いが命中が低く、見得を切ってばかりいる
     factors: { hp: 1.2, atk: 2.0, def: 1.1, spd: 1.0 },
+    reward: { exp: 1.5, money: 1.3 },
     missRate: 0.3,
     actions: [
       { skill: 'attack', weight: 3 },
@@ -926,6 +982,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     image: true,
     // 火の玉になって飛び込み、自爆する
     factors: { hp: 0.8, atk: 1.1, def: 0.8, spd: 1.4 },
+    reward: { exp: 0.8, money: 0.7 },
     weak: ['holy'],
     resist: ['fire'],
     actions: [
@@ -942,6 +999,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     image: true,
     // 呼び声で群れを呼んでばかりいる
     factors: { hp: 1.1, atk: 1.3, def: 0.9, spd: 1.3 },
+    reward: { exp: 0.9, money: 0.6 },
     actions: [
       { skill: 'attack', weight: 1 },
       { skill: 'okuriKiba', weight: 1 },
@@ -972,6 +1030,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     color: 0x3a5a4a,
     image: true,
     factors: { hp: 1.0, atk: 1.4, def: 1.2, spd: 1.4 },
+    reward: { exp: 1.2, money: 1.2 },
     weak: ['mech'],
     actions: [
       { skill: 'attack', weight: 3 },
@@ -984,6 +1043,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     color: 0xa03a4a,
     image: true,
     factors: { hp: 1.0, atk: 1.3, def: 1.0, spd: 1.3 },
+    reward: { exp: 1.1, money: 1.4 },
     weak: ['holy'],
     actions: [
       { skill: 'attack', weight: 3 },
@@ -997,6 +1057,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     image: true,
     // 防御が非常に高い
     factors: { hp: 1.4, atk: 1.4, def: 2.4, spd: 0.9 },
+    reward: { exp: 1.7, money: 1.8 },
     weak: ['mech', 'thunder'],
     actions: [
       { skill: 'attack', weight: 3 },
@@ -1010,6 +1071,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     color: 0x9a8aaa,
     image: true,
     factors: { hp: 0.9, atk: 1.2, def: 1.2, spd: 1.2 },
+    reward: { exp: 1, money: 1.2 },
     weak: ['mech', 'thunder'],
     actions: [
       { skill: 'attack', weight: 3 },
