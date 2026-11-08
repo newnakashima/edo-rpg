@@ -1007,18 +1007,25 @@ describe('第 5 章の大坂', () => {
 
   it('米が町に配られたあと（chapter5Cleared）は、建物の中の人と家具も、米が無い・高いという話をしない', () => {
     const flags = { heardOsakaRumor: true, hyogoJoined: true, hyakuhyoDefeated: true, chapter5Cleared: true };
-    const scarce = /米が(高|足りん|手に入ら|無|あらへん)|この米の値|麦|粥|飢え|空っぽ/;
+    const scarce = /米が(高|足りん|手に入ら|無|な|あらへん)|米の値が上が|値が上がり|この米の値|見せかけ|麦|粥|飢え|空っぽ/;
     const inside = Object.values(MAPS).filter((m) => buildingTown(m.id) === 'osaka').flatMap((m) => m.npcs);
     for (const npc of [...osaka.npcs, ...inside]) {
       for (const line of npcLines(npc, flags)) expect(line, npc.id).not.toMatch(scarce);
     }
   });
 
-  it('長屋の私塾の戸の脇に門弟の子が立ち、どの戸が私塾かを教える', () => {
+  it('長屋の路地の口に門弟の子が立ち、どの戸が私塾かを教える', () => {
     const kodomo = osaka.npcs.find((n) => n.id === 'osakaJukuKodomo')!;
-    const door = osaka.exits.find((e) => e.to === 'osakaJuku')!;
-    expect(Math.abs(kodomo.x - door.x) + Math.abs(kodomo.y - door.y)).toBe(2);
-    expect(kodomo.lines!.join('')).toContain('私塾');
+    expect(osaka.exits.find((e) => e.to === 'osakaJuku')).toMatchObject({ x: 12, y: 23 });
+    expect(kodomo.lines!.join('')).toContain('東から二つ目の戸が、榊先生の私塾');
+  });
+
+  it('町の人に囲まれず、戸（私塾・民家・店）にはすべて、その前のマスまで歩いて行ける', () => {
+    const states: Record<string, boolean>[] = [{}, { hyogoJoined: true }, { hyogoJoined: true, hyakuhyoDefeated: true, chapter5Cleared: true }];
+    for (const flags of states) {
+      const area = reachable(osaka, start, flags, true);
+      for (const e of osaka.exits.filter((x) => osaka.rows[x.y]?.[x.x] === 'D')) expect(area.has(`${e.x},${e.y + 1}`), `${e.to} ${JSON.stringify(flags)}`).toBe(true);
+    }
   });
 
   it('米蔵の地下で全滅したら大坂の旅籠の前に戻る', () => {
