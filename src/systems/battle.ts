@@ -2,6 +2,7 @@
 // コマンドは「たたかう・技・道具・防御・逃げる」。技・道具・状態異常・属性は docs/balance.md、docs/characters.md に従う。
 import { characterName, type Gender } from '../data/characters';
 import { ENEMIES } from '../data/enemies';
+import { traitSource, type EquipTrait } from '../data/equipment';
 import { ITEMS, itemCount, removeItem, type Inventory, type ItemEffect } from '../data/items';
 import { SKILLS, isAilment, skillsAtLevel, type Ailment, type Element, type SkillDef, type StatusId } from '../data/skills';
 import {
@@ -47,6 +48,8 @@ export interface Combatant {
   summoned?: boolean;
   /** 溜め（charge）の構えに入っている敵が、次に必ず使う技の ID。 */
   charged?: string;
+  /** 装備の特性と、それを与えている装備の ID（味方だけ）。 */
+  traits?: Partial<Record<EquipTrait, string>>;
 }
 
 export type Command =
@@ -95,6 +98,8 @@ export type BattleEvent =
   | { type: 'summon'; actor: string; target: string }
   /** 敵が溜めの構えに入った（次の行動で skill を使う）。 */
   | { type: 'charge'; actor: string; skill: string }
+  /** 装備の特性で、もう一度攻撃する・術がもう一度発動する（equip は装備の ID）。 */
+  | { type: 'again'; actor: string; equip: string; trait: EquipTrait }
   | { type: 'escape'; success: boolean };
 
 export type Outcome = 'ongoing' | 'victory' | 'defeat' | 'escaped';
@@ -142,6 +147,7 @@ export function createBattle(
       weak: [],
       resist: [],
       status: {},
+      traits: memberTraits(m),
     };
   });
   const counts = new Map<string, number>();
@@ -162,6 +168,21 @@ export function createBattle(
     outcome: 'ongoing',
     turn: 0,
   };
+}
+
+/** 仲間の装備の特性。 */
+function memberTraits(m: PartyMember): Partial<Record<EquipTrait, string>> {
+  const traits: Partial<Record<EquipTrait, string>> = {};
+  for (const trait of ['doubleAttack', 'doubleCast'] as const) {
+    const equip = traitSource(m.equip, trait);
+    if (equip) traits[trait] = equip;
+  }
+  return traits;
+}
+
+/** 術がもう一度発動する技か（ダメージの術と回復の術）。 */
+function canDoubleCast(skill: SkillDef): boolean {
+  return skill.effect.kind === 'magic' || skill.effect.kind === 'heal';
 }
 
 function makeEnemy(id: string, level: number, key: string, name: string): Combatant {
@@ -379,6 +400,27 @@ class TurnContext {
     }
     actor.mp -= skill.mp;
     this.events.push({ type: 'skill', actor: actor.key, skill: skill.id });
+    const before = this.events.length;
+    this.skillEffect(actor, skill, targetKey);
+    // 木霊の数珠: 術がもう一度発動する（気力は使わない）。戦いが決まっていたら、1 回目が効かなかったら（倒れた・満タンの味方に回復）発動しない
+    const echo = actor.traits?.doubleCast;
+    const worked = this.events
+      .slice(before)
+      .some((e) => e.type === 'damage' || (e.type === 'heal' && e.amount > 0));
+    if (echo && canDoubleCast(skill) && worked && isAlive(actor) && judge(this.state) === 'ongoing' && this.healHasRoom(actor, skill, targetKey)) {
+      this.events.push({ type: 'again', actor: actor.key, equip: echo, trait: 'doubleCast' });
+      this.skillEffect(actor, skill, targetKey);
+    }
+  }
+
+  /** 回復の術なら、もう一度かけて回復する相手（生きていて満タンでない）がいるか。回復以外は常に true。 */
+  private healHasRoom(actor: Combatant, skill: SkillDef, targetKey: string | undefined): boolean {
+    if (skill.effect.kind !== 'heal') return true;
+    return this.skillTargets(actor, skill, targetKey).some((t) => isAlive(t) && t.hp < t.stats.maxHp);
+  }
+
+  /** 技の効果（気力を払った後）。 */
+  private skillEffect(actor: Combatant, skill: SkillDef, targetKey: string | undefined): void {
     const effect = skill.effect;
     const elements = skill.elements ?? [];
 
@@ -607,7 +649,17 @@ class TurnContext {
     switch (command?.kind) {
       case 'attack': {
         const target = this.partyEnemyTarget(command.target);
-        if (target) this.attack(actor, target);
+        if (!target) return;
+        this.attack(actor, target);
+        // 影分身の秘伝書: もう一度斬りつける。1 回目で狙いが倒れたら別の敵を狙う
+        const twin = actor.traits?.doubleAttack;
+        if (twin && isAlive(actor) && judge(this.state) === 'ongoing') {
+          const next = isAlive(target) ? target : this.partyEnemyTarget(undefined);
+          if (next) {
+            this.events.push({ type: 'again', actor: actor.key, equip: twin, trait: 'doubleAttack' });
+            this.attack(actor, next);
+          }
+        }
         return;
       }
       case 'skill': {

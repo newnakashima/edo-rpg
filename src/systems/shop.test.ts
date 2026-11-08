@@ -36,6 +36,11 @@ describe('店', () => {
     expect(r.ok && r.state.items).toEqual({});
     expect(sell(game(), 'sandogasa')).toEqual({ ok: false, reason: 'none' });
   });
+
+  it('一度しか手に入らないレア装備は売れない', () => {
+    const s = game({ money: 0, items: { kodamaJuzu: 1 } });
+    expect(sell(s, 'kodamaJuzu')).toEqual({ ok: false, reason: 'unsellable' });
+  });
 });
 
 describe('寺社のお祓い', () => {

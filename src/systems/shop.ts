@@ -4,7 +4,7 @@ import { addItem, isKnownItem, ITEMS, itemCount, MAX_ITEM_COUNT, removeItem, typ
 import type { GameState } from './gameState';
 import { memberStats } from './party';
 
-export type TradeResult = { ok: true; state: GameState } | { ok: false; reason: 'money' | 'full' | 'none' | 'unknown' };
+export type TradeResult = { ok: true; state: GameState } | { ok: false; reason: 'money' | 'full' | 'none' | 'unknown' | 'unsellable' };
 
 /** 1 回にやり取りする個数として正しいか（1 以上の整数）。 */
 function isCount(n: number): boolean {
@@ -33,6 +33,7 @@ export function buy(state: GameState, id: string, n = 1): TradeResult {
 /** 所持品から n 個売る（付けている装備は所持品に入っていないので売れない）。 */
 export function sell(state: GameState, id: string, n = 1): TradeResult {
   if (!isKnownItem(id) || !isCount(n)) return { ok: false, reason: 'unknown' };
+  if (EQUIPMENT[id]?.unsellable) return { ok: false, reason: 'unsellable' };
   const items = removeItem(state.items, id, n);
   if (!items) return { ok: false, reason: 'none' };
   return { ok: true, state: { ...state, money: state.money + sellPrice(id) * n, items } };

@@ -657,12 +657,12 @@ MAPS.world = {
     { id: 'worldChestHiei', name: '葛籠', x: 70, y: 21, color: 0x8a6a3a, object: 'tsuzura', event: 'worldChestHiei' },
     // 伊勢（伊賀から南東）
     { id: 'worldChestIse', name: '葛籠', x: 82, y: 37, color: 0x8a6a3a, object: 'tsuzura', event: 'worldChestIse' },
-    // 高野山（大坂の南）
-    { id: 'worldChestKoya', name: '葛籠', x: 60, y: 38, color: 0x8a6a3a, object: 'tsuzura', event: 'worldChestKoya' },
+    // 高野山（大坂の南）。中身はレア装備（木霊の数珠）なので、大坂が開くまでは置かない
+    { id: 'worldChestKoya', name: '葛籠', x: 60, y: 38, color: 0x8a6a3a, object: 'tsuzura', event: 'worldChestKoyaJuzu', showFlag: 'chapter4Cleared' },
     // 出雲（広島から山陰へ）
-    { id: 'worldChestIzumo', name: '葛籠', x: 37, y: 25, color: 0x8a6a3a, object: 'tsuzura', event: 'worldChestIzumo' },
+    { id: 'worldChestIzumo', name: '葛籠', x: 37, y: 25, color: 0x8a6a3a, object: 'tsuzura', event: 'worldChestIzumoIdaten', showFlag: 'chapter5Cleared' },
     // 阿蘇（九州の東）
-    { id: 'worldChestAso', name: '葛籠', x: 21, y: 46, color: 0x8a6a3a, object: 'tsuzura', event: 'worldChestAso' },
+    { id: 'worldChestAso', name: '葛籠', x: 21, y: 46, color: 0x8a6a3a, object: 'tsuzura', event: 'worldChestAsoKagebunshin', showFlag: 'kasumiRejoined' },
   ],
   exits: [],
   towns: [
