@@ -4,7 +4,7 @@ import { newGame, STARTING_ITEMS } from './gameState';
 import { createMember } from './party';
 import { MAPS, TILES } from '../data/maps';
 import { WARD_STEPS } from '../data/skills';
-import { deserialize, listSlots, load, MAPS_REBUILT_IN_V6, readSlot, save, SAVE_VERSION, serialize, SLOT_COUNT, slotKey, WORLD_TOWNS_BEFORE_V7, type KeyValueStorage } from './save';
+import { deserialize, EXPORT_FORMAT, exportFileName, exportText, importText, listSlots, writeSaveData, load, MAPS_REBUILT_IN_V6, readSlot, save, SAVE_VERSION, serialize, SLOT_COUNT, slotKey, WORLD_TOWNS_BEFORE_V7, type KeyValueStorage } from './save';
 
 function memoryStorage(): KeyValueStorage & { data: Map<string, string> } {
   const data = new Map<string, string>();
@@ -268,5 +268,46 @@ describe('版 7（ワールドマップを広げた）', () => {
 
   it('ワールドマップ以外のマップの位置はそのまま', () => {
     expect(v6('osaka', 26, 9)).toMatchObject({ mapId: 'osaka', x: 26, y: 9 });
+  });
+});
+
+describe('記録のファイル', () => {
+  const data = () => ({ version: SAVE_VERSION, savedAt: '2026-10-31T00:00:00.000Z', state: { ...state(), money: 77 } });
+
+  it('書き出したファイルを読み込むと同じ記録になり、記録した日時を変えずにスロットへ書き込める', () => {
+    const text = exportText(data());
+    expect(JSON.parse(text).format).toBe(EXPORT_FORMAT);
+    const read = importText(text);
+    expect(read).toEqual(data());
+    const storage = memoryStorage();
+    expect(writeSaveData(storage, 2, read!)).toBe(true);
+    expect(load(storage, 2)).toEqual(data());
+  });
+
+  it('目印のないもの・壊れたもの・正しくない状態・未対応の版は読まない', () => {
+    expect(importText(serialize(state()))).toBeNull();
+    expect(importText('{broken')).toBeNull();
+    expect(importText('null')).toBeNull();
+    expect(importText(JSON.stringify({ format: 'other-game', ...data() }))).toBeNull();
+    expect(importText(JSON.stringify({ format: EXPORT_FORMAT, ...data(), state: { ...state(), money: -1 } }))).toBeNull();
+    expect(importText(JSON.stringify({ format: EXPORT_FORMAT, ...data(), version: SAVE_VERSION + 1 }))).toBeNull();
+  });
+
+  it('古い版のファイルも今の形に直して読む', () => {
+    const v1: Record<string, unknown> = { ...state() };
+    delete v1.items;
+    const read = importText(JSON.stringify({ format: EXPORT_FORMAT, version: 1, savedAt: '2026-01-01T00:00:00.000Z', state: v1 }));
+    expect(read?.version).toBe(SAVE_VERSION);
+    expect(read?.state.items).toEqual(STARTING_ITEMS);
+  });
+
+  it('ファイル名はスロットを 1 から数え、端末の日時を付ける', () => {
+    expect(exportFileName(0, new Date(2026, 10, 8, 9, 5))).toBe('edo-rpg-save-1-20261108-0905.json');
+    expect(() => exportFileName(SLOT_COUNT)).toThrow(RangeError);
+  });
+
+  it('書き込みに失敗したら false', () => {
+    const failing = { ...memoryStorage(), setItem: () => { throw new Error('full'); } };
+    expect(writeSaveData(failing, 0, data())).toBe(false);
   });
 });

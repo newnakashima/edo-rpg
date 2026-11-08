@@ -233,3 +233,40 @@ export function browserStorage(): KeyValueStorage | null {
     return null;
   }
 }
+
+/** 書き出したファイルの目印（ほかのゲームや別の JSON を読み込まないため）。 */
+export const EXPORT_FORMAT = 'edo-rpg-save';
+
+/**
+ * セーブデータを、ファイルに書き出す文字列にする。
+ * 形はスロットの JSON（version・savedAt・state）に目印 format を足したもの。読み込みは版の移し替えを通るので、古い版のファイルも読める。
+ */
+export function exportText(data: SaveData): string {
+  return JSON.stringify({ format: EXPORT_FORMAT, version: data.version, savedAt: data.savedAt, state: data.state }, null, 2);
+}
+
+/** 書き出すファイルの名前（例: edo-rpg-save-1-20261108-0930.json）。スロットは 1 から数える。日時は端末の時刻。 */
+export function exportFileName(slot: number, now: Date = new Date()): string {
+  slotKey(slot);
+  const p = (n: number) => String(n).padStart(2, '0');
+  const date = `${now.getFullYear()}${p(now.getMonth() + 1)}${p(now.getDate())}-${p(now.getHours())}${p(now.getMinutes())}`;
+  return `${EXPORT_FORMAT}-${slot + 1}-${date}.json`;
+}
+
+/** 書き出したファイルの中身を読む。目印がない、壊れている、未対応の版なら null。 */
+export function importText(text: string): SaveData | null {
+  let data: unknown;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    return null;
+  }
+  if (!isObject(data) || data.format !== EXPORT_FORMAT) return null;
+  return deserialize(text);
+}
+
+/** 読み込んだセーブデータを、記録した日時を変えずにスロットへ書き込む。失敗したら false。 */
+export function writeSaveData(storage: KeyValueStorage, slot: number, data: SaveData): boolean {
+  const savedAt = new Date(data.savedAt);
+  return save(storage, slot, data.state, Number.isNaN(savedAt.getTime()) ? new Date() : savedAt);
+}

@@ -26,12 +26,14 @@ export type SaveSlotResult =
   | { kind: 'cancel' }
   | { kind: 'loaded'; data: SaveData }
   | { kind: 'saved' }
-  | { kind: 'failed' };
+  | { kind: 'failed' }
+  | { kind: 'picked'; slot: number; info: SlotInfo };
 
 /**
  * セーブスロットを選ぶメニュー。
  * load: 読めるデータのスロットだけ選べる。選んだデータを onDone に渡す。
  * save: 選んだスロットに state を書き込む。読めないデータのスロットにも上書きできる（表示で区別する）。
+ * export: 読めるデータのスロットだけ選べる。import: どのスロットも選べる。どちらも選んだスロットを onDone に渡すだけで、書き出し・書き込みは呼び出し側がする。
  */
 export class SaveSlotMenu {
   private readonly menu: Menu;
@@ -39,14 +41,14 @@ export class SaveSlotMenu {
   constructor(
     scene: Phaser.Scene,
     storage: KeyValueStorage,
-    mode: 'load' | 'save',
+    mode: 'load' | 'save' | 'export' | 'import',
     onDone: (result: SaveSlotResult) => void,
     state?: GameState,
   ) {
     const slots = listSlots(storage);
     const items = slots.map((info, i) => ({
       label: `${i + 1}. ${describe(info)}`,
-      enabled: mode === 'save' || info.status === 'ok',
+      enabled: mode === 'save' || mode === 'import' || info.status === 'ok',
     }));
     this.menu = new Menu(
       scene,
@@ -55,6 +57,10 @@ export class SaveSlotMenu {
       336,
       items,
       (i) => {
+        if (mode === 'export' || mode === 'import') {
+          onDone({ kind: 'picked', slot: i, info: slots[i]! });
+          return;
+        }
         if (mode === 'save') {
           onDone(state && save(storage, i, state) ? { kind: 'saved' } : { kind: 'failed' });
           return;
