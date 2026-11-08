@@ -683,7 +683,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: '野狐',
     color: 0xe08a3a,
     image: true,
-    factors: { hp: 3, atk: 0.65, def: 1.0, spd: 1.2 },
+    factors: { hp: 2.6, atk: 0.9, def: 1.0, spd: 1.2 },
     weak: ['holy'],
     actions: [
       { skill: 'attack', weight: 5 },
@@ -698,7 +698,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: 'からくり大将 鉄瓶',
     color: 0x5a6070,
     image: true,
-    factors: { hp: 5, atk: 0.7, def: 1.2, spd: 0.8 },
+    factors: { hp: 6, atk: 1.1, def: 1.2, spd: 0.8 },
     weak: ['mech', 'thunder'],
     actions: [
       { skill: 'attack', weight: 3 },
@@ -714,7 +714,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: '金鯱からくり',
     color: 0xd0a030,
     image: true,
-    factors: { hp: 5, atk: 0.95, def: 1.2, spd: 0.9 },
+    factors: { hp: 6, atk: 1.4, def: 1.2, spd: 0.9 },
     weak: ['mech', 'thunder'],
     actions: [
       { skill: 'attack', weight: 3 },
@@ -729,7 +729,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: '酒呑の大鬼',
     color: 0xa02020,
     image: true,
-    factors: { hp: 9, atk: 1.25, def: 1.1, spd: 0.8 },
+    factors: { hp: 13.5, atk: 2.1, def: 1.1, spd: 0.8 },
     weak: ['holy'],
     actions: [
       { skill: 'attack', weight: 3 },
@@ -745,7 +745,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: '上忍 朧',
     color: 0x6a6a6a,
     image: true,
-    factors: { hp: 10, atk: 1.25, def: 1.0, spd: 1.5 },
+    factors: { hp: 12, atk: 2.4, def: 1.0, spd: 1.5 },
     actions: [
       { skill: 'attack', weight: 3 },
       { skill: 'shurikenAme', weight: 2 },
@@ -759,7 +759,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: '蛇骨の権六',
     color: 0x4a5a3a,
     image: true,
-    factors: { hp: 13, atk: 1.3, def: 1.0, spd: 1.4 },
+    factors: { hp: 17, atk: 2.05, def: 1.0, spd: 1.4 },
     weak: ['fire'],
     actions: [
       { skill: 'attack', weight: 3 },
@@ -775,7 +775,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: '百俵からくり',
     color: 0xb09050,
     image: true,
-    factors: { hp: 14, atk: 1.2, def: 1.4, spd: 0.7 },
+    factors: { hp: 22, atk: 2.15, def: 1.4, spd: 0.7 },
     weak: ['mech', 'fire'],
     actions: [
       { skill: 'attack', weight: 3 },
@@ -790,7 +790,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: '南蛮大筒からくり',
     color: 0x6a6a7a,
     image: true,
-    factors: { hp: 12, atk: 1.1, def: 1.3, spd: 0.8 },
+    factors: { hp: 20, atk: 1.8, def: 1.3, spd: 0.8 },
     weak: ['mech', 'thunder'],
     actions: [
       { skill: 'attack', weight: 3 },
@@ -893,7 +893,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: 'からくり影武者',
     color: 0x7a5a8a,
     image: true,
-    factors: { hp: 9, atk: 1.2, def: 1.3, spd: 1.0 },
+    factors: { hp: 16, atk: 2.1, def: 1.3, spd: 1.0 },
     weak: ['mech', 'thunder'],
     actions: [
       { skill: 'attack', weight: 3 },
@@ -908,7 +908,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: '夜叉丸',
     color: 0x3a2a3a,
     image: true,
-    factors: { hp: 11, atk: 1.1, def: 1.0, spd: 1.3 },
+    factors: { hp: 18, atk: 1.85, def: 1.0, spd: 1.3 },
     weak: ['holy'],
     actions: [
       { skill: 'attack', weight: 3 },
@@ -1013,7 +1013,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: '火車からくり',
     color: 0xa03020,
     image: true,
-    factors: { hp: 13, atk: 1.05, def: 1.2, spd: 1.1 },
+    factors: { hp: 18, atk: 1.8, def: 1.2, spd: 1.1 },
     weak: ['holy', 'mech'],
     resist: ['fire'],
     actions: [
@@ -1084,7 +1084,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: '鬼塚典膳',
     color: 0x2a1a1a,
     image: true,
-    factors: { hp: 12, atk: 1.15, def: 1.2, spd: 1.2 },
+    factors: { hp: 15, atk: 1.8, def: 1.2, spd: 1.2 },
     actions: [
       { skill: 'attack', weight: 3 },
       { skill: 'tenzenIai', weight: 2 },
@@ -1098,7 +1098,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: '鷲尾但馬守宗衡',
     color: 0x6a1a2a,
     image: true,
-    factors: { hp: 12, atk: 1.1, def: 1.2, spd: 1.0 },
+    factors: { hp: 18, atk: 1.85, def: 1.2, spd: 1.0 },
     actions: [
       { skill: 'attack', weight: 3 },
       { skill: 'roju', weight: 1 },
@@ -1112,7 +1112,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: 'からくり大権現',
     color: 0xc0a040,
     image: true,
-    factors: { hp: 10, atk: 0.8, def: 1.3, spd: 1.1 },
+    factors: { hp: 10, atk: 1.1, def: 1.3, spd: 1.1 },
     weak: ['mech', 'holy'],
     actions: [
       { skill: 'attack', weight: 3 },
