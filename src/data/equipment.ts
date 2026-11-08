@@ -138,7 +138,7 @@ export const EQUIPMENT: Record<string, EquipDef> = {
   tsugeMino: { id: 'tsugeMino', name: '柘植の隠れ蓑', slot: 'accessory', price: 2600, bonus: { spd: 14, luck: 4 }, wearers: ALL, description: '山の一家に伝わる、着ると身が軽くなる蓑', unsellable: true },
   naniwaSoroban: { id: 'naniwaSoroban', name: '浪花の算盤', slot: 'accessory', price: 2600, bonus: { luck: 25 }, wearers: ALL, description: '大坂の両替商が使い込んだ算盤。弾けば福が寄るという', unsellable: true },
   miyajimaShakushi: { id: 'miyajimaShakushi', name: '宮島の杓子', slot: 'accessory', price: 3000, bonus: { maxHp: 40, maxMp: 15 }, wearers: ALL, description: '宮島の杓子。飯をすくうように福をすくうという', unsellable: true },
-  kaichuDokei: { id: 'kaichuDokei', name: '南蛮の懐中時計', slot: 'accessory', price: 3000, bonus: { spd: 12, def: 4 }, wearers: ALL, description: '出島から流れてきた、刻を刻む南蛮の時計', unsellable: true },
+  kaichuTokei: { id: 'kaichuTokei', name: '南蛮の懐中時計', slot: 'accessory', price: 3000, bonus: { spd: 12, def: 4 }, wearers: ALL, description: '出島から流れてきた、刻を刻む南蛮の時計', unsellable: true },
   higonokami: { id: 'higonokami', name: '肥後守', slot: 'accessory', price: 3000, bonus: { atk: 12, spd: 3 }, wearers: ALL, description: '肥後の鍛冶が打った、よく切れる折りたたみの小刀', unsellable: true },
   yuzenObi: { id: 'yuzenObi', name: '加賀友禅の帯', slot: 'accessory', price: 3400, bonus: { mag: 14, def: 4 }, wearers: ALL, description: '加賀の染め師が草花を描いた友禅の帯', unsellable: true },
   kawaraIshi: { id: 'kawaraIshi', name: '広瀬川の守り石', slot: 'accessory', price: 3400, bonus: { maxHp: 30, def: 10 }, wearers: ALL, description: '広瀬川の河原で拾われた、どっしり重い守り石', unsellable: true },

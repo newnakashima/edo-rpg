@@ -1,5 +1,5 @@
 // 名が通ったときの親分の贈り物（docs/balance.md の「仁義ポイント」）。
-// 仁義ポイントが JINGI_RENOWN（90）以上になると「名が通る」。そのあいだに親分の屋敷を訪ねると、若い衆のメニューに
+// 仁義ポイントが JINGI_RENOWN（90）以上（isRenowned）になると「名が通る」。そのあいだに親分の屋敷を訪ねると、若い衆のメニューに
 // 「親分の贈り物を受け取る」が出て、その町ならではのレアな装飾品（src/data/equipment.ts。店に置かず、売れない）を 1 つもらえる。町ごとに 1 回。
 // ポイントは使わない。もらったあとにポイントが 90 を割っても、品はそのまま。
 // 親分は屋敷の奥にいて画面に出ないので、話すのは若い衆だけにする。
@@ -7,7 +7,7 @@ import type { EventDef, EventStep } from './eventTypes';
 import { itemName } from './items';
 import type { MenuRequest } from './jingiRequests';
 import { OYABUN } from './oyabun';
-import { JINGI_RENOWN } from '../systems/jingi';
+import { isRenowned } from '../systems/jingi';
 
 /** 屋敷のある町ごとの、名が通ったときにもらう品（equipment.ts の ID）。 */
 export const OYABUN_GIFTS: Record<string, string> = {
@@ -20,7 +20,7 @@ export const OYABUN_GIFTS: Record<string, string> = {
   iga: 'tsugeMino',
   osaka: 'naniwaSoroban',
   hiroshima: 'miyajimaShakushi',
-  nagasaki: 'kaichuDokei',
+  nagasaki: 'kaichuTokei',
   kumamoto: 'higonokami',
   kanazawa: 'yuzenObi',
   sendai: 'kawaraIshi',
@@ -79,6 +79,6 @@ export const OYABUN_GIFT_EVENTS: Record<string, EventDef> = Object.fromEntries(
 /** 屋敷の若い衆のメニューに出す、親分の贈り物（名が通っていて、まだ受け取っていなければ）。 */
 export function pendingOyabunGift(town: string, state: { flags: Record<string, boolean>; jingi: number }): MenuRequest | null {
   const id = oyabunGiftId(town);
-  if (!OYABUN[town] || !OYABUN_GIFT_EVENTS[id] || state.flags[id] || state.jingi < JINGI_RENOWN) return null;
+  if (!OYABUN_GIFT_EVENTS[id] || state.flags[id] || !isRenowned(state.jingi)) return null;
   return { id, label: '親分の贈り物を受け取る' };
 }
