@@ -1,6 +1,8 @@
 // 加賀金沢の建物の屋内（src/data/buildings.ts）。民家（src/data/minka.ts）以外の戸のある建物すべてに入れる。
-// 長町の武家屋敷の長瀬左近と女中、ひがしの茶屋街の芸妓と茶屋の女将、寺町の僧、道ばたに立っていた飛脚を、建物の中へ移した
-// （ID・台詞・イベントはそのまま）。旅籠は民家（町家）の戸 (6, 21) と同じ棟の東の壁 (8, 21) に戸を開けて入口にした。
+// 長町の武家屋敷の長瀬左近と女中、ひがしの茶屋街の芸妓と茶屋の女将、寺町の僧、道ばたに立っていた飛脚、
+// 旅籠の主人と茶屋・よろず屋・刀鍛冶・金箔屋の人を、建物の中へ移した（ID・台詞・イベントはそのまま。女将と寺町の僧には、
+// 第 7 章のあとの台詞〈chapter7Cleared〉を足した）。旅籠は前からの旅籠の戸 (6, 21) から入り、同じ棟の東の壁に開けた戸 (8, 21) を
+// 民家（町家）にした（看板が戸の左 (5, 21) に掛かり、民家の戸と見まちがえないように。民家の移した戸は src/systems/save.ts の版 9）。
 // 武家屋敷の南西の家の戸は、前が旅籠の屋根でふさがっていたので (7, 17) から (9, 17) へ移した。
 // 城の門 (28, 13) は、ご家老の命で門番が固める「鍵をかけた戸」として入れない（buildings.test.ts の LOCKED）。
 // 間取りは建物ごとに固有（使い回さない）。タイルセット interior: 地面 . は土間、床 _ は板の間、草 , は畳。
@@ -64,7 +66,7 @@ export const KANAZAWA_BUILDINGS: BuildingDef[] = [
         { name: '掛け軸', x: 1, y: 1, object: 'kakejiku', lines: ['「忠」の一字を書いた掛け軸だ。墨の跡が力強い。'] },
         { name: '刀掛け', x: 8, y: 1, object: 'katanakake', lines: ['使い込んだ大小が掛けてある。柄巻きが手の脂で黒ずんでいる。'] },
         { name: '文机', x: 1, y: 3, object: 'fuzukue', lines: ['書きかけの上申書が広げてある。「殿の御容体につき」とだけ書いて、筆が止まっている。'] },
-        { name: '厨子', x: 13, y: 1, object: 'jizo', lines: ['長瀬家の先祖の位牌を納めた厨子だ。線香の煙が細く立ちのぼっている。'] },
+        { name: '厨子', x: 13, y: 1, object: 'jizo', lines: ['長瀬家の持仏を納めた厨子だ。赤い前掛けをした小さな地蔵が祀られ、線香の煙が細く立ちのぼっている。'] },
         { name: '行灯', x: 21, y: 6, object: 'andon', lines: ANDON_LINES },
       ]),
     ],
@@ -114,7 +116,7 @@ export const KANAZAWA_BUILDINGS: BuildingDef[] = [
       },
       ...furniture('kanazawaKachiYashiki', [
         { name: '刀掛け', x: 1, y: 1, object: 'katanakake', lines: ['手入れの行き届いた大小が掛けてある。'] },
-        { name: '掛け軸', x: 9, y: 1, object: 'kakejiku', lines: ['雪吊りの松を描いた掛け軸だ。'] },
+        { name: '掛け軸', x: 9, y: 1, object: 'kakejiku', lines: ['「質実剛健」と書いた掛け軸だ。'] },
         { name: '箪笥', x: 11, y: 1, object: 'tansu', lines: ['裃と羽織をしまった箪笥だ。'] },
         { name: '文机', x: 1, y: 7, object: 'fuzukue', lines: ['見回りの順を書いた帳面が載っている。'] },
         { name: '竈', x: 11, y: 9, object: 'kamado', lines: ['鍋で鴨と麩を煮ている。とろみのついた汁の、いい匂いがする。'] },
@@ -297,7 +299,7 @@ export const KANAZAWA_BUILDINGS: BuildingDef[] = [
       ...furniture('kanazawaOchaya', [
         { name: '金箔の屏風', x: 13, y: 1, object: 'byobu', lines: ['金箔を一面に押した屏風だ。行灯の灯りを照り返して、座敷が明るく見える。'] },
         { name: '行灯', x: 1, y: 1, object: 'andon', lines: ANDON_LINES },
-        { name: '掛け軸', x: 20, y: 1, object: 'kakejiku', lines: ['雪の浅野川を描いた掛け軸だ。'] },
+        { name: '掛け軸', x: 20, y: 1, object: 'kakejiku', lines: ['「花鳥風月」と書いた掛け軸だ。'] },
         { name: '箪笥', x: 20, y: 7, object: 'tansu', lines: ['芸妓の着物と帯をしまった箪笥だ。'] },
       ]),
     ],
@@ -348,13 +350,16 @@ export const KANAZAWA_BUILDINGS: BuildingDef[] = [
         y: 3,
         color: 0x4a6a8a,
         sprite: 'npc_sendo',
-        lines: ['船主「蝦夷の昆布に、大坂の木綿。北前船が一度湊を回れば、千両になるがや。……そやけど、この冬の海は船幽霊が出るゆうて、船乗りが怖がっとってな」'],
-        after: { flag: 'kanazawaArrived', lines: ['船主「船幽霊を退けて着いた船があるそうな。あんたらか？ たいしたもんや。うちの船にも乗ってほしいわいね」'] },
+        // 金沢へは船幽霊を退けて着く（kanazawaArrived）ので、町ではいつも退けたあとの台詞
+        lines: [
+          '船主「蝦夷の昆布に、大坂の木綿。北前船が一度湊を回れば、千両になるがや。この冬は船幽霊が出るゆうて、船乗りが怖がっとったがやけど……」',
+          '船主「その船幽霊を退けて着いた船があるそうな。あんたらか？ たいしたもんや。うちの船にも乗ってほしいわいね」',
+        ],
       },
       ...furniture('kanazawaRyoriChaya', [
         { name: '竈', x: 1, y: 1, object: 'kamado', lines: ['大鍋で蕪寿司に使う蕪を下茹でしている。'] },
         { name: '酒樽', x: 5, y: 1, object: 'sakadaru', lines: ['加賀の蔵元から届いた菰樽だ。'] },
-        { name: '掛け軸', x: 10, y: 1, object: 'kakejiku', lines: ['百万石の御城を描いた掛け軸だ。'] },
+        { name: '掛け軸', x: 10, y: 1, object: 'kakejiku', lines: ['「千客万来」と書いた掛け軸だ。'] },
         { name: '屏風', x: 22, y: 1, object: 'byobu', lines: ['加賀友禅の花鳥を描いた屏風だ。'] },
         { name: '行灯', x: 22, y: 8, object: 'andon', lines: ANDON_LINES },
       ]),
@@ -362,7 +367,7 @@ export const KANAZAWA_BUILDINGS: BuildingDef[] = [
   },
   // 旅籠: 奥に畳の客間が三つ、中ほどに板の間の廊下、手前の左に囲炉裏を切った板の間、右に主人の立つ土間
   {
-    door: { x: 8, y: 21 },
+    door: { x: 6, y: 21 },
     id: 'kanazawaYado',
     name: '旅籠',
     rows: [
@@ -424,7 +429,7 @@ export const KANAZAWA_BUILDINGS: BuildingDef[] = [
       },
       ...furniture('kanazawaYado', [
         { name: '囲炉裏', x: 4, y: 11, object: 'irori', lines: ['囲炉裏に炭が赤く熾っている。泊まり客が濡れた草鞋を乾かしている。'] },
-        { name: '柳行李', x: 1, y: 1, object: 'kibako', lines: ['薬売りの柳行李だ。引き出しに、色とりどりの薬の袋が詰まっている。'] },
+        { name: '荷箱', x: 1, y: 1, object: 'kibako', lines: ['薬売りの荷箱だ。色とりどりの薬の袋が詰まっている。'] },
         { name: '行灯', x: 19, y: 8, object: 'andon', lines: ANDON_LINES },
         { name: '箪笥', x: 11, y: 1, object: 'tansu', lines: ['客の荷を預かる箪笥だ。'] },
       ]),
@@ -491,7 +496,7 @@ export const KANAZAWA_BUILDINGS: BuildingDef[] = [
       ...furniture('kanazawaChaya', [
         { name: '竈', x: 1, y: 1, object: 'kamado', lines: ['竈で茶の湯が沸いている。焙じた茎茶の香ばしい匂いがする。'] },
         { name: '木箱', x: 2, y: 1, object: 'kibako', lines: ['生姜の煎餅、柴舟を詰めた木箱だ。'] },
-        { name: '掛け軸', x: 8, y: 1, object: 'kakejiku', lines: ['雪の兼六園を描いた掛け軸だ。'] },
+        { name: '掛け軸', x: 8, y: 1, object: 'kakejiku', lines: ['「一期一会」と書いた掛け軸だ。'] },
       ]),
     ],
   },
@@ -677,7 +682,7 @@ export const KANAZAWA_BUILDINGS: BuildingDef[] = [
       ]),
     ],
   },
-  // 湯屋: 奥を壁で男湯と女湯に分け、それぞれ柘榴口を抜けた洗い場、中ほどに板の間の脱衣場、手前の土間の真ん中に番台、右手に畳の休み処
+  // 湯屋: 奥を壁で男湯と女湯に分け、それぞれ柘榴口を抜けた洗い場、中ほどに板の間の脱衣場（左が男湯、右が女湯）、手前の土間の真ん中に番台、その下に畳の休み処
   {
     door: { x: 7, y: 27 },
     id: 'kanazawaYuya',
@@ -716,7 +721,7 @@ export const KANAZAWA_BUILDINGS: BuildingDef[] = [
       {
         id: 'kanazawaYuyaKyaku1',
         name: '湯上がりの人足',
-        x: 9,
+        x: 3,
         y: 7,
         color: 0x6a5a4a,
         sprite: 'npc_ninsoku',
@@ -836,8 +841,10 @@ export const KANAZAWA_BUILDINGS: BuildingDef[] = [
         y: 2,
         color: 0x4a6a8a,
         sprite: 'npc_sendo',
-        lines: ['船乗り「ひっく……能登の沖で、船幽霊が柄杓を貸せって手を伸ばしてきたがや……。底を抜いた柄杓を渡さんと、船を沈められるがやぞ……」'],
-        after: { flag: 'kanazawaArrived', lines: ['船乗り「ひっく……船幽霊を斬った渡世人がおるげな……。あんたらか？ ほんなら一杯おごらせてくれまっし……」'] },
+        lines: [
+          '船乗り「ひっく……前の船出で、能登の沖の船幽霊が柄杓を貸せって手を伸ばしてきたがや……。底を抜いた柄杓を渡して、どうにか逃げたがやぞ……」',
+          '船乗り「ひっく……その船幽霊を斬った渡世人がおるげな……。あんたらか？ ほんなら一杯おごらせてくれまっし……」',
+        ],
       },
       {
         id: 'kanazawaIzakayaKyaku2',
@@ -1044,7 +1051,7 @@ export const KANAZAWA_BUILDINGS: BuildingDef[] = [
       },
       ...furniture('kanazawaOyabunYashiki', [
         { name: '掛け軸', x: 2, y: 1, object: 'kakejiku', lines: ['「仁義」の二字を大書した掛け軸だ。'] },
-        { name: '千両箱', x: 9, y: 1, object: 'senryobako', lines: ['一家の金をしまった千両箱だ。錠がしっかり下りている。'] },
+        { name: '千両箱', x: 9, y: 1, object: 'senryobako', lines: ['一家の金をしまった千両箱だ。蓋の中に、小判がぎっしり詰まっている。'] },
         { name: '箪笥', x: 19, y: 1, object: 'tansu', lines: ['一家の半纏と、雪下ろしの蓑をしまった箪笥だ。'] },
         { name: '囲炉裏', x: 10, y: 6, object: 'irori', lines: ['大きな囲炉裏に薪がくべてある。自在鉤の鉄瓶で、燗の湯が沸いている。'] },
         { name: '薪の木箱', x: 19, y: 10, object: 'kibako', lines: ['ひと冬分の薪を詰めた木箱だ。'] },
@@ -1052,7 +1059,7 @@ export const KANAZAWA_BUILDINGS: BuildingDef[] = [
       ]),
     ],
   },
-  // 寺町の仕掛け寺: 奥の中ほどに板の間の内陣、左右に畳の脇の間、中ほどに板の間、その奥の左右に隠し部屋（左は畳、右は落とし戸の土間）、手前に土間
+  // 寺町の仕掛け寺: 奥の中ほどに板の間の内陣、左右に畳の脇の間、中ほどに板の間、その左右に仕掛けの小部屋（左は畳、右は落とし戸のある板の間）、手前に土間
   {
     door: { x: 8, y: 35 },
     id: 'kanazawaShikakeDera',
@@ -1065,8 +1072,8 @@ export const KANAZAWA_BUILDINGS: BuildingDef[] = [
       'W,,,,,__________,,,,,W',
       'W____________________W',
       'W__WWWWWW____WWWWWW__W',
-      'W__W,,,,W____W....W__W',
-      'W__W,,,,_____.....W__W',
+      'W__W,,,,W____W____W__W',
+      'W__W,,,,__________W__W',
       'W__WWWWWW____WWWWWW__W',
       'W....................W',
       'W....................W',
@@ -1108,10 +1115,10 @@ export const KANAZAWA_BUILDINGS: BuildingDef[] = [
         lines: ['子ども「この部屋の床、踏むと板が外れて下に落ちるんやて。和尚さまに、ここで跳ねたらあかんって叱られたがや」'],
       },
       ...furniture('kanazawaShikakeDera', [
-        { name: '本尊の厨子', x: 11, y: 1, object: 'jizo', lines: ['内陣の厨子に、本尊の日蓮上人の像が祀られている。'] },
+        { name: '本尊の厨子', x: 11, y: 1, object: 'jizo', lines: ['内陣の厨子に本尊が祀られている。扉の前には、赤い前掛けをしたお前立ちの小さな像が立っている。'] },
         { name: '行灯', x: 8, y: 1, object: 'andon', lines: ANDON_LINES },
         { name: '行灯', x: 14, y: 1, object: 'andon', lines: ANDON_LINES },
-        { name: '掛け軸', x: 4, y: 7, object: 'kakejiku', lines: ['掛け軸の裏の壁に、指を掛ける窪みがある。押すと、壁がくるりと回る仕掛けらしい。'] },
+        { name: '掛け軸', x: 4, y: 7, object: 'kakejiku', lines: ['掛け軸の脇の壁に、指を掛ける窪みがある。押すと、壁がくるりと回って奥の隠し段へ抜ける仕掛けらしい。今は釘で留めてある。'] },
         { name: '賽銭箱', x: 17, y: 7, object: 'kibako', lines: ['賽銭箱だ。その前の床板には、細い切れ目が入っている。落とし戸の上らしい。'] },
       ]),
     ],
@@ -1171,10 +1178,10 @@ export const KANAZAWA_BUILDINGS: BuildingDef[] = [
         lines: ['侍「父の墓に参りに来た。父も殿にお仕えした身。今のお城のありさまを、草葉の陰でどう見ておるか」'],
       },
       ...furniture('kanazawaTera', [
-        { name: '本尊の厨子', x: 10, y: 1, object: 'jizo', lines: ['内陣の厨子に、阿弥陀如来が祀られている。金色の光背が、灯明に照らされて光っている。'] },
+        { name: '本尊の厨子', x: 10, y: 1, object: 'jizo', lines: ['内陣の厨子に、阿弥陀如来が祀られている。扉の前には、赤い前掛けをしたお前立ちの小さな像が立っている。'] },
         { name: '行灯', x: 6, y: 1, object: 'andon', lines: ANDON_LINES },
         { name: '行灯', x: 14, y: 1, object: 'andon', lines: ANDON_LINES },
-        { name: '掛け軸', x: 1, y: 1, object: 'kakejiku', lines: ['極楽浄土を描いた掛け軸だ。'] },
+        { name: '掛け軸', x: 1, y: 1, object: 'kakejiku', lines: ['「南無阿弥陀仏」と書いた掛け軸だ。'] },
         { name: '木箱', x: 19, y: 1, object: 'kibako', lines: ['経本と数珠をしまった木箱だ。'] },
       ]),
     ],
@@ -1228,8 +1235,8 @@ export const KANAZAWA_BUILDINGS: BuildingDef[] = [
         lines: ['典座「わしは寺の台所を預かる典座じゃ。菜っ葉ひと切れ、米ひと粒も無駄にせぬのが修行でな。今朝は大根の粥じゃよ」'],
       },
       ...furniture('kanazawaZendera', [
-        { name: '本尊の厨子', x: 12, y: 1, object: 'jizo', lines: ['本堂の厨子に、釈迦如来が祀られている。'] },
-        { name: '掛け軸', x: 1, y: 1, object: 'kakejiku', lines: ['墨で大きな丸がひとつ描いてある。円相という、禅の悟りを表す絵だそうだ。'] },
+        { name: '本尊の厨子', x: 12, y: 1, object: 'jizo', lines: ['本堂の厨子に、釈迦如来が祀られている。扉の前には、赤い前掛けをしたお前立ちの小さな像が立っている。'] },
+        { name: '掛け軸', x: 1, y: 1, object: 'kakejiku', lines: ['「無」の一字を大書した掛け軸だ。'] },
         { name: '行灯', x: 9, y: 1, object: 'andon', lines: ANDON_LINES },
         { name: '竈', x: 23, y: 1, object: 'kamado', lines: ['大鍋で大根の粥が煮えている。'] },
         { name: '木箱', x: 23, y: 9, object: 'kibako', lines: ['托鉢でいただいた米と大根が詰まっている。'] },

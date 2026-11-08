@@ -5,7 +5,7 @@ import { createMember, memberLevel } from './party';
 import { MAPS, TILES } from '../data/maps';
 import { MAX_WARD_STEPS } from '../data/skills';
 import { ITEMS } from '../data/items';
-import { deserialize, EXPORT_FORMAT, exportFileName, exportText, importText, listSlots, writeSaveData, load, MAPS_REBUILT_IN_V6, readSlot, save, SAVE_VERSION, serialize, SLOT_COUNT, slotKey, WORLD_TOWNS_BEFORE_V7, type KeyValueStorage } from './save';
+import { deserialize, EXPORT_FORMAT, exportFileName, exportText, importText, listSlots, writeSaveData, load, MAPS_REBUILT_IN_V6, MAPS_REMOVED_IN_V9, readSlot, save, SAVE_VERSION, serialize, SLOT_COUNT, slotKey, WORLD_TOWNS_BEFORE_V7, type KeyValueStorage } from './save';
 import { JINGI_MAX, JINGI_START } from './jingi';
 
 function memoryStorage(): KeyValueStorage & { data: Map<string, string> } {
@@ -356,5 +356,22 @@ describe('記録のファイル', () => {
   it('書き込みに失敗したら false', () => {
     const failing = { ...memoryStorage(), setItem: () => { throw new Error('full'); } };
     expect(writeSaveData(failing, 0, data())).toBe(false);
+  });
+});
+
+describe('版 9（金沢の湊の町家の戸を動かした）', () => {
+  const v8 = (mapId: string, x: number, y: number) =>
+    deserialize(JSON.stringify({ version: 8, savedAt: '2026-10-31T00:00:00.000Z', state: { ...state(), mapId, x, y } }))?.state;
+
+  it('版 8 でなくした民家の中にいたら、その町の旅籠の前へ移す。ほかの場所はそのまま', () => {
+    expect(v8('minka_kanazawa_6_21', 2, 9)).toMatchObject({ mapId: 'kanazawa', ...MAPS.kanazawa!.respawn });
+    expect(v8('minka_kanazawa_52_21', 2, 9)).toMatchObject({ mapId: 'minka_kanazawa_52_21', x: 2, y: 9 });
+  });
+
+  it('なくしたマップは今はなく、移す先の町はある', () => {
+    for (const [id, town] of Object.entries(MAPS_REMOVED_IN_V9)) {
+      expect(MAPS[id], id).toBeUndefined();
+      expect(MAPS[town]?.respawn, town).toBeDefined();
+    }
   });
 });
