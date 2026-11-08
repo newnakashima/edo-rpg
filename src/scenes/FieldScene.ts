@@ -600,6 +600,8 @@ export class FieldScene extends Phaser.Scene {
         this.controls.flush();
       },
       () => this.scene.start('Title'),
+      // 道しるべの札・抜け道: 使ったことを出してから、入口の外へ移る
+      (to, message) => this.message.show([message], () => this.moveTo(to.mapId, to.x, to.y)),
     );
     this.pushOverlay(menu);
   }

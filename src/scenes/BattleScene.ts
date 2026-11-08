@@ -251,7 +251,8 @@ export class BattleScene extends Phaser.Scene {
   private askItem(index: number): void {
     const actor = aliveOf(this.battle, 'party')[index];
     if (!actor) return;
-    const ids = ownedItems(this.battle.items);
+    // 戦闘の外だけで使う道具（道しるべの札）は一覧に出さない
+    const ids = ownedItems(this.battle.items).filter((id) => ITEMS[id]?.battle !== false);
     this.openMenu(
       ids.map((id) => {
         const n = availableItemCount(this.battle, id, this.commands);

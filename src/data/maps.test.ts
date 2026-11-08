@@ -8,7 +8,7 @@ import { EQUIPMENT } from './equipment';
 import { ITEMS, MAX_ITEM_COUNT } from './items';
 import { EventRunner } from '../systems/eventScript';
 import { newGame } from '../systems/gameState';
-import { closedGateAt, encounterAt, MAPS, npcLines, npcObjectFrame, npcVisible, respawnPoint, START_POSITION, TILE_KINDS, tileAt, TILES, TILESETS, tileTextureKey, townAction, type MapDef } from './maps';
+import { closedGateAt, encounterAt, escapePoint, isDungeon, MAPS, npcLines, npcObjectFrame, npcVisible, respawnPoint, START_POSITION, TILE_KINDS, tileAt, TILES, TILESETS, tileTextureKey, townAction, type MapDef } from './maps';
 
 describe('タイルの画像', () => {
   it('全ての種類の画像が public/assets/tiles/ にあり、全ての種類が使われている', () => {
@@ -1776,5 +1776,54 @@ describe('入口の目印（テストプレイの指摘: 南蛮寺跡・島原�
 
   it('熊本の清正の古井戸は井戸の画像で描く（石段の穴の画像を使い回さない）', () => {
     expect(MAPS.kumamoto!.npcs.find((n) => n.id === 'furuido')?.object).toBe('ido');
+  });
+});
+
+describe('ダンジョンから入口の外へ戻る（道しるべの札・抜け道）', () => {
+  const dungeons = Object.values(MAPS).filter(isDungeon);
+  /** 歩いて外へ出られないダンジョン（海の上の北前船）。 */
+  const sealed = ['kitamaebune'];
+
+  it('敵が出て町の印も全滅時の戻り先もないマップがダンジョンで、町・ワールドマップ・屋敷の中は含まない', () => {
+    expect(dungeons.map((m) => m.id)).toEqual(expect.arrayContaining(['kitsunebiCave', 'urayama', 'karakuriYashiki', 'kenkyujo', 'edojo', 'matsuNoRoka']));
+    for (const id of ['world', 'shimizu', 'edo', 'kobo', 'kagiya', 'dejima']) expect(isDungeon(MAPS[id]!), id).toBe(false);
+  });
+
+  it('歩いて出られるダンジョンでは、ダンジョンの外の通れる場所へ戻る', () => {
+    for (const map of dungeons) {
+      const to = escapePoint(map.id);
+      if (sealed.includes(map.id)) {
+        expect(to, map.id).toBeNull();
+        continue;
+      }
+      expect(to, map.id).not.toBeNull();
+      const dest = MAPS[to!.mapId]!;
+      expect(isDungeon(dest), map.id).toBe(false);
+      const where = `${map.id} → ${to!.mapId} (${to!.x},${to!.y})`;
+      expect(tileAt(dest, to!.x, to!.y)?.blocked, where).toBe(false);
+      // 着いた場所で、すぐ別のマップへ移ったり、イベントや人・町の印の上に立ったりしない
+      const at = (p: { x: number; y: number }) => p.x === to!.x && p.y === to!.y;
+      expect([...dest.exits, ...(dest.triggers ?? []), ...dest.npcs, ...(dest.towns ?? [])].some(at), where).toBe(false);
+    }
+  });
+
+  it('歩いて出られないダンジョンは、出口のないものだけ', () => {
+    for (const id of sealed) expect(MAPS[id]?.exits, id).toEqual([]);
+  });
+
+  it('奥の階からは、手前の階を通って入口の外へ戻る', () => {
+    // 狐火の洞は裏山の奥、地下の研究所は原城跡の奥、松の廊下は本丸御殿の奥
+    expect(escapePoint('kitsunebiCave')?.mapId).toBe('shimizu');
+    expect(escapePoint('kitsunebiCave')).toEqual(escapePoint('urayama'));
+    expect(escapePoint('kenkyujo')).toEqual(escapePoint('harajo'));
+    expect(escapePoint('kenkyujo')?.mapId).toBe('world');
+    expect(escapePoint('matsuNoRoka')).toEqual(escapePoint('edojo'));
+    expect(escapePoint('karakuriGura')?.mapId).toBe('kanazawa');
+    // 大凧で着く名古屋城の天守も、階段を下りれば城の外へ出られる
+    expect(escapePoint('tenshu')?.mapId).toBe('nagoya');
+  });
+
+  it('ダンジョンでないマップと、ないマップでは使えない', () => {
+    for (const id of ['world', 'shimizu', 'kobo', 'nope']) expect(escapePoint(id), id).toBeNull();
   });
 });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { SKILLS, skillsAtLevel } from '../data/skills';
-import { changeEquipment, expToNext, fieldSkills, itemUsableOn, skillDescription, statsWithEquipment, statusSheet, swapMembers, useItemInField, useSkillInField } from './fieldMenu';
+import { changeEquipment, escapeInField, expToNext, fieldSkills, itemUsableOn, skillDescription, statsWithEquipment, statusSheet, swapMembers, useItemInField, useSkillInField } from './fieldMenu';
 import { newGame, type GameState } from './gameState';
 import { createMember, memberStats } from './party';
 import { expRemainingToNext, MAX_LEVEL } from './stats';
@@ -70,9 +70,9 @@ describe('道具をメニューで使う（続き）', () => {
 });
 
 describe('技をメニューで使う', () => {
-  it('回復の技だけが使える', () => {
+  it('回復の技と抜け道だけが使える', () => {
     expect(fieldSkills(createMember('gendo', 19))).toEqual(['yakushi', 'hannya']);
-    expect(fieldSkills(createMember('kasumi', 30))).toEqual([]);
+    expect(fieldSkills(createMember('kasumi', 30))).toEqual(['nukemichi']);
   });
 
   it('薬師の真言で回復し、気力を使う', () => {
@@ -261,5 +261,50 @@ describe('仲間の並び替え', () => {
     expect(swapMembers(s, 1, 1)).toBe(s);
     expect(swapMembers(s, 0, 3)).toBe(s);
     expect(swapMembers(s, -1, 0)).toBe(s);
+  });
+});
+
+describe('道しるべの札・抜け道（ダンジョンから入口の外へ）', () => {
+  const inCave = { mapId: 'kitsunebiCave', x: 1, y: 1 };
+
+  it('道しるべの札を 1 枚使い、裏山の麓の清水湊へ戻る（居場所は画面の切り替えと一緒に変える）', () => {
+    const s = game({ ...inCave, party: [createMember('hero', 1)], items: { michishirube: 2 } });
+    const r = escapeInField(s, { item: 'michishirube' });
+    expect(r.ok && r.state.items).toEqual({ michishirube: 1 });
+    expect(r.ok && r.to.mapId).toBe('shimizu');
+    expect(r.ok && r.state.mapId).toBe('kitsunebiCave');
+  });
+
+  it('霞の抜け道は気力を 4 使う', () => {
+    const s = game({ ...inCave, party: [createMember('hero', 1), createMember('kasumi', 1)] });
+    const before = s.party[1]!.mp;
+    const r = escapeInField(s, { caster: 1, skill: 'nukemichi' });
+    expect(r.ok && r.state.party[1]?.mp).toBe(before - 4);
+    expect(r.ok && r.to.mapId).toBe('shimizu');
+  });
+
+  it('ダンジョンの外や歩いて出られない場所では使わず、札も気力も減らさない', () => {
+    for (const mapId of ['shimizu', 'world', 'kitamaebune']) {
+      const s = game({ mapId, party: [createMember('hero', 1), { ...createMember('kasumi', 1), mp: 0 }], items: { michishirube: 1 } });
+      expect(escapeInField(s, { item: 'michishirube' }), mapId).toEqual({ ok: false, reason: 'noEscape' });
+      // 気力が足りなくても、先に「ここでは使えない」と断る
+      expect(escapeInField(s, { caster: 1, skill: 'nukemichi' }), mapId).toEqual({ ok: false, reason: 'noEscape' });
+    }
+  });
+
+  it('札がない・気力が足りない・倒れている・覚えていないときは使えない', () => {
+    const s = game({ ...inCave, party: [createMember('hero', 1), { ...createMember('kasumi', 1), mp: 3 }, { ...createMember('kasumi', 1), hp: 0 }] });
+    expect(escapeInField(s, { item: 'michishirube' })).toEqual({ ok: false, reason: 'noItem' });
+    expect(escapeInField(s, { item: 'kizugusuri' })).toEqual({ ok: false, reason: 'notField' });
+    expect(escapeInField(s, { caster: 1, skill: 'nukemichi' })).toEqual({ ok: false, reason: 'noMp' });
+    expect(escapeInField(s, { caster: 2, skill: 'nukemichi' })).toEqual({ ok: false, reason: 'casterDown' });
+    expect(escapeInField(s, { caster: 0, skill: 'nukemichi' })).toEqual({ ok: false, reason: 'notField' });
+  });
+
+  it('抜け道はメニューの技に出て、札は誰にも使う道具ではない', () => {
+    expect(fieldSkills(createMember('kasumi', 1))).toContain('nukemichi');
+    expect(itemUsableOn('michishirube', createMember('hero', 1))).toBe(false);
+    expect(skillDescription(SKILLS.nukemichi!)).toContain('戦闘の外だけで使う');
+    expect(skillDescription(SKILLS.nukemichi!, true)).not.toContain('戦闘の外でも使える');
   });
 });

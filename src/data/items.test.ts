@@ -40,6 +40,12 @@ describe('道具の品ぞろえ', () => {
     }
   });
 
+  it('道しるべの札はどの町のよろず屋でも買える', () => {
+    const yorozu = Object.values(SHOPS).filter((shop) => shop.name === 'よろず屋');
+    expect(yorozu.length).toBeGreaterThan(0);
+    for (const shop of yorozu) expect(shop.goods, shop.id).toContain('michishirube');
+  });
+
   it('同じ効き目の道具は、高いほど回復量が多い', () => {
     const byKind = (kind: 'healHp' | 'healMp') =>
       Object.values(ITEMS)
