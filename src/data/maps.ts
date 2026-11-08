@@ -5,6 +5,7 @@ import { OBJECT_DEFS, type CharacterSpriteId, type ObjectSpriteId } from './spri
 import { MOGURI_YADO, moguriYadoNpc } from './moguriYado';
 import { OYABUN, bakutoNpc, oyabunNpc } from './oyabun';
 import { TOWN_FACILITY_DOORS, townFacilityNpcs } from './townFacilities';
+import { MINKA_DOORS, minkaEntrance, minkaMap } from './minka';
 
 /** タイルの種類。画像は public/assets/tiles/<種類>.png（PixelLab で生成。記録は public/assets/README.md）。 */
 export const TILE_KINDS = ['ground', 'grass', 'road', 'tree', 'water', 'wall', 'roof', 'door', 'floor', 'rock', 'plain', 'town', 'gate'] as const;
@@ -6069,6 +6070,18 @@ for (const town of Object.keys(OYABUN)) MAPS[town]!.npcs.push(oyabunNpc(town)!);
 for (const town of Object.keys(OYABUN)) MAPS[town]!.npcs.push(bakutoNpc(town)!);
 // 非合法な旅籠（もぐりの宿）。ワールドマップの街道沿いに点在する小屋（場所と値段のレベルは src/data/moguriYado.ts）
 MAPS.world!.npcs.push(...MOGURI_YADO.map(moguriYadoNpc));
+// 民家の屋内（戸口ごとに、町家・長屋・農家の間取りの写しを 1 つ作る。戸口と間取りは src/data/minka.ts）
+{
+  let resident = 0;
+  for (const [townId, doors] of Object.entries(MINKA_DOORS)) {
+    const town = MAPS[townId]!;
+    for (const door of doors) {
+      const house = minkaMap(town, door, resident++);
+      MAPS[house.id] = house;
+      town.exits.push(minkaEntrance(townId, door));
+    }
+  }
+}
 
 export type TownAction =
   | { kind: 'enter'; to: { mapId: string; x: number; y: number } }
@@ -6167,6 +6180,16 @@ export function encounterAt(map: MapDef, x: number, y: number, flags: Record<str
 /** 通れない関所（flag がまだ立っていない）。 */
 export function closedGateAt(map: MapDef, x: number, y: number, flags: Record<string, boolean>): GateDef | undefined {
   return map.gates?.find((g) => g.x === x && g.y === y && !flags[g.flag]);
+}
+
+/**
+ * そのマスへ歩いて入れるか（人や関所は見ない）。通れるタイルのほか、出口を置いた戸口（民家の入口）にも入れる。
+ */
+export function canStep(map: MapDef, x: number, y: number): boolean {
+  const tile = tileAt(map, x, y);
+  if (!tile) return false;
+  if (!tile.blocked) return true;
+  return tile.kind === 'door' && map.exits.some((e) => e.x === x && e.y === y);
 }
 
 export function tileAt(map: MapDef, x: number, y: number): TileDef | undefined {

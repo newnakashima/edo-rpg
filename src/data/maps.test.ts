@@ -8,7 +8,8 @@ import { EQUIPMENT } from './equipment';
 import { ITEMS, MAX_ITEM_COUNT } from './items';
 import { EventRunner } from '../systems/eventScript';
 import { newGame } from '../systems/gameState';
-import { closedGateAt, encounterAt, escapePoint, isDungeon, MAPS, npcLines, npcObjectFrame, npcVisible, respawnPoint, START_POSITION, TILE_KINDS, tileAt, TILES, TILESETS, tileTextureKey, townAction, type MapDef } from './maps';
+import { canStep, closedGateAt, encounterAt, escapePoint, isDungeon, MAPS, npcLines, npcObjectFrame, npcVisible, respawnPoint, START_POSITION, TILE_KINDS, tileAt, TILES, TILESETS, tileTextureKey, townAction, type MapDef } from './maps';
+import { isMinka } from './minka';
 
 describe('タイルの画像', () => {
   it('全ての種類の画像が public/assets/tiles/ にあり、全ての種類が使われている', () => {
@@ -50,7 +51,10 @@ describe('タイルの画像', () => {
       // 野山（清水湊の裏山・原城跡）
       urayama: 'yama', harajo: 'yama',
     };
-    const actual = Object.fromEntries(Object.values(MAPS).filter((m) => m.tileset).map((m) => [m.id, m.tileset]));
+    // 民家の屋内（src/data/minka.ts）はすべて屋内の見た目
+    const minka = Object.values(MAPS).filter((m) => isMinka(m.id));
+    for (const m of minka) expect(m.tileset, m.id).toBe('interior');
+    const actual = Object.fromEntries(Object.values(MAPS).filter((m) => m.tileset && !isMinka(m.id)).map((m) => [m.id, m.tileset]));
     expect(actual).toEqual(expected);
     // 共通の見た目のままのマップを増やさない（町も建物を町ごとの見た目に、野山も部品で描くようにした）
     for (const m of Object.values(MAPS)) expect(m.tileset, m.id).toBeDefined();
@@ -247,7 +251,8 @@ describe('マップのデータ', () => {
 
       it('出口の行き先は、通れて出口でも NPC でもない場所', () => {
         for (const exit of map.exits) {
-          expect(tileAt(map, exit.x, exit.y)?.blocked).toBe(false);
+          // 出口は通れるマスか、民家の入口の戸口
+          expect(canStep(map, exit.x, exit.y), `${exit.x},${exit.y}`).toBe(true);
           const dest = MAPS[exit.to];
           expect(dest, exit.to).toBeDefined();
           if (!dest) continue;
@@ -1195,7 +1200,8 @@ describe('第 7 章のマップ（北前船・金沢・兼六園・からくり�
 describe('マップの広さと使い回し（テストプレイの指摘: どの町もダンジョンも同じ・狭い）', () => {
   /** 建物の中や、塀で囲まれた小さな区画（出島）。町・ダンジョンより狭くてよい。 */
   const SMALL = ['kobo', 'yoriki', 'takoya', 'dejima'];
-  const maps = Object.values(MAPS).filter((m) => m.id !== 'world');
+  // 民家の屋内は、使い回してよい唯一の建物（ユーザーの決定。3 種類の間取りの写し）なので、ここでは比べない（src/data/minka.test.ts で確かめる）
+  const maps = Object.values(MAPS).filter((m) => m.id !== 'world' && !isMinka(m.id));
   const area = (m: MapDef) => m.rows.length * (m.rows[0]?.length ?? 0);
 
   it('町は 1100 マス以上、ダンジョン・野山は 750 マス以上、建物の中・小さな区画は 400 マス以上', () => {
@@ -1714,7 +1720,7 @@ describe('寄り道の熊本', () => {
     const actions = new Set(kumamoto.npcs.map((n) => n.action).filter(Boolean));
     expect(actions).toEqual(new Set(['inn', 'teahouse', 'shop', 'temple', 'hikyaku', 'yuya', 'tobaku', 'izakaya', 'gyoro', 'oyabun']));
     expect(kumamoto.areaLevel).toBe(19);
-    expect(kumamoto.exits).toEqual([]);
+    expect(kumamoto.exits.filter((e) => !isMinka(e.to))).toEqual([]);
     expect(tileAt(kumamoto, kumamoto.respawn!.x, kumamoto.respawn!.y)?.blocked).toBe(false);
   });
 
