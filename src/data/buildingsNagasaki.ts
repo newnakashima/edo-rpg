@@ -184,7 +184,7 @@ export const NAGASAKI_BUILDINGS: BuildingDef[] = [
         after: { flag: 'chapter6Cleared', lines: ['船乗り「鉄の兵の噂も聞かなくなったアル。媽祖さまのおかげネ。明日、唐へ帰る船が出るヨ」'] },
       },
       ...furniture('nagasakiTera', [
-        { name: '本尊', x: 9, y: 1, object: 'butsuzo', lines: ['須弥壇に、唐の国で刻まれた釈迦如来が祀られている。赤と金の飾りがまぶしい。'] },
+        { name: '本尊の厨子', x: 9, y: 1, object: 'jizo', lines: ['須弥壇の厨子に、唐の国から運ばれた釈迦如来が祀られている。扉の前には、お前立ちの小さな像が立っている。'] },
         { name: '行灯', x: 7, y: 1, object: 'andon', lines: ANDON_LINES },
         { name: '行灯', x: 11, y: 1, object: 'andon', lines: ANDON_LINES },
         { name: '媽祖の祠', x: 17, y: 1, object: 'hokora', lines: ['海の守り神・媽祖が祀られている。航海の無事を願う赤い札が、いくつも結んである。'] },
@@ -605,7 +605,7 @@ export const NAGASAKI_BUILDINGS: BuildingDef[] = [
         color: 0x6b8c5a,
         sprite: 'npc_merchant',
         lines: ['よろず屋「いらっしゃい。南蛮渡りの甘いものなら、茶屋で売っとりますばい。うちは薬と旅の支度ですたい」'],
-        after: { flag: 'chapter6Cleared', lines: ['よろず屋「いらっしゃい。鉄の兵の騒ぎが収まって、唐船の荷もまた入るごとなりました。品も揃うてきましたばい」'] },
+        after: { flag: 'chapter6Cleared', lines: ['よろず屋「いらっしゃい。鉄の兵の騒ぎが収まって、唐船の船乗りも安心して湊に上がるごとなりましたばい」'] },
         action: 'shop',
         shop: 'nagasakiYorozu',
       },
@@ -688,7 +688,7 @@ export const NAGASAKI_BUILDINGS: BuildingDef[] = [
         { name: '金床', x: 2, y: 2, object: 'kanatoko', lines: ['使い込んだ金床だ。打ちかけの刀身と、阿蘭陀の銃の部品が載っている。'] },
         { name: '刀掛け', x: 12, y: 1, object: 'katanakake', lines: ['打ち上がった肥前刀が、白鞘のまま掛けてある。'] },
         { name: '木箱', x: 12, y: 4, object: 'kibako', lines: ['出島から届いた阿蘭陀の胴の木箱だ。横文字の焼き印が押してある。'] },
-        { name: '木箱', x: 12, y: 12, object: 'kibako', lines: ['火床にくべる炭の俵が積んである。'] },
+        { name: '木箱', x: 12, y: 12, object: 'kibako', lines: ['火床にくべる炭を詰めた木箱だ。'] },
       ]),
     ],
   },
@@ -752,7 +752,7 @@ export const NAGASAKI_BUILDINGS: BuildingDef[] = [
       ]),
     ],
   },
-  // 妓楼（丸山）: 奥に畳の座敷が四間、中ほどに板の間の廊下、手前の左に畳の控えの間、右に土間
+  // 妓楼（丸山）: 奥に畳の座敷が四間、中ほどに板の間の廊下、その手前の左に畳の控えの間（右は板の間のまま）、手前に広い土間
   {
     door: { x: 29, y: 24 },
     id: 'nagasakiGyoro',
@@ -793,7 +793,7 @@ export const NAGASAKI_BUILDINGS: BuildingDef[] = [
         y: 2,
         color: 0x8a3a3a,
         sprite: 'npc_tojin',
-        lines: ['旦那「唐人屋敷を出られるのは、丸山へ来るときだけアル。長崎の唄と三味線は、唐の船乗りのいちばんの楽しみネ」'],
+        lines: ['旦那「唐人屋敷は塀の中で窮屈アル。今夜は商いの寄り合いのお座敷ネ。長崎の唄と三味線は、唐の商人のいちばんの楽しみヨ」'],
       },
       {
         id: 'nagasakiGyoroKamuro',
