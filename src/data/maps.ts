@@ -12,6 +12,7 @@ import { SHIMIZU_BUILDINGS } from './buildingsShimizu';
 import { SUNPU_BUILDINGS } from './buildingsSunpu';
 import { NAGOYA_BUILDINGS } from './buildingsNagoya';
 import { KYO_BUILDINGS } from './buildingsKyo';
+import { IGA_BUILDINGS } from './buildingsIga';
 
 /** タイルの種類。画像は public/assets/tiles/<種類>.png（PixelLab で生成。記録は public/assets/README.md）。 */
 export const TILE_KINDS = ['ground', 'grass', 'road', 'tree', 'water', 'wall', 'roof', 'door', 'floor', 'rock', 'plain', 'town', 'gate'] as const;
@@ -1850,90 +1851,8 @@ MAPS.iga = {
     'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
     'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
   ],
+  // 店・天神・旅籠・飛脚屋・湯屋などの施設の人と鍵屋の隠居は建物の中にいる（src/data/buildingsIga.ts）
   npcs: [
-    {
-      id: 'igaTeahouse',
-      name: '茶屋の娘',
-      x: 7,
-      y: 16,
-      color: 0xc76b8f,
-      sprite: 'npc_musume',
-      lines: [
-        '茶屋の娘「いらっしゃいまし。……お客さん、山の上の里には近づかないほうがいいですよ」',
-        '茶屋の娘「このごろ、からくりの鷹が里の上を飛び回ってるんです。よそ者を見ると、襲ってくるとか」',
-        '茶屋の娘「お団子はいかが？」',
-      ],
-      after: { flag: 'heardIgaRumor', lines: ['茶屋の娘「いらっしゃいまし。お団子はいかが？」'] },
-      setsFlag: 'heardIgaRumor',
-      action: 'teahouse',
-      shop: 'igaChaya',
-    },
-    {
-      id: 'igaYorozu',
-      name: 'よろず屋',
-      x: 37,
-      y: 16,
-      color: 0x6b8c5a,
-      sprite: 'npc_merchant',
-      lines: ['よろず屋「山の里へ行くなら、毒消しは忘れずに。あそこの蜘蛛は質が悪い」'],
-      action: 'shop',
-      shop: 'igaYorozu',
-    },
-    {
-      id: 'igaTenjin',
-      name: '天神の神主',
-      x: 25,
-      y: 23,
-      color: 0xb0b0a0,
-      sprite: 'npc_kannushi',
-      lines: ['神主「上野の天神さまのご加護を。倒れた者があれば、お祓いをして進ぜよう」'],
-      action: 'temple',
-    },
-    {
-      id: 'igaInn',
-      name: '旅籠の主人',
-      x: 44,
-      y: 16,
-      color: 0x5a6b8c,
-      sprite: 'npc_innkeeper',
-      lines: ['旅籠の主人「伊賀の山の夜は冷えますよ。けど、渡世人のお方はうちには泊められねえ。親分さんの屋敷へお行きなせえ」'],
-      action: 'inn',
-    },
-    {
-      id: 'kagiyaRojin',
-      name: '鍵屋の隠居',
-      x: 7,
-      y: 23,
-      color: 0x8a7a6a,
-      sprite: 'npc_rojin',
-      lines: [
-        '隠居「西の外れの辻は、鍵屋の辻というてな。むかし、あそこで名高い仇討ちがあった」',
-        '隠居「弟の仇を、義兄の剣客が助太刀して討った。朝から昼まで斬り合うたそうな」',
-        '隠居「仇討ちというのは、討つほうも討たれるほうも、命がけよ」',
-      ],
-      after: { flag: 'gonrokuDefeated', lines: ['隠居「鍵屋の辻で、また仇討ちがあったと聞いた。……娘さん、本懐を遂げなすったか」'] },
-    },
-    {
-      id: 'igaKaji',
-      name: '刀鍛冶',
-      x: 14,
-      y: 23,
-      color: 0x5a5a6b,
-      sprite: 'npc_smith',
-      lines: ['刀鍛冶「伊賀の鍛冶は忍びの得物も打つ。小太刀でも錫杖でも、なんでも言いなせえ」'],
-      action: 'shop',
-      shop: 'igaKaji',
-    },
-    {
-      id: 'igaHikyaku',
-      name: '飛脚',
-      x: 33,
-      y: 23,
-      color: 0x3e7cb0,
-      sprite: 'npc_hikyaku',
-      lines: ['飛脚「へい、まいど！ 伊賀の飛脚問屋でございやす」'],
-      action: 'hikyaku',
-    },
     {
       id: 'igaKodomo',
       name: '町の子',
@@ -5767,6 +5686,7 @@ addBuildings(MAPS, 'shimizu', SHIMIZU_BUILDINGS);
 addBuildings(MAPS, 'sunpu', SUNPU_BUILDINGS);
 addBuildings(MAPS, 'nagoya', NAGOYA_BUILDINGS);
 addBuildings(MAPS, 'kyo', KYO_BUILDINGS);
+addBuildings(MAPS, 'iga', IGA_BUILDINGS);
 /** その戸口が屋内へ入る入口か（屋内のある施設の人は、屋内の建物のファイルで屋内に置くので、店先には立たせない）。 */
 const hasInterior = (town: string, door: { x: number; y: number }) => MAPS[town]!.exits.some((e) => e.x === door.x && e.y === door.y);
 // 湯屋・賭場・居酒屋・妓楼（刀鍛冶かよろず屋のあるすべての町。戸口と台詞は src/data/townFacilities.ts）

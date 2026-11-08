@@ -26,7 +26,7 @@ const buildings = Object.values(MAPS).filter((m) => buildingTown(m.id));
 
 describe('施設・民家以外の建物の屋内（テストプレイの指摘: あらゆる建物に入れるようにすべき）', () => {
   // 屋内を足した町（町を足したらここにも足す）
-  const TOWNS = ['shimizu', 'sunpu', 'nagoya', 'kyo'];
+  const TOWNS = ['shimizu', 'sunpu', 'nagoya', 'kyo', 'iga'];
 
   it.each(TOWNS)('%s の戸（D）はすべて入れる（民家か、建物ごとの屋内）', (townId) => {
     const town = MAPS[townId]!;
@@ -112,8 +112,8 @@ describe('施設・民家以外の建物の屋内（テストプレイの指摘:
         }
       }
     }
-    // 清水湊・駿府・名古屋・京の賭場・居酒屋・妓楼・親分の屋敷（町を足すと増える）
-    expect(checked).toBeGreaterThanOrEqual(16);
+    // 清水湊・駿府・名古屋・京・伊賀上野の賭場・居酒屋・妓楼・親分の屋敷（町を足すと増える）
+    expect(checked).toBeGreaterThanOrEqual(20);
   });
 
   it('辰五郎とお凛は一家の屋敷の中にいる。辰五郎の話（序章の頼み）は屋敷に入って聞く', () => {
