@@ -184,7 +184,7 @@ export const SUNPU_BUILDINGS: BuildingDef[] = [
         { name: '品棚', x: 5, y: 1, object: 'shinadana', lines: ['駿河の名物、竹細工の籠が並んでいる。'] },
         { name: '文机', x: 9, y: 1, object: 'fuzukue', lines: ['大福帳と算盤が載っている。お城の御用の掛け売りが書きつけてある。'] },
         { name: '木箱', x: 12, y: 1, object: 'kibako', lines: ['江戸から下ってきた品の木箱だ。'] },
-        { name: '木箱', x: 13, y: 2, object: 'kibako', lines: ['油の壺を詰めた木箱だ。'] },
+        { name: '木箱', x: 13, y: 1, object: 'kibako', lines: ['油の壺を詰めた木箱だ。'] },
       ]),
     ],
   },
@@ -272,7 +272,7 @@ export const SUNPU_BUILDINGS: BuildingDef[] = [
         y: 2,
         color: 0x4a4a6a,
         sprite: 'npc_ronin',
-        lines: ['侍「江戸へ下る御用の途中でな。明日は宇津ノ谷峠を越えねばならぬ」'],
+        lines: ['侍「京へ上る御用の途中でな。明日は宇津ノ谷峠を越えねばならぬ」'],
       },
       {
         id: 'sunpuYadoKyaku2',
@@ -403,7 +403,7 @@ export const SUNPU_BUILDINGS: BuildingDef[] = [
       {
         id: 'sunpuTobakuKyaku1',
         name: '川越し人足',
-        x: 8,
+        x: 7,
         y: 4,
         color: 0x8a7a6a,
         sprite: 'npc_ninsoku',
@@ -412,7 +412,7 @@ export const SUNPU_BUILDINGS: BuildingDef[] = [
       {
         id: 'sunpuTobakuKyaku2',
         name: '旦那衆',
-        x: 11,
+        x: 12,
         y: 4,
         color: 0x4a6a8a,
         sprite: 'npc_merchant',
