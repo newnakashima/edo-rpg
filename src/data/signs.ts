@@ -1,5 +1,6 @@
 // 施設の看板（テストプレイで「看板がないと各施設を見分けることが非常に困難」と指摘されたため足した）。
 // 施設の人（maps.ts の NpcDef の action）が立つ戸口の隣の壁に、施設の種類ごとの看板（板の色と漢字 1 字）を掛ける。
+// 施設の人が建物の中にいる町（src/data/buildings.ts）では、屋内への入口（出口の sign）の戸の隣の壁に掛ける。
 // 画像は public/assets/signs/<種類>.png（16 × 16。scripts/draw_signs.py で描いた。記録は public/assets/README.md）。
 import type { MapDef, NpcDef } from './maps';
 

@@ -1,11 +1,11 @@
 // 各町の親分の屋敷（テストプレイで「各町に親分とその屋敷を追加すべき」と指摘されたため足した）。
 // 主人公の一行は渡世人なので、親分の屋敷に仁義ポイントを使って泊まり、体力と気力を全回復する（src/systems/jingi.ts）。
-// 湯屋・賭場などと同じく、刀鍛冶かよろず屋のあるすべての町に 1 軒ずつ置く。屋敷の戸口の真下に一家の若い衆が立ち、
-// 看板（src/data/signs.ts の oyabun、「親」の字）を戸の隣の壁に掛ける。
+// 湯屋・賭場などと同じく、刀鍛冶かよろず屋のあるすべての町に 1 軒ずつ置く。屋敷の戸口の真下（屋内のある町では屋敷の中。
+// src/data/buildings.ts）に一家の若い衆が立ち、看板（src/data/signs.ts の oyabun、「親」の字）を戸の隣の壁に掛ける。
 import type { NpcDef } from './maps';
 
 export interface OyabunDef {
-  /** 屋敷の戸口（maps.ts の rows の D のマス）。若い衆はその真下に立つ。 */
+  /** 屋敷の戸口（maps.ts の rows の D のマス）。若い衆はその真下に立つ（屋内のある町では、この戸口から入る屋敷の中に立つ）。 */
   door: { x: number; y: number };
   /**
    * 町をぶらついている文無しの博徒の立つマス（親分に紹介すると仁義ポイント。src/data/jingiRequests.ts の bakutoMeetEvent）。

@@ -2,10 +2,10 @@
 // 間取りは建物ごとに固有（使い回さない）。タイルセット interior: 地面 . は土間、床 _ は板の間、草 , は畳。
 import type { BuildingDef } from './buildings';
 import type { NpcDef } from './maps';
+import { KAMADO_LINES } from './minka';
 import { oyabunNpc } from './oyabun';
 import { townFacilityNpc } from './townFacilities';
 
-const KAMADO_LINES = ['竈に釜が掛かっている。焚き口の火が、ちろちろと燃えている。'];
 const ANDON_LINES = ['行灯の紙ごしに、菜種油の火がやわらかく灯っている。'];
 
 /** 家具（話しかけると台詞を出す物）。ID は建物の ID と通し番号から作る。 */

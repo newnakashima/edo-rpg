@@ -6,6 +6,7 @@
 // - 施設の人（店の主人・住職など）は屋内に立つ。看板は、屋内の施設の人の種類で、町の戸口の隣の壁に掛ける（src/data/signs.ts）
 import type { ExitDef, MapDef, NpcDef, TilesetId } from './maps';
 import { signKind } from './signs';
+import { townRespawnMap } from './minka';
 
 export interface BuildingDef {
   /** 町のマップの戸口（rows の D のマス）。 */
@@ -27,7 +28,7 @@ export interface BuildingDef {
 /** 屋内マップの ID → その建物のある町の ID。 */
 const BUILDING_TOWN: Record<string, string> = {};
 
-/** その建物のある町（建物の屋内マップでなければ undefined）。 */
+/** その建物のある町（建物の屋内マップでなければ undefined。建物の屋内かどうかの判定にも使う）。 */
 export function buildingTown(mapId: string): string | undefined {
   return BUILDING_TOWN[mapId];
 }
@@ -38,7 +39,7 @@ export function townOf(mapId: string): string {
 }
 
 /** 建物の屋内マップを作る。 */
-export function buildingMap(town: MapDef, b: BuildingDef): MapDef {
+function buildingMap(town: MapDef, b: BuildingDef): MapDef {
   return {
     id: b.id,
     name: `${town.name}の${b.name}`,
@@ -48,12 +49,12 @@ export function buildingMap(town: MapDef, b: BuildingDef): MapDef {
     npcs: b.npcs,
     exits: [{ x: b.exit.x, y: b.exit.y, to: town.id, toX: b.door.x, toY: b.door.y + 1 }],
     // 全滅したら町（の旅籠の前）へ戻る
-    respawnMap: town.respawn ? town.id : town.respawnMap,
+    respawnMap: townRespawnMap(town),
   };
 }
 
 /** 町の戸口から屋内へ入る出口。屋内に施設の人がいれば、その看板を戸の隣に掛ける。 */
-export function buildingEntrance(b: BuildingDef): ExitDef {
+function buildingEntrance(b: BuildingDef): ExitDef {
   const sign = b.npcs.map(signKind).find((k) => k !== null);
   return { x: b.door.x, y: b.door.y, to: b.id, toX: b.exit.x, toY: b.exit.y - 1, ...(sign ? { sign } : {}) };
 }

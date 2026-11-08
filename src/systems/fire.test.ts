@@ -15,8 +15,11 @@ describe('火のある場所', () => {
   it('茶屋・旅籠（と居酒屋）の人と焚き火から FIRE_RANGE のマス以内（斜めも）が火のそば', () => {
     const { mapId, npc } = teahouse;
     expect(nearFire(at(mapId, npc.x + FIRE_RANGE, npc.y + FIRE_RANGE))).toBe(true);
-    // 茶屋の娘から離れた所（竈からも離れた、縁台の向こう）は火のそばでない
-    expect(fireAmong([npc], npc.x, npc.y + FIRE_RANGE + 1, {})).toBe(false);
+    // 茶屋の娘からも竈からも離れた、店の右下の隅は火のそばでない
+    const map = MAPS[mapId]!;
+    const corner = { x: map.rows[0]!.length - 2, y: map.rows.length - 2 };
+    expect(map.npcs.filter(isFireSource).every((n) => Math.max(Math.abs(n.x - corner.x), Math.abs(n.y - corner.y)) > FIRE_RANGE)).toBe(true);
+    expect(nearFire(at(mapId, corner.x, corner.y))).toBe(false);
     const inn = shimizuNpc('inn');
     expect(nearFire(at(inn.mapId, inn.npc.x - FIRE_RANGE, inn.npc.y))).toBe(true);
   });
