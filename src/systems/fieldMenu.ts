@@ -134,12 +134,6 @@ export function itemUsableOn(itemId: string, member: PartyMember): boolean {
   }
 }
 
-/** メニューの強さの窓に出す経験値の行（累計と、次のレベルまでの残り）。 */
-export function expLine(member: PartyMember, sep = '  '): string {
-  const rest = expToNext(member);
-  return `経験 ${member.exp}${sep}次 ${rest === null ? '――' : rest}`;
-}
-
 /** 次のレベルまでの経験値。ゲストは成長しないので null（最大レベルも null）。 */
 export function expToNext(member: PartyMember): number | null {
   return isGuest(member.id) ? null : expRemainingToNext(member.exp);

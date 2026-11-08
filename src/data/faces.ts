@@ -1,7 +1,5 @@
 // 会話の顔グラフィック（PixelLab で生成した 48 × 48。public/assets/faces/<ID>.png）。記録は public/assets/README.md。
 // 台詞は「名前「……」」の形でそろっているので、ページの先頭の名前から顔を引く（events.ts などの台詞を書き換えなくてよい）。
-import type { CharacterId, Gender } from './characters';
-
 /** 顔の画像の大きさ（テストで画像を確かめる。窓は読み込んだ画像の幅から文字の位置を決めるので、ここの値は使わない）。 */
 export const FACE_SIZE = 48;
 
@@ -74,11 +72,6 @@ export const FACE_IMAGES: readonly FaceImage[] = [
   ...FACES,
   ...EXPRESSION_FACES.flatMap((id) => Object.values(EXPRESSIONS).map((e) => `${id}_${e}` as const)),
 ];
-
-/** 仲間の顔（メニューの仲間の顔の窓）。主人公は男女で分ける。 */
-export function memberFace(id: CharacterId, gender: Gender): FaceId {
-  return id === 'hero' ? `hero_${gender}` : id;
-}
 
 export function faceKey(id: FaceImage): string {
   return `face_${id}`;

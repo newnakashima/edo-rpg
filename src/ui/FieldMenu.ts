@@ -2,8 +2,9 @@
 // 仲間の能力値・装備はステータス画面（StatusScreen）で見る。
 import Phaser from 'phaser';
 import { characterName, isGuest } from '../data/characters';
-import { faceKey, memberFace } from '../data/faces';
+import { faceKey } from '../data/faces';
 import { nextObjective } from '../data/objectives';
+import { portraitFor } from '../data/portraits';
 import { EQUIP_SLOTS, EQUIPMENT, SLOT_NAMES, canEquip, type EquipSlot } from '../data/equipment';
 import { ITEMS, itemCount, itemName, ownedEquipment, ownedItems } from '../data/items';
 import { SKILLS } from '../data/skills';
@@ -73,9 +74,9 @@ export class FieldMenu {
 
   private push(items: MenuItem[], x: number, y: number, width: number, onSelect: (i: number) => void, onMove?: (i: number) => void, onCancel?: () => void): Menu {
     this.controls.flush();
-    // 長い一覧は、説明の窓に重ならない行数だけ見せてずらす
-    const maxRows = maxMenuRows(4, INFO_Y - 2);
-    const top = Math.min(y, INFO_Y - 2 - menuHeight(Math.min(items.length, maxRows)));
+    // 長い一覧は、下の仲間の顔の窓（体力・気力）に重ならない行数だけ見せてずらす
+    const maxRows = maxMenuRows(4, PARTY_Y - 2);
+    const top = Math.min(y, PARTY_Y - 2 - menuHeight(Math.min(items.length, maxRows)));
     // 下に重なるメニューは、クリックも含めて操作できないようにする
     this.menus[this.menus.length - 1]?.setActive(false);
     const menu = new Menu(this.scene, x, Math.max(4, top), width, items, onSelect, onCancel ?? (() => this.pop()), onMove, maxRows);
@@ -303,8 +304,8 @@ export class FieldMenu {
     );
   }
 
-  private statsLine(s: Stats, withHp = true, sep = '  '): string {
-    return [`攻 ${s.atk}`, `防 ${s.def}`, `術 ${s.mag}`, `速 ${s.spd}`, `運 ${s.luck}`, ...(withHp ? [`体 ${s.maxHp}`] : [])].join(sep);
+  private statsLine(s: Stats): string {
+    return [`攻 ${s.atk}`, `防 ${s.def}`, `術 ${s.mag}`, `速 ${s.spd}`, `運 ${s.luck}`, `体 ${s.maxHp}`].join('  ');
   }
 
   private compareLine(before: Stats, after: Stats): string {
@@ -367,7 +368,7 @@ export class FieldMenu {
       const hpColor = down ? COLORS.danger : m.hp <= s.maxHp / 4 ? COLORS.accent : COLORS.text;
       objs.push(this.scene.add.text(cx, PARTY_Y + 6, `体 ${m.hp}/${s.maxHp}`, textStyle(9, hpColor)).setOrigin(0.5, 0));
       objs.push(this.scene.add.text(cx, PARTY_Y + 17, `気 ${m.mp}/${s.maxMp}`, textStyle(9)).setOrigin(0.5, 0));
-      const face = this.scene.add.image(cx, PARTY_Y + 29, faceKey(memberFace(m.id, state.gender))).setOrigin(0.5, 0);
+      const face = this.scene.add.image(cx, PARTY_Y + 29, faceKey(portraitFor(m.id, state.gender))).setOrigin(0.5, 0);
       // 倒れた仲間は顔を暗くする
       if (down) face.setTint(0x555555);
       objs.push(face);
