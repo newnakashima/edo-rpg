@@ -78,7 +78,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     color: 0x5f8f3e,
     image: true,
     factors: { hp: 1.3, atk: 0.9, def: 1.0, spd: 0.7 },
-    reward: { exp: 1.2, money: 0.6 },
+    reward: { exp: 1.2, money: 0.8 },
     actions: [
       { skill: 'attack', weight: 4 },
       { skill: 'dokueki', weight: 1 },
@@ -411,7 +411,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     color: 0xb0703a,
     image: true,
     factors: { hp: 0.7, atk: 1.0, def: 0.7, spd: 1.4 },
-    reward: { exp: 1.1, money: 0.6 },
+    reward: { exp: 1.1, money: 0.8 },
     actions: [
       { skill: 'attack', weight: 3 },
       { skill: 'kamakaze', weight: 1 },

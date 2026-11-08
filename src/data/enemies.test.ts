@@ -216,7 +216,7 @@ describe('雑魚敵の報酬のばらつき（docs/balance.md の「敵の報酬
     expect(Math.max(...moneys)).toBeGreaterThanOrEqual(2);
   });
 
-  it('地域（出現表）ごとの平均の倍率は、経験値 0.9〜1.3、お金 0.85〜1.25 に収まる（レベル上げと買い物の見積もりを大きく変えない）', () => {
+  it('地域（出現表）ごとの平均の倍率（組の重み × 体数で数える）は、経験値 0.9〜1.3、お金 0.85〜1.25（敵 Lv4 までは 0.9 以上）に収まる', () => {
     for (const [key, table] of Object.entries(ENCOUNTERS)) {
       let weight = 0;
       let exp = 0;
@@ -231,7 +231,8 @@ describe('雑魚敵の報酬のばらつき（docs/balance.md の「敵の報酬
       }
       expect(exp / weight, key).toBeGreaterThanOrEqual(0.9);
       expect(exp / weight, key).toBeLessThanOrEqual(1.3);
-      expect(money / weight, key).toBeGreaterThanOrEqual(0.85);
+      // 序章〜駿府（敵 Lv4 まで）は 1 戦の報酬が小さく、最初の買い物に響くので下限を上げる
+      expect(money / weight, key).toBeGreaterThanOrEqual(table.level <= 4 ? 0.9 : 0.85);
       expect(money / weight, key).toBeLessThanOrEqual(1.25);
     }
   });
