@@ -1,9 +1,10 @@
 // 戦闘の進行（画面に依存しない純粋なロジック）。
 // コマンドは「たたかう・技・道具・防御・逃げる」。技・道具・状態異常・属性は docs/balance.md、docs/characters.md に従う。
 import { characterName, type Gender } from '../data/characters';
+import { COMMON_DROP_RATE, ENEMY_DROPS, RARE_DROP_RATE } from '../data/drops';
 import { ENEMIES } from '../data/enemies';
 import { traitSource, type EquipTrait } from '../data/equipment';
-import { ITEMS, itemCount, removeItem, type Inventory, type ItemEffect } from '../data/items';
+import { addItem, ITEMS, itemCount, itemName, removeItem, type Inventory, type ItemEffect } from '../data/items';
 import { SKILLS, isAilment, skillsAtLevel, type Ailment, type Element, type SkillDef, type StatusId } from '../data/skills';
 import {
   ailmentChance,
@@ -906,6 +907,47 @@ export function computeRewards(state: BattleState): Rewards {
       : 0;
   }
   return { exp, money };
+}
+
+/** 倒した敵が落とした道具・装備品。 */
+export interface Drop {
+  /** 落とした敵の種族の名前。 */
+  enemy: string;
+  item: string;
+  /** その敵だけが落とすレアのドロップか。 */
+  rare: boolean;
+}
+
+/**
+ * 勝利したときのドロップ（docs/balance.md の「敵のドロップ」）。報酬になる敵（rewardedEnemies）1 体ごとに、
+ * まずレアを、外れたら通常のドロップを判定する（1 体が落とすのは 1 つまで）。ボスと、ドロップのない敵は落とさない。
+ */
+export function rollDrops(state: BattleState, rng: Rng): Drop[] {
+  const drops: Drop[] = [];
+  for (const e of rewardedEnemies(state)) {
+    const drop = e.enemyId ? ENEMY_DROPS[e.enemyId] : undefined;
+    if (!drop) continue;
+    const enemy = ENEMIES[e.enemyId!]?.name ?? e.name;
+    if (rng() < (drop.rareRate ?? RARE_DROP_RATE)) drops.push({ enemy, item: drop.rare, rare: true });
+    else if (rng() < (drop.commonRate ?? COMMON_DROP_RATE)) drops.push({ enemy, item: drop.common, rare: false });
+  }
+  return drops;
+}
+
+/** ドロップを所持品に加える（1 種類 99 個の上限で止める）。 */
+export function addDrops(items: Inventory, drops: Drop[]): Inventory {
+  return drops.reduce((inv, d) => addItem(inv, d.item), items);
+}
+
+/** 1 ページに出すドロップの数（敵の名前と品の名前が長いと 1 つが 2 行に折り返すため、戦闘のメッセージ窓に収まる 2 つまで）。 */
+const DROPS_PER_PAGE = 2;
+
+/** ドロップの文のページ。レアは「めずらしい」と添える。 */
+export function dropPages(drops: Drop[]): string[] {
+  const lines = drops.map((d) => `${d.enemy}は${d.rare ? 'めずらしい' : ''}「${itemName(d.item)}」を落としていった！`);
+  const pages: string[] = [];
+  for (let i = 0; i < lines.length; i += DROPS_PER_PAGE) pages.push(lines.slice(i, i + DROPS_PER_PAGE).join('\n'));
+  return pages;
 }
 
 /** 勝利の文。逃げた敵がいれば「退けた」、倒した敵がいなければ報酬の行を出さない。 */

@@ -59,14 +59,23 @@ export const ITEMS: Record<string, ItemDef> = {
   zundaMochi: { id: 'zundaMochi', name: 'ずんだ餅', price: 150, kind: 'food', effect: { kind: 'healHp', amount: 270 }, target: 'ally', field: true, description: '仙台の枝豆の餡の餅。体力を 270 回復する' },
   mishirazuGaki: { id: 'mishirazuGaki', name: '身不知柿', price: 160, kind: 'food', effect: { kind: 'healHp', amount: 285 }, target: 'ally', field: true, description: '会津の渋を抜いた甘い柿。体力を 285 回復する' },
   sakuraMochi: { id: 'sakuraMochi', name: '桜餅', price: 170, kind: 'food', effect: { kind: 'healHp', amount: 300 }, target: 'ally', field: true, description: '江戸向島の桜の葉の餅。体力を 300 回復する' },
+  // 体力の敵のレアドロップ（その敵だけが落とす。店には置かない。src/data/drops.ts、docs/balance.md の「敵のドロップ」）
+  gamaNoAbura: { id: 'gamaNoAbura', name: '蝦蟇の油', price: 40, kind: 'medicine', effect: { kind: 'healHp', amount: 100 }, target: 'ally', field: true, description: '大蛙の脂を練った膏薬。体力を 100 回復する' },
+  momijiDofu: { id: 'momijiDofu', name: '紅葉豆腐', price: 50, kind: 'food', effect: { kind: 'healHp', amount: 110 }, target: 'ally', field: true, description: '一つ目小僧が盆にのせて運んでいた豆腐。体力を 110 回復する' },
+  shinmai: { id: 'shinmai', name: '新米の握り飯', price: 140, kind: 'food', effect: { kind: 'healHp', amount: 250 }, target: 'ally', field: true, description: 'からくり俵に詰まっていた新米の握り飯。体力を 250 回復する' },
   // 気力
   amazake: { id: 'amazake', name: '甘酒', price: 20, kind: 'food', effect: { kind: 'healMp', amount: 8 }, target: 'ally', field: true, description: '体の温まる甘酒。気力を 8 回復する' },
   mankintan: { id: 'mankintan', name: '万金丹', price: 40, kind: 'medicine', effect: { kind: 'healMp', amount: 15 }, target: 'ally', field: true, description: '気力を 15 回復する' },
   matcha: { id: 'matcha', name: '宇治の抹茶', price: 70, kind: 'food', effect: { kind: 'healMp', amount: 24 }, target: 'ally', field: true, description: '宇治の濃い抹茶。気力を 24 回復する' },
   konpeito: { id: 'konpeito', name: '金平糖', price: 90, kind: 'food', effect: { kind: 'healMp', amount: 30 }, target: 'ally', field: true, description: '南蛮渡りの砂糖菓子。気力を 30 回復する' },
   bocha: { id: 'bocha', name: '加賀棒茶', price: 110, kind: 'food', effect: { kind: 'healMp', amount: 36 }, target: 'ally', field: true, description: '茎を焙じた加賀の茶。気力を 36 回復する' },
+  // 気力の敵のレアドロップ
+  gyokuro: { id: 'gyokuro', name: '玉露', price: 90, kind: 'food', effect: { kind: 'healMp', amount: 30 }, target: 'ally', field: true, description: '茶運び人形が運んでいた上等の茶。気力を 30 回復する' },
+  mannenYuki: { id: 'mannenYuki', name: '万年雪の雫', price: 200, kind: 'medicine', effect: { kind: 'healMp', amount: 60 }, target: 'ally', field: true, description: '雪入道の頭の、溶けない雪の雫。気力を 60 回復する' },
   // 体力と気力
   hyorogan: { id: 'hyorogan', name: '兵糧丸', price: 60, kind: 'food', effect: { kind: 'healBoth', hp: 60, mp: 12 }, target: 'ally', field: true, description: '忍びの携帯食。体力を 60、気力を 12 回復する' },
+  // 体力と気力の敵のレアドロップ
+  shishiNiku: { id: 'shishiNiku', name: '山鯨の味噌漬け', price: 60, kind: 'food', effect: { kind: 'healBoth', hp: 90, mp: 10 }, target: 'ally', field: true, description: '猪の肉の味噌漬け。体力を 90、気力を 10 回復する' },
   // 状態異常（戦闘が終わると治るので、戦闘中だけ）
   dokukeshi: { id: 'dokukeshi', name: '毒消し', price: 6, kind: 'medicine', effect: { kind: 'cure', ailment: 'poison' }, target: 'ally', field: false, description: '毒を治す' },
   umeboshi: { id: 'umeboshi', name: '梅干し', price: 8, kind: 'food', effect: { kind: 'cure', ailment: 'sleep' }, target: 'ally', field: false, description: '酸っぱさで目が覚める。眠りを治す' },
@@ -76,9 +85,13 @@ export const ITEMS: Record<string, ItemDef> = {
   // 気付け
   kitsukegusuri: { id: 'kitsukegusuri', name: '気付け薬', price: 100, kind: 'medicine', effect: { kind: 'revive', rate: 0.25 }, target: 'ally', field: true, description: '戦闘不能から起こす' },
   ninjin: { id: 'ninjin', name: '朝鮮人参', price: 280, kind: 'medicine', effect: { kind: 'revive', rate: 0.5 }, target: 'ally', field: true, description: '高価な薬の根。戦闘不能から体力の半分で起こす' },
+  // 気付けの敵のレアドロップ
+  kappaHiyaku: { id: 'kappaHiyaku', name: '河童の秘薬', price: 300, kind: 'medicine', effect: { kind: 'revive', rate: 1 }, target: 'ally', field: true, description: '河童に伝わる傷の妙薬。戦闘不能から体力満タンで起こす' },
   // 旅の札（戦闘の外だけ）
   michishirube: { id: 'michishirube', name: '道しるべの札', price: 24, kind: 'charm', effect: { kind: 'escape' }, target: 'party', field: true, battle: false, description: '洞窟や城の中から、入口の外へひと息に戻る' },
   mayokeKo: { id: 'mayokeKo', name: '魔除けの香', price: 40, kind: 'charm', effect: { kind: 'ward', steps: WARD_STEPS }, target: 'party', field: true, battle: false, description: `焚くと、${WARD_STEPS} 歩のあいだ敵が寄ってこない` },
+  // 旅の札の敵のレアドロップ
+  hyakumeRosoku: { id: 'hyakumeRosoku', name: '百目蝋燭', price: 80, kind: 'charm', effect: { kind: 'ward', steps: WARD_STEPS * 2 }, target: 'party', field: true, battle: false, description: `化け提灯の灯を移した大蝋燭。灯すと、${WARD_STEPS * 2} 歩のあいだ敵が寄ってこない` },
 };
 
 /** 所持品（道具・装備品の ID ごとの個数）。 */
