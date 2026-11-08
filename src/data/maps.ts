@@ -130,6 +130,8 @@ export interface NpcDef {
   shop?: string;
   /** このフラグが立っていたら、lines の代わりにこちらを話す。 */
   after?: { flag: string; lines: string[] };
+  /** このフラグが立っていたら、lines や after の代わりにこちらを話す（after よりも後の場面。大坂の米が町に配られたあとなど）。 */
+  later?: { flag: string; lines: string[] };
   /** 話し終えたら立てるフラグ。 */
   setsFlag?: string;
   /** 話しかけたときに行うイベント（EVENTS の ID）。あれば lines などの代わりにこれを行う。 */
@@ -2523,6 +2525,7 @@ MAPS.osaka = {
         '茶屋の娘「お団子、いかがどす？」',
       ],
       after: { flag: 'heardOsakaRumor', lines: ['茶屋の娘「おいでやす。小さいお団子でよかったら、どうぞ」'] },
+      later: { flag: 'chapter5Cleared', lines: ['茶屋の娘「おいでやす。米の粉が安うなって、お団子も元の大きさに戻りましたえ」'] },
       setsFlag: 'heardOsakaRumor',
       action: 'teahouse',
     },
@@ -2534,6 +2537,7 @@ MAPS.osaka = {
       color: 0x6b8c5a,
       sprite: 'npc_merchant',
       lines: ['よろず屋「まいど！ 天下の台所や、品物だけはなんでもありまっせ。米のほかはな」'],
+      after: { flag: 'chapter5Cleared', lines: ['よろず屋「まいど！ 蔵の米が出回って、町にも活気が戻りましたわ。これで天下の台所の面目が立ちます」'] },
       action: 'shop',
       shop: 'osakaYorozu',
     },
@@ -2555,6 +2559,7 @@ MAPS.osaka = {
       color: 0x5a6b8c,
       sprite: 'npc_innkeeper',
       lines: ['旅籠の主人「お泊まりでっか。……飯は麦がちでかんにんしとくなはれ」'],
+      after: { flag: 'chapter5Cleared', lines: ['旅籠の主人「お泊まりでっか。米が戻って、ようやく白い飯をお出しできますわ」'] },
       action: 'inn',
     },
     {
@@ -6027,6 +6032,13 @@ export function npcObjectFrame(npc: NpcDef, flags: Record<string, boolean>): num
   // 姿の変わらない物（祠・石碑など）は、話しかけてフラグが立っても列 0 のまま
   if (!npc.object || OBJECT_DEFS[npc.object].frames < 2) return 0;
   return flags[npc.event ?? npc.id] ? 1 : 0;
+}
+
+/** 話しかけたときの台詞。later のフラグが立っていれば later、after のフラグが立っていれば after、どちらもなければ lines。 */
+export function npcLines(npc: NpcDef, flags: Record<string, boolean>): string[] {
+  if (npc.later && flags[npc.later.flag]) return npc.later.lines;
+  if (npc.after && flags[npc.after.flag]) return npc.after.lines;
+  return npc.lines ?? [];
 }
 
 /** その NPC が今いるか（showFlag が立つまでと、hideFlag が立ったあとはいない）。 */

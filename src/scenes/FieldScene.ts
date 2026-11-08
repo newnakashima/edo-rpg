@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { ENCOUNTERS } from '../data/enemies';
-import { closedGateAt, encounterAt, MAPS, npcObjectFrame, npcVisible, respawnPoint, START_POSITION, tileAt, townAction, type EventTrigger, type MapDef, type NpcDef } from '../data/maps';
+import { closedGateAt, encounterAt, MAPS, npcLines, npcObjectFrame, npcVisible, respawnPoint, START_POSITION, tileAt, townAction, type EventTrigger, type MapDef, type NpcDef } from '../data/maps';
 import { mapTileImages } from '../data/mapParts';
 import { pickGroup, step } from '../systems/encounter';
 import { dangoPrice, eatDango, innPrice, stayAtInn } from '../systems/facilities';
@@ -422,8 +422,7 @@ export class FieldScene extends Phaser.Scene {
       this.startEvent(npc.event);
       return;
     }
-    const useAfter = npc.after && state.flags[npc.after.flag];
-    const lines = useAfter && npc.after ? npc.after.lines : (npc.lines ?? []);
+    const lines = npcLines(npc, state.flags);
     this.message.show(lines, () => {
       if (npc.setsFlag) {
         const s = getState();
