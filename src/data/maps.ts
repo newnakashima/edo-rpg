@@ -11,6 +11,7 @@ import { addBuildings } from './buildings';
 import { SHIMIZU_BUILDINGS } from './buildingsShimizu';
 import { SUNPU_BUILDINGS } from './buildingsSunpu';
 import { NAGOYA_BUILDINGS } from './buildingsNagoya';
+import { KYO_BUILDINGS } from './buildingsKyo';
 
 /** タイルの種類。画像は public/assets/tiles/<種類>.png（PixelLab で生成。記録は public/assets/README.md）。 */
 export const TILE_KINDS = ['ground', 'grass', 'road', 'tree', 'water', 'wall', 'roof', 'door', 'floor', 'rock', 'plain', 'town', 'gate'] as const;
@@ -1481,7 +1482,7 @@ MAPS.kyo = {
     'T.....................................~~..,T.RRRRRR.TT',
     'TRRRRRRRR.RRRRRRRR..RRRRRRR.RRRRRRR...~~..,T.WWWDWW.TT',
     'TRRRRRRRR.RRRRRRRR..RRRRRRR.RRRRRRR...~~..,T........TT',
-    'TWWWWWWWW.WWDWWWWW..WWDWWWW.WWDWWWW...~~..,T........TT',
+    'TWWDWWWWW.WWDWWWWW..WWDWWWW.WWDWWWW...~~..,T........TT',
     'T.....................................~~..,T........TT',
     'T...,,,,,.,,,,,......,,,,,....,,,,,...~~..,TTTTT.TTTTT',
     '=========.========..=======.==========================',
@@ -1511,80 +1512,8 @@ MAPS.kyo = {
     'T.,,,,,......,,,,,.,,,,,,....,,,,,....~~..,TTT..TTTTTT',
     'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT..TTTTTT',
   ],
+  // 店・神社・寺・旅籠・飛脚屋・湯屋などの施設の人は建物の中にいる（src/data/buildingsKyo.ts）
   npcs: [
-    {
-      id: 'kyoTeahouse',
-      // 看板: 戸のない店先の茶屋。娘の頭にかからないよう、右隣の壁に掛ける
-      sign: { x: 4, y: 9 },
-      name: '茶屋の娘',
-      x: 3,
-      y: 10,
-      color: 0xc76b8f,
-      sprite: 'npc_musume',
-      lines: [
-        '茶屋の娘「おいでやす。……お客はん、夜は出歩かんほうがよろしおす。羅生門の跡に、鬼が出るんやて」',
-        '茶屋の娘「鬼退治を請け負うたお坊さんがいてはるそうやけど、鴨川の河原で酔いつぶれてはるとか」',
-        '茶屋の娘「お団子はいかがどす？」',
-      ],
-      after: { flag: 'heardOniRumor', lines: ['茶屋の娘「おいでやす。お団子はいかがどす？」'] },
-      setsFlag: 'heardOniRumor',
-      action: 'teahouse',
-      shop: 'kyoChaya',
-    },
-    {
-      id: 'kyoYorozu',
-      name: 'よろず屋',
-      x: 12,
-      y: 10,
-      color: 0x6b8c5a,
-      sprite: 'npc_merchant',
-      lines: ['よろず屋「都の品は確かどすえ。鬼退治のお供に、薬はたんと持っておいきやす」'],
-      action: 'shop',
-      shop: 'kyoYorozu',
-    },
-    {
-      id: 'kyoInn',
-      name: '旅籠の主人',
-      x: 22,
-      y: 10,
-      color: 0x5a6b8c,
-      sprite: 'npc_innkeeper',
-      lines: ['旅籠の主人「ようお越しやす。……渡世人さんはお泊めでけしまへんのや。親分さんのお屋敷を訪ねておくれやす」'],
-      action: 'inn',
-    },
-    {
-      id: 'yasakaKannushi',
-      // 看板: 社殿の戸から 2 マス下に立つ
-      sign: { x: 47, y: 7 },
-      name: '八坂の神主',
-      x: 48,
-      y: 9,
-      color: 0xb0b0a0,
-      sprite: 'npc_kannushi',
-      lines: ['神主「祇園さんのご加護を。倒れた者があれば、お祓いをして進ぜよう」'],
-      action: 'temple',
-    },
-    {
-      id: 'kyoKaji',
-      name: '刀鍛冶',
-      x: 31,
-      y: 17,
-      color: 0x5a5a6b,
-      sprite: 'npc_smith',
-      lines: ['刀鍛冶「江戸の虎徹に南蛮渡りの胴、都にはなんでも集まりますわ」'],
-      action: 'shop',
-      shop: 'kyoKaji',
-    },
-    {
-      id: 'kyoHikyaku',
-      name: '飛脚',
-      x: 4,
-      y: 17,
-      color: 0x3e7cb0,
-      sprite: 'npc_hikyaku',
-      lines: ['飛脚「へい、まいど！ 京の飛脚問屋でございやす」'],
-      action: 'hikyaku',
-    },
     {
       id: 'kyoMachiya',
       name: '町のおかみ',
@@ -5837,6 +5766,7 @@ MAPS.matsuNoRoka = {
 addBuildings(MAPS, 'shimizu', SHIMIZU_BUILDINGS);
 addBuildings(MAPS, 'sunpu', SUNPU_BUILDINGS);
 addBuildings(MAPS, 'nagoya', NAGOYA_BUILDINGS);
+addBuildings(MAPS, 'kyo', KYO_BUILDINGS);
 /** その戸口が屋内へ入る入口か（屋内のある施設の人は、屋内の建物のファイルで屋内に置くので、店先には立たせない）。 */
 const hasInterior = (town: string, door: { x: number; y: number }) => MAPS[town]!.exits.some((e) => e.x === door.x && e.y === door.y);
 // 湯屋・賭場・居酒屋・妓楼（刀鍛冶かよろず屋のあるすべての町。戸口と台詞は src/data/townFacilities.ts）

@@ -71,7 +71,7 @@ describe('施設の看板', () => {
   it('位置を書いていない施設は、戸口の隣に掛ける（看板の左右どちらかが戸）', () => {
     for (const { map, npc } of facilities) {
       const pos = signPosition(map, npc);
-      // 位置を書いた施設（戸から離れて立つ人、京の戸のない店先の茶屋）は除く
+      // 位置を書いた施設（戸から離れて立つ人）は除く
       if (!pos || npc.sign) continue;
       const row = map.rows[pos.y]!;
       expect([row[pos.x - 1], row[pos.x + 1]], `${map.id} ${npc.id}`).toContain('D');
