@@ -143,7 +143,7 @@ describe('町の旅籠', () => {
       for (const line of [...(n.lines ?? []), ...(n.after?.lines ?? []), ...(n.later?.lines ?? [])]) {
         expect(line, map).toMatch(/親分/);
         // 泊められない・お断り、とはっきり言う
-        expect(line, map).toMatch(/泊め(られ|でけ|でき)|泊められ|お断り|泊めちゃならねえ/);
+        expect(line, map).toMatch(/泊め(られ|でき|でけ)(ねえ|ない|ん|ませ|まへ|し)|泊めちゃならねえ|お断り/);
       }
     }
   });

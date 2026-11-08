@@ -34,7 +34,7 @@ describe('施設', () => {
     expect(dangoPrice(1)).toBe(6);
   });
 
-  it('もぐりの宿は旅籠の 4 倍の宿代で、妓楼より高い。泊まると旅籠と同じく全回復する（戦闘不能も治る）', () => {
+  it('もぐりの宿は宿代 innPrice の 4 倍で、妓楼より高い。泊まると全回復する（戦闘不能も治る）', () => {
     expect(moguriInnPrice(1)).toBe(56);
     expect(moguriInnPrice(25)).toBe(440);
     for (const lv of [1, 10, 25]) expect(moguriInnPrice(lv)).toBeGreaterThan(gyoroPrice(lv));
@@ -82,7 +82,7 @@ describe('湯屋・居酒屋・妓楼', () => {
     expect(yuyaPrice(1)).toBe(8);
     expect(izakayaPrice(25)).toBe(56);
     expect(gyoroPrice(1)).toBe(42);
-    // 湯屋と居酒屋を合わせると、旅籠（体力・気力と戦闘不能も治す）より高い
+    // 湯屋と居酒屋を合わせると、宿代 innPrice より高い
     for (const lv of [1, 10, 25]) expect(yuyaPrice(lv) + izakayaPrice(lv)).toBeGreaterThan(innPrice(lv));
   });
 

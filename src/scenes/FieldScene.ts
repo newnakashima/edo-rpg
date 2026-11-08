@@ -467,7 +467,8 @@ export class FieldScene extends Phaser.Scene {
         const s = getState();
         setState({ ...s, flags: { ...s.flags, [npc.setsFlag]: true } });
       }
-      // 町の旅籠（action が inn）は渡世人を泊めない。主人は台詞で親分の屋敷へ導くだけ（泊まるのは親分の屋敷か、もぐりの宿）
+      // （町の旅籠〈action が inn〉は渡世人を泊めないので、ここでは何もしない。主人は台詞で親分の屋敷へ導くだけ）
+
       if (npc.action === 'moguriInn') {
         // もぐりの宿はワールドマップ（敵レベル 1 のマップ）にあるので、値段は宿ごとに決めた街道の敵レベルで決める
         const level = moguriYadoById(npc.id)?.areaLevel ?? this.map.areaLevel;
@@ -679,7 +680,7 @@ export class FieldScene extends Phaser.Scene {
 
   /**
    * 代金を払って休む施設（湯屋・居酒屋・妓楼）。決めたら run で払って回復し、done を出す。
-   * request（まだ果たしていない頼まれごとのイベントの ID。src/data/jingiRequests.ts）があれば、メニューに頼まれごとを出す。
+   * request（まだ果たしていない頼まれごと。src/data/jingiRequests.ts の pendingJingiRequest）があれば、メニューに頼まれごとを出す。
    */
   private openPaidRest(
     label: string,
