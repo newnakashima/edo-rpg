@@ -18,6 +18,15 @@ describe('道具をメニューで使う', () => {
     expect(r.ok && r.state.items).toEqual({ kizugusuri: 1 });
   });
 
+  it('酒は戦闘の外では気力をすべて戻し、酔わない（気力が満タンなら使わない）', () => {
+    const hero = createMember('hero', 10);
+    const s = game({ party: [{ ...hero, mp: 0 }, hero], items: { sake: 2 } });
+    const r = useItemInField(s, 'sake', 0);
+    expect(r.ok && r.state.party[0]?.mp).toBe(memberStats(hero).maxMp);
+    expect(r.ok && r.state.items).toEqual({ sake: 1 });
+    expect(useItemInField(s, 'sake', 1)).toEqual({ ok: false, reason: 'noEffect' });
+  });
+
   it('効かないときは使わない', () => {
     const s = game({ party: [createMember('hero', 1), { ...createMember('kasumi', 1), hp: 0 }], items: { kizugusuri: 1, kitsukegusuri: 1, dokukeshi: 1 } });
     expect(useItemInField(s, 'kizugusuri', 0)).toEqual({ ok: false, reason: 'noEffect' });

@@ -16,7 +16,10 @@ export type Ailment = 'poison' | 'paralysis' | 'sleep' | 'confusion' | 'bind';
 /** 一時的な能力の変化（良い効果・悪い効果の両方）。 */
 export type Buff = 'atkUp' | 'atkDown' | 'defUp' | 'accDown' | 'evade' | 'critUp';
 
-export type StatusId = Ailment | Buff;
+/** 酩酊（酒を戦闘中に飲む）。その戦闘の最後まで続き（ターンでは切れない）、薬では治らない。倒れるとさめる。 */
+export type Drunk = 'drunk';
+
+export type StatusId = Ailment | Buff | Drunk;
 
 export const STATUS_NAMES: Record<StatusId, string> = {
   poison: '毒',
@@ -30,6 +33,7 @@ export const STATUS_NAMES: Record<StatusId, string> = {
   accDown: '命中↓',
   evade: '回避↑',
   critUp: '会心↑',
+  drunk: '酩酊',
 };
 
 export const AILMENTS: readonly Ailment[] = ['poison', 'paralysis', 'sleep', 'confusion', 'bind'];
@@ -38,12 +42,12 @@ export function isAilment(id: StatusId): id is Ailment {
   return (AILMENTS as readonly string[]).includes(id);
 }
 
-/** 状態異常の短い表示（戦闘の味方の欄に出す）。状態の名前の 1 文字目を AILMENTS の順に並べる。 */
+/** 状態異常の短い表示（戦闘の味方の欄に出す）。状態の名前の 1 文字目を AILMENTS の順に並べ、酩酊なら最後に「酔」を足す。 */
 export function ailmentMarks(status: Iterable<StatusId>): string {
   const set = new Set(status);
-  return AILMENTS.filter((id) => set.has(id))
-    .map((id) => STATUS_NAMES[id].slice(0, 1))
-    .join('');
+  const marks = AILMENTS.filter((id) => set.has(id)).map((id) => STATUS_NAMES[id].slice(0, 1));
+  if (set.has('drunk')) marks.push('酔');
+  return marks.join('');
 }
 
 /**

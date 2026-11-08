@@ -7,6 +7,8 @@ export type ItemEffect =
   | { kind: 'healHp'; amount: number }
   /** MP を amount 回復する。 */
   | { kind: 'healMp'; amount: number }
+  /** MP を最大まで回復する。drunk なら、戦闘中に使うとその戦闘のあいだ酩酊になる（酒）。 */
+  | { kind: 'fullMp'; drunk?: true }
   /** HP を hp、MP を mp 回復する（兵糧丸）。 */
   | { kind: 'healBoth'; hp: number; mp: number }
   /** 状態異常を治す。ailment を省くとすべて。 */
@@ -72,6 +74,8 @@ export const ITEMS: Record<string, ItemDef> = {
   // 気力の敵のレアドロップ
   gyokuro: { id: 'gyokuro', name: '玉露', price: 70, kind: 'food', effect: { kind: 'healMp', amount: 24 }, target: 'ally', field: true, description: '茶運び人形が運んでいた上等の茶。気力を 24 回復する' },
   mannenYuki: { id: 'mannenYuki', name: '万年雪の雫', price: 200, kind: 'medicine', effect: { kind: 'healMp', amount: 36 }, target: 'ally', field: true, description: '雪入道の頭の、溶けない雪の雫。気力を 36 回復する' },
+  // 気力を全回復（酒は戦闘中に飲むと酩酊になり、その戦闘の最後まで命中が半分になる。docs/balance.md の「戦闘計算」の酩酊と「経済」の酒）
+  sake: { id: 'sake', name: '酒', price: 100, kind: 'food', effect: { kind: 'fullMp', drunk: true }, target: 'ally', field: true, description: '気力がすべて戻る。戦闘中に飲むと酔って、その戦闘のあいだ命中が半分になる' },
   // 体力と気力
   hyorogan: { id: 'hyorogan', name: '兵糧丸', price: 60, kind: 'food', effect: { kind: 'healBoth', hp: 60, mp: 12 }, target: 'ally', field: true, description: '忍びの携帯食。体力を 60、気力を 12 回復する' },
   // 体力と気力の敵のレアドロップ
