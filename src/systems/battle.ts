@@ -50,6 +50,8 @@ export interface Combatant {
   charged?: string;
   /** 装備の特性と、それを与えている装備の ID（味方だけ）。 */
   traits?: Partial<Record<EquipTrait, string>>;
+  /** 戦闘から逃げ出した敵（倒れたのと同じく戦闘から外れるが、経験値・お金にならない）。 */
+  fled?: boolean;
 }
 
 export type Command =
@@ -100,6 +102,12 @@ export type BattleEvent =
   | { type: 'charge'; actor: string; skill: string }
   /** 装備の特性で、もう一度攻撃する・術がもう一度発動する（equip は装備の ID）。 */
   | { type: 'again'; actor: string; equip: string; trait: EquipTrait }
+  /** 敵が何もしなかった（無駄な行動。skill は idle の技の ID）。 */
+  | { type: 'idle'; actor: string; skill: string }
+  /** 敵が戦闘から逃げ出した。 */
+  | { type: 'fled'; actor: string }
+  /** 敵が自爆して倒れた（ダメージは先の damage で出す）。 */
+  | { type: 'exploded'; actor: string }
   | { type: 'escape'; success: boolean };
 
 export type Outcome = 'ongoing' | 'victory' | 'defeat' | 'escaped';
@@ -113,13 +121,17 @@ export interface BattleState {
   turn: number;
 }
 
+/** 戦闘に残っているか（倒れていない・逃げていない）。 */
 export function isAlive(c: Combatant): boolean {
-  return c.hp > 0;
+  return c.hp > 0 && !c.fled;
 }
 
 export function aliveOf(state: BattleState, side: Side): Combatant[] {
   return state.combatants.filter((c) => c.side === side && isAlive(c));
 }
+
+/** 戦闘の画面に並べる敵の数の上限。これだけ残っていれば、仲間を呼ばない（画像が重ならないように）。 */
+export const MAX_ENEMIES = 4;
 
 /** 同じ種族が複数いるとき「鬼火 甲」「鬼火 乙」のように呼び分ける。 */
 const SUFFIXES = ['甲', '乙', '丙', '丁'];
@@ -214,10 +226,22 @@ function pick<T>(items: T[], rng: Rng): T | undefined {
   return items[Math.floor(rng() * items.length)];
 }
 
+/** 勝ち負け。敵味方が同時に倒れたとき（敵の自爆、ターンの終わりの毒）は負けにする。 */
 function judge(state: BattleState): Outcome {
-  if (aliveOf(state, 'enemy').length === 0) return 'victory';
   if (aliveOf(state, 'party').length === 0) return 'defeat';
+  if (aliveOf(state, 'enemy').length === 0) return 'victory';
   return 'ongoing';
+}
+
+/** 生まれつき外れる確率（敵の missRate）。 */
+function innateMiss(c: Combatant): number {
+  return c.enemyId ? (ENEMIES[c.enemyId]?.missRate ?? 0) : 0;
+}
+
+/** 生まれつきかわす確率（敵の evasion）。眠り・麻痺・影縫いで動けないあいだはかわせない。 */
+function innateEvasion(c: Combatant): number {
+  if (c.status.sleep || c.status.paralysis || c.status.bind) return 0;
+  return c.enemyId ? (ENEMIES[c.enemyId]?.evasion ?? 0) : 0;
 }
 
 function opponentSide(side: Side): Side {
@@ -323,7 +347,7 @@ class TurnContext {
     options: { multiplier?: number; sureHit?: boolean; ignoreDefense?: boolean; elements?: Element[] } = {},
   ): { damage: number; critical: boolean; weak: boolean; resisted: boolean } | null {
     if (!options.sureHit) {
-      const miss = missChance(!!actor.status.accDown, !!target.status.evade);
+      const miss = missChance(!!actor.status.accDown, !!target.status.evade, innateMiss(actor) + innateEvasion(target));
       if (miss > 0 && this.rng() < miss) return null;
     }
     const def = options.ignoreDefense ? 0 : effectiveDef(target);
@@ -433,6 +457,10 @@ class TurnContext {
       this.events.push({ type: 'charge', actor: actor.key, skill: effect.next });
       return;
     }
+    if (effect.kind === 'selfDestruct') {
+      this.selfDestruct(actor, effect.multiplier, elements);
+      return;
+    }
 
     if (skill.target === 'randomEnemies' && effect.kind === 'physical') {
       const hits = randInt(this.rng, effect.hits ?? 1, effect.maxHits ?? effect.hits ?? 1);
@@ -502,9 +530,34 @@ class TurnContext {
     }
   }
 
-  /** 呼べる数に達しているか（呼んだ同じ種族の敵が max 体生きている）。 */
+  /** 自爆: 相手の全員に、防御を無視して必ず当たる（攻撃 × multiplier）のダメージを与え、自分は倒れる。 */
+  private selfDestruct(actor: Combatant, multiplier: number, elements: Element[]): void {
+    for (const target of this.alive(opponentSide(actor.side))) {
+      const hit = this.physicalHit(actor, target, { multiplier, sureHit: true, ignoreDefense: true, elements });
+      if (!hit) continue;
+      this.events.push({ type: 'damage', target: target.key, ...hit });
+      this.hurt(target, hit.damage);
+    }
+    actor.hp = 0;
+    actor.status = {};
+    actor.taunt = undefined;
+    actor.charged = undefined;
+    this.events.push({ type: 'exploded', actor: actor.key });
+  }
+
+  /** 敵が戦闘から逃げ出す。 */
+  flee(actor: Combatant): void {
+    actor.fled = true;
+    actor.status = {};
+    actor.taunt = undefined;
+    actor.charged = undefined;
+    this.events.push({ type: 'fled', actor: actor.key });
+  }
+
+  /** 呼べる数に達しているか（呼んだ同じ種族の敵が max 体生きている、または敵が MAX_ENEMIES 体残っている）。 */
   summonFull(actor: Combatant, effect: { enemy: string; max: number }): boolean {
-    return this.alive(actor.side).filter((c) => c.summoned && c.enemyId === effect.enemy).length >= effect.max;
+    const alive = this.alive(actor.side);
+    return alive.length >= MAX_ENEMIES || alive.filter((c) => c.summoned && c.enemyId === effect.enemy).length >= effect.max;
   }
 
   /** 敵を 1 体呼ぶ。名前は同じ種族の数で「甲」「乙」……と呼び分ける。 */
@@ -591,10 +644,10 @@ class TurnContext {
     }
   }
 
-  /** 敵の行動を重みで選ぶ。 */
+  /** 敵の行動を重みで選ぶ。whenHpBelow のある行動は、残りの HP がその割合を切っているときだけ候補にする。 */
   enemyAction(actor: Combatant): string {
     const def = actor.enemyId ? ENEMIES[actor.enemyId] : undefined;
-    const actions = def?.actions;
+    const actions = def?.actions?.filter((a) => a.whenHpBelow === undefined || actor.hp < actor.stats.maxHp * a.whenHpBelow);
     if (!actions || actions.length === 0) return 'attack';
     const total = actions.reduce((s, a) => s + a.weight, 0);
     let r = this.rng() * total;
@@ -635,11 +688,16 @@ class TurnContext {
       const action = actor.charged ?? this.enemyAction(actor);
       actor.charged = undefined;
       const skill = SKILLS[action];
-      // 呼べる数に達していたら、呼ぶ代わりに通常攻撃をする
+      // 呼べる数に達していたら呼ぶ代わりに、逃げられない戦闘（イベントの戦闘）では逃げる代わりに、通常攻撃をする
       const full = skill?.effect.kind === 'summon' && this.summonFull(actor, skill.effect);
-      if (action === 'attack' || !skill || full) {
+      const cannotFlee = skill?.effect.kind === 'flee' && !this.state.canEscape;
+      if (action === 'attack' || !skill || full || cannotFlee) {
         const target = this.enemyTarget(actor);
         if (target) this.attack(actor, target);
+      } else if (skill.effect.kind === 'idle') {
+        this.events.push({ type: 'idle', actor: actor.key, skill: skill.id });
+      } else if (skill.effect.kind === 'flee') {
+        this.flee(actor);
       } else {
         this.useSkill(actor, skill, undefined);
       }
@@ -821,18 +879,40 @@ export interface Rewards {
   money: number;
 }
 
-/** 勝利したときの経験値とお金。経験値は生き残った味方それぞれが全額を得る。ボスは rewardScale 倍。呼ばれた敵は数えない。 */
+/** 勝利で経験値・お金になる敵（倒した・自爆した敵。呼ばれた敵と、逃げた敵は数えない）。 */
+export function rewardedEnemies(state: BattleState): Combatant[] {
+  return state.combatants.filter((c) => c.side === 'enemy' && !c.summoned && !c.fled);
+}
+
+/** 逃げ出した敵がいるか（呼ばれた敵を含む）。 */
+export function anyEnemyFled(state: BattleState): boolean {
+  return state.combatants.some((c) => c.side === 'enemy' && c.fled);
+}
+
+/**
+ * 勝利したときの経験値とお金。経験値は生き残った味方それぞれが全額を得る。ボスは rewardScale 倍、逃げる高報酬の敵は reward の倍率も掛ける。
+ * 呼ばれた敵と、逃げた敵は数えない。
+ */
 export function computeRewards(state: BattleState): Rewards {
-  const enemies = state.combatants.filter((c) => c.side === 'enemy' && !c.summoned);
-  const scale = (e: Combatant): number => (e.enemyId ? (ENEMIES[e.enemyId]?.rewardScale ?? 1) : 1);
-  const money = enemies.reduce((sum, e) => sum + enemyMoney(e.level) * scale(e), 0);
+  const enemies = rewardedEnemies(state);
+  const def = (e: Combatant) => (e.enemyId ? ENEMIES[e.enemyId] : undefined);
+  const expScale = (e: Combatant): number => (def(e)?.rewardScale ?? 1) * (def(e)?.reward?.exp ?? 1);
+  const moneyScale = (e: Combatant): number => (def(e)?.rewardScale ?? 1) * (def(e)?.reward?.money ?? 1);
+  const money = Math.round(enemies.reduce((sum, e) => sum + enemyMoney(e.level) * moneyScale(e), 0));
   const exp: Record<string, number> = {};
   for (const member of state.combatants.filter((c) => c.side === 'party')) {
     exp[member.key] = isAlive(member)
-      ? enemies.reduce((sum, e) => sum + adjustedExp(enemyExp(e.level) * scale(e), member.level, e.level), 0)
+      ? enemies.reduce((sum, e) => sum + adjustedExp(Math.round(enemyExp(e.level) * expScale(e)), member.level, e.level), 0)
       : 0;
   }
   return { exp, money };
+}
+
+/** 勝利の文。逃げた敵がいれば「退けた」、倒した敵がいなければ報酬の行を出さない。 */
+export function victoryText(state: BattleState, exp: number, money: number): string {
+  const fled = anyEnemyFled(state);
+  const head = !fled ? '敵をすべて倒した！' : rewardedEnemies(state).length > 0 ? '敵を退けた！' : '敵はみな逃げていった。';
+  return exp > 0 || money > 0 ? `${head}\n経験値 ${exp} と ${money} 文を手に入れた。` : head;
 }
 
 /** 戦闘後の HP・MP を仲間の状態に書き戻す。状態異常は戦闘が終わると治る。 */

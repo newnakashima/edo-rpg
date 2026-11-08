@@ -78,6 +78,15 @@ export type SkillEffect =
    * 構えのあいだに眠り・麻痺などで動けなくても、構えは解けずに次に動けたときに next を使う。
    */
   | { kind: 'charge'; next: string }
+  /** 敵だけが使う。何もしない無駄な行動（戦闘の文は「〈敵の名前〉は」に message を続ける）。 */
+  | { kind: 'idle'; message: string }
+  /** 敵だけが使う。戦闘から逃げ出す（逃げた敵は経験値・お金にならない）。逃げられない戦闘（イベントの戦闘）では通常攻撃をする。 */
+  | { kind: 'flee' }
+  /**
+   * 敵だけが使う。自爆して、相手の全員に（使い手の攻撃 × multiplier）のダメージを与え、使い手は倒れる。
+   * 防御を無視して必ず当たる（防御のコマンドでは半分になる）。倒したときと同じく経験値・お金になる。
+   */
+  | { kind: 'selfDestruct'; multiplier: number }
   /** 戦闘の外だけで使う。ダンジョンの入口（外のマップ）へ戻る（maps.ts の escapePoint）。 */
   | { kind: 'escape' }
   /** 戦闘の外だけで使う。steps 歩のあいだ、敵に出会わない（GameState の wardSteps。魔除けの香と同じ）。 */
@@ -233,6 +242,21 @@ export const SKILLS: Record<string, SkillDef> = {
   roju: { id: 'roju', name: '老中の威光', mp: 0, target: 'allEnemies', effect: { kind: 'status', status: 'atkDown', turns: 3, chance: 0.6 }, description: '' },
   kinjuYobi: { id: 'kinjuYobi', name: '近習を呼ぶ', mp: 0, target: 'self', effect: { kind: 'summon', enemy: 'karakuriKinju', max: 2, level: 26 }, description: '' },
   gongenHo: { id: 'gongenHo', name: '権現砲', mp: 0, target: 'allEnemies', effect: { kind: 'physical', multiplier: 0.7 }, description: '' },
+  // 雑魚敵の個性（テストプレイのフィードバック。docs/balance.md の「雑魚敵の個性」）
+  akubi: { id: 'akubi', name: '大あくび', mp: 0, target: 'self', effect: { kind: 'idle', message: '大あくびをしている。' }, description: '' },
+  kanaboFurimawashi: { id: 'kanaboFurimawashi', name: '金棒振り回し', mp: 0, target: 'self', effect: { kind: 'idle', message: '金棒を振り回して、自分の足を打った。' }, description: '' },
+  iwaKajiri: { id: 'iwaKajiri', name: '岩かじり', mp: 0, target: 'self', effect: { kind: 'idle', message: '浜の岩をかじっている。' }, description: '' },
+  mie: { id: 'mie', name: '見得', mp: 0, target: 'self', effect: { kind: 'idle', message: '大見得を切って、こちらをにらんでいる。' }, description: '' },
+  tobisaru: { id: 'tobisaru', name: '飛び去る', mp: 0, target: 'self', effect: { kind: 'flee' }, description: '' },
+  nigeru: { id: 'nigeru', name: '逃げ出す', mp: 0, target: 'self', effect: { kind: 'flee' }, description: '' },
+  nezumiYobi: { id: 'nezumiYobi', name: '仲間を呼ぶ', mp: 0, target: 'self', effect: { kind: 'summon', enemy: 'bakeNezumi', max: 2, level: 16 }, description: '' },
+  ookamiYobi: { id: 'ookamiYobi', name: '呼び声', mp: 0, target: 'self', effect: { kind: 'summon', enemy: 'okuriOkami', max: 1, level: 25 }, description: '' },
+  nemuriNoKyo: { id: 'nemuriNoKyo', name: '眠りの経', mp: 0, target: 'allEnemies', effect: { kind: 'status', status: 'sleep', turns: 2, chance: 0.35 }, description: '' },
+  dokyo: { id: 'dokyo', name: '読経', mp: 0, target: 'allAllies', effect: { kind: 'status', status: 'defUp', turns: 3 }, description: '' },
+  shibariNoJu: { id: 'shibariNoJu', name: '縛りの呪', mp: 0, target: 'enemy', effect: { kind: 'status', status: 'paralysis', turns: 2, chance: 0.4 }, description: '' },
+  yukiGomori: { id: 'yukiGomori', name: '雪化粧', mp: 0, target: 'allAllies', effect: { kind: 'status', status: 'evade', turns: 3 }, description: '' },
+  kayakuBakuhatsu: { id: 'kayakuBakuhatsu', name: '火薬の爆発', mp: 0, target: 'allEnemies', effect: { kind: 'selfDestruct', multiplier: 1.5 }, elements: ['fire'], description: '' },
+  hinotama: { id: 'hinotama', name: '火の玉の体当たり', mp: 0, target: 'allEnemies', effect: { kind: 'selfDestruct', multiplier: 1.3 }, elements: ['fire'], description: '' },
   tamaZenmai: { id: 'tamaZenmai', name: '魂のゼンマイ', mp: 0, target: 'self', effect: { kind: 'heal', power: 16 }, description: '' },
 };
 

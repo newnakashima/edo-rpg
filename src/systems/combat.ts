@@ -67,7 +67,14 @@ export function ailmentChance(base: number, actorLuck: number, targetLuck: numbe
   return Math.min(0.95, Math.max(0.05, base + diff * 0.01));
 }
 
-/** 命中を下げられている・回避を上げているときに外れる確率（それぞれ 35%、合わせて上限 70%）。 */
-export function missChance(attackerAccDown: boolean, targetEvade: boolean): number {
-  return Math.min(0.7, (attackerAccDown ? 0.35 : 0) + (targetEvade ? 0.35 : 0));
+/** 外れる確率の上限（命中↓・回避↑ に、敵の生まれつきの命中の低さ・回避の高さを足したとき）。 */
+export const MISS_CHANCE_CAP = 0.85;
+
+/**
+ * 物理攻撃が外れる確率。命中を下げられている・回避を上げているときはそれぞれ 35%（合わせて上限 70%）。
+ * innate は敵の生まれつきの外れる確率（使い手の missRate + 相手の evasion）で、足したあと上限 85% にする。
+ */
+export function missChance(attackerAccDown: boolean, targetEvade: boolean, innate = 0): number {
+  const status = Math.min(0.7, (attackerAccDown ? 0.35 : 0) + (targetEvade ? 0.35 : 0));
+  return Math.min(MISS_CHANCE_CAP, status + innate);
 }

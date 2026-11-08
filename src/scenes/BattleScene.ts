@@ -14,6 +14,7 @@ import {
   needsTarget,
   partyAfterBattle,
   resolveTurn,
+  victoryText,
   type BattleEvent,
   type BattleState,
   type Combatant,
@@ -420,6 +421,14 @@ export class BattleScene extends Phaser.Scene {
           ? `${equip}の秘技！\n${this.nameOf(e.actor)}は影を分けて、もう一度斬りかかった！`
           : `${equip}が響き、術がもう一度発動した！`;
       }
+      case 'idle': {
+        const effect = SKILLS[e.skill]?.effect;
+        return `${this.nameOf(e.actor)}は${effect?.kind === 'idle' ? effect.message : '様子をうかがっている。'}`;
+      }
+      case 'fled':
+        return `${this.nameOf(e.actor)}は逃げ出した！`;
+      case 'exploded':
+        return `${this.nameOf(e.actor)}は砕け散った！`;
     }
   }
 
@@ -528,13 +537,16 @@ export class BattleScene extends Phaser.Scene {
         case 'cannotAct':
           if (e.reason === 'bind') setStatus(e.actor, (s) => s.delete('bind'));
           break;
-        case 'defeated': {
-          setStatus(e.target, (s) => s.clear());
-          const sprite = this.enemySprites.get(e.target);
+        case 'defeated':
+        case 'fled':
+        case 'exploded': {
+          const key = e.type === 'defeated' ? e.target : e.actor;
+          setStatus(key, (s) => s.clear());
+          const sprite = this.enemySprites.get(key);
           if (sprite) {
-            // 倒れた敵は名前も消し、呼ばれた敵が加わったときの並べ直しから外す
-            this.tweens.add({ targets: [sprite, this.enemyLabels.get(e.target)].filter((o) => o !== undefined), alpha: 0, duration: 300 });
-            this.shownEnemies = this.shownEnemies.filter((k) => k !== e.target);
+            // 倒れた・逃げた敵は名前も消し、呼ばれた敵が加わったときの並べ直しから外す
+            this.tweens.add({ targets: [sprite, this.enemyLabels.get(key)].filter((o) => o !== undefined), alpha: 0, duration: 300 });
+            this.shownEnemies = this.shownEnemies.filter((k) => k !== key);
           }
           break;
         }
@@ -580,7 +592,7 @@ export class BattleScene extends Phaser.Scene {
     setState({ ...state, party: leveled, money: state.money + rewards.money, items: this.battle.items });
     const exp = Math.max(0, ...amounts);
     this.controls.flush();
-    const pages = [`敵をすべて倒した！\n経験値 ${exp} と ${rewards.money} 文を手に入れた。`];
+    const pages = [victoryText(this.battle, exp, rewards.money)];
     for (const up of levelUps) {
       const name = characterName(up.id, state.gender);
       const learned = up.learned.map((id) => `「${SKILLS[id]?.name ?? id}」を覚えた！`).join('\n');
