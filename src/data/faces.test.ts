@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { pngSize } from '../systems/testUtils';
 import { CHARACTERS } from './characters';
-import { EXPRESSION_FACES, EXPRESSIONS, FACE_IMAGES, FACE_SIZE, FACES, faceForPage, pageText, SPEAKER_FACES, speakerOf } from './faces';
+import { EXPRESSION_FACES, EXPRESSIONS, FACE_IMAGES, FACE_SIZE, FACES, faceForPage, memberFace, pageText, SPEAKER_FACES, speakerOf } from './faces';
 
 describe('顔グラフィック', () => {
   it('どの顔（表情差分を含む）にも 48 × 48 の画像がある', () => {
@@ -121,5 +121,17 @@ describe('表情差分', () => {
         expect(used, `${id} ${mark}`).toBe(true);
       }
     }
+  });
+});
+
+describe('メニューの仲間の顔', () => {
+  it('どの仲間にも顔があり、主人公は男女で分ける', () => {
+    for (const id of Object.keys(CHARACTERS) as (keyof typeof CHARACTERS)[]) {
+      expect(FACES, id).toContain(memberFace(id, 'm'));
+      expect(FACES, id).toContain(memberFace(id, 'f'));
+    }
+    expect(memberFace('hero', 'm')).toBe('hero_m');
+    expect(memberFace('hero', 'f')).toBe('hero_f');
+    expect(memberFace('kasumi', 'f')).toBe('kasumi');
   });
 });
