@@ -254,13 +254,22 @@ describe('施設・民家以外の建物の屋内（テストプレイの指摘:
     expect(MAPS.aizuNushiIe!.npcs.some((n) => n.id === 'aizuNushi')).toBe(true);
     const moved = ['aizuInn', 'aizuTeahouse', 'aizuHikyaku', 'aizuYorozu', 'aizuKaji', 'aizuBanto', 'aizuTemple', 'aizuHanshi', 'aizuNushi'];
     expect(MAPS.aizu!.npcs.some((n) => moved.includes(n.id))).toBe(false);
+    // 店の人は、店の ID と施設の種類をそのまま持つ
+    const everyone = Object.values(MAPS).filter((m) => buildingTown(m.id) === 'aizu').flatMap((m) => m.npcs);
+    for (const [id, action, shop] of [['aizuTeahouse', 'teahouse', 'aizuChaya'], ['aizuYorozu', 'shop', 'aizuYorozu'], ['aizuKaji', 'shop', 'aizuKaji'], ['aizuHikyaku', 'hikyaku', undefined]] as const) {
+      const npc = everyone.find((n) => n.id === id);
+      expect({ action: npc?.action, shop: npc?.shop }, id).toEqual({ action, shop });
+    }
+    // 七日町通りの南の長屋の戸 (15, 28) は民家。前に立っていたおかみは 1 マス左へずらした
+    expect(MAPS.aizu!.exits.find((e) => e.x === 15 && e.y === 28)?.to).toBe('minka_aizu_15_28');
+    expect(MAPS.aizu!.npcs.find((n) => n.id === 'aizuOkami')).toMatchObject({ x: 14, y: 29 });
     expect(MAPS.aizuChayaMise!.npcs.find((n) => n.id === 'aizuTeahouse')?.after?.flag).toBe('heitaFound');
     expect(MAPS.aizuNisshinkan!.npcs.find((n) => n.id === 'aizuNisshinkanShosei2')?.after?.flag).toBe('heitaFound');
     for (const [map, id] of [['aizuNisshinkan', 'aizuNisshinkanShihan'], ['aizuTera', 'aizuTeraSankei']] as const) {
       expect(MAPS[map]!.npcs.find((n) => n.id === id)?.after?.flag, id).toBe('aizuJuuDone');
     }
-    // 旅籠の商人・居酒屋の馬方・一家の子分は、猪苗代一家の親分の頼み（峠の盗賊）を果たすと台詞が変わる
-    for (const [map, id] of [['aizuYado', 'aizuYadoKyaku1'], ['aizuIzakaya', 'aizuIzakayaUmakata'], ['aizuOyabunYashiki', 'aizuOyabunKobun']] as const) {
+    // 旅籠の商人・居酒屋の馬方・賭場の馬喰・一家の子分は、猪苗代一家の親分の頼み（峠の盗賊）を果たすと台詞が変わる
+    for (const [map, id] of [['aizuYado', 'aizuYadoKyaku1'], ['aizuIzakaya', 'aizuIzakayaUmakata'], ['aizuTobakuba', 'aizuTobakuKyaku2'], ['aizuOyabunYashiki', 'aizuOyabunKobun']] as const) {
       expect(MAPS[map]!.npcs.find((n) => n.id === id)?.after?.flag, id).toBe(oyabunRequestId('aizu'));
     }
   });

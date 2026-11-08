@@ -280,7 +280,7 @@ export const AIZU_BUILDINGS: BuildingDef[] = [
         { name: '文机', x: 1, y: 1, object: 'fuzukue', lines: ['宛先ごとに分けた書状の束が載っている。'] },
         { name: '木箱', x: 10, y: 1, object: 'kibako', lines: ['江戸へ送る荷を詰めた木箱だ。'] },
         { name: '木箱', x: 14, y: 1, object: 'kibako', lines: ['奥州街道の宿場へ送る荷を詰めた木箱だ。'] },
-        { name: '荷車', x: 22, y: 2, object: 'niguruma', lines: ['米俵を積んだ荷車だ。雪で峠が越せず、ここで春を待っている。'] },
+        { name: '荷車', x: 22, y: 2, object: 'niguruma', lines: ['米俵を積んだ荷車だ。雪の峠を越えて運ぶ荷だという。'] },
         { name: '行灯', x: 23, y: 6, object: 'andon', lines: ANDON_LINES },
       ]),
     ],
@@ -440,7 +440,7 @@ export const AIZU_BUILDINGS: BuildingDef[] = [
         y: 2,
         color: 0x8a8070,
         sprite: 'npc_rojin',
-        lines: ['杜氏「わしは向かいの造り酒屋の杜氏よ。寒の水で仕込む会津の酒は、雪の深い年ほど、うまくなる」'],
+        lines: ['杜氏「わしは隣の造り酒屋の杜氏よ。寒の水で仕込む会津の酒は、雪の深い年ほど、うまくなる」'],
       },
       {
         id: 'aizuIzakayaUmakata',
@@ -463,7 +463,7 @@ export const AIZU_BUILDINGS: BuildingDef[] = [
       },
       ...furniture('aizuIzakaya', [
         { name: '竈', x: 1, y: 1, object: 'kamado', lines: ['竈で燗の湯が沸いている。鍋では、貝柱でだしをとったこづゆが煮えている。'] },
-        { name: '酒樽', x: 5, y: 1, object: 'sakadaru', lines: ['向かいの造り酒屋から届いた菰樽だ。'] },
+        { name: '酒樽', x: 5, y: 1, object: 'sakadaru', lines: ['隣の造り酒屋から届いた菰樽だ。'] },
         { name: '行灯', x: 26, y: 4, object: 'andon', lines: ANDON_LINES },
       ]),
     ],
@@ -820,7 +820,8 @@ export const AIZU_BUILDINGS: BuildingDef[] = [
         y: 3,
         color: 0x5a4a3a,
         sprite: 'npc_merchant',
-        lines: ['馬喰「峠を越えられねえから、馬を売りにも行けねえ。ここで暇つぶしよ。……ありゃ、また半か」'],
+        lines: ['馬喰「峠の盗賊が怖くて、馬を売りにも行けねえ。ここで暇つぶしよ。……ありゃ、また半か」'],
+        after: { flag: OYABUN_DONE, lines: ['馬喰「峠の盗賊がいなくなったんで、明日は馬を連れて峠を越えるのさ。今夜は、その前祝いよ。……ありゃ、また半か」'] },
       },
       {
         id: 'aizuTobakuYojinbo',
