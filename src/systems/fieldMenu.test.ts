@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { changeEquipment, expLine, fieldSkills, itemUsableOn, statsWithEquipment, useItemInField, useSkillInField } from './fieldMenu';
+import { SKILLS, skillsAtLevel } from '../data/skills';
+import { changeEquipment, expLine, fieldSkills, itemUsableOn, skillDescription, statsWithEquipment, statusSheet, useItemInField, useSkillInField } from './fieldMenu';
 import { newGame, type GameState } from './gameState';
 import { createMember, memberStats } from './party';
-import { MAX_LEVEL } from './stats';
+import { expRemainingToNext, MAX_LEVEL } from './stats';
 
 function game(over: Partial<GameState> = {}): GameState {
   return { ...newGame('m', { mapId: 'shimizu', x: 1, y: 1 }), ...over };
@@ -169,5 +170,77 @@ describe('ゲストの装備と経験値の表示', () => {
   it('ゲストは次のレベルまでの経験値を出さない', () => {
     expect(expLine(createMember('hyogo', 18))).toMatch(/次 ――$/);
     expect(expLine(createMember('hero', 18))).not.toMatch(/――/);
+  });
+});
+
+describe('ステータス画面の内容', () => {
+  it('名前・職・レベル・体力と気力・能力値・経験値を出す', () => {
+    const m = { ...createMember('hero', 5), hp: 3 };
+    const s = memberStats(m);
+    const sheet = statusSheet(m, 'f');
+    expect(sheet.name).toBe('お志乃');
+    expect(sheet.job).toBe('渡世人');
+    expect(sheet.level).toBe(5);
+    expect(sheet.hp).toBe(`3/${s.maxHp}`);
+    expect(sheet.mp).toBe(`${m.mp}/${s.maxMp}`);
+    expect(sheet.stats).toEqual([
+      { label: '攻撃', value: s.atk },
+      { label: '防御', value: s.def },
+      { label: '術力', value: s.mag },
+      { label: '素早さ', value: s.spd },
+      { label: '運', value: s.luck },
+    ]);
+    expect(sheet.exp).toBe(m.exp);
+    expect(sheet.next).toBe(expRemainingToNext(m.exp));
+    expect(sheet.down).toBe(false);
+    expect(statusSheet(m, 'm').name).toBe('弥太郎');
+  });
+
+  it('装備は枠の順に並び、空の枠は ―― と出す', () => {
+    const m = createMember('hero', 1, { weapon: 'dotanuki' });
+    const sheet = statusSheet(m, 'm');
+    expect(sheet.equipment.map((e) => e.slot)).toEqual(['weapon', 'armor', 'accessory']);
+    expect(sheet.equipment[0]).toMatchObject({ label: '胴田貫', description: '武器: 肉厚で折れにくい刀' });
+    expect(sheet.equipment[1]).toMatchObject({ label: '――', description: '防具: 何も付けていない' });
+  });
+
+  it('使える技は今のレベルで覚えているものだけを習得順に、消費する気力と説明つきで出す', () => {
+    const sheet = statusSheet(createMember('hero', 5), 'm');
+    expect(sheet.skills.map((e) => e.label)).toEqual([SKILLS.jingi!.name, SKILLS.iai!.name]);
+    expect(sheet.skills[0]!.note).toBe(String(SKILLS.jingi!.mp));
+    expect(sheet.skills[0]!.description).toContain(SKILLS.jingi!.description);
+    expect(statusSheet(createMember('hero', 1), 'm').skills).toEqual([]);
+  });
+
+  it('戦闘の外でも使える技は説明にそう書く', () => {
+    const sheet = statusSheet(createMember('gendo', 1), 'm');
+    const yakushi = sheet.skills.find((e) => e.label === SKILLS.yakushi!.name);
+    expect(SKILLS.yakushi!.field).toBe(true);
+    expect(yakushi?.description).toContain('戦闘の外でも使える');
+  });
+
+  it('倒れている仲間は down になる', () => {
+    const sheet = statusSheet({ ...createMember('kasumi', 3), hp: 0 }, 'm');
+    expect(sheet.down).toBe(true);
+    expect(sheet.hp).toMatch(/^0\//);
+  });
+
+  it('ゲストは装備と技を出し、次のレベルまでの経験値は出さない', () => {
+    const m = createMember('hyogo', 18);
+    const sheet = statusSheet(m, 'm');
+    expect(sheet.next).toBeNull();
+    expect(sheet.exp).toBe(m.exp);
+    expect(sheet.equipment[0]!.label).toBe('与力の差料');
+    expect(sheet.equipment[1]!.label).toBe('与力の羽織');
+    expect(sheet.skills.map((e) => e.label)).toEqual(skillsAtLevel('hyogo', 18).map((id) => SKILLS[id]!.name));
+    expect(sheet.skills.length).toBeGreaterThan(0);
+  });
+});
+
+describe('技の説明', () => {
+  it('気力を書き、withField のときだけ戦闘の外でも使えることを書き足す', () => {
+    expect(skillDescription(SKILLS.yakushi!)).toBe(`${SKILLS.yakushi!.description}（気力 ${SKILLS.yakushi!.mp}）`);
+    expect(skillDescription(SKILLS.yakushi!, true)).toBe(`${SKILLS.yakushi!.description}（気力 ${SKILLS.yakushi!.mp}・戦闘の外でも使える）`);
+    expect(skillDescription(SKILLS.iai!, true)).toBe(`${SKILLS.iai!.description}（気力 ${SKILLS.iai!.mp}）`);
   });
 });

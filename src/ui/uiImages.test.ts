@@ -1,15 +1,9 @@
 import { describe, expect, it } from 'vitest';
+import { pngSize } from '../systems/testUtils';
 import { CURSOR_IMAGE_SIZE, CURSOR_SCALE, ICON_IMAGE_SIZE, ICON_NAMES, ICON_SCALE, iconFrame, PAD_BUTTON_FACE_RADIUS, PAD_BUTTON_IMAGE_SIZE, PAD_DPAD_IMAGE_SIZE, PAD_IMAGE_SCALE, SUBTITLE_TEXT, TITLE_SKY_BAND, TITLE_TEXT, WINDOW_CORNER, WINDOW_IMAGE_SIZE, windowSliceRects } from './uiImages';
 import { MENU_ICON_SPACE, MENU_LABEL_LEFT, MENU_LINE_HEIGHT, menuLabelLeft } from './widgets';
 import { GAME_HEIGHT, GAME_WIDTH } from './theme';
 import indexHtml from '../../index.html?raw';
-
-/** PNG の幅と高さ（IHDR）。data URL の画像から読む。 */
-function pngSize(dataUrl: string): { w: number; h: number } {
-  const png = atob(dataUrl.split(',')[1]!);
-  const u32 = (at: number) => [0, 1, 2, 3].reduce((v, i) => v * 256 + png.charCodeAt(at + i), 0);
-  return { w: u32(16), h: u32(20) };
-}
 
 /** data URL の PNG（8 bit の RGBA、インターレースなし）を読み、画素を [r, g, b, a] の 2 次元の配列で返す。 */
 async function decodePng(dataUrl: string): Promise<number[][][]> {

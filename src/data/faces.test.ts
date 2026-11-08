@@ -1,13 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { pngSize } from '../systems/testUtils';
 import { CHARACTERS } from './characters';
 import { EXPRESSION_FACES, EXPRESSIONS, FACE_IMAGES, FACE_SIZE, FACES, faceForPage, pageText, SPEAKER_FACES, speakerOf } from './faces';
-
-/** PNG の幅と高さ（IHDR）。data URL の画像から読む。 */
-function pngSize(dataUrl: string): { w: number; h: number } {
-  const png = atob(dataUrl.split(',')[1]!);
-  const u32 = (at: number) => [0, 1, 2, 3].reduce((v, i) => v * 256 + png.charCodeAt(at + i), 0);
-  return { w: u32(16), h: u32(20) };
-}
 
 describe('顔グラフィック', () => {
   it('どの顔（表情差分を含む）にも 48 × 48 の画像がある', () => {

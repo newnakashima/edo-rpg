@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { ENEMIES, enemyImageKey } from '../data/enemies';
 import { FACE_IMAGES, faceKey } from '../data/faces';
+import { PORTRAITS, portraitKey } from '../data/portraits';
 import { TILE_KINDS, TILESETS, tileTextureKey, type TilesetId } from '../data/maps';
 import { allPartsImages } from '../data/mapParts';
 import { TILE } from '../ui/theme';
@@ -30,6 +31,7 @@ export class BootScene extends Phaser.Scene {
       this.load.spritesheet(spriteKey(id), `assets/chars/${id}.png`, { frameWidth: CHAR_FRAME, frameHeight: CHAR_FRAME });
     }
     for (const id of FACE_IMAGES) this.load.image(faceKey(id), `assets/faces/${id}.png`);
+    for (const id of PORTRAITS) this.load.image(portraitKey(id), `assets/portraits/${id}.png`);
     for (const id of OBJECT_SPRITES) {
       this.load.spritesheet(objectKey(id), `assets/objects/${id}.png`, { frameWidth: OBJECT_DEFS[id].size, frameHeight: OBJECT_DEFS[id].size });
     }
