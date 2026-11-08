@@ -31,7 +31,7 @@ describe('施設の看板', () => {
     }
     // 掛けない施設は、戸のない施設と城の中の人、ワールドマップのもぐりの宿（届けの出ていない宿。src/data/moguriYado.ts）だけ
     const none = facilities.filter((f) => f.npc.sign === false && f.npc.action !== 'moguriInn').map((f) => f.npc.id);
-    expect(none.sort()).toEqual(['kakibune', 'kanazawaHikyaku', 'kintaRoka', 'kokichiJo']);
+    expect(none.sort()).toEqual(['kakibune', 'kintaRoka', 'kokichiJo']);
   });
 
   it('建物の中の施設は、その建物の町の戸口（入口）の隣の壁に、施設の種類の看板を掛ける', () => {

@@ -3,6 +3,11 @@ import events from './events.ts?raw';
 import maps from './maps.ts?raw';
 import { findTerms, GLOSSARY, termsIn } from './glossary';
 
+// 町の人の台詞は maps.ts のほか、建物の屋内・民家・湯屋などの施設・親分の屋敷のファイルにもある
+const npcSources = Object.values(
+  import.meta.glob<string>(['./buildings*.ts', './minka.ts', './townFacilities.ts', './oyabun.ts', '!./*.test.ts'], { eager: true, query: '?raw', import: 'default' }),
+).join('\n');
+
 describe('TIPS（用語の解説）', () => {
   it('台詞の中の用語を、前から順に見つける', () => {
     const text = '旅籠の主人「お代が足りねえようで……」と長屋の隠居が言った。';
@@ -47,9 +52,9 @@ describe('TIPS（用語の解説）', () => {
     }
   });
 
-  it('どの言葉も台詞（イベント・マップの人の台詞）に出てくる', () => {
+  it('どの言葉も台詞（イベント・マップの人・建物の中の人の台詞）に出てくる', () => {
     // コメントの行は除く（台詞から消えた言葉がコメントだけに残っていても通らないように）
-    const text = (events + maps)
+    const text = [events, maps, npcSources].join('\n')
       .split('\n')
       .filter((line) => !/^\s*(\/\/|\/\*|\*)/.test(line))
       .join('\n');

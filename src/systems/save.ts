@@ -19,8 +19,9 @@ import { totalExpForLevel } from './stats';
  * - 6: 序章〜第 5 章の町・ダンジョンを作り直した（古い位置は、新しい形では壁の中や見張りの向こうになりうる）
  * - 7: ワールドマップを 150×60 に広げた（古い座標は海や野原の上になりうるので、いちばん近い町の印の上へ移す）
  * - 8: 仁義ポイント（jingi）を追加
+ * - 9: 金沢の湊の町家の戸を動かした（古い戸の民家のマップはなくなった）
  */
-export const SAVE_VERSION = 8;
+export const SAVE_VERSION = 9;
 
 /** 版 6 で形を作り直したマップ。版 5 までのセーブがこの中にいたら、旅籠の前（ダンジョンなら近くの町の旅籠の前）へ移す。 */
 export const MAPS_REBUILT_IN_V6: readonly string[] = [
@@ -28,6 +29,10 @@ export const MAPS_REBUILT_IN_V6: readonly string[] = [
   'nagoya', 'takoya', 'horikawaKura', 'tenshu', 'kyo', 'rashomon', 'oninosu',
   'iga', 'igaSato', 'kagiya', 'osaka', 'komeKura',
 ];
+/** 版 9 でなくしたマップ（戸を動かした民家）と、その町。版 8 までのセーブがこの中にいたら、その町の旅籠の前へ移す。 */
+export const MAPS_REMOVED_IN_V9: Readonly<Record<string, string>> = {
+  minka_kanazawa_6_21: 'kanazawa',
+};
 /**
  * 版 7 でワールドマップを広げた。版 6 までのワールドマップの町の印の位置（古い座標）と町の名前。
  * 版 6 までのセーブがワールドマップにいたら、古い座標でいちばん近い町の、新しいワールドマップの印の上へ移す。
@@ -164,6 +169,9 @@ function migrate(version: unknown, state: unknown): unknown {
     } else if (v === 7) {
       // 版 7 には仁義ポイントがない。新しく始めた場合と同じだけ持たせる
       s = { ...s, jingi: JINGI_START };
+    } else if (v === 8 && typeof s.mapId === 'string' && Object.hasOwn(MAPS_REMOVED_IN_V9, s.mapId)) {
+      // 版 8 までの民家の戸はなくなった（金沢の湊の町家の戸は旅籠の入口になった）
+      s = { ...s, ...respawnPoint(MAPS_REMOVED_IN_V9[s.mapId]!) };
     }
     v++;
   }
