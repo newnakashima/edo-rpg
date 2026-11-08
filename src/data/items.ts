@@ -1,5 +1,6 @@
 // 道具（消耗品）と所持品。装備品の定義は equipment.ts にあり、所持品には両方が入る。
 import { EQUIPMENT } from './equipment';
+import { WARD_STEPS } from './skills';
 
 export type ItemEffect =
   /** HP を amount 回復する。 */
@@ -38,9 +39,6 @@ export interface ItemDef {
 
 // 定義順がメニューの並び順になる（体力 → 気力 → 両方 → 状態異常 → 気付け → 旅の札）。
 // 名物の食べ物は、その土地の店（shops.ts）で売る。
-/** 魔除けの香が効く歩数。 */
-export const WARD_STEPS_ITEM = 150;
-
 export const ITEMS: Record<string, ItemDef> = {
   // 体力
   omusubi: { id: 'omusubi', name: 'おむすび', price: 4, kind: 'food', effect: { kind: 'healHp', amount: 20 }, target: 'ally', field: true, description: '塩むすび。体力を 20 回復する' },
@@ -80,7 +78,7 @@ export const ITEMS: Record<string, ItemDef> = {
   ninjin: { id: 'ninjin', name: '朝鮮人参', price: 280, kind: 'medicine', effect: { kind: 'revive', rate: 0.5 }, target: 'ally', field: true, description: '高価な薬の根。戦闘不能から体力の半分で起こす' },
   // 旅の札（戦闘の外だけ）
   michishirube: { id: 'michishirube', name: '道しるべの札', price: 24, kind: 'charm', effect: { kind: 'escape' }, target: 'party', field: true, battle: false, description: '洞窟や城の中から、入口の外へひと息に戻る' },
-  mayokeKo: { id: 'mayokeKo', name: '魔除けの香', price: 40, kind: 'charm', effect: { kind: 'ward', steps: WARD_STEPS_ITEM }, target: 'party', field: true, battle: false, description: `焚くと、${WARD_STEPS_ITEM} 歩のあいだ敵が寄ってこない` },
+  mayokeKo: { id: 'mayokeKo', name: '魔除けの香', price: 40, kind: 'charm', effect: { kind: 'ward', steps: WARD_STEPS }, target: 'party', field: true, battle: false, description: `焚くと、${WARD_STEPS} 歩のあいだ敵が寄ってこない` },
 };
 
 /** 所持品（道具・装備品の ID ごとの個数）。 */

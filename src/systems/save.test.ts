@@ -31,7 +31,7 @@ describe('save', () => {
     expect(load(storage, 0)?.state.wardSteps).toBe(42);
     save(storage, 1, state());
     expect(load(storage, 1)?.state.wardSteps).toBeUndefined();
-    for (const wardSteps of [-1, 1.5, '3']) {
+    for (const wardSteps of [-1, 1.5, '3', 151]) {
       save(storage, 2, { ...state(), wardSteps: wardSteps as number });
       expect(load(storage, 2), String(wardSteps)).toBeNull();
     }

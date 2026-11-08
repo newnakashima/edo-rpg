@@ -17,22 +17,27 @@ describe('歩数', () => {
 
 describe('魔除け（魔除けの香・結界の真言）', () => {
   it('効いているあいだは残りの歩数だけが減り、戦闘にならず、エンカウントまでの歩数も進まない', () => {
-    expect(stepOnRoad({ stepsToEncounter: 1, wardSteps: 3 }, seqRng(0))).toEqual({ stepsToEncounter: 1, wardSteps: 2, encounter: false, wardEnded: false });
+    expect(stepOnRoad({ stepsToEncounter: 1, wardSteps: 3 }, true, seqRng(0))).toEqual({ stepsToEncounter: 1, wardSteps: 2, encounter: false, wardEnded: false });
   });
 
   it('最後の 1 歩で切れたことを知らせ、その歩では戦闘にならない', () => {
-    expect(stepOnRoad({ stepsToEncounter: 1, wardSteps: 1 }, seqRng(0))).toEqual({ stepsToEncounter: 1, wardSteps: 0, encounter: false, wardEnded: true });
+    expect(stepOnRoad({ stepsToEncounter: 1, wardSteps: 1 }, true, seqRng(0))).toEqual({ stepsToEncounter: 1, wardSteps: 0, encounter: false, wardEnded: true });
   });
 
   it('切れたあと（省いたときも）は、いつもどおり歩数を数えて戦闘になる', () => {
-    expect(stepOnRoad({ stepsToEncounter: 1, wardSteps: 0 }, seqRng(0))).toEqual({ stepsToEncounter: ENCOUNTER_STEPS_MIN, wardSteps: 0, encounter: true, wardEnded: false });
-    expect(stepOnRoad({ stepsToEncounter: 5 }, seqRng(0))).toEqual({ stepsToEncounter: 4, wardSteps: 0, encounter: false, wardEnded: false });
+    expect(stepOnRoad({ stepsToEncounter: 1, wardSteps: 0 }, true, seqRng(0))).toEqual({ stepsToEncounter: ENCOUNTER_STEPS_MIN, wardSteps: 0, encounter: true, wardEnded: false });
+    expect(stepOnRoad({ stepsToEncounter: 5 }, true, seqRng(0))).toEqual({ stepsToEncounter: 4, wardSteps: 0, encounter: false, wardEnded: false });
+  });
+
+  it('敵の出ない場所（町の中など）では、魔除けの残りもエンカウントまでの歩数も変わらない', () => {
+    expect(stepOnRoad({ stepsToEncounter: 1, wardSteps: 1 }, false, seqRng(0))).toEqual({ stepsToEncounter: 1, wardSteps: 1, encounter: false, wardEnded: false });
+    expect(stepOnRoad({ stepsToEncounter: 1 }, false, seqRng(0))).toEqual({ stepsToEncounter: 1, wardSteps: 0, encounter: false, wardEnded: false });
   });
 
   it('150 歩のあいだは一度も戦闘にならない', () => {
     let cur = { stepsToEncounter: 1, wardSteps: 150 };
     for (let i = 0; i < 150; i++) {
-      const r = stepOnRoad(cur, seededRng(i));
+      const r = stepOnRoad(cur, true, seededRng(i));
       expect(r.encounter).toBe(false);
       cur = r;
     }

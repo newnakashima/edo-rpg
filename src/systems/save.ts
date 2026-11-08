@@ -3,6 +3,7 @@ import { CHARACTERS, isGuest, type CharacterId } from '../data/characters';
 import { EQUIP_SLOTS, EQUIPMENT, STARTING_EQUIPMENT, type EquipSlot } from '../data/equipment';
 import { isKnownItem, MAX_ITEM_COUNT } from '../data/items';
 import { MAPS, respawnPoint } from '../data/maps';
+import { WARD_STEPS } from '../data/skills';
 import { STARTING_ITEMS, type GameState } from './gameState';
 import { memberStats } from './party';
 
@@ -120,7 +121,8 @@ export function isGameState(v: unknown): v is GameState {
   if (!isInventory(v.items) || !isInventory(v.storage)) return false;
   if (!isObject(v.flags) || !Object.values(v.flags).every((f) => typeof f === 'boolean')) return false;
   if (!isNonNegativeInteger(v.stepsToEncounter) || !isFiniteNumber(v.playTimeSec) || v.playTimeSec < 0) return false;
-  if (v.wardSteps !== undefined && !isNonNegativeInteger(v.wardSteps)) return false;
+  // 魔除けの残りは、香・結界の真言で付く歩数より多くならない
+  if (v.wardSteps !== undefined && (!isNonNegativeInteger(v.wardSteps) || v.wardSteps > WARD_STEPS)) return false;
   return true;
 }
 

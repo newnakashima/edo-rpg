@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { SKILLS, skillsAtLevel } from '../data/skills';
+import { ITEMS } from '../data/items';
+import { SKILLS, skillsAtLevel, WARD_STEPS } from '../data/skills';
 import { changeEquipment, escapeInField, expToNext, fieldSkills, itemUsableOn, skillDescription, statsWithEquipment, statusSheet, swapMembers, useItemInField, useSkillInField, wardInField } from './fieldMenu';
 import { newGame, type GameState } from './gameState';
 import { createMember, memberStats } from './party';
@@ -343,5 +344,18 @@ describe('しばらく敵に出会わなくする（魔除けの香・結界の�
   it('結界の真言はメニューの技に出て、戦闘の技の一覧には出ない', () => {
     expect(fieldSkills(createMember('gendo', 1))).toContain('kekkai');
     expect(SKILLS.kekkai?.fieldOnly).toBe(true);
+  });
+
+  it('香と結界の真言は同じ歩数だけ効く', () => {
+    const item = ITEMS.mayokeKo?.effect;
+    const skill = SKILLS.kekkai?.effect;
+    expect(item?.kind === 'ward' && item.steps).toBe(WARD_STEPS);
+    expect(skill?.kind === 'ward' && skill.steps).toBe(WARD_STEPS);
+  });
+
+  it('香は仲間に使う道具としては効かない（減らさない）', () => {
+    const s = game({ party: [{ ...createMember('hero', 1), hp: 5 }], items: { mayokeKo: 1 } });
+    expect(itemUsableOn('mayokeKo', s.party[0]!)).toBe(false);
+    expect(useItemInField(s, 'mayokeKo', 0)).toEqual({ ok: false, reason: 'noEffect' });
   });
 });

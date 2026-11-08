@@ -25,6 +25,7 @@ describe('createBattle', () => {
     expect(b.combatants[0]?.skills).not.toContain('nukemichi');
     expect(b.combatants[0]?.skills).toContain('shuriken');
     expect(availableItemCount(b, 'michishirube', {})).toBe(0);
+    expect(availableItemCount({ ...b, items: { mayokeKo: 1 } }, 'mayokeKo', {})).toBe(0);
     expect(availableItemCount(b, 'kizugusuri', {})).toBe(1);
     // 万一、札を使う指示が来ても何も起こらず、札は減らない
     const { state, events } = resolveTurn(b, { p0: { kind: 'item', item: 'michishirube', target: 'p0' } }, seededRng(1));

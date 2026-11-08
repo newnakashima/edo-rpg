@@ -375,10 +375,10 @@ export class FieldScene extends Phaser.Scene {
     const trigger = this.map.triggers?.find((t) => t.x === state.x && t.y === state.y);
     if (trigger && this.startTrigger(trigger)) return;
     const encounter = encounterAt(this.map, state.x, state.y, state.flags);
-    if (!encounter) return;
-    const table = ENCOUNTERS[encounter];
+    const table = encounter ? ENCOUNTERS[encounter] : undefined;
+    // 敵の出ない場所（町の中など）では、エンカウントまでの歩数も魔除けの残りも変わらない
+    const result = stepOnRoad(state, table !== undefined, defaultRng);
     if (!table) return;
-    const result = stepOnRoad(state, defaultRng);
     setState({ ...state, stepsToEncounter: result.stepsToEncounter, wardSteps: result.wardSteps });
     if (result.wardEnded) {
       this.message.show(['魔除けの効き目が切れた。']);

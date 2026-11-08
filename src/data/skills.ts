@@ -1,6 +1,9 @@
 // docs/characters.md の「技の一覧」と、敵が使う技。
 import type { CharacterId } from './characters';
 
+/** 魔除け（結界の真言・魔除けの香）が効く歩数。道具と技で同じにする。 */
+export const WARD_STEPS = 150;
+
 /** 属性。祓は妖怪、機はからくりに効く。 */
 export type Element = 'fire' | 'thunder' | 'holy' | 'mech';
 
@@ -122,7 +125,7 @@ export const SKILLS: Record<string, SkillDef> = {
   katon: { id: 'katon', name: '火遁の術', mp: 9, target: 'allEnemies', effect: { kind: 'magic', power: 14 }, elements: ['fire'], description: '敵全体に火の術' },
   // 玄道（破戒僧）
   yakushi: { id: 'yakushi', name: '薬師の真言', mp: 3, target: 'ally', effect: { kind: 'heal', power: 10 }, field: true, description: '味方 1 人を回復する' },
-  kekkai: { id: 'kekkai', name: '結界の真言', mp: 5, target: 'self', effect: { kind: 'ward', steps: 150 }, fieldOnly: true, description: '結界を張り、150 歩のあいだ敵を寄せつけない' },
+  kekkai: { id: 'kekkai', name: '結界の真言', mp: 5, target: 'self', effect: { kind: 'ward', steps: WARD_STEPS }, fieldOnly: true, description: `結界を張り、${WARD_STEPS} 歩のあいだ敵を寄せつけない` },
   oharai: { id: 'oharai', name: 'お祓い', mp: 3, target: 'ally', effect: { kind: 'cure' }, description: '状態異常を治す' },
   katsu: { id: 'katsu', name: '喝', mp: 4, target: 'enemy', effect: { kind: 'magic', power: 10 }, elements: ['holy'], description: '妖怪・からくりに効く祓いの一喝' },
   kongoriki: { id: 'kongoriki', name: '金剛力', mp: 5, target: 'ally', effect: { kind: 'status', status: 'atkUp', turns: 3 }, description: '3 ターン攻撃を上げる' },
