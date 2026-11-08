@@ -397,7 +397,7 @@ export const NAGOYA_BUILDINGS: BuildingDef[] = [
         y: 8,
         color: 0x7a7070,
         sprite: 'npc_roba',
-        lines: ['婆さま「うちの爺さまは、湯屋の二階で碁を打つのが楽しみでねえ。湯より長居しとるがね」'],
+        lines: ['婆さま「うちの爺さまは、湯上がりにここの板の間で碁を打つのが楽しみでねえ。湯より長居しとるがね」'],
       },
       ...furniture('nagoyaYuya', [
         { name: '湯船', x: 3, y: 1, object: 'yubune', lines: ['広い湯船だ。柘榴口の奥は湯気で薄暗い。'] },
@@ -538,7 +538,7 @@ export const NAGOYA_BUILDINGS: BuildingDef[] = [
         y: 2,
         color: 0xc06a7a,
         sprite: 'npc_maiko',
-        lines: ['芸者「今宵は材木問屋の旦那衆のお座敷。尾張の名古屋は城で持つ、と唄うと、皆さまお喜びになるんですの」'],
+        lines: ['芸者「今宵はこれから、材木問屋の旦那衆のお座敷。尾張の名古屋は城で持つ、と唄うと、皆さまお喜びになるんですの」'],
       },
       {
         id: 'nagoyaGyoroWakaimono',
