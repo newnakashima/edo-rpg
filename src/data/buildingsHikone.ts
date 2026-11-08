@@ -451,7 +451,7 @@ export const HIKONE_BUILDINGS: BuildingDef[] = [
       },
       ...furniture('hikoneOmiShoka', [
         { name: '品棚', x: 10, y: 1, object: 'shinadana', lines: ['近江の麻布と蚊帳の見本が並んでいる。'] },
-        { name: '帳場の文机', x: 7, y: 1, object: 'fuzukue', lines: ['大福帳が開いてある。細かい字で、売り上げがびっしり書きつけてある。'] },
+        { name: '帳場の文机', x: 17, y: 1, object: 'fuzukue', lines: ['大福帳が開いてある。細かい字で、売り上げがびっしり書きつけてある。'] },
         { name: '木箱', x: 22, y: 1, object: 'kibako', lines: ['行商に担いでいく麻布を詰めた木箱だ。'] },
         { name: '箪笥', x: 1, y: 1, object: 'tansu', lines: ['主人の座敷の箪笥だ。'] },
         { name: '行灯', x: 22, y: 5, object: 'andon', lines: ANDON_LINES },
@@ -492,7 +492,7 @@ export const HIKONE_BUILDINGS: BuildingDef[] = [
         y: 5,
         color: 0x4a6a8a,
         sprite: 'npc_sendo',
-        lines: ['漁師「夜明け前から湖に出て、網を上げてきたとこよ。冬の湖は、手がちぎれそうに冷てえんだ」'],
+        lines: ['漁師「夜明け前から湖に出て、網を上げてきたとこや。朝の湖は風が冷とうて、手がかじかんでかなわんわ」'],
       },
       {
         id: 'hikoneYuyaKyaku2',
@@ -588,6 +588,8 @@ export const HIKONE_BUILDINGS: BuildingDef[] = [
         color: 0x4a6a8a,
         sprite: 'npc_sendo',
         lines: ['漁師「近ごろ、夜のうちに網を切られる騒ぎが続いてな。……芹川の親分が、何とかしてくださると言うてくれたんやが」'],
+        // 芹川一家の親分の頼み（src/data/oyabunRequests.ts の oyabunRequestId('hikone')）を果たしたあと
+        after: { flag: 'oyabun_hikone_request', lines: ['漁師「網を切っとった荒くれどもが、ぱったり来んようになった。芹川一家と旅のお方のおかげや。今夜は祝い酒や」'] },
       },
       {
         id: 'hikoneIzakayaKyaku2',
@@ -778,7 +780,7 @@ export const HIKONE_BUILDINGS: BuildingDef[] = [
         y: 2,
         color: 0x5a4a3a,
         sprite: 'npc_ninsoku',
-        lines: ['子分「近ごろ、夜に佐和山のほうで灯りがちらつくんで。亡霊やら盗人やら……一家で見回りに出たもんか、親分と相談してるとこでさ」'],
+        lines: ['子分「近ごろ、夜に佐和山のほうで灯りがちらつくんで。亡霊か、人の仕業か……一家で見回りに出たもんか、親分と相談してるとこでさ」'],
         after: { flag: 'hikoneGusokuFound', lines: ['子分「佐和山の灯りは、具足を盗んだ盗人やったそうで。あんたらが片づけたって聞いて、親分も感心してはりましたで」'] },
       },
       {
@@ -801,7 +803,7 @@ export const HIKONE_BUILDINGS: BuildingDef[] = [
       },
       ...furniture('hikoneOyabunYashiki', [
         { name: '掛け軸', x: 1, y: 1, object: 'kakejiku', lines: ['墨の一字を大書した掛け軸だ。'] },
-        { name: '千両箱', x: 9, y: 1, object: 'senryobako', lines: ['一家の金をしまう千両箱だ。'] },
+        { name: '千両箱', x: 9, y: 1, object: 'senryobako', lines: ['一家の金をしまう千両箱だ。今は空で、中身は帳面と引き合わせている最中らしい。'] },
         { name: '箪笥', x: 22, y: 1, object: 'tansu', lines: ['一家の半纏と、漁師の刺子をしまった箪笥だ。'] },
         { name: '竈', x: 1, y: 5, object: 'kamado', lines: ['竈に大釜が掛かっている。しじみの汁の、いい匂いがする。'] },
         { name: '囲炉裏', x: 15, y: 7, object: 'irori', lines: ['大きな囲炉裏に薪がくべてある。自在鉤の鉄瓶で、燗の湯が沸いている。'] },

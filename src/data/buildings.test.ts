@@ -4,6 +4,7 @@ import { JINGI_REQUEST_KINDS, pendingJingiRequest } from './jingiRequests';
 import { canStep, MAPS, tileAt, type MapDef } from './maps';
 import { isMinka } from './minka';
 import { OYABUN } from './oyabun';
+import { oyabunRequestId } from './oyabunRequests';
 
 /** (x, y) から、人と通れないマスを避けて歩いて行けるマス。 */
 function reachable(map: MapDef, from: { x: number; y: number }): Set<string> {
@@ -224,5 +225,7 @@ describe('施設・民家以外の建物の屋内（テストプレイの指摘:
     const deshi = MAPS.hikone!.npcs.find((n) => n.id === 'jinbeiDeshi')!;
     expect(deshi.y).toBe(5);
     expect(deshi.x).not.toBe(40);
+    // 居酒屋の漁師は、芹川一家の親分の頼み（網を切る荒くれ）を果たすと台詞が変わる
+    expect(MAPS.hikoneIzakaya!.npcs.find((n) => n.id === 'hikoneIzakayaKyaku1')?.after?.flag).toBe(oyabunRequestId('hikone'));
   });
 });
