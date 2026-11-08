@@ -1,4 +1,4 @@
-// フィールドのメニュー画面（取消ボタンで開く）。道具・技・装備・ステータスと、所持金・次にすべきこと・仲間の顔（体力・気力）の表示。
+// フィールドのメニュー画面（取消ボタンで開く）。道具・技・装備・ステータス・並び替えと、所持金・次にすべきこと・仲間の顔（体力・気力）の表示。
 // 仲間の能力値・装備はステータス画面（StatusScreen）で見る。
 import Phaser from 'phaser';
 import { characterName, isGuest } from '../data/characters';
@@ -8,7 +8,7 @@ import { portraitFor } from '../data/portraits';
 import { EQUIP_SLOTS, EQUIPMENT, SLOT_NAMES, canEquip, type EquipSlot } from '../data/equipment';
 import { ITEMS, itemCount, itemName, ownedEquipment, ownedItems } from '../data/items';
 import { SKILLS } from '../data/skills';
-import { changeEquipment, skillDescription, fieldSkills, itemUsableOn, statsWithEquipment, useItemInField, useSkillInField, type FieldResult } from '../systems/fieldMenu';
+import { changeEquipment, skillDescription, fieldSkills, itemUsableOn, statsWithEquipment, swapMembers, useItemInField, useSkillInField, type FieldResult } from '../systems/fieldMenu';
 import { memberStats } from '../systems/party';
 import type { Stats } from '../systems/stats';
 import { getState, setState } from '../state';
@@ -112,7 +112,7 @@ export class FieldMenu {
 
   private openMain(): void {
     this.push(
-      [{ label: '道具' }, { label: '技' }, { label: '装備' }, { label: 'ステータス' }, { label: 'とじる' }, { label: 'タイトルへ' }],
+      [{ label: '道具' }, { label: '技' }, { label: '装備' }, { label: 'ステータス' }, { label: '並び替え' }, { label: 'とじる' }, { label: 'タイトルへ' }],
       MAIN_X,
       8,
       MAIN_W,
@@ -121,7 +121,8 @@ export class FieldMenu {
         else if (i === 1) this.chooseMember('誰の技を使う？', (m) => this.openSkills(m));
         else if (i === 2) this.chooseMember('誰の装備を変える？', (m) => this.openEquipSlots(m));
         else if (i === 3) this.openStatusScreen();
-        else if (i === 4) this.close();
+        else if (i === 4) this.openReorder();
+        else if (i === 5) this.close();
         else {
           this.destroy();
           this.onTitle();
@@ -146,11 +147,38 @@ export class FieldMenu {
     });
   }
 
+  /**
+   * 並び替え: 動かす仲間と、入れ替える相手を選んで入れ替える。入れ替えたら、続けて並び替えられるように
+   * 最初の一覧から開き直し、動かした先にカーソルを置く。
+   */
+  private openReorder(cursor = 0): void {
+    const state = getState();
+    if (state.party.length < 2) {
+      this.setInfo('並び替える仲間がいない。');
+      return;
+    }
+    this.chooseMember('誰を動かす？', (a) => {
+      const nameAt = (i: number) => characterName(getState().party[i]?.id ?? 'hero', getState().gender);
+      const name = nameAt(a);
+      const second = this.chooseMember(`${name}と入れ替える相手は？`, (b) => {
+        const message = `${name}と${nameAt(b)}を入れ替えた。`;
+        setState(swapMembers(getState(), a, b));
+        this.refreshStatus();
+        this.popToMain();
+        this.openReorder(b);
+        // 結果に続けて、最初の一覧の案内も出す
+        this.setInfo(`${message}誰を動かす？`);
+      }, (b) => b !== a);
+      // 選んだ仲間（選べない）の次の行から始める
+      second.select((a + 1) % getState().party.length);
+    }).select(cursor);
+  }
+
   /** 仲間を選ぶ。 */
-  private chooseMember(prompt: string, onChoose: (index: number) => void, isEnabled: (index: number) => boolean = () => true): void {
+  private chooseMember(prompt: string, onChoose: (index: number) => void, isEnabled: (index: number) => boolean = () => true): Menu {
     const state = getState();
     this.setInfo(prompt);
-    this.push(
+    return this.push(
       state.party.map((m, i) => {
         const s = memberStats(m);
         return { label: characterName(m.id, state.gender), note: `体${m.hp}/${s.maxHp} 気${m.mp}`, enabled: isEnabled(i) };

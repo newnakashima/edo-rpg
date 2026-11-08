@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createMember, gainExp, memberLevel, memberStats, restoreAll } from './party';
+import { createMember, gainExp, heroOf, memberLevel, memberStats, restoreAll } from './party';
 import { totalExpForLevel } from './stats';
 
 describe('party', () => {
@@ -59,5 +59,18 @@ describe('ゲスト（榊兵庫）', () => {
     expect(memberLevel(party[1]!)).toBe(18);
     expect(party[0]!.exp).toBe(hero.exp + 5000);
     expect(levelUps.map((l) => l.id)).toEqual(['hero']);
+  });
+});
+
+describe('heroOf（セーブスロットの表示）', () => {
+  it('並び替えで先頭でなくても主人公を返す', () => {
+    const hero = createMember('hero', 3);
+    expect(heroOf([createMember('kasumi', 1), hero])).toBe(hero);
+  });
+
+  it('主人公がいなければ先頭、空なら undefined', () => {
+    const kasumi = createMember('kasumi', 1);
+    expect(heroOf([kasumi])).toBe(kasumi);
+    expect(heroOf([])).toBeUndefined();
   });
 });

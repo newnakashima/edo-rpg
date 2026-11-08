@@ -32,6 +32,11 @@ export function memberStats(member: PartyMember): Stats {
   };
 }
 
+/** 主人公（セーブスロットの表示用）。並び替えで先頭が主人公とは限らないので id で探し、いなければ先頭を返す。 */
+export function heroOf(party: PartyMember[]): PartyMember | undefined {
+  return party.find((m) => m.id === 'hero') ?? party[0];
+}
+
 /** レベル L の仲間を、加入時の装備を付け、HP・MP 満タンで作る。 */
 export function createMember(id: CharacterId, level = 1, equip: Equipped = STARTING_EQUIPMENT[id]): PartyMember {
   const member: PartyMember = { id, exp: totalExpForLevel(level), hp: 0, mp: 0, equip: { ...equip } };
