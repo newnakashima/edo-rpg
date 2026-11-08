@@ -115,7 +115,8 @@ export function isGameState(v: unknown): v is GameState {
   }
   // 一時離脱に預けるのは主人公でもゲストでもない仲間だけ（leaveParty が作る形）
   if (v.away.some((m: { id: CharacterId }) => m.id === 'hero' || isGuest(m.id))) return false;
-  if (!isNonNegativeInteger(v.money) || typeof v.mapId !== 'string') return false;
+  // マップは実在するものだけ（ファイルから読み込むので、"constructor" のような Object の名前も弾く）
+  if (!isNonNegativeInteger(v.money) || typeof v.mapId !== 'string' || !Object.hasOwn(MAPS, v.mapId)) return false;
   if (!Number.isInteger(v.x) || !Number.isInteger(v.y)) return false;
   if (typeof v.facing !== 'string' || !FACINGS.has(v.facing)) return false;
   if (!isInventory(v.items) || !isInventory(v.storage)) return false;
@@ -265,8 +266,8 @@ export function importText(text: string): SaveData | null {
   return deserialize(text);
 }
 
-/** 読み込んだセーブデータを、記録した日時を変えずにスロットへ書き込む。失敗したら false。 */
-export function writeSaveData(storage: KeyValueStorage, slot: number, data: SaveData): boolean {
+/** 読み込んだセーブデータを、記録した日時を変えずにスロットへ書き込む（日時が読めなければ now）。失敗したら false。 */
+export function writeSaveData(storage: KeyValueStorage, slot: number, data: SaveData, now: Date = new Date()): boolean {
   const savedAt = new Date(data.savedAt);
-  return save(storage, slot, data.state, Number.isNaN(savedAt.getTime()) ? new Date() : savedAt);
+  return save(storage, slot, data.state, Number.isNaN(savedAt.getTime()) ? now : savedAt);
 }

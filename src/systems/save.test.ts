@@ -291,6 +291,9 @@ describe('記録のファイル', () => {
     expect(importText(JSON.stringify({ format: 'other-game', ...data() }))).toBeNull();
     expect(importText(JSON.stringify({ format: EXPORT_FORMAT, ...data(), state: { ...state(), money: -1 } }))).toBeNull();
     expect(importText(JSON.stringify({ format: EXPORT_FORMAT, ...data(), version: SAVE_VERSION + 1 }))).toBeNull();
+    for (const mapId of ['constructor', 'toString', 'nowhere']) {
+      expect(importText(JSON.stringify({ format: EXPORT_FORMAT, ...data(), state: { ...state(), mapId } })), mapId).toBeNull();
+    }
   });
 
   it('古い版のファイルも今の形に直して読む', () => {
@@ -304,6 +307,12 @@ describe('記録のファイル', () => {
   it('ファイル名はスロットを 1 から数え、端末の日時を付ける', () => {
     expect(exportFileName(0, new Date(2026, 10, 8, 9, 5))).toBe('edo-rpg-save-1-20261108-0905.json');
     expect(() => exportFileName(SLOT_COUNT)).toThrow(RangeError);
+  });
+
+  it('記録した日時が読めないときは、書き込んだ日時にする', () => {
+    const storage = memoryStorage();
+    expect(writeSaveData(storage, 0, { ...data(), savedAt: 'x' }, new Date('2026-11-08T00:00:00Z'))).toBe(true);
+    expect(load(storage, 0)?.savedAt).toBe('2026-11-08T00:00:00.000Z');
   });
 
   it('書き込みに失敗したら false', () => {

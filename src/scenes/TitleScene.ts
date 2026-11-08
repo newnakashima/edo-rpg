@@ -13,6 +13,8 @@ export class TitleScene extends Phaser.Scene {
   private controls!: Controls;
   private active: { update(c: Controls): void; destroy(): void } | null = null;
   private message!: MessageWindow;
+  /** ファイルを選ぶたびに増やす。前に開いた選ぶ画面の結果が遅れて届いても無視する。 */
+  private pickId = 0;
 
   constructor() {
     super('Title');
@@ -80,13 +82,29 @@ export class TitleScene extends Phaser.Scene {
       [{ label: 'ファイルに書き出す', enabled: hasSave }, { label: 'ファイルから読み込む' }],
       (i) => {
         if (i === 0) this.openExport();
-        // 選ぶ画面は決定を受けたその場で開く（ブラウザは操作の直後でないと開かない）。取消されたらこのメニューのまま
-        else pickTextFile((text) => this.onImportFile(text), () => this.notify(['ファイルを読めませんでした。']));
+        else this.pickImportFile(menu);
       },
       () => this.openMain(2),
     );
     menu.select(select);
     this.active = menu;
+  }
+
+  /**
+   * ファイルを選ぶ画面を開く。取消されたらこのメニューのまま。
+   * 読み終えるまでにメニューを離れた（取消でタイトルへ戻った、選び直した）ときは、結果を無視する。
+   */
+  private pickImportFile(menu: Menu): void {
+    const id = ++this.pickId;
+    const current = () => id === this.pickId && this.active === menu && this.scene.isActive();
+    pickTextFile(
+      (text) => {
+        if (current()) this.onImportFile(text);
+      },
+      () => {
+        if (current()) this.notify(['ファイルを読めませんでした。']);
+      },
+    );
   }
 
   private openExport(): void {
@@ -100,7 +118,7 @@ export class TitleScene extends Phaser.Scene {
         return;
       }
       const ok = downloadText(exportFileName(result.slot), exportText(result.info.data));
-      this.notify(ok ? [`記録 ${result.slot + 1} をファイルに書き出しました。`] : ['ファイルに書き出せませんでした。']);
+      this.notify(ok ? [`記録 ${result.slot + 1} をファイルに書き出しました（ダウンロードした先を確かめてください）。`] : ['ファイルに書き出せませんでした。']);
     });
   }
 
