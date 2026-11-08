@@ -26,12 +26,13 @@ const buildings = Object.values(MAPS).filter((m) => buildingTown(m.id));
 
 describe('施設・民家以外の建物の屋内（テストプレイの指摘: あらゆる建物に入れるようにすべき）', () => {
   // 屋内を足した町（町を足したらここにも足す）
-  const TOWNS = ['shimizu', 'sunpu', 'nagoya', 'kyo', 'iga', 'osaka', 'hiroshima', 'nagasaki', 'kanazawa', 'sendai'];
+  const TOWNS = ['shimizu', 'sunpu', 'nagoya', 'kyo', 'iga', 'osaka', 'hiroshima', 'nagasaki', 'kanazawa', 'sendai', 'hamamatsu'];
   // 鍵をかけた戸（入れなくてよい。ユーザーの決定「鍵をかけたもの以外のすべての建物に入れる」）
   const LOCKED: Record<string, [number, number][]> = {
     hiroshima: [[15, 4]], // 城の門（門番が堀の橋をふさぐ）
     kanazawa: [[28, 13]], // 城の門（ご家老の命で門番が固める）
     sendai: [[6, 13]], // 青葉城の門（門番が固める）
+    hamamatsu: [[11, 5]], // 浜松城の門（門番が堀の橋をふさぐ）
   };
   // 戸のある建物がなく、通りに立つ店（町の通りに残る施設の人）
   const STREET_SHOPS = ['kakibune'];
@@ -138,7 +139,7 @@ describe('施設・民家以外の建物の屋内（テストプレイの指摘:
         }
       }
     }
-    // 清水湊・駿府・名古屋・京・伊賀上野・大坂・広島・長崎・金沢・仙台の賭場・居酒屋・妓楼・親分の屋敷（町を足すと増える）
+    // 清水湊・駿府・名古屋・京・伊賀上野・大坂・広島・長崎・金沢・仙台・浜松の賭場・居酒屋・妓楼・親分の屋敷（町を足すと増える）
     expect(checked).toBeGreaterThanOrEqual(TOWNS.length * 4);
   });
 
@@ -196,5 +197,17 @@ describe('施設・民家以外の建物の屋内（テストプレイの指摘:
     expect(MAPS.sendaiGusokushiIe!.npcs.some((n) => n.id === 'sendaiRojin')).toBe(true);
     const moved = ['tatewaki', 'sendaiKannushi', 'sendaiInn', 'sendaiRojin', 'sendaiTeahouse', 'sendaiHikyaku', 'sendaiYorozu', 'sendaiKaji'];
     expect(MAPS.sendai!.npcs.some((n) => moved.includes(n.id))).toBe(false);
+  });
+
+  it('浜松の寺の僧・凧師の弥平・大工の棟梁とおかみ・旅籠の主人・店の人・うなぎ屋は建物の中にいる', () => {
+    expect(MAPS.hamamatsuTera!.npcs.find((n) => n.id === 'hamamatsuTemple')?.action).toBe('temple');
+    expect(MAPS.hamamatsuTakoshiIe!.npcs.find((n) => n.id === 'yahei')?.after?.flag).toBe('hamamatsuTakoDone');
+    expect(MAPS.hamamatsuToryoIe!.npcs.filter((n) => n.id === 'toryo' || n.id === 'toryoOkami')).toHaveLength(2);
+    expect(MAPS.hamamatsuYado!.npcs.find((n) => n.id === 'hamamatsuInn')?.action).toBe('inn');
+    expect(MAPS.hamamatsuUnagiya!.npcs.some((n) => n.id === 'unagiya')).toBe(true);
+    const moved = ['hamamatsuTemple', 'yahei', 'toryo', 'toryoOkami', 'hamamatsuInn', 'hamamatsuTeahouse', 'hamamatsuHikyaku', 'hamamatsuYorozu', 'hamamatsuKaji', 'unagiya'];
+    expect(MAPS.hamamatsu!.npcs.some((n) => moved.includes(n.id))).toBe(false);
+    // 張りかけの大凧は、弥平の家の前に干したまま
+    expect(MAPS.hamamatsu!.npcs.some((n) => n.id === 'yaheiDako')).toBe(true);
   });
 });

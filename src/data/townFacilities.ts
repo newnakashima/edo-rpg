@@ -50,7 +50,7 @@ const LOOKS: Record<TownFacilityKind, FacilityLook> = {
 
 /**
  * 町ごとの施設の戸口（maps.ts の rows の D のマス）。施設の人はその真下に立つ。
- * 浜松・彦根では、家の前の通りに町の人と施設の人が並び、間の 1〜2 マスに入れなくなる（何も置いていない行き止まりで、進行には関わらない）。
+ * 彦根では、家の前の通りに町の人と施設の人が並び、間の 1〜2 マスに入れなくなる（何も置いていない行き止まりで、進行には関わらない）。
  * 気になるなら、屋内マップを作るときに戸か人を 1 マスずらして隙間をなくす。
  */
 type TownDoors = Record<TownFacilityKind, { x: number; y: number }>;
@@ -69,7 +69,8 @@ export const TOWN_FACILITY_DOORS: Record<string, TownDoors> = {
   kanazawa: { yuya: d(7, 27), tobaku: d(16, 27), izakaya: d(23, 27), gyoro: d(39, 27) },
   // 仙台は、民家と同じ棟の二つの戸のうち西の戸（看板が戸の左の壁に掛かり、二つの戸の間に掛からないように。東の戸は民家）
   sendai: { yuya: d(36, 25), tobaku: d(44, 25), izakaya: d(19, 33), gyoro: d(26, 33) },
-  hamamatsu: { yuya: d(15, 24), tobaku: d(48, 18), izakaya: d(34, 24), gyoro: d(46, 24) },
+  // 浜松も、同じ棟の二つの戸のうち西の戸（東の戸は、賭場の棟がうなぎ屋、居酒屋・妓楼の棟が民家）
+  hamamatsu: { yuya: d(15, 24), tobaku: d(46, 18), izakaya: d(32, 24), gyoro: d(44, 24) },
   hikone: { yuya: d(10, 24), tobaku: d(21, 24), izakaya: d(35, 24), gyoro: d(47, 24) },
   kumamoto: { yuya: d(10, 22), tobaku: d(17, 22), izakaya: d(7, 30), gyoro: d(11, 30) },
   aizu: { yuya: d(19, 28), tobaku: d(34, 28), izakaya: d(42, 19), gyoro: d(48, 19) },
