@@ -1665,6 +1665,8 @@ describe('寄り道の浜松', () => {
 describe('寄り道の彦根', () => {
   const world = MAPS.world!;
   const hikone = MAPS.hikone!;
+  // 町と、町の建物の中の人
+  const everyone = [hikone, ...Object.values(MAPS).filter((m) => buildingTown(m.id) === 'hikone')].flatMap((m) => m.npcs);
   const town = world.towns!.find((t) => t.name === '彦根')!;
   const nagoya = world.towns!.find((t) => t.name === '名古屋')!;
   const kyo = world.towns!.find((t) => t.name === '京')!;
@@ -1695,7 +1697,8 @@ describe('寄り道の彦根', () => {
 
   it('町に入ると hikoneEnter を行い、着いたあとは行わない。旅籠・茶屋・店・寺・飛脚・湯屋・賭場・居酒屋・妓楼・親分の屋敷がそろう', () => {
     expect(hikone.onEnter).toEqual({ event: 'hikoneEnter', unless: 'hikoneIntro' });
-    const actions = new Set(hikone.npcs.map((n) => n.action).filter(Boolean));
+    // 施設の人は建物の中にいる（src/data/buildingsHikone.ts）
+    const actions = new Set(everyone.map((n) => n.action).filter(Boolean));
     expect(actions).toEqual(new Set(['inn', 'teahouse', 'shop', 'temple', 'hikyaku', 'yuya', 'tobaku', 'izakaya', 'gyoro', 'oyabun']));
     expect(hikone.areaLevel).toBe(10);
     expect(tileAt(hikone, hikone.respawn!.x, hikone.respawn!.y)?.blocked).toBe(false);
@@ -1703,7 +1706,8 @@ describe('寄り道の彦根', () => {
 
   it('入口から佐和山の頂の盗人・具足櫃・葛籠まで歩いて行け、工房の甚兵衛や町の人に話しかけられる', () => {
     const area = reachable(hikone, town.to!, {}, true);
-    for (const id of ['gusokuNusubito', 'gusokuBitsu', 'sawayamaSekihi', 'hikoneChest1', 'jinbei', 'jinbeiDeshi', 'hikoneChest2', 'umoregiRoba', 'hikoneOkami', 'hikoneInn', 'hikoneTemple']) {
+    // 甚兵衛・埋木舎の老女・旅籠の主人・寺の僧は建物の中（入れることは buildings.test.ts で確かめる）
+    for (const id of ['gusokuNusubito', 'gusokuBitsu', 'sawayamaSekihi', 'hikoneChest1', 'jinbeiDeshi', 'hikoneChest2', 'hikoneOkami', 'hikoneAshigaru', 'hikoneKodomo', 'hikoneRojin']) {
       const npc = hikone.npcs.find((n) => n.id === id)!;
       expect(near(area, npc.x, npc.y), id).toBe(true);
     }
@@ -1725,7 +1729,7 @@ describe('寄り道の彦根', () => {
       // 京の鬼の噂は、第 3 章を終えると退治された話に変わる
       hikoneTabibito: 'chapter3Cleared',
     };
-    for (const [id, flag] of Object.entries(want)) expect(hikone.npcs.find((n) => n.id === id)?.after?.flag, id).toBe(flag);
+    for (const [id, flag] of Object.entries(want)) expect(everyone.find((n) => n.id === id)?.after?.flag, id).toBe(flag);
   });
 });
 

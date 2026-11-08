@@ -19,6 +19,7 @@ import { NAGASAKI_BUILDINGS } from './buildingsNagasaki';
 import { KANAZAWA_BUILDINGS } from './buildingsKanazawa';
 import { SENDAI_BUILDINGS } from './buildingsSendai';
 import { HAMAMATSU_BUILDINGS } from './buildingsHamamatsu';
+import { HIKONE_BUILDINGS } from './buildingsHikone';
 
 /** タイルの種類。画像は public/assets/tiles/<種類>.png（PixelLab で生成。記録は public/assets/README.md）。 */
 export const TILE_KINDS = ['ground', 'grass', 'road', 'tree', 'water', 'wall', 'roof', 'door', 'floor', 'rock', 'plain', 'town', 'gate'] as const;
@@ -3679,21 +3680,7 @@ MAPS.hikone = {
       sprite: 'npc_monban',
       lines: ['門番「井伊の御家中は、具足から旗まで朱一色。戦場で赤備えを見た敵は、赤鬼が来たと震えあがったそうだ」'],
     },
-    // 埋木舎の前
-    {
-      id: 'umoregiRoba',
-      name: '屋敷の老女',
-      x: 30,
-      y: 5,
-      color: 0xa08a7a,
-      sprite: 'npc_roba',
-      lines: [
-        '老女「ここは埋木舎。御家を継ぐ見込みのない若様が、お住まいになっております」',
-        '老女「若様は、花の咲かぬ埋もれ木のようなものと仰って、茶の湯に歌に居合にと、日々修行に励んでおられますよ」',
-      ],
-    },
-    // 具足師の甚兵衛の工房の前
-    { id: 'jinbei', name: '具足師の甚兵衛', x: 40, y: 5, color: 0x7a6a5a, sprite: 'npc_smith', event: 'hikoneJinbei' },
+    // 埋木舎の老女・具足師の甚兵衛・店の人・寺の僧は、建物の中（src/data/buildingsHikone.ts）。甚兵衛の弟子は、工房の目印に工房の前に立つ
     {
       id: 'jinbeiDeshi',
       name: '具足師の弟子',
@@ -3701,7 +3688,7 @@ MAPS.hikone = {
       y: 5,
       color: 0x6a5a4a,
       sprite: 'npc_ninsoku',
-      lines: ['弟子「親方は、朱の漆を何べんも塗り重ねて、赤備えの色を出すんです。……その具足が盗まれちまって、親方は飯も喉を通らねえ」'],
+      lines: ['弟子「親方は、この工房で朱の漆を何べんも塗り重ねて、赤備えの色を出すんです。……その具足が盗まれちまって、親方は中で座りこんだきり、飯も喉を通らねえ」'],
       after: { flag: 'hikoneGusokuReturned', lines: ['弟子「具足が戻ってきて、親方もやっと笑ってくれました。おいらも、いつか赤備えを任される具足師になりてえ」'] },
     },
     { id: 'hikoneChest2', name: '葛籠', x: 50, y: 1, color: 0x8a6a3a, object: 'tsuzura', event: 'hikoneChest2' },
@@ -3715,78 +3702,11 @@ MAPS.hikone = {
       lines: ['老人「東へ戻れば名古屋、西へ行けば京じゃ。京では夜な夜な鬼が出ると聞く。くわばら、くわばら」'],
       after: { flag: 'chapter3Cleared', lines: ['老人「東へ戻れば名古屋、西へ行けば京じゃ。京の鬼は、旅の者が退治したそうな。ありがたや、ありがたや」'] },
     },
-    // 街道の南の店並び
-    {
-      id: 'hikoneInn',
-      name: '旅籠の主人',
-      x: 7,
-      y: 19,
-      color: 0x5a6b8c,
-      sprite: 'npc_innkeeper',
-      lines: ['旅籠の主人「窓を開ければ琵琶湖が一望できる宿ですが、渡世人のお方はお泊めできませんで。親分さんの屋敷を訪ねなされ」'],
-      action: 'inn',
-    },
-    {
-      id: 'hikoneTeahouse',
-      name: '茶屋の娘',
-      x: 15,
-      y: 19,
-      color: 0xc76b8f,
-      sprite: 'npc_musume',
-      lines: [
-        '茶屋の娘「いらっしゃいませ。多賀さまの門前の糸切餅、召し上がっていってくださいな」',
-        '茶屋の娘「甚兵衛さんの工房から、赤備えの具足が盗まれたんですって。具足揃えまで、あと三日しかないのに……」',
-      ],
-      after: { flag: 'hikoneGusokuReturned', lines: ['茶屋の娘「いらっしゃいませ。赤備えの具足、戻ってきたんですってね！ 具足揃えには、きっと間に合いますね」'] },
-      action: 'teahouse',
-      shop: 'hikoneChaya',
-    },
-    {
-      id: 'hikoneHikyaku',
-      name: '飛脚',
-      x: 21,
-      y: 19,
-      color: 0x6a8a4a,
-      sprite: 'npc_hikyaku',
-      lines: ['飛脚「京へは、街道を西へ山を越えてすぐだ。名古屋へ戻るなら東へな」'],
-      action: 'hikyaku',
-    },
-    {
-      id: 'hikoneYorozu',
-      name: 'よろず屋',
-      x: 31,
-      y: 19,
-      color: 0x8a6a4a,
-      sprite: 'npc_merchant',
-      lines: ['よろず屋「いらっしゃい。多賀さまの門前の名物の糸切餅は、茶屋で買えるよ」'],
-      action: 'shop',
-      shop: 'hikoneYorozu',
-    },
-    {
-      id: 'hikoneKaji',
-      name: '刀鍛冶',
-      x: 38,
-      y: 19,
-      color: 0x4a4a5a,
-      sprite: 'npc_smith',
-      lines: ['刀鍛冶「井伊の御家中は武具にうるさい。うちの刀も、半端なもんは置いてねえよ」'],
-      action: 'shop',
-      shop: 'hikoneKaji',
-    },
-    {
-      id: 'omiShonin',
-      name: '近江商人',
-      x: 46,
-      y: 19,
-      color: 0x8a6a4a,
-      sprite: 'npc_merchant',
-      lines: ['近江商人「売り手よし、買い手よし、世間よし。商いは、三方が喜んでこそ長続きするもんです」'],
-    },
-    // 裏通りの南の長屋
+    // 裏通りの南の長屋（湯屋・賭場・居酒屋・妓楼と同じ棟の西の戸の前に立っていた人は、1 マス左へずらした）
     {
       id: 'hikoneAshigaru',
       name: '足軽',
-      x: 7,
+      x: 6,
       y: 25,
       color: 0x7a3a3a,
       sprite: 'npc_yakunin',
@@ -3796,7 +3716,7 @@ MAPS.hikone = {
     {
       id: 'hikoneKodomo',
       name: '町の子',
-      x: 18,
+      x: 17,
       y: 25,
       color: 0x8a9a6a,
       sprite: 'npc_kodomo',
@@ -3806,7 +3726,7 @@ MAPS.hikone = {
     {
       id: 'hikoneRojin',
       name: 'ご隠居',
-      x: 32,
+      x: 31,
       y: 25,
       color: 0x8a7a6a,
       sprite: 'npc_rojin',
@@ -3819,24 +3739,14 @@ MAPS.hikone = {
     {
       id: 'hikoneOkami',
       name: '長屋のおかみ',
-      x: 44,
+      x: 43,
       y: 25,
       color: 0xa07a6a,
       sprite: 'npc_okami',
       lines: ['おかみ「ゆうべ、見慣れない男が佐和山の方へ大きな櫃を担いでいくのを見たよ。あんな夜更けに、何の用だったんだろうねえ」'],
       after: { flag: 'hikoneGusokuFound', lines: ['おかみ「あの櫃が盗まれた具足だったなんてねえ。取り返してくれて、ありがとうよ」'] },
     },
-    // 長屋の南。西に寺と墓所
-    {
-      id: 'hikoneTemple',
-      name: '寺の僧',
-      x: 12,
-      y: 32,
-      color: 0xd0c8b0,
-      sprite: 'npc_so',
-      lines: ['僧「遠路ようこそ。仏の加護がありますように」'],
-      action: 'temple',
-    },
+    // 長屋の南。西に寺の墓所
     { id: 'hikoneHaka1', name: '墓', x: 6, y: 35, color: 0x8a8a8a, object: 'haka', lines: ['苔むした墓石が並んでいる。'] },
     {
       id: 'hikoneHaka2',
@@ -5125,6 +5035,7 @@ addBuildings(MAPS, 'nagasaki', NAGASAKI_BUILDINGS);
 addBuildings(MAPS, 'kanazawa', KANAZAWA_BUILDINGS);
 addBuildings(MAPS, 'sendai', SENDAI_BUILDINGS);
 addBuildings(MAPS, 'hamamatsu', HAMAMATSU_BUILDINGS);
+addBuildings(MAPS, 'hikone', HIKONE_BUILDINGS);
 /** その戸口が屋内へ入る入口か（屋内のある施設の人は、屋内の建物のファイルで屋内に置くので、店先には立たせない）。 */
 const hasInterior = (town: string, door: { x: number; y: number }) => MAPS[town]!.exits.some((e) => e.x === door.x && e.y === door.y);
 // 湯屋・賭場・居酒屋・妓楼（刀鍛冶かよろず屋のあるすべての町。戸口と台詞は src/data/townFacilities.ts）

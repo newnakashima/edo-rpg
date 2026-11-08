@@ -26,13 +26,14 @@ const buildings = Object.values(MAPS).filter((m) => buildingTown(m.id));
 
 describe('施設・民家以外の建物の屋内（テストプレイの指摘: あらゆる建物に入れるようにすべき）', () => {
   // 屋内を足した町（町を足したらここにも足す）
-  const TOWNS = ['shimizu', 'sunpu', 'nagoya', 'kyo', 'iga', 'osaka', 'hiroshima', 'nagasaki', 'kanazawa', 'sendai', 'hamamatsu'];
+  const TOWNS = ['shimizu', 'sunpu', 'nagoya', 'kyo', 'iga', 'osaka', 'hiroshima', 'nagasaki', 'kanazawa', 'sendai', 'hamamatsu', 'hikone'];
   // 鍵をかけた戸（入れなくてよい。ユーザーの決定「鍵をかけたもの以外のすべての建物に入れる」）
   const LOCKED: Record<string, [number, number][]> = {
     hiroshima: [[15, 4]], // 城の門（門番が堀の橋をふさぐ）
     kanazawa: [[28, 13]], // 城の門（ご家老の命で門番が固める）
     sendai: [[6, 13]], // 青葉城の門（門番が固める）
     hamamatsu: [[11, 5]], // 浜松城の門（門番が堀の橋をふさぐ）
+    hikone: [[14, 5]], // 彦根城の門（門番が堀の橋をふさぐ）
   };
   // 戸のある建物がなく、通りに立つ店（町の通りに残る施設の人）
   const STREET_SHOPS = ['kakibune'];
@@ -139,7 +140,7 @@ describe('施設・民家以外の建物の屋内（テストプレイの指摘:
         }
       }
     }
-    // 清水湊・駿府・名古屋・京・伊賀上野・大坂・広島・長崎・金沢・仙台・浜松の賭場・居酒屋・妓楼・親分の屋敷（町を足すと増える）
+    // 清水湊・駿府・名古屋・京・伊賀上野・大坂・広島・長崎・金沢・仙台・浜松・彦根の賭場・居酒屋・妓楼・親分の屋敷（町を足すと増える）
     expect(checked).toBeGreaterThanOrEqual(TOWNS.length * 4);
   });
 
@@ -209,5 +210,19 @@ describe('施設・民家以外の建物の屋内（テストプレイの指摘:
     expect(MAPS.hamamatsu!.npcs.some((n) => moved.includes(n.id))).toBe(false);
     // 張りかけの大凧は、弥平の家の前に干したまま
     expect(MAPS.hamamatsu!.npcs.some((n) => n.id === 'yaheiDako')).toBe(true);
+  });
+
+  it('彦根の埋木舎の老女・具足師の甚兵衛・旅籠の主人・店の人・近江商人・寺の僧は建物の中にいる。甚兵衛の弟子は工房の前に残る', () => {
+    expect(MAPS.hikoneGusokushiKobo!.npcs.find((n) => n.id === 'jinbei')?.event).toBe('hikoneJinbei');
+    expect(MAPS.hikoneUmoregi!.npcs.some((n) => n.id === 'umoregiRoba')).toBe(true);
+    expect(MAPS.hikoneOmiShoka!.npcs.some((n) => n.id === 'omiShonin')).toBe(true);
+    expect(MAPS.hikoneYado!.npcs.find((n) => n.id === 'hikoneInn')?.action).toBe('inn');
+    expect(MAPS.hikoneTera!.npcs.find((n) => n.id === 'hikoneTemple')?.action).toBe('temple');
+    const moved = ['umoregiRoba', 'jinbei', 'hikoneInn', 'hikoneTeahouse', 'hikoneHikyaku', 'hikoneYorozu', 'hikoneKaji', 'omiShonin', 'hikoneTemple'];
+    expect(MAPS.hikone!.npcs.some((n) => moved.includes(n.id))).toBe(false);
+    // 弟子は工房の戸 (40, 4) の脇に立ち、戸の前はふさがない
+    const deshi = MAPS.hikone!.npcs.find((n) => n.id === 'jinbeiDeshi')!;
+    expect(deshi.y).toBe(5);
+    expect(deshi.x).not.toBe(40);
   });
 });
