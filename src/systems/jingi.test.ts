@@ -55,8 +55,15 @@ describe('仁義ポイント', () => {
     }
   });
 
+  it('全員の体力・気力が満タンなら泊めず、ポイントを使わない（ひとりでも減っていれば泊まれる）', () => {
+    const s = { ...newGame('m', start), jingi: 5 };
+    expect(stayAtOyabun(s, 1)).toEqual({ ok: false, reason: 'full', cost: 1 });
+    const tired = { ...s, party: [{ ...s.party[0]!, mp: 0 }] };
+    expect(stayAtOyabun(tired, 1).ok).toBe(true);
+  });
+
   it('仁義ポイントが足りなければ泊まれない（ちょうどなら泊まれて 0 になる）', () => {
-    const s = { ...newGame('m', start), jingi: 2 };
+    const s = { ...newGame('m', start), jingi: 2, party: [{ ...createMember('hero', 1), hp: 1 }] };
     expect(stayAtOyabun(s, 25)).toEqual({ ok: false, reason: 'jingi', cost: 3 });
     expect(stayAtOyabun({ ...s, jingi: 0 }, 1)).toEqual({ ok: false, reason: 'jingi', cost: 1 });
     const r = stayAtOyabun({ ...s, jingi: 3 }, 25);

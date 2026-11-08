@@ -2,7 +2,7 @@
 // 渡世人の一行は、各地の親分の屋敷に仁義ポイントを使って泊まり、体力と気力を全回復する。
 // ポイントは賭場・居酒屋・妓楼の頼まれごとや、親分の頼み（シナリオ）で得る（得る場面は別に足す）。
 import type { GameState } from './gameState';
-import { restoreAll } from './party';
+import { memberStats, restoreAll } from './party';
 
 /** 仁義ポイントの上限（ユーザーの決定、2026-11-07）。 */
 export const JINGI_MAX = 100;
@@ -26,11 +26,19 @@ export function addJingi(state: GameState, amount: number): GameState {
   return { ...state, jingi: Math.max(0, Math.min(JINGI_MAX, state.jingi + amount)) };
 }
 
-export type OyabunStayResult = { ok: true; state: GameState; cost: number } | { ok: false; reason: 'jingi'; cost: number };
+export type OyabunStayResult = { ok: true; state: GameState; cost: number } | { ok: false; reason: 'jingi' | 'full'; cost: number };
 
-/** 親分の屋敷に泊まる。仁義ポイントを使い、全員の体力・気力を全回復する（旅籠と同じく戦闘不能も治る）。 */
+/**
+ * 親分の屋敷に泊まる。仁義ポイントを使い、全員の体力・気力を全回復する（旅籠と同じく戦闘不能も治る）。
+ * 旅籠と違い、全員の体力・気力が満タンなら泊めず（full）、ポイントを使わない（得る手段の限られた資源をむだにしないため）。
+ */
 export function stayAtOyabun(state: GameState, areaLevel: number): OyabunStayResult {
   const cost = oyabunStayCost(areaLevel);
+  const full = state.party.every((m) => {
+    const max = memberStats(m);
+    return m.hp >= max.maxHp && m.mp >= max.maxMp;
+  });
+  if (full) return { ok: false, reason: 'full', cost };
   if (state.jingi < cost) return { ok: false, reason: 'jingi', cost };
   return { ok: true, state: { ...addJingi(state, -cost), party: restoreAll(state.party) }, cost };
 }

@@ -517,27 +517,18 @@ export class FieldScene extends Phaser.Scene {
           const result = stayAtOyabun(getState(), this.map.areaLevel);
           if (!result.ok) {
             this.message.show([
-              `若い衆「すまねえが、仁義の足りねえお方をお泊めしちゃ、親分に叱られやす……」（仁義 ${getState().jingi}／${cost} 要る）`,
+              result.reason === 'full'
+                ? '若い衆「みなさん、まだまだお元気そうでござんすね。草鞋を脱ぐのは、疲れなすったときにしなせえ」'
+                : `若い衆「すまねえが、仁義の足りねえお方をお泊めしちゃ、親分に叱られやす……」（仁義 ${getState().jingi}／${cost} 要る）`,
             ]);
             return;
           }
           setState(result.state);
-          // 暗転している間は動けないようにする（旅籠と同じ）
-          this.moving = true;
-          this.cameras.main.fadeOut(400, 0, 0, 0);
-          this.cameras.main.once('camerafadeoutcomplete', () => {
-            this.moving = false;
-            this.controls.flush();
-            this.cameras.main.fadeIn(400, 0, 0, 0);
-            this.message.show(
-              [
-                oyabunWelcome(def, getState().flags),
-                `一宿一飯の世話になった。体力と気力が回復した。（仁義 −${result.cost}、残り ${result.state.jingi}）`,
-                '若い衆「記録もつけていきなさるかい？」',
-              ],
-              () => this.openSave(),
-            );
-          });
+          this.sleepThen([
+            oyabunWelcome(def, getState().flags),
+            `一宿一飯の世話になった。体力と気力が回復した。（仁義 −${result.cost}、残り ${result.state.jingi}）`,
+            '若い衆「記録もつけていきなさるかい？」',
+          ]);
         } else if (i === 1) {
           this.openSave();
         }
@@ -545,6 +536,20 @@ export class FieldScene extends Phaser.Scene {
       () => this.closeOverlay(menu),
     );
     this.pushOverlay(menu);
+  }
+
+  /** 泊まったあと（旅籠・親分の屋敷）。暗転して明け、lines を出してから記録の窓を開く。 */
+  private sleepThen(lines: string[]): void {
+    // 暗転している間は動けないようにする
+    this.moving = true;
+    this.cameras.main.fadeOut(400, 0, 0, 0);
+    this.cameras.main.once('camerafadeoutcomplete', () => {
+      this.moving = false;
+      // 暗転中に押された決定でメッセージを読み飛ばさないようにする
+      this.controls.flush();
+      this.cameras.main.fadeIn(400, 0, 0, 0);
+      this.message.show(lines, () => this.openSave());
+    });
   }
 
   private openInn(): void {
@@ -564,16 +569,7 @@ export class FieldScene extends Phaser.Scene {
             return;
           }
           setState(result.state);
-          // 暗転している間は動けないようにする
-          this.moving = true;
-          this.cameras.main.fadeOut(400, 0, 0, 0);
-          this.cameras.main.once('camerafadeoutcomplete', () => {
-            this.moving = false;
-            // 暗転中に押された決定でメッセージを読み飛ばさないようにする
-            this.controls.flush();
-            this.cameras.main.fadeIn(400, 0, 0, 0);
-            this.message.show(['ぐっすり眠った。体力と気力が回復した。', '旅籠の主人「記録もつけていきなさるかい？」'], () => this.openSave());
-          });
+          this.sleepThen(['ぐっすり眠った。体力と気力が回復した。', '旅籠の主人「記録もつけていきなさるかい？」']);
         } else if (i === 1) {
           this.openSave();
         }
