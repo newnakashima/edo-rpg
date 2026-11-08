@@ -1,17 +1,9 @@
 // 清水湊の建物の屋内（src/data/buildings.ts）。民家（src/data/minka.ts）と蔵（戸のない建物）を除く、すべての建物に入れる。
 // 間取りは建物ごとに固有（使い回さない）。タイルセット interior: 地面 . は土間、床 _ は板の間、草 , は畳。
-import type { BuildingDef } from './buildings';
-import type { NpcDef } from './maps';
+import { ANDON_LINES, furniture, type BuildingDef } from './buildings';
 import { KAMADO_LINES } from './minka';
 import { oyabunNpc } from './oyabun';
 import { townFacilityNpc } from './townFacilities';
-
-const ANDON_LINES = ['行灯の紙ごしに、菜種油の火がやわらかく灯っている。'];
-
-/** 家具（話しかけると台詞を出す物）。ID は建物の ID と通し番号から作る。 */
-function furniture(building: string, list: Omit<NpcDef, 'id' | 'color'>[]): NpcDef[] {
-  return list.map((f, i) => ({ id: `${building}Kagu${i}`, color: 0x7a5a3a, ...f }));
-}
 
 export const SHIMIZU_BUILDINGS: BuildingDef[] = [
   // 寺の本堂: 奥の須弥壇に本尊、畳の外陣を板の回り縁が囲む。柱が並ぶ
