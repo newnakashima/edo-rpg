@@ -153,6 +153,9 @@ describe('博徒の紹介', () => {
       // 台詞の一家の名は、その町の親分の一家
       const { pages } = run(bakutoMeetEventId(town), newGame('m', start), 1, 'victory');
       expect(pages.join(''), town).toContain(OYABUN[town]!.family);
+      // 清水湊では辰五郎が殺されたあとも使うので、博徒も若い衆も親分が生きているとは言わない
+      const intro = run(bakutoIntroduceEventId(town), newGame('m', start), 0, 'victory').pages;
+      for (const p of [...pages, ...intro]) expect(p, town).not.toMatch(/親分/);
     }
     // 屋敷のないマップ（ダンジョン・ワールドマップなど）にはいない
     for (const map of Object.values(MAPS)) if (!OYABUN[map.id]) expect(map.npcs.some((n) => n.id.endsWith('Bakuto')), map.id).toBe(false);

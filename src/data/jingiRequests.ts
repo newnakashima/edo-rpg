@@ -147,13 +147,17 @@ export const JINGI_REQUEST_EVENTS: Record<string, EventDef> = Object.fromEntries
   }),
 );
 
-/** まだ果たしていない頼まれごと（施設のメニューに出す）。 */
-export interface PendingJingiRequest {
-  /** イベントの ID（果たしたら立つフラグと同じ）。 */
+/** 施設のメニューに出す、イベントで行う項目（頼まれごと・博徒の紹介）。 */
+export interface MenuRequest {
+  /** 選んだら行うイベントの ID。 */
   id: string;
-  kind: JingiRequestKind;
   /** メニューの項目の名前。 */
   label: string;
+}
+
+/** まだ果たしていない頼まれごと（施設のメニューに出す）。id はイベントの ID で、果たしたら立つフラグと同じ。 */
+export interface PendingJingiRequest extends MenuRequest {
+  kind: JingiRequestKind;
 }
 
 /** その施設で、まだ果たしていない頼まれごと（ない・済んだら null）。 */
@@ -167,7 +171,7 @@ export function pendingJingiRequest(town: string, action: string | undefined, fl
 
 // ---- 博徒の紹介 ----
 // 親分の屋敷のある 15 町には、賭場で負けて一文なしになった博徒が通りをぶらついている（src/data/oyabun.ts の bakutoNpc）。
-// 話しかけて「親分に紹介する」を選ぶと、博徒は先に屋敷へ向かって通りから消える。屋敷の若い衆のメニューに「博徒を引き合わせる」が出て、
+// 話しかけて「一家に紹介する」を選ぶと、博徒は先に屋敷へ向かって通りから消える。屋敷の若い衆のメニューに「博徒を引き合わせる」が出て、
 // 選ぶと仁義ポイントを得る。町ごとに 1 回。
 
 /** 博徒の紹介で得る仁義ポイント。その町の親分の屋敷の 1 泊分（序盤 1・中盤 2・終盤 3。戦わずに済む分、頼まれごとの半分）。 */
@@ -175,19 +179,22 @@ export function bakutoIntroReward(areaLevel: number): number {
   return oyabunStayCost(areaLevel);
 }
 
-/** 博徒が身の上を話す台詞（町ごとに順に使い回す。{family} は一家の名）。 */
+/**
+ * 博徒が身の上を話す台詞（町ごとに順に使い回す。{family} は一家の名）。
+ * 清水湊では辰五郎が殺されたあとも使うので、引き合わせる場面と同じく、親分が生きているとは言わない（一家に頼む）。
+ */
 const BAKUTO_ASK: string[][] = [
   [
     '博徒「……へへ、渡世人の方とお見受けしやす。あっしも旅の博徒でござんすが、賭場で身ぐるみはがれちまって、一文なしで……」',
-    '博徒「この町の{family}の親分に、口をきいてもらえやせんか。草鞋を脱がせてもらえりゃ、この恩は一生忘れやせん」',
+    '博徒「この町の{family}に、口をきいてもらえやせんか。草鞋を脱がせてもらえりゃ、この恩は一生忘れやせん」',
   ],
   [
     '博徒「腹が減って、目が回りそうで……。仁義を切ろうにも、手土産ひとつありゃしねえ」',
-    '博徒「渡世人の口ききがありゃあ、{family}の親分も会ってくださるはずなんで。どうか、お頼み申しやす」',
+    '博徒「渡世人の口ききがありゃあ、{family}も門を開けてくれるはずなんで。どうか、お頼み申しやす」',
   ],
   [
     '博徒「ちくしょう、あの壺振り、イカサマに決まってらあ……。おかげで宿代もありゃしねえ」',
-    '博徒「旦那方、{family}の親分に、あっしを引き合わせちゃもらえやせんか。一宿一飯の恩は、きっと返しやす」',
+    '博徒「旦那方、{family}に、あっしを引き合わせちゃもらえやせんか。一宿一飯の恩は、きっと返しやす」',
   ],
 ];
 
@@ -203,7 +210,7 @@ export function bakutoMeetEvent(town: string, variant: number): EventDef {
         type: 'choice',
         options: [
           {
-            label: '親分に紹介する',
+            label: '一家に紹介する',
             steps: [
               {
                 type: 'say',
@@ -260,14 +267,6 @@ export const BAKUTO_INTRO_EVENTS: Record<string, EventDef> = Object.fromEntries(
 export function pendingBakutoIntro(town: string, flags: Record<string, boolean>): MenuRequest | null {
   if (!OYABUN[town] || !flags[bakutoSentFlag(town)] || flags[bakutoIntroducedFlag(town)]) return null;
   return { id: bakutoIntroduceEventId(town), label: '博徒を引き合わせる' };
-}
-
-/** 施設のメニューに出す、イベントで行う項目（頼まれごと・博徒の紹介）。 */
-export interface MenuRequest {
-  /** 選んだら行うイベントの ID。 */
-  id: string;
-  /** メニューの項目の名前。 */
-  label: string;
 }
 
 /** 施設のメニューで選んだもの（施設の本来の品・頼まれごと・やめる）。 */
