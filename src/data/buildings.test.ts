@@ -26,7 +26,7 @@ const buildings = Object.values(MAPS).filter((m) => buildingTown(m.id));
 
 describe('施設・民家以外の建物の屋内（テストプレイの指摘: あらゆる建物に入れるようにすべき）', () => {
   // 屋内を足した町（町を足したらここにも足す）
-  const TOWNS = ['shimizu', 'sunpu', 'nagoya', 'kyo', 'iga', 'osaka', 'hiroshima'];
+  const TOWNS = ['shimizu', 'sunpu', 'nagoya', 'kyo', 'iga', 'osaka', 'hiroshima', 'nagasaki'];
   // 鍵をかけた戸（入れなくてよい。ユーザーの決定「鍵をかけたもの以外のすべての建物に入れる」）
   const LOCKED: Record<string, [number, number][]> = {
     hiroshima: [[15, 4]], // 城の門（門番が堀の橋をふさぐ）
@@ -136,7 +136,7 @@ describe('施設・民家以外の建物の屋内（テストプレイの指摘:
         }
       }
     }
-    // 清水湊・駿府・名古屋・京・伊賀上野・大坂・広島の賭場・居酒屋・妓楼・親分の屋敷（町を足すと増える）
+    // 清水湊・駿府・名古屋・京・伊賀上野・大坂・広島・長崎の賭場・居酒屋・妓楼・親分の屋敷（町を足すと増える）
     expect(checked).toBeGreaterThanOrEqual(TOWNS.length * 4);
   });
 
@@ -166,5 +166,13 @@ describe('施設・民家以外の建物の屋内（テストプレイの指摘:
     expect(MAPS.hiroshimaFunayado!.npcs.some((n) => n.id === 'hiroshimaSendo')).toBe(true);
     expect(MAPS.hiroshimaYado!.npcs.find((n) => n.id === 'hiroshimaInn')?.action).toBe('inn');
     expect(MAPS.hiroshima!.npcs.some((n) => ['hiroshimaSendo', 'hiroshimaInn', 'hiroshimaTemple'].includes(n.id))).toBe(false);
+  });
+
+  it('長崎の奉行所の役人・蘭方医・唐寺の僧・旅籠の主人は、通りではなく建物の中にいる', () => {
+    expect(MAPS.nagasakiBugyosho!.npcs.some((n) => n.id === 'bugyoYakunin')).toBe(true);
+    expect(MAPS.nagasakiRanpoi!.npcs.some((n) => n.id === 'ranpoI')).toBe(true);
+    expect(MAPS.nagasakiTera!.npcs.find((n) => n.id === 'nagasakiTemple')?.action).toBe('temple');
+    expect(MAPS.nagasakiYado!.npcs.find((n) => n.id === 'nagasakiInn')?.action).toBe('inn');
+    expect(MAPS.nagasaki!.npcs.some((n) => ['bugyoYakunin', 'ranpoI', 'nagasakiTemple', 'nagasakiInn'].includes(n.id))).toBe(false);
   });
 });
