@@ -116,6 +116,12 @@ describe('施設・民家以外の建物の屋内（テストプレイの指摘:
     expect(checked).toBeGreaterThanOrEqual(20);
   });
 
+  it('伊賀上野の鍵屋の隠居は、通りではなく自分の家の中にいる（仇討ちのあとの台詞も家の中で聞ける）', () => {
+    const rojin = MAPS.igaInkyo!.npcs.find((n) => n.id === 'kagiyaRojin');
+    expect(rojin?.after?.flag).toBe('gonrokuDefeated');
+    expect(MAPS.iga!.npcs.some((n) => n.id === 'kagiyaRojin')).toBe(false);
+  });
+
   it('辰五郎とお凛は一家の屋敷の中にいる。辰五郎の話（序章の頼み）は屋敷に入って聞く', () => {
     const ids = MAPS.shimizuOyabun!.npcs.map((n) => n.id);
     expect(ids).toEqual(expect.arrayContaining(['tatsugoro', 'orin', 'shimizuOyabun']));
