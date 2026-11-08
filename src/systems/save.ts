@@ -3,7 +3,7 @@ import { CHARACTERS, isGuest, type CharacterId } from '../data/characters';
 import { EQUIP_SLOTS, EQUIPMENT, STARTING_EQUIPMENT, type EquipSlot } from '../data/equipment';
 import { isKnownItem, MAX_ITEM_COUNT } from '../data/items';
 import { MAPS, respawnPoint } from '../data/maps';
-import { WARD_STEPS } from '../data/skills';
+import { MAX_WARD_STEPS } from '../data/skills';
 import { STARTING_ITEMS, type GameState } from './gameState';
 import { memberStats } from './party';
 
@@ -180,8 +180,8 @@ export function deserialize(text: string): SaveData | null {
     return { ...m, hp: Math.min(m.hp, s.maxHp), mp: Math.min(m.mp, s.maxMp) };
   };
   const state: GameState = { ...migrated, party: migrated.party.map(clamp), away: migrated.away.map(clamp) };
-  // 魔除けの残りは、香・結界の真言で付く歩数（WARD_STEPS）に収める（歩数を減らす調整をしても、古いセーブを捨てない）
-  if (state.wardSteps !== undefined) state.wardSteps = Math.min(state.wardSteps, WARD_STEPS);
+  // 魔除けの残りは、香・結界の真言・百目蝋燭で付く歩数の上限（MAX_WARD_STEPS）に収める（歩数を減らす調整をしても、古いセーブを捨てない）
+  if (state.wardSteps !== undefined) state.wardSteps = Math.min(state.wardSteps, MAX_WARD_STEPS);
   return { version: SAVE_VERSION, savedAt: data.savedAt, state };
 }
 

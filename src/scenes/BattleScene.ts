@@ -6,14 +6,17 @@ import { ITEMS, ownedItems } from '../data/items';
 import { respawnPoint } from '../data/maps';
 import { ailmentMarks, isAilment, SKILLS, STATUS_NAMES, type StatusId } from '../data/skills';
 import {
+  addDrops,
   aliveOf,
   availableItemCount,
   computeRewards,
   createBattle,
+  dropPages,
   isAlive,
   needsTarget,
   partyAfterBattle,
   resolveTurn,
+  rollDrops,
   victoryText,
   type BattleEvent,
   type BattleState,
@@ -589,10 +592,12 @@ export class BattleScene extends Phaser.Scene {
     const party = partyAfterBattle(state.party, this.battle);
     const amounts = party.map((_, i) => rewards.exp[`p${i}`] ?? 0);
     const { party: leveled, levelUps } = gainExp(party, amounts);
-    setState({ ...state, party: leveled, money: state.money + rewards.money, items: this.battle.items });
+    const drops = rollDrops(this.battle, defaultRng);
+    setState({ ...state, party: leveled, money: state.money + rewards.money, items: addDrops(this.battle.items, drops) });
     const exp = Math.max(0, ...amounts);
     this.controls.flush();
     const pages = [victoryText(this.battle, exp, rewards.money)];
+    pages.push(...dropPages(drops, this.battle.items));
     for (const up of levelUps) {
       const name = characterName(up.id, state.gender);
       const learned = up.learned.map((id) => `「${SKILLS[id]?.name ?? id}」を覚えた！`).join('\n');

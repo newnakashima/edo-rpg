@@ -3,7 +3,8 @@ import { STARTING_EQUIPMENT } from '../data/equipment';
 import { newGame, STARTING_ITEMS } from './gameState';
 import { createMember } from './party';
 import { MAPS, TILES } from '../data/maps';
-import { WARD_STEPS } from '../data/skills';
+import { MAX_WARD_STEPS } from '../data/skills';
+import { ITEMS } from '../data/items';
 import { deserialize, EXPORT_FORMAT, exportFileName, exportText, importText, listSlots, writeSaveData, load, MAPS_REBUILT_IN_V6, readSlot, save, SAVE_VERSION, serialize, SLOT_COUNT, slotKey, WORLD_TOWNS_BEFORE_V7, type KeyValueStorage } from './save';
 
 function memoryStorage(): KeyValueStorage & { data: Map<string, string> } {
@@ -33,7 +34,12 @@ describe('save', () => {
     save(storage, 1, state());
     expect(load(storage, 1)?.state.wardSteps).toBeUndefined();
     save(storage, 2, { ...state(), wardSteps: 9999 });
-    expect(load(storage, 2)?.state.wardSteps).toBe(WARD_STEPS);
+    expect(load(storage, 2)?.state.wardSteps).toBe(MAX_WARD_STEPS);
+    // いちばん長く効く百目蝋燭（化け提灯のレアドロップ）を灯した直後の歩数も削らない
+    const longest = Math.max(...Object.values(ITEMS).flatMap((i) => (i.effect.kind === 'ward' ? [i.effect.steps] : [])));
+    expect(longest).toBe(MAX_WARD_STEPS);
+    save(storage, 0, { ...state(), wardSteps: longest });
+    expect(load(storage, 0)?.state.wardSteps).toBe(longest);
     for (const wardSteps of [-1, 1.5, '3']) {
       save(storage, 2, { ...state(), wardSteps: wardSteps as number });
       expect(load(storage, 2), String(wardSteps)).toBeNull();

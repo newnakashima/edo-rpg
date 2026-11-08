@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { EQUIPMENT } from './equipment';
 import { addItem, ITEMS, MAX_ITEM_COUNT, ownedItems, removeItem } from './items';
 import { SHOPS } from './shops';
+import { ENEMY_DROPS } from './drops';
 
 describe('所持品', () => {
   it('加えると増え、上限で止まる', () => {
@@ -29,8 +30,9 @@ describe('道具の品ぞろえ', () => {
     for (const id of ['waraji', 'chochin', 'kiseru']) expect(EQUIPMENT[id], id).toBeDefined();
   });
 
-  it('どの道具もどこかの店で買える', () => {
-    for (const id of Object.keys(ITEMS)) expect(sold.has(id), id).toBe(true);
+  it('どの道具もどこかの店で買える（敵のレアドロップは、その敵を倒したときだけ手に入る）', () => {
+    const rares = new Set(Object.values(ENEMY_DROPS).map((d) => d.rare));
+    for (const id of Object.keys(ITEMS)) expect(sold.has(id) !== rares.has(id), id).toBe(true);
   });
 
   it('店の品はすべて定義されていて、1 つの店に同じ品は並ばない', () => {
