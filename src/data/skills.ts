@@ -154,6 +154,7 @@ export const SKILLS: Record<string, SkillDef> = {
   // 榊兵庫（侍、第 5 章のゲスト）
   hyogoKesagiri: { id: 'hyogoKesagiri', name: '袈裟斬り', mp: 3, target: 'enemy', effect: { kind: 'physical', multiplier: 1.5 }, description: '肩から斬り下ろす' },
   tsubamegaeshi: { id: 'tsubamegaeshi', name: '燕返し', mp: 6, target: 'enemy', effect: { kind: 'physical', multiplier: 1.0, hits: 2 }, description: '2 回斬る' },
+  kurumagiri: { id: 'kurumagiri', name: '車斬り', mp: 8, target: 'allEnemies', effect: { kind: 'physical', multiplier: 1.1 }, description: '刀を車のように回し、敵全体を斬る' },
   munenmuso: { id: 'munenmuso', name: '無念無想', mp: 5, target: 'self', effect: { kind: 'status', status: 'critUp', turns: 3 }, description: '3 ターン会心率を上げる' },
   // 敵の技
   kitsunebi: { id: 'kitsunebi', name: '狐火', mp: 0, target: 'enemy', effect: { kind: 'magic', power: 3 }, elements: ['fire'], description: '' },
@@ -300,10 +301,11 @@ export const LEARNSETS: Record<CharacterId, LearnableSkill[]> = {
     { skill: 'hayago', level: 15 },
     { skill: 'katami', level: 24 },
   ],
-  // ゲストは Lv18 で加入し成長しないので、すべて加入時に覚えている
+  // ゲストは Lv25 で加入し成長しないので、すべて加入時に覚えている
   hyogo: [
     { skill: 'hyogoKesagiri', level: 1 },
     { skill: 'tsubamegaeshi', level: 1 },
+    { skill: 'kurumagiri', level: 1 },
     { skill: 'munenmuso', level: 1 },
   ],
 };

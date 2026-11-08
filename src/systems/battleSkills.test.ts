@@ -626,9 +626,16 @@ describe('第 4 章（伊賀）の敵の技', () => {
 });
 
 describe('榊兵庫（侍、ゲスト）の技', () => {
-  it('Lv18 で加わったときから 3 つの技を覚えている', () => {
-    const b = createBattle([createMember('hyogo', 18)], 'm', ['ogaeru'], 1);
-    expect(get(b, 'p0').skills).toEqual(['hyogoKesagiri', 'tsubamegaeshi', 'munenmuso']);
+  it('Lv25 で加わったときから 4 つの技を覚えている', () => {
+    const b = createBattle([createMember('hyogo', 25)], 'm', ['ogaeru'], 1);
+    expect(get(b, 'p0').skills).toEqual(['hyogoKesagiri', 'tsubamegaeshi', 'kurumagiri', 'munenmuso']);
+  });
+
+  it('車斬りは気力 8 で、敵全体に通常攻撃の 1.1 倍', () => {
+    const def = SKILLS.kurumagiri!;
+    expect(def.mp).toBe(8);
+    expect(def.target).toBe('allEnemies');
+    expect(def.effect).toEqual({ kind: 'physical', multiplier: 1.1 });
   });
 
   it('袈裟斬りは気力 3 で、通常攻撃の 1.5 倍', () => {

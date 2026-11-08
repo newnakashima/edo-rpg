@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ENCOUNTERS, ENEMIES, enemyImageKey } from './enemies';
 import { SKILLS } from './skills';
+import { MAPS } from './maps';
 import { pickGroup } from '../systems/encounter';
 import { seededRng } from '../systems/testUtils';
 
@@ -166,6 +167,19 @@ describe('大坂の敵の組', () => {
     const rng = seededRng(5);
     const sizes = Array.from({ length: 300 }, () => pickGroup(table, { size: 4, maxLevel: 18 }, rng)?.length ?? 0);
     expect(Math.max(...sizes)).toBe(4);
+  });
+});
+
+describe('米蔵の地下の敵の組（兵庫 Lv25 と 4 人で来る）', () => {
+  it('大坂の街道より 1 レベル高く、どの組も 3〜4 体', () => {
+    const table = ENCOUNTERS.komeKura!;
+    expect(table.level).toBe(ENCOUNTERS.osaka!.level + 1);
+    for (const g of table.groups) expect(g.members.length, g.members.join(',')).toBeGreaterThanOrEqual(3);
+    expect(Math.max(...table.groups.map((g) => g.members.length))).toBe(4);
+  });
+
+  it('米蔵の地下のマップは komeKura の表を使う', () => {
+    expect(MAPS.komeKura!.encounter).toBe('komeKura');
   });
 });
 

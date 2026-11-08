@@ -2804,7 +2804,7 @@ MAPS.komeKura = {
     { x: 3, y: 0, to: 'osaka', toX: 26, toY: 4 },
     { x: 4, y: 0, to: 'osaka', toX: 26, toY: 4 },
   ],
-  encounter: 'osaka',
+  encounter: 'komeKura',
   respawnMap: 'osaka',
   // 工場の奥へ上がる細い段で、百俵からくりが待ち構える
   triggers: [

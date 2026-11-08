@@ -184,12 +184,12 @@ describe('一時加入と一時離脱（第 5 章）', () => {
     expect(leaveParty(s, 'hero')).toBe(s);
   });
 
-  it('ゲストは平均レベルではなく guestLevel（兵庫は 18）で加わり、抜けるときは預けない', () => {
+  it('ゲストは平均レベルではなく guestLevel（兵庫は 25）で加わり、抜けるときは預けない', () => {
     const left = leaveParty(four(), 'kasumi');
     const joined = joinParty(left, 'hyogo');
     const hyogo = joined.party[3]!;
     expect(hyogo.id).toBe('hyogo');
-    expect(memberLevel(hyogo)).toBe(18);
+    expect(memberLevel(hyogo)).toBe(25);
     expect(hyogo.equip).toEqual({ weapon: 'hyogoKatana', armor: 'hyogoHaori' });
     const gone = leaveParty(joined, 'hyogo');
     expect(gone.party.map((m) => m.id)).toEqual(['hero', 'gendo', 'orin']);

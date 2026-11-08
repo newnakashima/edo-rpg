@@ -775,7 +775,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: '百俵からくり',
     color: 0xb09050,
     image: true,
-    factors: { hp: 33, atk: 2.15, def: 1.4, spd: 0.7 },
+    factors: { hp: 40, atk: 2.7, def: 1.4, spd: 0.7 },
     weak: ['mech', 'fire'],
     actions: [
       { skill: 'attack', weight: 3 },
@@ -1241,7 +1241,7 @@ const IGA: EncounterTable = {
   ],
 };
 
-/** 大坂のまわりの街道と米蔵の地下の敵の組（霞の代わりに兵庫が加わった 4 人で来る）。 */
+/** 大坂のまわりの街道の敵の組（兵庫が加わる前の 3 人でも、霞の代わりに兵庫が加わった 4 人でも通る）。 */
 const OSAKA: EncounterTable = {
   level: 16,
   groups: [
@@ -1255,6 +1255,23 @@ const OSAKA: EncounterTable = {
     { members: ['bakuto', 'yojinbo'], weight: 2 },
     { members: ['bakuto', 'bakuto', 'bakeNezumi'], weight: 1 },
     { members: ['nekomata', 'bakeNezumi', 'bakeNezumi', 'bakuto'], weight: 1 },
+  ],
+};
+
+/**
+ * 米蔵の地下の敵の組。兵庫（Lv25 のゲスト）と 4 人で来るので、街道より 1 レベル高く、どの組も 3〜4 体にする
+ * （docs/balance.md の「榊兵庫と米蔵の地下」）。蔵を守る用心棒・鉄砲足軽・からくり俵と、米に群がる化け鼠・それを追う猫又が出る。
+ */
+const KOME_KURA: EncounterTable = {
+  level: 17,
+  groups: [
+    { members: ['yojinbo', 'yojinbo', 'teppoAshigaru'], weight: 2 },
+    { members: ['karakuriTawara', 'karakuriTawara', 'bakeNezumi'], weight: 2 },
+    { members: ['yojinbo', 'karakuriTawara', 'teppoAshigaru'], weight: 2 },
+    { members: ['nekomata', 'bakeNezumi', 'bakeNezumi'], weight: 2 },
+    { members: ['bakeNezumi', 'bakeNezumi', 'nekomata', 'karakuriTawara'], weight: 1 },
+    { members: ['teppoAshigaru', 'yojinbo', 'teppoAshigaru', 'karakuriTawara'], weight: 1 },
+    { members: ['bakeNezumi', 'yojinbo', 'bakeNezumi', 'teppoAshigaru'], weight: 1 },
   ],
 };
 
@@ -1403,8 +1420,10 @@ export const ENCOUNTERS: Record<string, EncounterTable> = {
   kyoto: KYOTO,
   /** 伊賀のまわりの街道と、伊賀者の里。 */
   iga: IGA,
-  /** 大坂のまわりの街道と、米蔵の地下。 */
+  /** 大坂のまわりの街道。 */
   osaka: OSAKA,
+  /** 大坂の米蔵の地下（兵庫と 4 人で来る）。 */
+  komeKura: KOME_KURA,
   /** 西国街道（大坂の西〜広島のまわり）。 */
   saigoku: SAIGOKU,
   /** 長崎のまわりの街道と、南蛮寺跡。 */
