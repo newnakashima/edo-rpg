@@ -14,6 +14,7 @@ import { NAGOYA_BUILDINGS } from './buildingsNagoya';
 import { KYO_BUILDINGS } from './buildingsKyo';
 import { IGA_BUILDINGS } from './buildingsIga';
 import { OSAKA_BUILDINGS } from './buildingsOsaka';
+import { HIROSHIMA_BUILDINGS } from './buildingsHiroshima';
 
 /** タイルの種類。画像は public/assets/tiles/<種類>.png（PixelLab で生成。記録は public/assets/README.md）。 */
 export const TILE_KINDS = ['ground', 'grass', 'road', 'tree', 'water', 'wall', 'roof', 'door', 'floor', 'rock', 'plain', 'town', 'gate'] as const;
@@ -2399,7 +2400,7 @@ MAPS.hiroshima = {
     'T,..=.,,~~,,..,=,,..,~~,,,..=,,.,~~,,....T',
     'T,,,=,,,~~RRRR,=,RRRR~~RRRR,=,RRR~~,,,,,,T',
     'TRRR=RRR~~WDWW,=,WWDW~~WWDW,=,WDW~~RRRRRRT',
-    'TWDW=WDW~~....,=,....~~....,=,...~~WWWDWWT',
+    'TWDW=WDW~~....,=,....~~....,=,...~~WDWDWWT',
     'T...=...~~,,,,,=,,,,,~~,,,,,=,,,,~~......T',
     'TTTT=,,,~~,T,,,=,,T,,~~,T,,,=,,T,~~,TTTTTT',
     'TTTT=,,,~~,,,,,=,,,,,~~,,,,,=,,,,~~,TTTTTT',
@@ -2411,77 +2412,6 @@ MAPS.hiroshima = {
     'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
   ],
   npcs: [
-    {
-      id: 'hiroshimaTeahouse',
-      name: '茶屋の娘',
-      x: 12,
-      y: 11,
-      color: 0xc76b8f,
-      sprite: 'npc_musume',
-      lines: [
-        '茶屋の娘「おいでませ。……お客さん、上方から来んさったん？ 西の海は、このごろ物騒なんよ」',
-        '茶屋の娘「夜の瀬戸の浜で、赤い蟹がぎょうさん這い上がってくるんじゃと。平家の侍の顔をした蟹じゃいうて、漁師も浜に出んのよ」',
-        '茶屋の娘「お団子、どうぞ」',
-      ],
-      after: { flag: 'heardHeikegani', lines: ['茶屋の娘「おいでませ。お団子、どうぞ」'] },
-      setsFlag: 'heardHeikegani',
-      action: 'teahouse',
-      shop: 'hiroshimaChaya',
-    },
-    {
-      id: 'hiroshimaYorozu',
-      name: 'よろず屋',
-      x: 18,
-      y: 11,
-      color: 0x6b8c5a,
-      sprite: 'npc_merchant',
-      lines: ['よろず屋「いらっしゃい。西国街道を行くなら、薬は多めに持っていきんさい」'],
-      action: 'shop',
-      shop: 'hiroshimaYorozu',
-    },
-    {
-      id: 'hiroshimaKaji',
-      name: '刀鍛冶',
-      x: 24,
-      y: 11,
-      color: 0x5a5a6b,
-      sprite: 'npc_smith',
-      lines: ['刀鍛冶「忍びの得物も打っとるけえ、見ていきんさい。お城の御用の合間じゃがのう」'],
-      action: 'shop',
-      shop: 'hiroshimaKaji',
-    },
-    {
-      id: 'hiroshimaHikyaku',
-      name: '飛脚',
-      x: 31,
-      y: 11,
-      color: 0x3e7cb0,
-      sprite: 'npc_hikyaku',
-      lines: ['飛脚「へい、まいど！ 広島の飛脚問屋でございやす」'],
-      action: 'hikyaku',
-    },
-    {
-      id: 'hiroshimaTemple',
-      name: '寺の僧',
-      x: 24,
-      y: 5,
-      color: 0xb08a3e,
-      sprite: 'npc_so',
-      lines: ['僧「よう参られた。倒れた者があれば、お祓いをして進ぜよう」'],
-      action: 'temple',
-    },
-    {
-      id: 'hiroshimaInn',
-      // 看板: 旅籠の戸の左の壁の前に立つ
-      sign: { x: 37, y: 17 },
-      name: '旅籠の主人',
-      x: 36,
-      y: 18,
-      color: 0x5a6b8c,
-      sprite: 'npc_innkeeper',
-      lines: ['旅籠の主人「夕餉は牡蠣の土手鍋じゃが、渡世人さんは泊められんのじゃ。親分さんの屋敷を訪ねんさい」'],
-      action: 'inn',
-    },
     {
       id: 'kakibune',
       // 看板: 水の上の舟（戸のある建物がない）
@@ -2514,21 +2444,10 @@ MAPS.hiroshima = {
       lines: ['巡礼「厳島さまへ渡る舟を待っておりますじゃ。海の上に建つ社は、それはそれは見事なものだそうな」'],
     },
     {
-      id: 'hiroshimaSendo',
-      name: '船頭',
-      x: 37,
-      y: 5,
-      color: 0x6a5a4a,
-      sprite: 'npc_sendo',
-      lines: [
-        '船頭「長崎へ行くなら、西国街道をまっすぐ西じゃ。海は荒れとるけえ、歩いたほうがええ」',
-        '船頭「長崎の手前で街道が分かれて、東へ行くと島原じゃ。あそこは昔の乱の古城があってのう……近寄る者はおらんよ」',
-      ],
-    },
-    {
       id: 'hiroshimaOkami',
       name: '長屋のおかみ',
-      x: 6,
+      // 長屋の戸口（6, 3）の前をあけるため、1 マス左に立つ
+      x: 5,
       y: 4,
       color: 0x9c8a5a,
       sprite: 'npc_okami',
@@ -2537,7 +2456,8 @@ MAPS.hiroshima = {
     {
       id: 'hiroshimaChild',
       name: '子ども',
-      x: 2,
+      // 長屋の戸口（2, 17）の前をあけるため、1 マス右に立つ
+      x: 3,
       y: 18,
       color: 0xd09a6a,
       sprite: 'npc_kodomo',
@@ -2546,7 +2466,8 @@ MAPS.hiroshima = {
     {
       id: 'hiroshimaRonin',
       name: '浪人',
-      x: 31,
+      // 町家の戸口（31, 4）の前をあけるため、1 マス右に立つ
+      x: 32,
       y: 5,
       color: 0x4a4a4a,
       sprite: 'npc_ronin',
@@ -5600,6 +5521,7 @@ addBuildings(MAPS, 'nagoya', NAGOYA_BUILDINGS);
 addBuildings(MAPS, 'kyo', KYO_BUILDINGS);
 addBuildings(MAPS, 'iga', IGA_BUILDINGS);
 addBuildings(MAPS, 'osaka', OSAKA_BUILDINGS);
+addBuildings(MAPS, 'hiroshima', HIROSHIMA_BUILDINGS);
 /** その戸口が屋内へ入る入口か（屋内のある施設の人は、屋内の建物のファイルで屋内に置くので、店先には立たせない）。 */
 const hasInterior = (town: string, door: { x: number; y: number }) => MAPS[town]!.exits.some((e) => e.x === door.x && e.y === door.y);
 // 湯屋・賭場・居酒屋・妓楼（刀鍛冶かよろず屋のあるすべての町。戸口と台詞は src/data/townFacilities.ts）

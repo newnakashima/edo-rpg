@@ -26,13 +26,21 @@ const buildings = Object.values(MAPS).filter((m) => buildingTown(m.id));
 
 describe('施設・民家以外の建物の屋内（テストプレイの指摘: あらゆる建物に入れるようにすべき）', () => {
   // 屋内を足した町（町を足したらここにも足す）
-  const TOWNS = ['shimizu', 'sunpu', 'nagoya', 'kyo', 'iga', 'osaka'];
+  const TOWNS = ['shimizu', 'sunpu', 'nagoya', 'kyo', 'iga', 'osaka', 'hiroshima'];
+  // 鍵をかけた戸（入れなくてよい。ユーザーの決定「鍵をかけたもの以外のすべての建物に入れる」）
+  const LOCKED: Record<string, [number, number][]> = {
+    hiroshima: [[15, 4]], // 城の門（門番が堀の橋をふさぐ）
+  };
 
-  it.each(TOWNS)('%s の戸（D）はすべて入れる（民家か、建物ごとの屋内）', (townId) => {
+  it.each(TOWNS)('%s の戸（D）はすべて入れる（民家か、建物ごとの屋内。鍵をかけた戸を除く）', (townId) => {
     const town = MAPS[townId]!;
     town.rows.forEach((row, y) =>
       [...row].forEach((ch, x) => {
         if (ch !== 'D') return;
+        if (LOCKED[townId]?.some(([lx, ly]) => lx === x && ly === y)) {
+          expect(canStep(town, x, y), `${x},${y}`).toBe(false);
+          return;
+        }
         const entrance = town.exits.find((e) => e.x === x && e.y === y);
         expect(entrance, `${x},${y}`).toBeDefined();
         expect(canStep(town, x, y), `${x},${y}`).toBe(true);
@@ -46,7 +54,8 @@ describe('施設・民家以外の建物の屋内（テストプレイの指摘:
   });
 
   it.each(TOWNS)('%s の施設の人は、町の通りではなく建物の中に立つ', (townId) => {
-    const outside = MAPS[townId]!.npcs.filter((n) => n.action).map((n) => n.id);
+    // 戸のある建物のない店（広島の水の上の牡蠣船。看板なし）は通りに残る
+    const outside = MAPS[townId]!.npcs.filter((n) => n.action && n.sign !== false).map((n) => n.id);
     expect(outside).toEqual([]);
   });
 
@@ -112,8 +121,8 @@ describe('施設・民家以外の建物の屋内（テストプレイの指摘:
         }
       }
     }
-    // 清水湊・駿府・名古屋・京・伊賀上野・大坂の賭場・居酒屋・妓楼・親分の屋敷（町を足すと増える）
-    expect(checked).toBeGreaterThanOrEqual(24);
+    // 清水湊・駿府・名古屋・京・伊賀上野・大坂・広島の賭場・居酒屋・妓楼・親分の屋敷（町を足すと増える）
+    expect(checked).toBeGreaterThanOrEqual(28);
   });
 
   it('伊賀上野の鍵屋の隠居は、通りではなく自分の家の中にいる（仇討ちのあとの台詞も家の中で聞ける）', () => {
@@ -136,5 +145,12 @@ describe('施設・民家以外の建物の屋内（テストプレイの指摘:
     expect(juku.npcs.filter((n) => n.name.includes('門弟')).length).toBeGreaterThanOrEqual(2);
     expect(MAPS.osakaDaikokuya!.npcs.some((n) => n.id === 'daikokuya')).toBe(true);
     expect(MAPS.osaka!.npcs.some((n) => ['hyogoJuku', 'daikokuya', 'osakaShibaiChaya'].includes(n.id))).toBe(false);
+  });
+
+  it('広島の船頭は船宿の中、旅籠の主人は旅籠の中にいる。城の門は鍵をかけた戸のまま（門番が橋をふさぐ）', () => {
+    expect(MAPS.hiroshimaFunayado!.npcs.some((n) => n.id === 'hiroshimaSendo')).toBe(true);
+    expect(MAPS.hiroshimaYado!.npcs.find((n) => n.id === 'hiroshimaInn')?.action).toBe('inn');
+    expect(MAPS.hiroshima!.npcs.some((n) => ['hiroshimaSendo', 'hiroshimaInn', 'hiroshimaTemple'].includes(n.id))).toBe(false);
+    expect(MAPS.hiroshima!.exits.some((e) => e.x === 15 && e.y === 4)).toBe(false);
   });
 });
