@@ -890,7 +890,7 @@ export function anyEnemyFled(state: BattleState): boolean {
 }
 
 /**
- * 勝利したときの経験値とお金。経験値は生き残った味方それぞれが全額を得る。ボスは rewardScale 倍、逃げる高報酬の敵は reward の倍率も掛ける。
+ * 勝利したときの経験値とお金。経験値は生き残った味方それぞれが全額を得る。ボスは rewardScale 倍、雑魚敵は敵ごとの reward の倍率を掛ける。
  * 呼ばれた敵と、逃げた敵は数えない。
  */
 export function computeRewards(state: BattleState): Rewards {

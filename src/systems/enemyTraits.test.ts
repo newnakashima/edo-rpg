@@ -57,7 +57,8 @@ describe('逃げる敵', () => {
 
   it('ほかの敵を倒していれば、倒した分だけ経験値・お金になり、「退けた」と出す', () => {
     const id = testEnemy('testFlee', { actions: [{ skill: 'nigeru', weight: 1 }] });
-    const b = createBattle([createMember('hero', 10)], 'm', [id, 'onibi'], 10);
+    const plain = testEnemy('testPlain', {});
+    const b = createBattle([createMember('hero', 10)], 'm', [id, plain], 10);
     get(b, 'e1').hp = 0;
     const r = resolveTurn(b, guardAll(b), seededRng(1));
     expect(r.state.outcome).toBe('victory');
@@ -89,7 +90,7 @@ describe('自爆', () => {
   it('相手の全員に防御を無視したダメージを与え、自分は倒れる。倒したのと同じく経験値・お金になる', () => {
     const id = testEnemy('testBomb', { actions: [{ skill: 'kayakuBakuhatsu', weight: 1 }] });
     const party = [createMember('hero', 30), createMember('gendo', 30)];
-    const b = createBattle(party, 'm', [id, 'ogaeru'], 10);
+    const b = createBattle(party, 'm', [id, testEnemy('testPlain', {})], 10);
     get(b, 'e1').status.sleep = 99;
     const r = resolveTurn(b, guardAll(b), seededRng(3));
     expect(r.events).toContainEqual({ type: 'skill', actor: 'e0', skill: 'kayakuBakuhatsu' });
@@ -361,7 +362,9 @@ describe('雑魚敵の個性のデータ', () => {
       expect(e.factors.def, e.id).toBeLessThanOrEqual(1.5);
       expect(e.evasion, e.id).toBeUndefined();
       expect(e.missRate, e.id).toBeUndefined();
-      expect(e.reward, e.id).toBeUndefined();
+      // 報酬のばらつき（reward）は付けるが、逃げる高報酬の敵ほど大きくしない
+      expect(e.reward?.exp ?? 1, e.id).toBeLessThanOrEqual(1.5);
+      expect(e.reward?.money ?? 1, e.id).toBeLessThanOrEqual(3);
       expect(share(e, (s) => kind(s) === 'flee' || kind(s) === 'selfDestruct'), e.id).toBe(0);
     }
   });
