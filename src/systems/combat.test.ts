@@ -17,10 +17,10 @@ describe('物理ダメージ', () => {
     expect(physicalDamage(20, 100, 0, seqRng(0, 0.5))).toEqual({ damage: 30, critical: true });
   });
 
-  it('会心率は 3% + 運 / 10 %、上限 25%', () => {
+  it('会心率は 3% + 運 / 10 %、上限 50%', () => {
     expect(criticalRate(0)).toBeCloseTo(0.03);
     expect(criticalRate(70)).toBeCloseTo(0.1);
-    expect(criticalRate(1000)).toBe(0.25);
+    expect(criticalRate(1000)).toBe(0.5);
   });
 });
 

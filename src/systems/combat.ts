@@ -6,9 +6,12 @@ export interface DamageResult {
   critical: boolean;
 }
 
-/** 会心の確率（0〜0.25）。 */
+/** 会心の確率の上限。運が大きく伸びる霞（晩成）が終盤に届く。 */
+export const CRITICAL_RATE_CAP = 0.5;
+
+/** 会心の確率（0〜CRITICAL_RATE_CAP）。 */
 export function criticalRate(luck: number): number {
-  return Math.min(0.25, 0.03 + luck / 1000);
+  return Math.min(CRITICAL_RATE_CAP, 0.03 + luck / 1000);
 }
 
 /** 物理攻撃のダメージ。会心は防御を無視して攻撃 × 1.5。critBonus は会心率に足す値（無念無想など）。 */

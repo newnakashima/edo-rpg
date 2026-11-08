@@ -56,8 +56,8 @@ export type SkillTarget = 'enemy' | 'ally' | 'allEnemies' | 'allAllies' | 'rando
 export type SkillEffect =
   /** 物理攻撃。ダメージは通常攻撃 × multiplier。hits〜maxHits 回当てる。gamble は半々で × 0 か × multiplier。 */
   | { kind: 'physical'; multiplier: number; hits?: number; maxHits?: number; sureHit?: boolean; ignoreDefense?: boolean; gamble?: boolean }
-  /** 術のダメージ（技の威力 + 術力 × 1.2 − 防御 / 4）。 */
-  | { kind: 'magic'; power: number }
+  /** 術のダメージ（技の威力 + 術力 × 1.2 − 防御 / 4）。hits 回当てる。ignoreDefense なら防御を引かない。 */
+  | { kind: 'magic'; power: number; hits?: number; ignoreDefense?: boolean }
   /** 回復（技の威力 + 術力 × 1.5）。 */
   | { kind: 'heal'; power: number }
   /** 状態異常・能力の変化を与える。 */
@@ -132,12 +132,13 @@ export const SKILLS: Record<string, SkillDef> = {
   hannya: { id: 'hannya', name: '般若心経', mp: 10, target: 'allAllies', effect: { kind: 'heal', power: 9 }, field: true, description: '味方全体を回復する' },
   fudo: { id: 'fudo', name: '不動明王の火炎', mp: 12, target: 'allEnemies', effect: { kind: 'magic', power: 16 }, elements: ['fire', 'holy'], description: '敵全体に火・祓の炎' },
   // お凛（鉄砲打ち）
-  neraiuchi: { id: 'neraiuchi', name: '狙い撃ち', mp: 3, target: 'enemy', effect: { kind: 'physical', multiplier: 1.5, sureHit: true }, description: '必ず当たる強い一発' },
-  sandan: { id: 'sandan', name: '散弾', mp: 5, target: 'allEnemies', effect: { kind: 'physical', multiplier: 0.7 }, description: '敵全体を撃つ' },
-  kayakudan: { id: 'kayakudan', name: '火薬弾', mp: 4, target: 'enemy', effect: { kind: 'physical', multiplier: 1.2 }, elements: ['fire'], description: '火の弾' },
-  raikandan: { id: 'raikandan', name: '雷管弾', mp: 5, target: 'enemy', effect: { kind: 'physical', multiplier: 1.2 }, elements: ['thunder'], description: 'からくりに効く雷の弾' },
-  hayago: { id: 'hayago', name: '早合', mp: 6, target: 'enemy', effect: { kind: 'physical', multiplier: 1.0, hits: 2 }, description: '2 回撃つ' },
-  katami: { id: 'katami', name: '父の形見', mp: 12, target: 'enemy', effect: { kind: 'physical', multiplier: 2.5, ignoreDefense: true }, description: '防御を無視する一撃' },
+  // お凛の弾はからくりの仕掛けで撃つので、威力は術力で決まる（術のダメージ。術は外れない）
+  neraiuchi: { id: 'neraiuchi', name: '狙い撃ち', mp: 3, target: 'enemy', effect: { kind: 'magic', power: 8 }, description: '必ず当たる強い一発' },
+  sandan: { id: 'sandan', name: '散弾', mp: 5, target: 'allEnemies', effect: { kind: 'magic', power: 5 }, description: '敵全体を撃つ' },
+  kayakudan: { id: 'kayakudan', name: '火薬弾', mp: 4, target: 'enemy', effect: { kind: 'magic', power: 9 }, elements: ['fire'], description: '火の弾' },
+  raikandan: { id: 'raikandan', name: '雷管弾', mp: 5, target: 'enemy', effect: { kind: 'magic', power: 10 }, elements: ['thunder'], description: 'からくりに効く雷の弾' },
+  hayago: { id: 'hayago', name: '早合', mp: 6, target: 'enemy', effect: { kind: 'magic', power: 6, hits: 2 }, description: '2 回撃つ' },
+  katami: { id: 'katami', name: '父の形見', mp: 12, target: 'enemy', effect: { kind: 'magic', power: 24, ignoreDefense: true }, description: '防御を無視する一撃' },
   // 榊兵庫（侍、第 5 章のゲスト）
   hyogoKesagiri: { id: 'hyogoKesagiri', name: '袈裟斬り', mp: 3, target: 'enemy', effect: { kind: 'physical', multiplier: 1.5 }, description: '肩から斬り下ろす' },
   tsubamegaeshi: { id: 'tsubamegaeshi', name: '燕返し', mp: 6, target: 'enemy', effect: { kind: 'physical', multiplier: 1.0, hits: 2 }, description: '2 回斬る' },
@@ -267,9 +268,10 @@ export const LEARNSETS: Record<CharacterId, LearnableSkill[]> = {
     { skill: 'neraiuchi', level: 1 },
     { skill: 'sandan', level: 1 },
     { skill: 'kayakudan', level: 1 },
-    { skill: 'raikandan', level: 17 },
-    { skill: 'hayago', level: 21 },
-    { skill: 'katami', level: 26 },
+    // Lv1 で加わるので、技は低めのレベルから覚える
+    { skill: 'raikandan', level: 8 },
+    { skill: 'hayago', level: 15 },
+    { skill: 'katami', level: 24 },
   ],
   // ゲストは Lv18 で加入し成長しないので、すべて加入時に覚えている
   hyogo: [
