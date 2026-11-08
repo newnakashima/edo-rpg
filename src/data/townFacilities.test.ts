@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MAPS } from './maps';
+import { MAPS, tileAt } from './maps';
 import { signKind, signPosition } from './signs';
 import { TOWN_FACILITY_DOORS, TOWN_FACILITY_KINDS } from './townFacilities';
 
@@ -26,12 +26,28 @@ describe('湯屋・賭場・居酒屋・妓楼', () => {
     }
   });
 
-  it('施設の戸は、ほかの施設の人やほかの町の人の戸口と重ならない（戸の前に別の人が立たない）', () => {
+  it('施設の戸の真下に立つのは、その施設の人だけ（ほかの町の人が戸口をふさがない）', () => {
     for (const map of shopTowns) {
       for (const kind of TOWN_FACILITY_KINDS) {
         const door = TOWN_FACILITY_DOORS[map.id]![kind];
         const front = map.npcs.filter((n) => n.x === door.x && n.y === door.y + 1);
         expect(front.map((n) => n.action), `${map.id} ${kind}`).toEqual([kind]);
+      }
+    }
+  });
+
+  it('施設の人は通れるマスに立ち、出口・乗るイベント・関所・入口の目印と重ならない', () => {
+    for (const map of shopTowns) {
+      for (const kind of TOWN_FACILITY_KINDS) {
+        const door = TOWN_FACILITY_DOORS[map.id]![kind];
+        const at = { x: door.x, y: door.y + 1 };
+        const label = `${map.id} ${kind}`;
+        expect(tileAt(map, at.x, at.y)?.blocked, label).toBe(false);
+        const same = (p: { x: number; y: number }) => Math.floor(p.x) === at.x && p.y === at.y;
+        expect(map.exits.some(same), label).toBe(false);
+        expect((map.triggers ?? []).some(same), label).toBe(false);
+        expect((map.gates ?? []).some(same), label).toBe(false);
+        expect((map.marks ?? []).some((m) => Math.abs(m.x - at.x) < 1 && m.y === at.y), label).toBe(false);
       }
     }
   });

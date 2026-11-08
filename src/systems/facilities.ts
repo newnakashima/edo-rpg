@@ -58,7 +58,10 @@ export function gyoroPrice(areaLevel: number): number {
   return innPrice(areaLevel) * 3;
 }
 
-/** 代金を払い、戦闘不能でない全員を heal で回復する。 */
+/**
+ * 代金を払い、戦闘不能でない全員を heal で回復する。
+ * 旅籠（stayAtInn）と同じく、回復する余地がなくても代金を取る。直すなら旅籠と合わせて、満タンのときは { ok: false, reason: 'full' } を返す。
+ */
 function payAndHeal(
   state: GameState,
   price: number,
@@ -88,7 +91,7 @@ export function visitGyoro(state: GameState, areaLevel: number): PurchaseResult 
 export const CHOHAN_BETS = [10, 100, 1000] as const;
 
 /** 勝ったときに賭場が取る寺銭（勝ち分に対する割合。切り捨て）。 */
-export const TERASEN_RATE = 0.05;
+const TERASEN_RATE = 0.05;
 
 /** 丁（偶数）か半（奇数）か。 */
 export type ChohanCall = 'cho' | 'han';

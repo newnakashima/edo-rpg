@@ -6,7 +6,7 @@ const teahouse = MAPS.shimizu!.npcs.find((n) => n.action === 'teahouse')!;
 const at = (mapId: string, x: number, y: number, flags: Record<string, boolean> = {}) => ({ mapId, x, y, flags });
 
 describe('火のある場所', () => {
-  it('茶屋・旅籠の人と焚き火から FIRE_RANGE のマス以内（斜めも）が火のそば', () => {
+  it('茶屋・旅籠（と居酒屋）の人と焚き火から FIRE_RANGE のマス以内（斜めも）が火のそば', () => {
     expect(nearFire(at('shimizu', teahouse.x + FIRE_RANGE, teahouse.y + FIRE_RANGE))).toBe(true);
     expect(nearFire(at('shimizu', teahouse.x, teahouse.y + FIRE_RANGE + 1))).toBe(false);
     const inn = MAPS.shimizu!.npcs.find((n) => n.action === 'inn')!;
