@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Facing } from '../systems/gameState';
 import html from '../../index.html?raw';
-import { BLOCKED_DEFAULTS, bindDpad, blockDefaults, DPAD_DEAD_ZONE, DpadTracker, directionFromOffset, isPrimaryPress } from './dpad';
+import { BLOCKED_DEFAULTS, bindButton, bindDpad, padSink, blockDefaults, DPAD_DEAD_ZONE, DpadTracker, directionFromOffset, isPrimaryPress } from './dpad';
 
 describe('directionFromOffset', () => {
   it('腕の上は、その向きになる', () => {
@@ -255,5 +255,40 @@ describe('index.html の十字キー', () => {
       expect(rule, sel).toContain('-webkit-user-select: none');
       expect(rule, sel).toContain('-webkit-touch-callout: none');
     }
+  });
+});
+
+describe('padSink / bindButton', () => {
+  it('十字キーの向きを pad の held と「押した瞬間」に伝える', () => {
+    const held = new Set<Facing>();
+    const pressed: Facing[] = [];
+    const dpad = new FakeDpad();
+    bindDpad(dpad, padSink({ held, press: (k) => pressed.push(k) }), new EventTarget());
+    pointer(dpad, 'pointerdown', { x: 140 });
+    pointer(dpad, 'pointermove', { y: 150, x: 100 });
+    expect([...held]).toEqual(['down']);
+    expect(pressed).toEqual(['right', 'down']);
+    pointer(dpad, 'pointerup');
+    expect(held.size).toBe(0);
+  });
+
+  it('ボタンは押した瞬間を伝えて光り、離すと消える。右クリックは無視し、タッチの既定の動作を止める', () => {
+    const classes = new Set<string>();
+    const el = Object.assign(new EventTarget(), { classList: { add: (c: string) => classes.add(c), remove: (c: string) => classes.delete(c) } });
+    let presses = 0;
+    bindButton(el, () => presses++);
+    pointer(el, 'pointerdown', { pointerType: 'mouse', button: 2 });
+    expect(presses).toBe(0);
+    expect(pointer(el, 'pointerdown')).toBe(true);
+    expect(presses).toBe(1);
+    expect(classes.has('active')).toBe(true);
+    for (const release of ['pointerup', 'pointercancel', 'pointerleave']) {
+      classes.add('active');
+      pointer(el, release);
+      expect(classes.has('active'), release).toBe(false);
+    }
+    const e = new Event('touchstart', { cancelable: true });
+    el.dispatchEvent(e);
+    expect(e.defaultPrevented).toBe(true);
   });
 });

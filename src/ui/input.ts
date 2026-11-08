@@ -1,7 +1,7 @@
 // キーボードと画面上の仮想パッド（DOM のボタン）の入力をまとめる。
 import Phaser from 'phaser';
 import type { Facing } from '../systems/gameState';
-import { bindDpad, blockDefaults, isPrimaryPress } from './dpad';
+import { bindButton, bindDpad, padSink } from './dpad';
 
 export type Button = 'ok' | 'cancel';
 
@@ -36,36 +36,10 @@ const DIRECTIONS: Facing[] = ['up', 'down', 'left', 'right'];
 /** index.html の #pad の十字キーとボタンに、押下・離しのイベントをつなぐ。 */
 export function bindVirtualPad(root: HTMLElement): void {
   const dpad = root.querySelector<HTMLElement>('.dpad');
-  if (dpad) {
-    bindDpad(
-      dpad,
-      {
-        hold: (dir) => {
-          pad.held.add(dir);
-          pad.press(dir);
-        },
-        release: (dir) => pad.held.delete(dir),
-      },
-      window,
-    );
-  }
+  if (dpad) bindDpad(dpad, padSink(pad), window);
   for (const el of Array.from(root.querySelectorAll<HTMLElement>('[data-key]'))) {
     const key = el.dataset.key as Button;
-    const down = (e: PointerEvent) => {
-      e.preventDefault();
-      if (!isPrimaryPress(e)) return;
-      el.classList.add('active');
-      pad.press(key);
-    };
-    const up = (e: Event) => {
-      e.preventDefault();
-      el.classList.remove('active');
-    };
-    el.addEventListener('pointerdown', down);
-    el.addEventListener('pointerup', up);
-    el.addEventListener('pointercancel', up);
-    el.addEventListener('pointerleave', up);
-    blockDefaults(el);
+    bindButton(el, () => pad.press(key));
   }
   // タブを切り替えたときに押しっぱなしにならないようにする
   window.addEventListener('blur', () => pad.clear());

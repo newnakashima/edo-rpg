@@ -145,3 +145,42 @@ export function bindDpad(dpad: DpadElement, sink: DpadSink, blurTarget: EventTar
   blurTarget.addEventListener('blur', () => tracker.reset());
   return tracker;
 }
+
+/** 押された向きを溜めるところ（input.ts の pad）。 */
+export interface PadLike {
+  readonly held: Set<Facing>;
+  press(key: Facing): void;
+}
+
+/** 十字キーの向きを pad に伝える。押した瞬間（滑らせて変えたときも）はメニューのカーソル送りにも使う。 */
+export function padSink(pad: PadLike): DpadSink {
+  return {
+    hold: (dir) => {
+      pad.held.add(dir);
+      pad.press(dir);
+    },
+    release: (dir) => pad.held.delete(dir),
+  };
+}
+
+/** bindButton が使う、ボタンの要素の性質。 */
+export interface ButtonElement extends EventTarget {
+  classList: { add(c: string): void; remove(c: string): void };
+}
+
+/** 決定・取消のボタンに、押下・離しのイベントをつなぐ。押している間は光らせる。 */
+export function bindButton(el: ButtonElement, onPress: () => void): void {
+  el.addEventListener('pointerdown', (ev) => {
+    const e = ev as PointerEvent;
+    e.preventDefault();
+    if (!isPrimaryPress(e)) return;
+    el.classList.add('active');
+    onPress();
+  });
+  const up = (e: Event) => {
+    e.preventDefault();
+    el.classList.remove('active');
+  };
+  for (const type of ['pointerup', 'pointercancel', 'pointerleave']) el.addEventListener(type, up);
+  blockDefaults(el);
+}
