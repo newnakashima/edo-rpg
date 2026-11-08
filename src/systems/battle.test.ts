@@ -361,3 +361,59 @@ describe('敵が仲間を呼ぶ（鉄瓶のからくり兵を呼ぶ）', () => {
     expect(computeRewards(b)).toEqual({ exp: { p0: enemyExp(7) * 5, p1: enemyExp(7) * 5 }, money: enemyMoney(7) * 5 });
   });
 });
+
+describe('酒と酩酊', () => {
+  /** 主人公（気力 0）と、眠っていて動かない山犬。 */
+  function drinking(items: Record<string, number> = { sake: 1 }): BattleState {
+    const b = createBattle([createMember('hero', 10)], 'm', ['yamainu'], 1, { items });
+    b.combatants[0]!.mp = 0;
+    b.combatants[1]!.hp = 9999;
+    b.combatants[1]!.status = { sleep: 99 };
+    return b;
+  }
+
+  it('戦闘中に飲むと気力がすべて戻り、酩酊になる', () => {
+    const b = drinking();
+    const { state, events } = resolveTurn(b, { p0: { kind: 'item', item: 'sake', target: 'p0' } }, seededRng(1));
+    const p0 = state.combatants[0]!;
+    expect(p0.mp).toBe(p0.stats.maxMp);
+    expect(p0.status.drunk).toBeDefined();
+    expect(state.items.sake).toBeUndefined();
+    expect(events).toContainEqual({ type: 'healMp', target: 'p0', amount: p0.stats.maxMp });
+    expect(events).toContainEqual({ type: 'status', target: 'p0', status: 'drunk' });
+  });
+
+  it('気力が満タンなら飲まない', () => {
+    const b = drinking();
+    b.combatants[0]!.mp = b.combatants[0]!.stats.maxMp;
+    const { state, events } = resolveTurn(b, { p0: { kind: 'item', item: 'sake', target: 'p0' } }, seededRng(1));
+    expect(state.items.sake).toBe(1);
+    expect(state.combatants[0]!.status.drunk).toBeUndefined();
+    expect(events).toContainEqual(expect.objectContaining({ type: 'itemUnused', item: 'sake' }));
+  });
+
+  it('酩酊はターンが過ぎても切れず、反魂丹でも治らない', () => {
+    let state = resolveTurn(drinking({ sake: 1, hangontan: 1 }), { p0: { kind: 'item', item: 'sake', target: 'p0' } }, seededRng(1)).state;
+    for (let i = 0; i < 10; i++) state = resolveTurn(state, { p0: { kind: 'guard' } }, seededRng(i)).state;
+    const cured = resolveTurn(state, { p0: { kind: 'item', item: 'hangontan', target: 'p0' } }, seededRng(2));
+    expect(cured.state.combatants[0]!.status.drunk).toBeDefined();
+    expect(cured.events.some((e) => e.type === 'statusEnd' && e.status === 'drunk')).toBe(false);
+  });
+
+  it('酩酊だと通常攻撃が半分ほど外れる', () => {
+    let misses = 0;
+    let sober = 0;
+    const n = 300;
+    for (let i = 0; i < n; i++) {
+      const drunk = drinking();
+      drunk.combatants[0]!.status = { drunk: 1 };
+      const a = resolveTurn(drunk, { p0: { kind: 'attack', target: 'e0' } }, seededRng(i)).events;
+      if (a.some((e) => e.type === 'miss')) misses++;
+      const b = resolveTurn(drinking(), { p0: { kind: 'attack', target: 'e0' } }, seededRng(i)).events;
+      if (b.some((e) => e.type === 'miss')) sober++;
+    }
+    expect(sober).toBe(0);
+    expect(misses / n).toBeGreaterThan(0.4);
+    expect(misses / n).toBeLessThan(0.6);
+  });
+});

@@ -17,5 +17,6 @@ describe('技', () => {
   it('状態異常のマークは状態異常だけを決まった順に出す', () => {
     expect(ailmentMarks(['sleep', 'atkUp', 'poison', 'bind'])).toBe('毒眠影');
     expect(ailmentMarks([])).toBe('');
+    expect(ailmentMarks(['drunk', 'poison'])).toBe('毒酔');
   });
 });

@@ -348,7 +348,7 @@ class TurnContext {
     options: { multiplier?: number; sureHit?: boolean; ignoreDefense?: boolean; elements?: Element[] } = {},
   ): { damage: number; critical: boolean; weak: boolean; resisted: boolean } | null {
     if (!options.sureHit) {
-      const miss = missChance(!!actor.status.accDown, !!target.status.evade, innateMiss(actor) + innateEvasion(target));
+      const miss = missChance(!!actor.status.accDown, !!target.status.evade, innateMiss(actor) + innateEvasion(target), !!actor.status.drunk);
       if (miss > 0 && this.rng() < miss) return null;
     }
     const def = options.ignoreDefense ? 0 : effectiveDef(target);
@@ -639,6 +639,17 @@ class TurnContext {
         if (mp > 0) this.events.push({ type: 'healMp', target: target.key, amount: mp });
         return;
       }
+      case 'fullMp': {
+        const amount = target.stats.maxMp - target.mp;
+        target.mp += amount;
+        this.events.push({ type: 'healMp', target: target.key, amount });
+        // 酒: その戦闘の最後まで酔う（ターンでは切れない。endOfTurn）
+        if (effect.drunk) {
+          target.status.drunk = 1;
+          this.events.push({ type: 'status', target: target.key, status: 'drunk' });
+        }
+        return;
+      }
       case 'cure':
         this.cure(target, effect.ailment);
         return;
@@ -745,8 +756,8 @@ class TurnContext {
         if (!isAlive(c)) continue;
       }
       for (const id of Object.keys(c.status) as StatusId[]) {
-        // 影縫いは次の行動を止めるまで残す
-        if (id === 'bind' || this.fresh.has(`${c.key}:${id}`)) continue;
+        // 影縫いは次の行動を止めるまで、酩酊は戦闘の最後まで残す
+        if (id === 'bind' || id === 'drunk' || this.fresh.has(`${c.key}:${id}`)) continue;
         const left = (c.status[id] ?? 0) - 1;
         if (left > 0) {
           c.status[id] = left;
@@ -770,6 +781,7 @@ export function itemWorks(effect: ItemEffect, target: Combatant): boolean {
     case 'healHp':
       return target.hp < target.stats.maxHp;
     case 'healMp':
+    case 'fullMp':
       return target.mp < target.stats.maxMp;
     case 'healBoth':
       return target.hp < target.stats.maxHp || target.mp < target.stats.maxMp;

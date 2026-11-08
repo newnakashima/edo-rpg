@@ -73,8 +73,13 @@ export const MISS_CHANCE_CAP = 0.85;
 /**
  * 物理攻撃が外れる確率。命中を下げられている・回避を上げているときはそれぞれ 35%（合わせて上限 70%）。
  * innate は敵の生まれつきの外れる確率（使い手の missRate + 相手の evasion）で、足したあと上限 85% にする。
+ * 使い手が酩酊（酒）なら、そのうえで当たる確率を半分にする（上限 85% のあとにかけるので、外れる確率は最大 92.5%）。
  */
-export function missChance(attackerAccDown: boolean, targetEvade: boolean, innate = 0): number {
+export function missChance(attackerAccDown: boolean, targetEvade: boolean, innate = 0, attackerDrunk = false): number {
   const status = Math.min(0.7, (attackerAccDown ? 0.35 : 0) + (targetEvade ? 0.35 : 0));
-  return Math.min(MISS_CHANCE_CAP, status + innate);
+  const miss = Math.min(MISS_CHANCE_CAP, status + innate);
+  return attackerDrunk ? 1 - (1 - miss) * DRUNK_HIT_RATE : miss;
 }
+
+/** 酩酊のときの、当たる確率にかける倍率。 */
+export const DRUNK_HIT_RATE = 0.5;

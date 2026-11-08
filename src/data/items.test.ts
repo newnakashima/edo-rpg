@@ -65,6 +65,14 @@ describe('道具の品ぞろえ', () => {
     for (const shop of yorozu) expect(SHOPS[shop.id.replace(/Yorozu$/, 'Chaya')]?.name, shop.id).toBe('茶屋');
   });
 
+  it('酒はどの町の茶屋でも買え、気力をすべて戻し、戦闘中は酩酊になる', () => {
+    expect(ITEMS.sake?.effect).toEqual({ kind: 'fullMp', drunk: true });
+    expect(ITEMS.sake?.kind).toBe('food');
+    expect(ITEMS.sake?.field).toBe(true);
+    expect(ITEMS.sake?.battle).toBeUndefined();
+    for (const shop of Object.values(SHOPS).filter((x) => x.name === '茶屋')) expect(shop.goods, shop.id).toContain('sake');
+  });
+
   it('同じ効き目の道具は、高いほど回復量が多い', () => {
     const byKind = (kind: 'healHp' | 'healMp') =>
       Object.values(ITEMS)

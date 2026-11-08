@@ -460,6 +460,8 @@ export class BattleScene extends Phaser.Scene {
         return `${name}の姿がいくつにも分かれた！`;
       case 'critUp':
         return `${name}は心を研ぎ澄ませた！`;
+      case 'drunk':
+        return `${name}は酔っぱらった！\n足もとがおぼつかない。`;
     }
   }
 

@@ -72,6 +72,12 @@ describe('術・回復・属性・状態異常', () => {
     expect(missChance(true, true)).toBe(0.7);
   });
 
+  it('酩酊なら当たる確率が半分になる（上限 85% のあとにかける）', () => {
+    expect(missChance(false, false, 0, true)).toBe(0.5);
+    expect(missChance(true, false, 0, true)).toBeCloseTo(0.675);
+    expect(missChance(true, true, 0.5, true)).toBeCloseTo(0.925);
+  });
+
   it('会心↑ は会心率に足す', () => {
     expect(physicalDamage(20, 100, 0, seqRng(0.2, 0.5), 0.3).critical).toBe(true);
   });
