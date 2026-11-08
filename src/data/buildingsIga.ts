@@ -54,12 +54,12 @@ export const IGA_BUILDINGS: BuildingDef[] = [
       },
       ...furniture('igaChaya', [
         { name: '竈', x: 1, y: 1, object: 'kamado', lines: ['竈で団子を蒸す湯が、ぐらぐらと煮え立っている。'] },
-        { name: '囲炉裏', x: 6, y: 2, object: 'irori', lines: ['囲炉裏の灰に、串に刺した田楽がならべて立ててある。'] },
-        { name: '掛け軸', x: 8, y: 1, object: 'kakejiku', lines: ['白い石垣の上野の城を描いた掛け軸だ。'] },
+        { name: '囲炉裏', x: 6, y: 2, object: 'irori', lines: ['囲炉裏の自在鉤に鍋が掛かり、味噌の田楽を温めている。'] },
+        { name: '掛け軸', x: 8, y: 1, object: 'kakejiku', lines: ['「茶」の一字を大書した掛け軸だ。'] },
       ]),
     ],
   },
-  // 居酒屋: 左奥に竈と酒樽の板場（土間）、その前に板の付け台、右奥に畳の小上がり、手前は土間
+  // 居酒屋: 左奥に竈と酒樽の板場（土間）、その前に板の付け台、右奥と手前の左に畳の小上がり、ほかは土間
   {
     door: { x: 9, y: 15 },
     id: 'igaIzakaya',
@@ -164,7 +164,7 @@ export const IGA_BUILDINGS: BuildingDef[] = [
         { name: '木箱', x: 8, y: 1, object: 'kibako', lines: ['炭俵と、薬の包みを詰めた木箱が積んである。'] },
         { name: '木箱', x: 12, y: 1, object: 'kibako', lines: ['伊賀焼の壺を、藁にくるんで詰めた木箱だ。'] },
         { name: '品棚', x: 1, y: 6, object: 'shinadana', lines: ['毒消しと熊の胆が、ずらりと並んでいる。'] },
-        { name: '品棚', x: 12, y: 6, object: 'shinadana', lines: ['キセルと煙草の葉、草鞋が並んでいる。'] },
+        { name: '品棚', x: 12, y: 6, object: 'shinadana', lines: ['キセルと煙草の葉、道しるべの札が並んでいる。'] },
       ]),
     ],
   },
@@ -219,7 +219,7 @@ export const IGA_BUILDINGS: BuildingDef[] = [
         lines: ['薬売り「大和から山を越えて、伊賀・伊勢と売り歩いとります。この辺りの山道は、追い剥ぎより蜘蛛のほうが怖いですな」'],
       },
       ...furniture('igaYado', [
-        { name: '囲炉裏', x: 7, y: 6, object: 'irori', lines: ['囲炉裏に太い薪がくべられ、泊まり客が手をかざしている。'] },
+        { name: '囲炉裏', x: 7, y: 6, object: 'irori', lines: ['囲炉裏の自在鉤に鉄鍋が掛かり、泊まり客の夕餉の汁が煮えている。'] },
         { name: '行灯', x: 5, y: 1, object: 'andon', lines: ANDON_LINES },
         { name: '箪笥', x: 13, y: 1, object: 'tansu', lines: ['客の荷を預かる箪笥だ。'] },
         { name: '木箱', x: 11, y: 1, object: 'kibako', lines: ['泊まり客の荷だ。「大和郡山行き」の札が付いている。'] },
@@ -227,7 +227,7 @@ export const IGA_BUILDINGS: BuildingDef[] = [
       ]),
     ],
   },
-  // 柘植一家の屋敷: 左奥に畳の親分の座敷、右に囲炉裏の広い板の間、手前に土間
+  // 柘植一家の屋敷: 左奥に畳の座敷、右に囲炉裏の広い板の間（若い衆が客を迎える）、手前に土間
   {
     door: { x: 41, y: 8 },
     id: 'igaOyabun',
@@ -365,13 +365,13 @@ export const IGA_BUILDINGS: BuildingDef[] = [
         lines: ['おかみ「うちの人は、仇討ちの話になると止まらんでねえ。お茶でも飲んで、気長に聞いてやってくださいな」'],
       },
       ...furniture('igaInkyo', [
-        { name: '掛け軸', x: 1, y: 1, object: 'kakejiku', lines: ['辻で二人の侍が斬り結ぶさまを描いた絵だ。隅に「鍵屋の辻」と書いてある。'] },
+        { name: '掛け軸', x: 1, y: 1, object: 'kakejiku', lines: ['「本懐」の二文字を大書した掛け軸だ。仇討ちのあった年に、辻を通った剣客が書き残していったものだという。'] },
         { name: '箪笥', x: 4, y: 1, object: 'tansu', lines: ['茶屋のころの古い湯呑みが、大事にしまってある。'] },
         { name: '竈', x: 7, y: 1, object: 'kamado', lines: ['竈に土瓶が掛かり、番茶が煮出されている。'] },
       ]),
     ],
   },
-  // 刀鍛冶: 左奥に畳の主人の部屋、右奥に火床と金床の鍛冶場（土間）、手前に板の間の見世と土間
+  // 刀鍛冶: 奥の全幅に火床と金床の鍛冶場（土間）、中ほど左に畳の主人の部屋、右に板の間の研ぎ場、手前に板の見世と土間
   {
     door: { x: 14, y: 22 },
     id: 'igaKaji',
@@ -422,7 +422,7 @@ export const IGA_BUILDINGS: BuildingDef[] = [
         lines: ['山伏「赤目の滝で修行しておる者です。錫杖の頭を鉄で打ち直してもらいましてな。山の蜘蛛も、これで払えましょう」'],
       },
       ...furniture('igaKaji', [
-        { name: '火床', x: 1, y: 1, object: 'kamado', lines: ['鞴で風を送る火床だ。炭が赤々と燃えている。'] },
+        { name: '火床', x: 1, y: 1, object: 'kamado', lines: ['炭を熾した火床だ。焼き入れの湯を沸かす釜も載っている。'] },
         { name: '金床', x: 3, y: 1, object: 'kanatoko', lines: ['焼けた鋼を打つ金床だ。打ちかけの小太刀が載っている。'] },
         { name: '文机', x: 1, y: 5, object: 'fuzukue', lines: ['刀の銘を書きつけた帳面が載っている。'] },
         { name: '刀掛け', x: 9, y: 5, object: 'katanakake', lines: ['反りの浅い忍び刀と、小太刀が掛けてある。'] },
@@ -483,7 +483,7 @@ export const IGA_BUILDINGS: BuildingDef[] = [
       ...furniture('igaGyoro', [
         { name: '屏風', x: 1, y: 1, object: 'byobu', lines: ['金地に赤目の滝を描いた屏風だ。'] },
         { name: '行灯', x: 6, y: 1, object: 'andon', lines: ANDON_LINES },
-        { name: '掛け軸', x: 13, y: 1, object: 'kakejiku', lines: ['月の出の伊賀の山並みを描いた掛け軸だ。'] },
+        { name: '掛け軸', x: 13, y: 1, object: 'kakejiku', lines: ['盆踊りの唄の文句を散らし書きにした掛け軸だ。'] },
       ]),
     ],
   },
@@ -542,7 +542,7 @@ export const IGA_BUILDINGS: BuildingDef[] = [
         { name: '行灯', x: 6, y: 1, object: 'andon', lines: ANDON_LINES },
         { name: '行灯', x: 10, y: 1, object: 'andon', lines: ANDON_LINES },
         { name: '奉納の酒樽', x: 3, y: 7, object: 'sakadaru', lines: ['伊賀の蔵元が奉納した菰樽が積んである。秋の天神祭に振る舞われるらしい。'] },
-        { name: '絵馬の掛け軸', x: 15, y: 2, object: 'kakejiku', lines: ['手習いの上達を願う絵馬が、何枚も奉納されている。'] },
+        { name: '奉納の書', x: 15, y: 2, object: 'kakejiku', lines: ['手習いの子が天神さまに奉納した書だ。大きな字で「学」と書いてある。'] },
       ]),
     ],
   },
@@ -602,7 +602,7 @@ export const IGA_BUILDINGS: BuildingDef[] = [
       ]),
     ],
   },
-  // 賭場: 奥に盆茣蓙を敷いた畳の広間、右奥に板の間の胴元の帳場、手前は土間
+  // 賭場: 奥に盆茣蓙を敷いた畳の広間、手前の左に板の間の胴元の帳場、ほかは土間
   {
     door: { x: 39, y: 25 },
     id: 'igaTobaku',
