@@ -140,6 +140,11 @@ export interface NpcDef {
   hideFlag?: string;
   /** このフラグが立つまでは姿を見せない（あとから現れる人。第 8 章の長屋の小吉など）。 */
   showFlag?: string;
+  /**
+   * 施設の看板（src/data/signs.ts）を掛ける壁のマス。省くと、人の真上（なければ斜め上）の戸の隣の壁に掛ける。
+   * false なら掛けない（戸のない施設。外の社の前に立つ神主、舟の牡蠣船など）。
+   */
+  sign?: { x: number; y: number } | false;
 }
 
 /** マップに入ったとき、または決まった場所に乗ったときに行うイベント。unless のフラグが立っていれば行わない。 */
@@ -322,6 +327,8 @@ export const MAPS: Record<string, MapDef> = {
       },
       {
         id: 'temple',
+        // 看板: 寺の戸から 3 マス下に立つ
+        sign: { x: 8, y: 4 },
         name: '寺の住職',
         x: 9,
         y: 7,
@@ -835,6 +842,8 @@ MAPS.sunpu = {
     },
     {
       id: 'sengenKannushi',
+      // 看板: 外の社の前に立つ（戸のある建物がない）
+      sign: false,
       name: '浅間神社の神主',
       x: 7,
       y: 10,
@@ -1722,6 +1731,8 @@ MAPS.kyo = {
   npcs: [
     {
       id: 'kyoTeahouse',
+      // 看板: 戸のない店先の茶屋。娘の頭にかからないよう、右隣の壁に掛ける
+      sign: { x: 4, y: 9 },
       name: '茶屋の娘',
       x: 3,
       y: 10,
@@ -1759,6 +1770,8 @@ MAPS.kyo = {
     },
     {
       id: 'yasakaKannushi',
+      // 看板: 社殿の戸から 2 マス下に立つ
+      sign: { x: 47, y: 7 },
       name: '八坂の神主',
       x: 48,
       y: 9,
@@ -2543,6 +2556,8 @@ MAPS.osaka = {
     },
     {
       id: 'osakaTennoji',
+      // 看板: 寺の戸から 2 マス下に立つ
+      sign: { x: 41, y: 32 },
       name: '天王寺の僧',
       x: 42,
       y: 34,
@@ -2909,6 +2924,8 @@ MAPS.hiroshima = {
     },
     {
       id: 'hiroshimaInn',
+      // 看板: 旅籠の戸の左の壁の前に立つ
+      sign: { x: 37, y: 17 },
       name: '旅籠の主人',
       x: 36,
       y: 18,
@@ -2919,6 +2936,8 @@ MAPS.hiroshima = {
     },
     {
       id: 'kakibune',
+      // 看板: 水の上の舟（戸のある建物がない）
+      sign: false,
       name: '牡蠣船の売り子',
       x: 26,
       y: 24,
@@ -3650,6 +3669,8 @@ MAPS.kanazawa = {
     },
     {
       id: 'kanazawaInn',
+      // 看板: 旅籠の戸から右下に離れて立つ
+      sign: { x: 7, y: 21 },
       name: '旅籠の主人',
       x: 9,
       y: 22,
@@ -3707,6 +3728,8 @@ MAPS.kanazawa = {
     },
     {
       id: 'kanazawaHikyaku',
+      // 看板: 道ばたに立つ（前に飛脚屋の戸がない）
+      sign: false,
       name: '飛脚',
       x: 16,
       y: 23,
@@ -5805,6 +5828,8 @@ MAPS.edojo = {
   npcs: [
     {
       id: 'kokichiJo',
+      // 看板: 城の中（施設ではない）
+      sign: false,
       name: '小吉',
       x: 17,
       y: 27,
@@ -5948,6 +5973,8 @@ MAPS.matsuNoRoka = {
     },
     {
       id: 'kintaRoka',
+      // 看板: 城の中（施設ではない）
+      sign: false,
       name: '金太',
       x: 5,
       y: 11,
