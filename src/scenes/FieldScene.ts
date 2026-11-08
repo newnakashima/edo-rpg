@@ -3,7 +3,7 @@ import { ENCOUNTERS } from '../data/enemies';
 import { closedGateAt, encounterAt, MAPS, npcLines, npcObjectFrame, npcVisible, respawnPoint, START_POSITION, tileAt, townAction, type EventTrigger, type MapDef, type NpcDef } from '../data/maps';
 import { mapTileImages } from '../data/mapParts';
 import { pickGroup, stepOnRoad } from '../systems/encounter';
-import { dangoPrice, eatDango, innPrice, stayAtInn } from '../systems/facilities';
+import { dangoPrice, eatDango, innPrice, stayAtInn, teahouseChoices } from '../systems/facilities';
 import { prayAtTemple, templePrice } from '../systems/shop';
 import { SHOPS } from '../data/shops';
 import type { Facing } from '../systems/gameState';
@@ -446,7 +446,7 @@ export class FieldScene extends Phaser.Scene {
         setState({ ...s, flags: { ...s.flags, [npc.setsFlag]: true } });
       }
       if (npc.action === 'inn') this.openInn();
-      if (npc.action === 'teahouse') this.openTeahouse();
+      if (npc.action === 'teahouse') this.openTeahouse(npc.shop);
       if (npc.action === 'shop') this.openShop(npc.shop);
       if (npc.action === 'temple') this.openTemple();
       if (npc.action === 'hikyaku') this.openHikyaku();
@@ -584,17 +584,25 @@ export class FieldScene extends Phaser.Scene {
     this.pushOverlay(menu);
   }
 
-  private openTeahouse(): void {
+  /** 茶屋。その場で団子を食べる（全員を少し回復）か、持ち帰りの飲み物・食べ物を買う（shopId の店）。 */
+  private openTeahouse(shopId: string | undefined): void {
     const price = dangoPrice(this.map.areaLevel);
+    const choices = teahouseChoices(shopId !== undefined);
+    const labels = { eat: `団子を食べる（${price} 文）`, buy: '品を買う', cancel: 'やめる' };
     const menu: Menu = new Menu(
       this,
       GAME_WIDTH - 140,
       40,
       130,
-      [{ label: `団子を食べる（${price} 文）` }, { label: 'やめる' }],
+      choices.map((c) => ({ label: labels[c] })),
       (i) => {
         this.closeOverlay(menu);
-        if (i !== 0) return;
+        const choice = choices[i];
+        if (choice === 'buy') {
+          this.openShop(shopId);
+          return;
+        }
+        if (choice !== 'eat') return;
         const result = eatDango(getState(), this.map.areaLevel);
         if (!result.ok) {
           this.message.show(['茶屋の娘「あら、お代が……」']);

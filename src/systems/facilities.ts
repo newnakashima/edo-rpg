@@ -13,6 +13,13 @@ export function dangoPrice(areaLevel: number): number {
 /** 団子で回復する割合（最大 HP に対する割合）。 */
 export const DANGO_HEAL_RATE = 0.3;
 
+/** 茶屋のメニューの選択肢（並び順）。その場で団子を食べる・持ち帰りの品を買う（品を売る店があるときだけ）・やめる。 */
+export type TeahouseChoice = 'eat' | 'buy' | 'cancel';
+
+export function teahouseChoices(hasShop: boolean): TeahouseChoice[] {
+  return hasShop ? ['eat', 'buy', 'cancel'] : ['eat', 'cancel'];
+}
+
 export type PurchaseResult = { ok: true; state: GameState } | { ok: false; reason: 'money' };
 
 /** 旅籠に泊まる。全員の HP・MP を全回復する（戦闘不能も治る）。 */
