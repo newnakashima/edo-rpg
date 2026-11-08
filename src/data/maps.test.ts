@@ -1005,6 +1005,22 @@ describe('第 5 章の大坂', () => {
     }
   });
 
+  it('米が町に配られたあと（chapter5Cleared）は、建物の中の人と家具も、米が無い・高いという話をしない', () => {
+    const flags = { heardOsakaRumor: true, hyogoJoined: true, hyakuhyoDefeated: true, chapter5Cleared: true };
+    const scarce = /米が(高|足りん|手に入ら|無|あらへん)|この米の値|麦|粥|飢え|空っぽ/;
+    const inside = Object.values(MAPS).filter((m) => buildingTown(m.id) === 'osaka').flatMap((m) => m.npcs);
+    for (const npc of [...osaka.npcs, ...inside]) {
+      for (const line of npcLines(npc, flags)) expect(line, npc.id).not.toMatch(scarce);
+    }
+  });
+
+  it('長屋の私塾の戸の脇に門弟の子が立ち、どの戸が私塾かを教える', () => {
+    const kodomo = osaka.npcs.find((n) => n.id === 'osakaJukuKodomo')!;
+    const door = osaka.exits.find((e) => e.to === 'osakaJuku')!;
+    expect(Math.abs(kodomo.x - door.x) + Math.abs(kodomo.y - door.y)).toBe(2);
+    expect(kodomo.lines!.join('')).toContain('私塾');
+  });
+
   it('米蔵の地下で全滅したら大坂の旅籠の前に戻る', () => {
     expect(respawnPoint('komeKura')).toEqual({ mapId: 'osaka', ...osaka.respawn });
   });

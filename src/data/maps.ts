@@ -2172,6 +2172,18 @@ MAPS.osaka = {
       after: { flag: 'chapter5Cleared', lines: ['母親「蔵の米が、町に配られたんです。……あのお侍さまのおかげやて、みんな言うてます」'] },
     },
     {
+      // 長屋の私塾（12, 23）の戸の脇に立ち、どの戸が私塾かを教える（戸に看板がなく、ほかの長屋の戸と見分けがつかないため）
+      id: 'osakaJukuKodomo',
+      name: '門弟の子',
+      x: 13,
+      y: 24,
+      color: 0xb08a5a,
+      sprite: 'npc_kodomo',
+      lines: ['子ども「おいらの後ろの戸が、榊先生の私塾やで。先生は、奥で書を教えてはる」'],
+      after: { flag: 'hyogoJoined', lines: ['子ども「先生は、あんたらと蔵へ行かはったんやろ。……おいら、ここで帰りを待っとるんや」'] },
+      later: { flag: 'chapter5Cleared', lines: ['子ども「先生は奉行所へ行かはった。……塾は、門弟のみんなで続けていくんや」'] },
+    },
+    {
       id: 'kuraGuardW',
       name: '用心棒',
       x: 25,
