@@ -52,7 +52,7 @@ const ESCAPE_FAIL_MESSAGES: Record<Exclude<EscapeResult, { ok: true }>['reason']
   notField: FAIL_MESSAGES.notField,
   noMp: FAIL_MESSAGES.noMp,
   casterDown: FAIL_MESSAGES.casterDown,
-  noEscape: 'ここでは使えない。洞窟や城の中で使う。',
+  noEscape: FAIL_MESSAGES.notField,
 };
 
 export class FieldMenu {

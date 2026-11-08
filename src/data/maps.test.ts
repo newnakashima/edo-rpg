@@ -1799,8 +1799,16 @@ describe('ダンジョンから入口の外へ戻る（道しるべの札・抜�
       expect(to, map.id).not.toBeNull();
       const dest = MAPS[to!.mapId]!;
       expect(isDungeon(dest), map.id).toBe(false);
-      expect(tileAt(dest, to!.x, to!.y)?.blocked, `${map.id} → ${to!.mapId} (${to!.x},${to!.y})`).toBe(false);
+      const where = `${map.id} → ${to!.mapId} (${to!.x},${to!.y})`;
+      expect(tileAt(dest, to!.x, to!.y)?.blocked, where).toBe(false);
+      // 着いた場所で、すぐ別のマップへ移ったり、イベントや人・町の印の上に立ったりしない
+      const at = (p: { x: number; y: number }) => p.x === to!.x && p.y === to!.y;
+      expect([...dest.exits, ...(dest.triggers ?? []), ...dest.npcs, ...(dest.towns ?? [])].some(at), where).toBe(false);
     }
+  });
+
+  it('歩いて出られないダンジョンは、出口のないものだけ', () => {
+    for (const id of sealed) expect(MAPS[id]?.exits, id).toEqual([]);
   });
 
   it('奥の階からは、手前の階を通って入口の外へ戻る', () => {

@@ -88,9 +88,9 @@ export interface SkillDef {
   elements?: Element[];
   /** 行動順に関係なく先に動く（居合・かばう）。 */
   priority?: boolean;
-  /** 戦闘の外（メニュー）でも使える（回復の技と、抜け道）。 */
+  /** 戦闘の外（メニュー）でも使える（回復の技）。 */
   field?: boolean;
-  /** 戦闘の外だけで使い、戦闘の技の一覧に出さない（抜け道）。 */
+  /** 戦闘の外だけで使い、戦闘の技の一覧に出さない（抜け道）。field を付けなくてもメニューで使える。 */
   fieldOnly?: boolean;
   /** 説明（メニューに出す）。 */
   description: string;
@@ -116,7 +116,7 @@ export const SKILLS: Record<string, SkillDef> = {
   shibire: { id: 'shibire', name: '痺れ薬', mp: 4, target: 'enemy', effect: { kind: 'status', status: 'paralysis', turns: 3 }, description: '敵を麻痺させる' },
   kagenui: { id: 'kagenui', name: '影縫い', mp: 5, target: 'enemy', effect: { kind: 'status', status: 'bind', turns: 1, chance: 0.9 }, description: '敵の次の行動を止める' },
   bunshin: { id: 'bunshin', name: '分身の術', mp: 6, target: 'self', effect: { kind: 'status', status: 'evade', turns: 3 }, description: '3 ターン回避を上げる' },
-  nukemichi: { id: 'nukemichi', name: '抜け道', mp: 4, target: 'self', effect: { kind: 'escape' }, field: true, fieldOnly: true, description: '忍びの抜け道で、洞窟や城の中から入口の外へ戻る' },
+  nukemichi: { id: 'nukemichi', name: '抜け道', mp: 4, target: 'self', effect: { kind: 'escape' }, fieldOnly: true, description: '忍びの抜け道で、洞窟や城の中から入口の外へ戻る' },
   katon: { id: 'katon', name: '火遁の術', mp: 9, target: 'allEnemies', effect: { kind: 'magic', power: 14 }, elements: ['fire'], description: '敵全体に火の術' },
   // 玄道（破戒僧）
   yakushi: { id: 'yakushi', name: '薬師の真言', mp: 3, target: 'ally', effect: { kind: 'heal', power: 10 }, field: true, description: '味方 1 人を回復する' },

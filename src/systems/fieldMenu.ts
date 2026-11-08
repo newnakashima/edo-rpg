@@ -43,7 +43,7 @@ export function useItemInField(state: GameState, itemId: string, target: number)
 
 /** その仲間がメニューで使える技（覚えていて、戦闘の外で使えるもの）。 */
 export function fieldSkills(member: PartyMember): string[] {
-  return skillsAtLevel(member.id, memberLevel(member)).filter((id) => SKILLS[id]?.field);
+  return skillsAtLevel(member.id, memberLevel(member)).filter((id) => SKILLS[id]?.field || SKILLS[id]?.fieldOnly);
 }
 
 /**
