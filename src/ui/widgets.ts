@@ -221,14 +221,15 @@ export class MessageWindow {
 
   update(controls: Controls): void {
     if (!this.isOpen) return;
+    // 決定と取消は両方とも先に読む（同じフレームで押されても、片方が溜まって次のフレームに持ち越さないように）
+    const ok = controls.okPressed();
+    // 用語を使わないウィンドウは、取消を読まない（これまでどおり）
+    const cancel = this.glossary && controls.cancelPressed();
     if (this.tipsOpen) {
-      if (controls.okPressed()) this.nextTip();
-      else if (controls.cancelPressed()) this.closeTips();
+      if (ok) this.nextTip();
+      else if (cancel) this.closeTips();
       return;
     }
-    const ok = controls.okPressed();
-    // 用語を使うウィンドウでは、取消を読んでいる間に溜めない（決定と同時に押しても、閉じた後にメニューが開かないように）
-    const cancel = this.glossary && controls.cancelPressed();
     if (ok) this.advance();
     else if (cancel) this.openTips();
   }
