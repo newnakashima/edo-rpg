@@ -33,7 +33,8 @@ const two = (l: number): [CharacterId, number][] => [
 const three = (l: number): [CharacterId, number][] => [...two(l), ['gendo', l]];
 /**
  * 第 4 章は、Lv1 で加わったお凛がまだ 5 レベル、玄道が 1 レベル低い（progressionSim.test.ts の通しの確かめで、
- * 主人公が雑魚敵 Lv + 3 になったとき、玄道は 1、お凛は 5 低い）。
+ * 主人公が雑魚敵 Lv + 3 になったとき、玄道は 1、お凛は 5 低い）。経験値の式・出現表・加入の決まりを変えて通しの確かめの表が変わったら、
+ * ここ（と osaka）の遅れも合わせ直す。
  */
 const iga = (l: number): [CharacterId, number][] => [...two(l), ['gendo', l - 1], ['orin', l - 5]];
 const four = (l: number): [CharacterId, number][] => [...three(l), ['orin', l]];

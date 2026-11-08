@@ -204,13 +204,17 @@ const STAGES: Stage[] = [
 
 const levelOf = (exps: Exps, id: CharacterId): number => (isGuest(id) ? (CHARACTERS[id].guestLevel ?? 1) : levelForExp(exps[id] ?? 0));
 
-/** 加わる・戻る仲間のレベル（eventScript.ts の averageLevel と同じく、加入時のレベルが決まっている仲間を数えない）。 */
+/**
+ * 加わる・戻る仲間のレベル（eventScript.ts の averageLevel と同じく、切り捨て・最低 1。加入時のレベルが決まっている仲間を数えず、
+ * その仲間しかいなければ全員で数える）。
+ */
 function averageLevel(exps: Exps, party: CharacterId[]): number {
-  const counted = party.filter((id) => !isGuest(id) && CHARACTERS[id].joinLevel === undefined);
-  return Math.max(1, Math.round(counted.reduce((s, id) => s + levelOf(exps, id), 0) / Math.max(1, counted.length)));
+  const counted = party.filter((id) => CHARACTERS[id].joinLevel === undefined);
+  const members = counted.length > 0 ? counted : party;
+  return Math.max(1, Math.floor(members.reduce((s, id) => s + levelOf(exps, id), 0) / Math.max(1, members.length)));
 }
 
-/** 敵の組 1 つを倒したときの、レベル L の仲間 1 人の経験値（逃げる敵は数えない）。 */
+/** 敵の組 1 つを倒したときの、レベル L の仲間 1 人の経験値（逃げる敵は、倒せることもあるが数えない。レベル上げの戦闘の回数は多めに出る）。 */
 function groupExp(members: string[], enemyLevel: number, memberLevel: number): number {
   return members.reduce((sum, id) => {
     const def = ENEMIES[id]!;
@@ -237,22 +241,38 @@ function gain(exps: Exps, party: CharacterId[], amount: (level: number) => numbe
 interface StageLevels {
   /** 章に入ったときの各自のレベル。 */
   entry: Partial<Record<CharacterId, number>>;
-  /** レベル上げのあと（ボスに挑むとき）の各自のレベル。 */
+  /** レベル上げのあと（イベントの戦闘と 1 体目のボスに挑むとき）の各自のレベル。 */
   ready: Partial<Record<CharacterId, number>>;
+  /** ボスごとの、挑むときの各自のレベル（前のボスとイベントの戦闘の経験値を足したもの）。 */
+  bosses: Partial<Record<CharacterId, number>>[];
   /** 主人公が雑魚敵 Lv + offset に届くまでの戦闘の回数。 */
   battles: number;
 }
 
-/** 序章から順に章を進め、章ごとのレベルを求める。主人公が雑魚敵 Lv + offset に届くまでレベル上げをしてからボスに挑む。 */
+/**
+ * 序章から順に章を進め、章ごとのレベルを求める。主人公が雑魚敵 Lv + offset に届くまでレベル上げをしてから、イベントの戦闘とボスに挑む。
+ * レベル上げの経験値は章の仲間（4 人）で数える（第 5 章の街道を兵庫の加入前の 3 人で、第 6 章の西国街道を霞が戻る前の 3 人で通る分は数えない）。
+ */
 function progress(offset: number): StageLevels[] {
   const exps: Exps = { hero: 0 };
+  /** 一時離脱中の仲間の経験値（eventScript.ts の away）。 */
+  const away: Exps = {};
+  const inParty = new Set<CharacterId>([H]);
   const out: StageLevels[] = [];
   for (const stage of STAGES) {
-    for (const id of stage.leave ?? []) delete exps[id];
+    for (const id of stage.leave ?? []) {
+      away[id] = exps[id];
+      delete exps[id];
+      inParty.delete(id);
+    }
     for (const id of stage.join ?? []) {
+      const members = [...inParty];
+      inParty.add(id);
       if (isGuest(id)) continue;
-      const level = CHARACTERS[id].joinLevel ?? averageLevel(exps, stage.party.filter((p) => p !== id && exps[p] !== undefined));
-      exps[id] = Math.max(exps[id] ?? 0, totalExpForLevel(level));
+      // 戻る仲間（rejoinParty）は、預けていた経験値と平均レベルの多いほう
+      const level = CHARACTERS[id].joinLevel ?? averageLevel(exps, members);
+      exps[id] = Math.max(away[id] ?? 0, totalExpForLevel(level));
+      delete away[id];
     }
     const snapshot = () => Object.fromEntries(stage.party.map((id) => [id, levelOf(exps, id)]));
     const entry = snapshot();
@@ -263,8 +283,13 @@ function progress(offset: number): StageLevels[] {
       battles++;
     }
     const ready = snapshot();
-    out.push({ entry, ready, battles });
-    for (const f of [...stage.events, ...stage.bosses]) gain(exps, f.party ?? stage.party, (l) => groupExp(f.enemies, f.level, l));
+    for (const f of stage.events) gain(exps, f.party ?? stage.party, (l) => groupExp(f.enemies, f.level, l));
+    const bosses: StageLevels['bosses'] = [];
+    for (const f of stage.bosses) {
+      bosses.push(snapshot());
+      gain(exps, stage.party, (l) => groupExp(f.enemies, f.level, l));
+    }
+    out.push({ entry, ready, battles, bosses });
   }
   return out;
 }
@@ -322,6 +347,15 @@ describe('通しの確かめ（序章から終章まで）', () => {
     STAGES.forEach((s, i) => expect(levels[i]!.entry.hero, s.name).toBeGreaterThanOrEqual(s.area - 1));
   });
 
+  it('お凛（Lv1 で加わる）は、第 5 章のボスでは主人公より 3 レベル低いまでに、第 6 章以降のボスでは 2 レベル低いまでに追いつく', () => {
+    STAGES.forEach((s, i) => {
+      const at = upper[i]!.bosses[0]!;
+      if (at.orin === undefined || i < STAGES.findIndex((x) => x.name === '第 5 章')) return;
+      const gap = i === STAGES.findIndex((x) => x.name === '第 5 章') ? 3 : 2;
+      expect(at.hero! - at.orin, s.name).toBeLessThanOrEqual(gap);
+    });
+  });
+
   it('雑魚敵の組: 章に入ったときのレベルで、どの組にも 80% 以上、推奨の下限で 95% 以上勝てる（通常攻撃と回復だけ）', () => {
     const rows: string[] = [];
     const bad: string[] = [];
@@ -367,17 +401,19 @@ describe('通しの確かめ（序章から終章まで）', () => {
     const rows: string[] = [];
     const bad: string[] = [];
     STAGES.forEach((s, i) => {
-      for (const f of s.bosses) {
+      s.bosses.forEach((f, j) => {
         const boss = f.enemies[0]!;
         const run = (lv: Partial<Record<CharacterId, number>>) =>
           simulateBattle(partyAt(s.party, lv, s.shops), { enemies: f.enemies, level: f.level, policy: 'skills', runs: BOSS_RUNS, focus: boss });
-        const l = run(levels[i]!.ready);
-        const u = run(upper[i]!.ready);
+        const lower = levels[i]!.bosses[j]!;
+        const top = upper[i]!.bosses[j]!;
+        const l = run(lower);
+        const u = run(top);
         rows.push(
-          `| ${f.name}（Lv${f.level}） | ${levelText(s.party, levels[i]!.ready)}: ${pct(l.win)}・HP ${pct(l.hpLoss)} 減 | ${levelText(s.party, upper[i]!.ready)}: ${pct(u.win)}・${u.turns.toFixed(1)} ターン・HP ${pct(u.hpLoss)} 減 |`,
+          `| ${f.name}（Lv${f.level}） | ${levelText(s.party, lower)}: ${pct(l.win)}・HP ${pct(l.hpLoss)} 減 | ${levelText(s.party, top)}: ${pct(u.win)}・${u.turns.toFixed(1)} ターン・HP ${pct(u.hpLoss)} 減 |`,
         );
         if (u.win < 0.55) bad.push(`${f.name}: ${pct(u.win)}`);
-      }
+      });
     });
     if (REPORT) console.log(rows.join('\n'));
     expect(bad).toEqual([]);
