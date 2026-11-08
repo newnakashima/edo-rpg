@@ -745,7 +745,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: '上忍 朧',
     color: 0x6a6a6a,
     image: true,
-    factors: { hp: 22, atk: 2.3, def: 1.0, spd: 1.5 },
+    factors: { hp: 21, atk: 2.2, def: 1.0, spd: 1.5 },
     actions: [
       { skill: 'attack', weight: 3 },
       { skill: 'shurikenAme', weight: 2 },
@@ -775,7 +775,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: '百俵からくり',
     color: 0xb09050,
     image: true,
-    factors: { hp: 40, atk: 2.7, def: 1.4, spd: 0.7 },
+    factors: { hp: 40, atk: 2.4, def: 1.4, spd: 0.7 },
     weak: ['mech', 'fire'],
     actions: [
       { skill: 'attack', weight: 3 },
