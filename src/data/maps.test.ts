@@ -260,6 +260,10 @@ describe('マップのデータ', () => {
       it('イベント・店の参照先があり、乗るイベントの場所は通れる', () => {
         for (const npc of map.npcs) if (npc.event) expect(EVENTS[npc.event], npc.event).toBeDefined();
         for (const npc of map.npcs) if (npc.action === 'shop') expect(npc.shop && SHOPS[npc.shop], `${npc.id}: ${npc.shop}`).toBeTruthy();
+        for (const npc of map.npcs) if (npc.action === 'teahouse') expect(npc.shop && SHOPS[npc.shop]?.name, `${npc.id}: ${npc.shop}`).toBe('茶屋');
+        // 茶屋の品は、同じ町のよろず屋と対になる店（shimizuYorozu と shimizuChaya）
+        const yorozu = map.npcs.find((n) => n.shop?.endsWith('Yorozu'))?.shop;
+        for (const npc of map.npcs) if (npc.action === 'teahouse' && yorozu) expect(npc.shop, npc.id).toBe(yorozu.replace(/Yorozu$/, 'Chaya'));
         if (map.onEnter) expect(EVENTS[map.onEnter.event], map.onEnter.event).toBeDefined();
         for (const t of map.triggers ?? []) {
           expect(EVENTS[t.event], t.event).toBeDefined();

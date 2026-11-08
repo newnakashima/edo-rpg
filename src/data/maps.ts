@@ -126,7 +126,7 @@ export interface NpcDef {
   lines?: string[];
   /** 台詞のあとに行う施設の処理。 */
   action?: NpcAction;
-  /** action が 'shop' のときの店の ID（SHOPS）。 */
+  /** action が 'shop' のときの店の ID（SHOPS）。'teahouse' のときは茶屋で売る品の店の ID。 */
   shop?: string;
   /** このフラグが立っていたら、lines の代わりにこちらを話す。 */
   after?: { flag: string; lines: string[] };
@@ -302,6 +302,7 @@ export const MAPS: Record<string, MapDef> = {
         after: { flag: 'heardKitsunebi', lines: ['茶屋の娘「いらっしゃいまし。お団子はいかが？」'] },
         setsFlag: 'heardKitsunebi',
         action: 'teahouse',
+        shop: 'shimizuChaya',
       },
       {
         id: 'yorozuya',
@@ -808,6 +809,7 @@ MAPS.sunpu = {
       after: { flag: 'heardSunpuRumor', lines: ['茶屋の娘「いらっしゃいまし。お団子はいかが？」'] },
       setsFlag: 'heardSunpuRumor',
       action: 'teahouse',
+      shop: 'sunpuChaya',
     },
     {
       id: 'sunpuYorozu',
@@ -1291,6 +1293,7 @@ MAPS.nagoya = {
       after: { flag: 'heardKinshachiRumor', lines: ['茶屋の娘「いらっしゃいまし。お団子はいかが？」'] },
       setsFlag: 'heardKinshachiRumor',
       action: 'teahouse',
+      shop: 'nagoyaChaya',
     },
     {
       id: 'nagoyaYorozu',
@@ -1746,6 +1749,7 @@ MAPS.kyo = {
       after: { flag: 'heardOniRumor', lines: ['茶屋の娘「おいでやす。お団子はいかがどす？」'] },
       setsFlag: 'heardOniRumor',
       action: 'teahouse',
+      shop: 'kyoChaya',
     },
     {
       id: 'kyoYorozu',
@@ -2152,6 +2156,7 @@ MAPS.iga = {
       after: { flag: 'heardIgaRumor', lines: ['茶屋の娘「いらっしゃいまし。お団子はいかが？」'] },
       setsFlag: 'heardIgaRumor',
       action: 'teahouse',
+      shop: 'igaChaya',
     },
     {
       id: 'igaYorozu',
@@ -2541,6 +2546,7 @@ MAPS.osaka = {
       later: { flag: 'chapter5Cleared', lines: ['茶屋の娘「おいでやす。米の粉が安うなって、お団子も元の大きさに戻りましたえ」'] },
       setsFlag: 'heardOsakaRumor',
       action: 'teahouse',
+      shop: 'osakaChaya',
     },
     {
       id: 'osakaYorozu',
@@ -2879,6 +2885,7 @@ MAPS.hiroshima = {
       after: { flag: 'heardHeikegani', lines: ['茶屋の娘「おいでませ。お団子、どうぞ」'] },
       setsFlag: 'heardHeikegani',
       action: 'teahouse',
+      shop: 'hiroshimaChaya',
     },
     {
       id: 'hiroshimaYorozu',
@@ -3116,13 +3123,14 @@ MAPS.nagasaki = {
       color: 0xc76b8f,
       sprite: 'npc_musume',
       lines: [
-        '茶屋の娘「いらっしゃいまっせ。長崎の名物はカステラですばい。よろず屋で売っとります」',
+        '茶屋の娘「いらっしゃいまっせ。長崎の名物はカステラですばい。うちでも売っとります」',
         '茶屋の娘「東の山の南蛮寺跡には、夜な夜な鉄の鎧の兵が歩きよるって噂です。奉行所が石段をふさいでしまって」',
         '茶屋の娘「お茶、どうぞ」',
       ],
       after: { flag: 'heardNanbanji', lines: ['茶屋の娘「いらっしゃいまっせ。お茶、どうぞ」'] },
       setsFlag: 'heardNanbanji',
       action: 'teahouse',
+      shop: 'nagasakiChaya',
     },
     {
       id: 'nagasakiYorozu',
@@ -3131,7 +3139,7 @@ MAPS.nagasaki = {
       y: 18,
       color: 0x6b8c5a,
       sprite: 'npc_merchant',
-      lines: ['よろず屋「いらっしゃい。カステラに金平糖、南蛮渡りの甘いものもそろっとりますばい」'],
+      lines: ['よろず屋「いらっしゃい。南蛮渡りの甘いものなら、茶屋で売っとりますばい。うちは薬と旅の支度ですたい」'],
       action: 'shop',
       shop: 'nagasakiYorozu',
     },
@@ -3692,6 +3700,7 @@ MAPS.kanazawa = {
       ],
       after: { flag: 'chapter7Cleared', lines: ['茶屋の娘「お殿様がお元気になられて、町じゅう大喜びやよ。お茶、どうぞ」'] },
       action: 'teahouse',
+      shop: 'kanazawaChaya',
     },
     {
       id: 'kanazawaYorozu',
@@ -3700,7 +3709,7 @@ MAPS.kanazawa = {
       y: 22,
       color: 0x6b8c5a,
       sprite: 'npc_merchant',
-      lines: ['よろず屋「金沢の名物は、生姜の煎餅の柴舟と、加賀棒茶。旅のお供にどうぞ」'],
+      lines: ['よろず屋「いらっしゃい。生姜の煎餅の柴舟と加賀棒茶は、茶屋で買えるがやよ。うちは薬と旅の支度」'],
       action: 'shop',
       shop: 'kanazawaYorozu',
     },
@@ -4162,6 +4171,7 @@ MAPS.sendai = {
         '茶屋の娘「このごろ、江戸のお役人が片平丁のお屋敷のまわりをうろうろしてるの。何を探ってるのかしら」',
       ],
       action: 'teahouse',
+      shop: 'sendaiChaya',
     },
     {
       id: 'sendaiHikyaku',
@@ -4180,7 +4190,7 @@ MAPS.sendai = {
       y: 16,
       color: 0x8a6a4a,
       sprite: 'npc_merchant',
-      lines: ['よろず屋「いらっしゃい。仙台名物のずんだ餅、枝豆の餡が甘くてうまいよ」'],
+      lines: ['よろず屋「いらっしゃい。仙台名物のずんだ餅なら茶屋だよ。枝豆の餡が甘くてうまいんだ」'],
       action: 'shop',
       shop: 'sendaiYorozu',
     },
@@ -4415,6 +4425,7 @@ MAPS.hamamatsu = {
       ],
       after: { flag: 'hamamatsuTakoFound', lines: ['茶屋の娘「いらっしゃいませ。初凧、見つかったんですってね！ 今年の合戦は盛り上がりそう」'] },
       action: 'teahouse',
+      shop: 'hamamatsuChaya',
     },
     {
       id: 'hamamatsuHikyaku',
@@ -4433,7 +4444,7 @@ MAPS.hamamatsu = {
       y: 19,
       color: 0x8a6a4a,
       sprite: 'npc_merchant',
-      lines: ['よろず屋「いらっしゃい。浜名湖のうなぎの蒲焼は、精がつくよ」'],
+      lines: ['よろず屋「いらっしゃい。浜名湖のうなぎの蒲焼は茶屋で売ってるよ。精がつくから食べていきな」'],
       action: 'shop',
       shop: 'hamamatsuYorozu',
     },
@@ -4665,6 +4676,7 @@ MAPS.hikone = {
       ],
       after: { flag: 'hikoneGusokuReturned', lines: ['茶屋の娘「いらっしゃいませ。赤備えの具足、戻ってきたんですってね！ 具足揃えには、きっと間に合いますね」'] },
       action: 'teahouse',
+      shop: 'hikoneChaya',
     },
     {
       id: 'hikoneHikyaku',
@@ -4683,7 +4695,7 @@ MAPS.hikone = {
       y: 19,
       color: 0x8a6a4a,
       sprite: 'npc_merchant',
-      lines: ['よろず屋「いらっしゃい。糸切餅は、多賀さまの門前の名物だよ」'],
+      lines: ['よろず屋「いらっしゃい。多賀さまの門前の名物の糸切餅は、茶屋で買えるよ」'],
       action: 'shop',
       shop: 'hikoneYorozu',
     },
@@ -4934,6 +4946,7 @@ MAPS.kumamoto = {
       lines: ['茶屋の娘「いらっしゃいませ。お茶をいれる水も、遠くの川まで汲みに行ってるんですよ」'],
       after: { flag: 'kumamotoIdoFound', lines: ['茶屋の娘「いらっしゃいませ。井戸の水が戻って、お茶がおいしくいれられるようになりました！」'] },
       action: 'teahouse',
+      shop: 'kumamotoChaya',
     },
     {
       id: 'kumamotoHikyaku',
@@ -5264,6 +5277,7 @@ MAPS.aizu = {
         lines: ['茶屋の娘「いらっしゃいませ。平太ちゃん、飯盛山から無事に帰ってきたんですってね。……よかった」'],
       },
       action: 'teahouse',
+      shop: 'aizuChaya',
     },
     {
       id: 'aizuHikyaku',
@@ -5282,7 +5296,7 @@ MAPS.aizu = {
       y: 20,
       color: 0x8a6a4a,
       sprite: 'npc_merchant',
-      lines: ['よろず屋「いらっしゃい。会津の身不知柿は、渋を抜いてあるから甘いよ」'],
+      lines: ['よろず屋「いらっしゃい。会津の身不知柿は茶屋で売ってるよ。渋を抜いてあるから甘いんだ」'],
       action: 'shop',
       shop: 'aizuYorozu',
     },
@@ -5581,6 +5595,7 @@ MAPS.edo = {
         '茶屋の娘「御城では、御老中の鷲尾さまが何もかもお決めになるんですって。上様のお声を聞いた人は、もう誰もいないとか」',
       ],
       action: 'teahouse',
+      shop: 'edoChaya',
     },
     {
       id: 'edoHikyaku',
@@ -5599,7 +5614,7 @@ MAPS.edo = {
       y: 32,
       color: 0x8a6a4a,
       sprite: 'npc_merchant',
-      lines: ['よろず屋「へい、らっしゃい！ 向島の桜餅、今朝届いたばかりだよ」'],
+      lines: ['よろず屋「へい、らっしゃい！ 向島の桜餅なら茶屋だよ。今朝届いたばかりだってさ」'],
       action: 'shop',
       shop: 'edoYorozu',
     },

@@ -53,6 +53,18 @@ describe('道具の品ぞろえ', () => {
     for (const shop of yorozu) expect(shop.goods, shop.id).toContain('michishirube');
   });
 
+  it('飲み物・食べ物はよろず屋に置かず、茶屋で売る（どの茶屋でも団子と甘酒を買える）', () => {
+    const yorozu = Object.values(SHOPS).filter((shop) => shop.name === 'よろず屋');
+    const chaya = Object.values(SHOPS).filter((shop) => shop.name === '茶屋');
+    for (const shop of yorozu) for (const id of shop.goods) expect(ITEMS[id]?.kind, `${shop.id} ${id}`).not.toBe('food');
+    for (const shop of chaya) {
+      for (const id of shop.goods) expect(ITEMS[id]?.kind, `${shop.id} ${id}`).toBe('food');
+      expect(shop.goods, shop.id).toEqual(expect.arrayContaining(['dango', 'amazake']));
+    }
+    // よろず屋のある町には茶屋がある
+    for (const shop of yorozu) expect(SHOPS[shop.id.replace(/Yorozu$/, 'Chaya')]?.name, shop.id).toBe('茶屋');
+  });
+
   it('同じ効き目の道具は、高いほど回復量が多い', () => {
     const byKind = (kind: 'healHp' | 'healMp') =>
       Object.values(ITEMS)
