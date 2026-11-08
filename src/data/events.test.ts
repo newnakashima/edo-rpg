@@ -780,8 +780,8 @@ describe('第 8 章の流れ', () => {
     expect(boss.rewardScale).toBe(6);
     expect(boss.weak).toEqual(['holy', 'mech']);
     expect(boss.resist).toEqual(['fire']);
-    // docs/balance.md の「第 8 章で見積もりから変えたこと」の数値（勝率 Lv27 95%・Lv26 72% はこの値で試した）
-    expect(boss.factors).toEqual({ hp: 13, atk: 1.05, def: 1.2, spd: 1.1 });
+    // docs/balance.md の「ボス」の表の倍率（勝率は「作り直したボスで確かめた結果」）
+    expect(boss.factors).toEqual({ hp: 32, atk: 2.1, def: 1.2, spd: 1.1 });
     expect(boss.actions).toEqual([
       { skill: 'attack', weight: 3 },
       { skill: 'kaenGuruma', weight: 2 },
@@ -960,10 +960,10 @@ describe('終章の流れ', () => {
   });
 
   it('終章の敵は、ボスの報酬と弱点が決めたとおりで、画像がある。大権現は 1 ターンに 2 回動く', () => {
-    expect(ENEMIES.onizukaTenzen).toMatchObject({ rewardScale: 4, factors: { hp: 12, atk: 1.15, def: 1.2, spd: 1.2 } });
-    expect(ENEMIES.washio).toMatchObject({ rewardScale: 6, factors: { hp: 12, atk: 1.1, def: 1.2, spd: 1.0 } });
-    expect(ENEMIES.karakuriDaigongen).toMatchObject({ rewardScale: 6, actionsPerTurn: 2, weak: ['mech', 'holy'], factors: { hp: 10, atk: 0.8, def: 1.3, spd: 1.1 } });
-    // docs/balance.md の「終章で見積もりから変えたこと」の数値（勝率はこの値で試した）
+    expect(ENEMIES.onizukaTenzen).toMatchObject({ rewardScale: 4, factors: { hp: 32, atk: 2.0, def: 1.2, spd: 1.2 } });
+    expect(ENEMIES.washio).toMatchObject({ rewardScale: 6, factors: { hp: 45, atk: 2.0, def: 1.2, spd: 1.0 } });
+    expect(ENEMIES.karakuriDaigongen).toMatchObject({ rewardScale: 6, actionsPerTurn: 2, weak: ['mech', 'holy'], factors: { hp: 22, atk: 1.2, def: 1.3, spd: 1.1 } });
+    // docs/balance.md の「終章で見積もりから変えたこと」の技の数値
     expect(SKILLS.tenzenIai).toMatchObject({ effect: { kind: 'physical', multiplier: 1.4 } });
     expect(SKILLS.kinjuYobi).toMatchObject({ effect: { kind: 'summon', enemy: 'karakuriKinju', max: 2, level: 26 } });
     expect(SKILLS.gongenHo).toMatchObject({ target: 'allEnemies', effect: { kind: 'physical', multiplier: 0.7 } });
