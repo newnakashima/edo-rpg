@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { aliveOf, computeRewards, createBattle, partyAfterBattle, resolveTurn, type BattleState } from './battle';
+import { aliveOf, availableItemCount, computeRewards, createBattle, partyAfterBattle, resolveTurn, type BattleState } from './battle';
 import { createMember } from './party';
 import { enemyExp, enemyMoney } from './stats';
 import { seededRng, seqRng } from './testUtils';
@@ -18,6 +18,14 @@ describe('createBattle', () => {
 
   it('知らない敵は例外にする', () => {
     expect(() => createBattle(hero(), 'm', ['nope'], 1)).toThrow();
+  });
+
+  it('戦闘の外だけの技（抜け道）と道具（道しるべの札）は戦闘では選べない', () => {
+    const b = createBattle([createMember('kasumi', 1)], 'm', ['onibi'], 1, { items: { michishirube: 2, kizugusuri: 1 } });
+    expect(b.combatants[0]?.skills).not.toContain('nukemichi');
+    expect(b.combatants[0]?.skills).toContain('shuriken');
+    expect(availableItemCount(b, 'michishirube', {})).toBe(0);
+    expect(availableItemCount(b, 'kizugusuri', {})).toBe(1);
   });
 });
 

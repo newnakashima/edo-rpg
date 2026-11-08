@@ -27,7 +27,7 @@ export function slotIcon(slot: EquipSlot, wearer: CharacterId): IconName {
 /** 道具・装備品のアイコン。道具は食べ物なら団子、薬なら薬包。装飾品はお守り。知らない ID は undefined。 */
 export function itemIcon(id: string): IconName | undefined {
   const item = ITEMS[id];
-  if (item) return item.kind === 'medicine' ? 'kusuri' : 'dango';
+  if (item) return item.kind === 'medicine' ? 'kusuri' : item.kind === 'charm' ? 'omamori' : 'dango';
   const equip = EQUIPMENT[id];
   // 武器を付けられるのは 1 人だけ（icons.test.ts で確かめる）。付ける人のいない装備はアイコンなし（icons.test.ts で全装備にアイコンがあることを確かめる）
   const wearer = equip?.wearers[0];

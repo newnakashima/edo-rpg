@@ -74,7 +74,9 @@ export type SkillEffect =
    * 敵だけが使う。構えに入り（溜め）、使い手の次の行動を必ず next の技にする（第 6 章の南蛮大筒からくりの装填 → 大筒）。
    * 構えのあいだに眠り・麻痺などで動けなくても、構えは解けずに次に動けたときに next を使う。
    */
-  | { kind: 'charge'; next: string };
+  | { kind: 'charge'; next: string }
+  /** 戦闘の外だけで使う。ダンジョンの入口（外のマップ）へ戻る（maps.ts の escapePoint）。 */
+  | { kind: 'escape' };
 
 export interface SkillDef {
   id: string;
@@ -86,8 +88,10 @@ export interface SkillDef {
   elements?: Element[];
   /** 行動順に関係なく先に動く（居合・かばう）。 */
   priority?: boolean;
-  /** 戦闘の外（メニュー）でも使える（回復の技だけ）。 */
+  /** 戦闘の外（メニュー）でも使える（回復の技と、抜け道）。 */
   field?: boolean;
+  /** 戦闘の外だけで使い、戦闘の技の一覧に出さない（抜け道）。 */
+  fieldOnly?: boolean;
   /** 説明（メニューに出す）。 */
   description: string;
 }
@@ -112,6 +116,7 @@ export const SKILLS: Record<string, SkillDef> = {
   shibire: { id: 'shibire', name: '痺れ薬', mp: 4, target: 'enemy', effect: { kind: 'status', status: 'paralysis', turns: 3 }, description: '敵を麻痺させる' },
   kagenui: { id: 'kagenui', name: '影縫い', mp: 5, target: 'enemy', effect: { kind: 'status', status: 'bind', turns: 1, chance: 0.9 }, description: '敵の次の行動を止める' },
   bunshin: { id: 'bunshin', name: '分身の術', mp: 6, target: 'self', effect: { kind: 'status', status: 'evade', turns: 3 }, description: '3 ターン回避を上げる' },
+  nukemichi: { id: 'nukemichi', name: '抜け道', mp: 4, target: 'self', effect: { kind: 'escape' }, field: true, fieldOnly: true, description: '忍びの抜け道で、洞窟や城の中から入口の外へ戻る' },
   katon: { id: 'katon', name: '火遁の術', mp: 9, target: 'allEnemies', effect: { kind: 'magic', power: 14 }, elements: ['fire'], description: '敵全体に火の術' },
   // 玄道（破戒僧）
   yakushi: { id: 'yakushi', name: '薬師の真言', mp: 3, target: 'ally', effect: { kind: 'heal', power: 10 }, field: true, description: '味方 1 人を回復する' },
@@ -237,6 +242,7 @@ export const LEARNSETS: Record<CharacterId, LearnableSkill[]> = {
   kasumi: [
     { skill: 'shuriken', level: 1 },
     { skill: 'kemuridama', level: 1 },
+    { skill: 'nukemichi', level: 1 },
     { skill: 'shibire', level: 9 },
     { skill: 'kagenui', level: 14 },
     { skill: 'bunshin', level: 18 },

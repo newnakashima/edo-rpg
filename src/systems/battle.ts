@@ -137,7 +137,8 @@ export function createBattle(
       hp: m.hp,
       mp: m.mp,
       guarding: false,
-      skills: skillsAtLevel(m.id, level),
+      // 戦闘の外だけの技（抜け道）は戦闘の一覧に出さない
+      skills: skillsAtLevel(m.id, level).filter((id) => !SKILLS[id]?.fieldOnly),
       weak: [],
       resist: [],
       status: {},
@@ -659,6 +660,8 @@ export function itemWorks(effect: ItemEffect, target: Combatant): boolean {
       return target.hp < target.stats.maxHp || target.mp < target.stats.maxMp;
     case 'cure':
       return Object.keys(target.status).some((id) => isAilment(id as StatusId) && (!effect.ailment || id === effect.ailment));
+    case 'escape':
+      return false;
   }
 }
 
@@ -749,6 +752,8 @@ export function resolveTurn(
 
 /** 戦闘中にその道具を使える残りの数（他の味方がこのターンに使う予定の分を除く）。 */
 export function availableItemCount(state: BattleState, item: string, reserved: Record<string, Command>): number {
+  // 戦闘中に使えない道具（道しるべの札）は選べない
+  if (ITEMS[item]?.battle === false) return 0;
   const planned = Object.values(reserved).filter((c) => c.kind === 'item' && c.item === item).length;
   return itemCount(state.items, item) - planned;
 }

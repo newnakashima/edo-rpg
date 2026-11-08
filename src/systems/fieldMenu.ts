@@ -2,6 +2,7 @@
 import { CHARACTERS, characterName, isGuest, type Gender } from '../data/characters';
 import { canEquip, EQUIP_SLOTS, EQUIPMENT, SLOT_NAMES, type EquipSlot } from '../data/equipment';
 import { addItem, ITEMS, itemCount, itemName, MAX_ITEM_COUNT, removeItem } from '../data/items';
+import { escapePoint } from '../data/maps';
 import { SKILLS, skillsAtLevel, type SkillDef } from '../data/skills';
 import { healAmount } from './combat';
 import type { GameState } from './gameState';
@@ -74,6 +75,37 @@ export function useSkillInField(state: GameState, caster: number, skillId: strin
   return { ok: true, state: { ...state, party }, changes };
 }
 
+export type EscapeResult =
+  | { ok: true; state: GameState; to: { mapId: string; x: number; y: number } }
+  | { ok: false; reason: 'noItem' | 'notField' | 'noMp' | 'casterDown' | 'noEscape' };
+
+/**
+ * ダンジョンから入口の外へ戻る道具（道しるべの札）か技（抜け道）を使う。by が道具の ID か、技を使う仲間と技の ID。
+ * ダンジョンの外や、歩いて出られないダンジョンでは使わず、道具も気力も減らさない（noEscape。気力が足りないなどより先に断る）。
+ * 戻った state は道具・気力を減らしただけで、居場所は変えない（画面の切り替えと一緒に to へ移す）。
+ */
+export function escapeInField(state: GameState, by: { item: string } | { caster: number; skill: string }): EscapeResult {
+  const to = escapePoint(state.mapId);
+  let next: GameState;
+  if ('item' in by) {
+    const item = ITEMS[by.item];
+    if (!item || item.effect.kind !== 'escape') return { ok: false, reason: 'notField' };
+    if (!to) return { ok: false, reason: 'noEscape' };
+    const rest = removeItem(state.items, by.item);
+    if (!rest) return { ok: false, reason: 'noItem' };
+    next = { ...state, items: rest };
+  } else {
+    const skill = SKILLS[by.skill];
+    const c = state.party[by.caster];
+    if (!skill || !c || skill.effect.kind !== 'escape' || !fieldSkills(c).includes(by.skill)) return { ok: false, reason: 'notField' };
+    if (!to) return { ok: false, reason: 'noEscape' };
+    if (c.hp <= 0) return { ok: false, reason: 'casterDown' };
+    if (c.mp < skill.mp) return { ok: false, reason: 'noMp' };
+    next = setMember(state, by.caster, { ...c, mp: c.mp - skill.mp });
+  }
+  return { ok: true, state: next, to };
+}
+
 /**
  * 装備を付け替える。equipId が null なら外す。外した装備は所持品に戻す。
  * 最大 HP・MP が減ったら、今の HP・MP を最大値に収める。
@@ -138,6 +170,7 @@ export function itemUsableOn(itemId: string, member: PartyMember): boolean {
     case 'healBoth':
       return member.hp > 0 && (member.hp < s.maxHp || member.mp < s.maxMp);
     case 'cure':
+    case 'escape':
       return false;
   }
 }
@@ -147,9 +180,10 @@ export function expToNext(member: PartyMember): number | null {
   return isGuest(member.id) ? null : expRemainingToNext(member.exp);
 }
 
-/** 技の説明の窓に出す文。withField なら、戦闘の外でも使える技にそう書き足す。 */
+/** 技の説明の窓に出す文。withField なら、戦闘の外でも使える技にそう書き足す。戦闘の外だけの技（抜け道）には、いつもそう書き足す。 */
 export function skillDescription(skill: SkillDef, withField = false): string {
-  return `${skill.description}（気力 ${skill.mp}${withField && skill.field ? '・戦闘の外でも使える' : ''}）`;
+  const where = skill.fieldOnly ? '・戦闘の外だけで使う' : withField && skill.field ? '・戦闘の外でも使える' : '';
+  return `${skill.description}（気力 ${skill.mp}${where}）`;
 }
 
 /** ステータス画面の能力値の並び（表示名と Stats のキー）。 */

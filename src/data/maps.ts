@@ -6061,6 +6061,38 @@ export function respawnPoint(mapId: string, x?: number, y?: number, flags: Recor
   return town?.respawn ? { mapId: town.id, ...town.respawn } : START_POSITION;
 }
 
+/**
+ * ダンジョンか（敵が出て、町の印も全滅時の戻り先もないマップ）。ワールドマップ・町・屋敷の中は含まない。
+ * 道しるべの札・抜け道（escapePoint）を使える場所の判定に使う。
+ */
+export function isDungeon(map: MapDef): boolean {
+  return map.encounter !== undefined && !map.towns && !map.respawn;
+}
+
+/**
+ * ダンジョンから入口の外へ戻る先（道しるべの札・抜け道）。出口をたどってダンジョンの外のマップへ出る最初の出口の着く場所
+ * （奥の階からは、手前の階を通って外へ出る）。ダンジョンでないマップと、歩いて外へ出られないダンジョン
+ * （海の上の北前船）では null。
+ */
+export function escapePoint(mapId: string): { mapId: string; x: number; y: number } | null {
+  const start = MAPS[mapId];
+  if (!start || !isDungeon(start)) return null;
+  const seen = new Set([mapId]);
+  const queue = [start];
+  for (let map = queue.shift(); map; map = queue.shift()) {
+    for (const exit of map.exits) {
+      const next = MAPS[exit.to];
+      if (!next) continue;
+      if (!isDungeon(next)) return { mapId: next.id, x: exit.toX, y: exit.toY };
+      if (!seen.has(next.id)) {
+        seen.add(next.id);
+        queue.push(next);
+      }
+    }
+  }
+  return null;
+}
+
 /** その場所の出現表の ID（範囲の指定が優先。flag の立っていない範囲は飛ばす。なければマップ全体の encounter）。 */
 export function encounterAt(map: MapDef, x: number, y: number, flags: Record<string, boolean>): string | undefined {
   const zone = map.encounterZones?.find(

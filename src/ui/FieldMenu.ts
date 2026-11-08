@@ -8,7 +8,7 @@ import { portraitFor } from '../data/portraits';
 import { EQUIP_SLOTS, EQUIPMENT, SLOT_NAMES, canEquip, type EquipSlot } from '../data/equipment';
 import { ITEMS, itemCount, itemName, ownedEquipment, ownedItems } from '../data/items';
 import { SKILLS } from '../data/skills';
-import { changeEquipment, skillDescription, fieldSkills, itemUsableOn, statsWithEquipment, swapMembers, useItemInField, useSkillInField, type FieldResult } from '../systems/fieldMenu';
+import { changeEquipment, escapeInField, skillDescription, fieldSkills, itemUsableOn, statsWithEquipment, swapMembers, useItemInField, useSkillInField, type EscapeResult, type FieldResult } from '../systems/fieldMenu';
 import { memberStats } from '../systems/party';
 import type { Stats } from '../systems/stats';
 import { getState, setState } from '../state';
@@ -46,6 +46,15 @@ const FAIL_MESSAGES: Record<Exclude<FieldResult, { ok: true }>['reason'], string
   guest: 'この人の装備は変えられない。',
 };
 
+/** 道しるべの札・抜け道を使えなかったときの説明。 */
+const ESCAPE_FAIL_MESSAGES: Record<Exclude<EscapeResult, { ok: true }>['reason'], string> = {
+  noItem: FAIL_MESSAGES.noItem,
+  notField: FAIL_MESSAGES.notField,
+  noMp: FAIL_MESSAGES.noMp,
+  casterDown: FAIL_MESSAGES.casterDown,
+  noEscape: 'ここでは使えない。洞窟や城の中で使う。',
+};
+
 export class FieldMenu {
   private readonly menus: Menu[] = [];
   private status: Phaser.GameObjects.Container | null = null;
@@ -59,6 +68,8 @@ export class FieldMenu {
     private readonly controls: Controls,
     private readonly onClose: () => void,
     private readonly onTitle: () => void,
+    /** 道しるべの札・抜け道で入口の外へ戻る（メニューを閉じたあとに呼ぶ。message はフィールドに出す文）。 */
+    private readonly onEscape: (to: { mapId: string; x: number; y: number }, message: string) => void,
   ) {
     const bg = drawWindow(scene, 8, INFO_Y, GAME_WIDTH - 16, INFO_H);
     this.infoText = scene.add.text(16, INFO_Y + 4, '', { ...textStyle(10), wordWrap: { width: GAME_WIDTH - 32, useAdvancedWrap: true } });
@@ -208,6 +219,10 @@ export class FieldMenu {
       (i) => {
         const id = ids[i];
         if (!id) return;
+        if (ITEMS[id]?.effect.kind === 'escape') {
+          this.escape(escapeInField(getState(), { item: id }), `${ITEMS[id]?.name ?? ''}を使った。`);
+          return;
+        }
         this.chooseMember(
           `${ITEMS[id]?.name ?? ''}を誰に使う？`,
           (target) => {
@@ -248,6 +263,11 @@ export class FieldMenu {
       (i) => {
         const skill = ids[i] ? SKILLS[ids[i]] : undefined;
         if (!skill) return;
+        if (skill.effect.kind === 'escape') {
+          const name = characterName(member.id, getState().gender);
+          this.escape(escapeInField(getState(), { caster, skill: skill.id }), `${name}は${skill.name}を使った。`);
+          return;
+        }
         const done = (r: FieldResult) => {
           const message = this.apply(r, `${skill.name}を使った。`);
           this.popToMain();
@@ -267,6 +287,17 @@ export class FieldMenu {
         if (skill) this.setInfo(skillDescription(skill));
       },
     );
+  }
+
+  /** 道しるべの札・抜け道の結果。使えたらメニューを閉じて入口の外へ移り、使えなければ説明の窓に理由を出す。 */
+  private escape(result: EscapeResult, message: string): void {
+    if (!result.ok) {
+      this.setInfo(ESCAPE_FAIL_MESSAGES[result.reason]);
+      return;
+    }
+    setState(result.state);
+    this.close();
+    this.onEscape(result.to, message);
   }
 
   private openEquipSlots(index: number): void {

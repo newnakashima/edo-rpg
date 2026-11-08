@@ -1,6 +1,6 @@
 // 町の店（よろず屋＝道具、刀鍛冶＝装備）。品ぞろえは町ごとに決める。以降の町の店はフェーズ 4 で足す。
 // よろず屋には、その土地の名物（安倍川餅は駿府、ういろうは名古屋など。items.ts）と、わらじ・提灯・キセルなどの旅の小物も置く。
-// 伊賀上野から先のよろず屋では、傷薬を置かず金創膏を置く（伊賀・大坂・長崎は土地の食べ物も置く。広島の名物の牡蠣飯は牡蠣船で売る）。万金丹・毒消し・気付け薬はどの町のよろず屋でも買える。
+// 伊賀上野から先のよろず屋では、傷薬を置かず金創膏を置く（伊賀・大坂・長崎は土地の食べ物も置く。広島の名物の牡蠣飯は牡蠣船で売る）。万金丹・毒消し・気付け薬・道しるべの札はどの町のよろず屋でも買える。
 
 export interface ShopDef {
   id: string;
@@ -11,52 +11,52 @@ export interface ShopDef {
 
 // 清水湊（序章）は主人公の一人旅なので、仲間の武器・防具は置かない。仲間の装備は加入する町（駿府など）の店に置く。
 export const SHOPS: Record<string, ShopDef> = {
-  shimizuYorozu: { id: 'shimizuYorozu', name: 'よろず屋', goods: ['omusubi', 'kizugusuri', 'dango', 'amazake', 'mankintan', 'dokukeshi', 'umeboshi', 'kitsukegusuri', 'waraji'] },
+  shimizuYorozu: { id: 'shimizuYorozu', name: 'よろず屋', goods: ['omusubi', 'kizugusuri', 'dango', 'amazake', 'mankintan', 'dokukeshi', 'umeboshi', 'kitsukegusuri', 'michishirube', 'waraji'] },
   shimizuKaji: { id: 'shimizuKaji', name: '刀鍛冶', goods: ['nagawakizashi', 'shimagappa', 'sandogasa', 'omamori'] },
   // 駿府（第 1 章）。霞が加入する町なので、霞の装備も置く
-  sunpuYorozu: { id: 'sunpuYorozu', name: 'よろず屋', goods: ['omusubi', 'kizugusuri', 'abekawamochi', 'amazake', 'mankintan', 'dokukeshi', 'umeboshi', 'hangontan', 'kitsukegusuri', 'waraji', 'chochin'] },
+  sunpuYorozu: { id: 'sunpuYorozu', name: 'よろず屋', goods: ['omusubi', 'kizugusuri', 'abekawamochi', 'amazake', 'mankintan', 'dokukeshi', 'umeboshi', 'hangontan', 'kitsukegusuri', 'michishirube', 'waraji', 'chochin'] },
   sunpuKaji: { id: 'sunpuKaji', name: '刀鍛冶', goods: ['dotanuki', 'ninjato', 'kusarikatabira', 'shinobishozoku', 'inro', 'omamori'] },
   // 名古屋（第 2 章）
-  nagoyaYorozu: { id: 'nagoyaYorozu', name: 'よろず屋', goods: ['kizugusuri', 'uiro', 'kintsuba', 'mankintan', 'dokukeshi', 'kumanoi', 'hangontan', 'kitsukegusuri', 'chochin'] },
+  nagoyaYorozu: { id: 'nagoyaYorozu', name: 'よろず屋', goods: ['kizugusuri', 'uiro', 'kintsuba', 'mankintan', 'dokukeshi', 'kumanoi', 'hangontan', 'kitsukegusuri', 'michishirube', 'chochin'] },
   // 京（第 3 章）。玄道が加入する町なので、玄道の装備も置く
-  kyoYorozu: { id: 'kyoYorozu', name: 'よろず屋', goods: ['kizugusuri', 'yatsuhashi', 'kintsuba', 'mankintan', 'matcha', 'dokukeshi', 'hakka', 'hangontan', 'kitsukegusuri', 'kiseru'] },
+  kyoYorozu: { id: 'kyoYorozu', name: 'よろず屋', goods: ['kizugusuri', 'yatsuhashi', 'kintsuba', 'mankintan', 'matcha', 'dokukeshi', 'hakka', 'hangontan', 'kitsukegusuri', 'michishirube', 'kiseru'] },
   kyoKaji: { id: 'kyoKaji', name: '刀鍛冶', goods: ['kotetsu', 'tekkokagi', 'shakujo', 'dokko', 'nanbando', 'kusarishozoku', 'hachigane'] },
   // 伊賀上野（第 4 章）。お凛が加入した 4 人で来るので、4 人分の装備を置く
-  igaYorozu: { id: 'igaYorozu', name: 'よろず屋', goods: ['katayaki', 'kintsuba', 'mankintan', 'hyorogan', 'dokukeshi', 'kumanoi', 'hakka', 'hangontan', 'kitsukegusuri'] },
+  igaYorozu: { id: 'igaYorozu', name: 'よろず屋', goods: ['katayaki', 'kintsuba', 'mankintan', 'hyorogan', 'dokukeshi', 'kumanoi', 'hakka', 'hangontan', 'kitsukegusuri', 'michishirube'] },
   igaKaji: { id: 'igaKaji', name: '刀鍛冶', goods: ['osafune', 'shinobiKodachi', 'tetsuShakujo', 'nanbanju', 'toseiGusoku', 'igaShozoku', 'nanbando', 'hachigane'] },
   // 大坂（第 5 章）。霞は抜けているので、霞の装備は置かない（兵庫の装備は変えられない）
-  osakaYorozu: { id: 'osakaYorozu', name: 'よろず屋', goods: ['awaokoshi', 'kintsuba', 'mankintan', 'hyorogan', 'dokukeshi', 'hangontan', 'kitsukegusuri', 'ninjin', 'kiseru'] },
+  osakaYorozu: { id: 'osakaYorozu', name: 'よろず屋', goods: ['awaokoshi', 'kintsuba', 'mankintan', 'hyorogan', 'dokukeshi', 'hangontan', 'kitsukegusuri', 'ninjin', 'michishirube', 'kiseru'] },
   osakaKaji: { id: 'osakaKaji', name: '刀鍛冶', goods: ['sukehiro', 'kongoShakujo', 'renpatsuju', 'nanbanGusoku', 'toseiGusoku', 'hachigane', 'inro'] },
   // 広島（第 6 章）。霞が戻る町なので、霞の装備も置く
-  hiroshimaYorozu: { id: 'hiroshimaYorozu', name: 'よろず屋', goods: ['kintsuba', 'mankintan', 'hyorogan', 'dokukeshi', 'umeboshi', 'kumanoi', 'hakka', 'hangontan', 'kitsukegusuri', 'ninjin'] },
+  hiroshimaYorozu: { id: 'hiroshimaYorozu', name: 'よろず屋', goods: ['kintsuba', 'mankintan', 'hyorogan', 'dokukeshi', 'umeboshi', 'kumanoi', 'hakka', 'hangontan', 'kitsukegusuri', 'ninjin', 'michishirube'] },
   hiroshimaKaji: { id: 'hiroshimaKaji', name: '刀鍛冶', goods: ['sukehiro', 'kageKodachi', 'kongoShakujo', 'renpatsuju', 'nanbanGusoku', 'kageShozoku', 'hachigane', 'inro'] },
   hiroshimaKakibune: { id: 'hiroshimaKakibune', name: '牡蠣船', goods: ['kakimeshi', 'omusubi', 'amazake'] },
   // 長崎・出島（第 6 章）
-  nagasakiYorozu: { id: 'nagasakiYorozu', name: 'よろず屋', goods: ['kintsuba', 'kasutera', 'mankintan', 'konpeito', 'hyorogan', 'dokukeshi', 'hakka', 'hangontan', 'kitsukegusuri', 'ninjin'] },
+  nagasakiYorozu: { id: 'nagasakiYorozu', name: 'よろず屋', goods: ['kintsuba', 'kasutera', 'mankintan', 'konpeito', 'hyorogan', 'dokukeshi', 'hakka', 'hangontan', 'kitsukegusuri', 'ninjin', 'michishirube'] },
   nagasakiKaji: { id: 'nagasakiKaji', name: '刀鍛冶', goods: ['tadayoshi', 'karakuriKagizume', 'rakanShakujo', 'orandaDo', 'kageShozoku', 'hachigane'] },
   dejimaShop: { id: 'dejimaShop', name: '商館', goods: ['gewehr', 'tomegane', 'kasutera'] },
   // 金沢（第 7 章）
-  kanazawaYorozu: { id: 'kanazawaYorozu', name: 'よろず屋', goods: ['kintsuba', 'shibafune', 'mankintan', 'bocha', 'hyorogan', 'dokukeshi', 'hakka', 'hangontan', 'kitsukegusuri', 'ninjin'] },
+  kanazawaYorozu: { id: 'kanazawaYorozu', name: 'よろず屋', goods: ['kintsuba', 'shibafune', 'mankintan', 'bocha', 'hyorogan', 'dokukeshi', 'hakka', 'hangontan', 'kitsukegusuri', 'ninjin', 'michishirube'] },
   kanazawaKaji: { id: 'kanazawaKaji', name: '刀鍛冶', goods: ['kanewaka', 'yukiKodachi', 'hakusanShakujo', 'kagaZutsu', 'kagaGusoku', 'yukiShozoku', 'hachigane'] },
   kanazawaKinpaku: { id: 'kanazawaKinpaku', name: '金箔屋', goods: ['kinpakuMamori', 'shibafune', 'bocha'] },
   // 仙台（第 8 章）
-  sendaiYorozu: { id: 'sendaiYorozu', name: 'よろず屋', goods: ['kintsuba', 'zundaMochi', 'mankintan', 'bocha', 'hyorogan', 'dokukeshi', 'kumanoi', 'hangontan', 'kitsukegusuri', 'ninjin'] },
+  sendaiYorozu: { id: 'sendaiYorozu', name: 'よろず屋', goods: ['kintsuba', 'zundaMochi', 'mankintan', 'bocha', 'hyorogan', 'dokukeshi', 'kumanoi', 'hangontan', 'kitsukegusuri', 'ninjin', 'michishirube'] },
   sendaiKaji: { id: 'sendaiKaji', name: '刀鍛冶', goods: ['kunikane', 'yukiKodachi', 'hakusanShakujo', 'kagaZutsu', 'yukinoshitaDo', 'yukiShozoku', 'hachigane'] },
   // 浜松（第 2 章の寄り道）。主人公と霞の 2 人で来るので、2 人分の装備を置く
-  hamamatsuYorozu: { id: 'hamamatsuYorozu', name: 'よろず屋', goods: ['omusubi', 'kizugusuri', 'dango', 'unagi', 'amazake', 'mankintan', 'dokukeshi', 'umeboshi', 'hangontan', 'kitsukegusuri', 'waraji', 'chochin'] },
+  hamamatsuYorozu: { id: 'hamamatsuYorozu', name: 'よろず屋', goods: ['omusubi', 'kizugusuri', 'dango', 'unagi', 'amazake', 'mankintan', 'dokukeshi', 'umeboshi', 'hangontan', 'kitsukegusuri', 'michishirube', 'waraji', 'chochin'] },
   hamamatsuKaji: { id: 'hamamatsuKaji', name: '刀鍛冶', goods: ['dotanuki', 'magoroku', 'ninjato', 'kusarigama', 'kusarikatabira', 'shinobishozoku', 'hachigane', 'inro'] },
   // 彦根（第 3 章の寄り道）。第 3 章の初め（主人公と霞の 2 人）から来られるので、京の品ぞろえに 2 人分の装備を置く
-  hikoneYorozu: { id: 'hikoneYorozu', name: 'よろず屋', goods: ['kizugusuri', 'itokiriMochi', 'kintsuba', 'mankintan', 'dokukeshi', 'kumanoi', 'hangontan', 'kitsukegusuri', 'waraji', 'chochin'] },
+  hikoneYorozu: { id: 'hikoneYorozu', name: 'よろず屋', goods: ['kizugusuri', 'itokiriMochi', 'kintsuba', 'mankintan', 'dokukeshi', 'kumanoi', 'hangontan', 'kitsukegusuri', 'michishirube', 'waraji', 'chochin'] },
   hikoneKaji: { id: 'hikoneKaji', name: '刀鍛冶', goods: ['kotetsu', 'tekkokagi', 'shakujo', 'nanbando', 'kusarishozoku', 'hachigane', 'inro'] },
   // 熊本（第 6 章の寄り道。島原の湊から渡し船で渡る）。長崎と同じ地域なので、長崎の品ぞろえに熊本の名物を足す
-  kumamotoYorozu: { id: 'kumamotoYorozu', name: 'よろず屋', goods: ['kintsuba', 'karashiRenkon', 'mankintan', 'konpeito', 'hyorogan', 'dokukeshi', 'hakka', 'hangontan', 'kitsukegusuri', 'ninjin'] },
+  kumamotoYorozu: { id: 'kumamotoYorozu', name: 'よろず屋', goods: ['kintsuba', 'karashiRenkon', 'mankintan', 'konpeito', 'hyorogan', 'dokukeshi', 'hakka', 'hangontan', 'kitsukegusuri', 'ninjin', 'michishirube'] },
   kumamotoKaji: { id: 'kumamotoKaji', name: '刀鍛冶', goods: ['tadayoshi', 'karakuriKagizume', 'rakanShakujo', 'orandaDo', 'kageShozoku', 'hachigane', 'inro'] },
   kumamotoRenkon: { id: 'kumamotoRenkon', name: '辛子蓮根の店', goods: ['karashiRenkon', 'omusubi', 'amazake'] },
   // 会津若松（第 8 章の寄り道）
-  aizuYorozu: { id: 'aizuYorozu', name: 'よろず屋', goods: ['kintsuba', 'mishirazuGaki', 'mankintan', 'bocha', 'hyorogan', 'dokukeshi', 'kumanoi', 'hakka', 'hangontan', 'kitsukegusuri', 'ninjin', 'chochin'] },
+  aizuYorozu: { id: 'aizuYorozu', name: 'よろず屋', goods: ['kintsuba', 'mishirazuGaki', 'mankintan', 'bocha', 'hyorogan', 'dokukeshi', 'kumanoi', 'hakka', 'hangontan', 'kitsukegusuri', 'ninjin', 'michishirube', 'chochin'] },
   aizuKaji: { id: 'aizuKaji', name: '刀鍛冶', goods: ['aizuKanesada', 'yukiKodachi', 'hakusanShakujo', 'kagaZutsu', 'yukinoshitaDo', 'yukiShozoku', 'hachigane', 'inro'] },
   // 江戸（第 8 章）
-  edoYorozu: { id: 'edoYorozu', name: 'よろず屋', goods: ['kintsuba', 'sakuraMochi', 'mankintan', 'konpeito', 'hyorogan', 'dokukeshi', 'kumanoi', 'hakka', 'hangontan', 'kitsukegusuri', 'ninjin', 'kiseru'] },
+  edoYorozu: { id: 'edoYorozu', name: 'よろず屋', goods: ['kintsuba', 'sakuraMochi', 'mankintan', 'konpeito', 'hyorogan', 'dokukeshi', 'kumanoi', 'hakka', 'hangontan', 'kitsukegusuri', 'ninjin', 'michishirube', 'kiseru'] },
   edoKaji: { id: 'edoKaji', name: '刀鍛冶', goods: ['kiyomaro', 'hibanaKodachi', 'fudoShakujo', 'kunitomoZutsu', 'sashikoBanten', 'kuroShozoku', 'hachigane', 'inro'] },
   nagoyaKaji: { id: 'nagoyaKaji', name: '刀鍛冶', goods: ['magoroku', 'kusarigama', 'kusarikatabira', 'shinobishozoku', 'hachigane', 'inro'] },
 };

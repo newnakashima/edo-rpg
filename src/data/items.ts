@@ -11,26 +11,30 @@ export type ItemEffect =
   /** 状態異常を治す。ailment を省くとすべて。 */
   | { kind: 'cure'; ailment?: 'poison' | 'paralysis' | 'sleep' | 'confusion' }
   /** 戦闘不能から HP の rate の割合で起き上がらせる。 */
-  | { kind: 'revive'; rate: number };
+  | { kind: 'revive'; rate: number }
+  /** ダンジョンの入口（外のマップ）へ戻る（maps.ts の escapePoint）。対象を選ばない。 */
+  | { kind: 'escape' };
 
-export type ItemKind = 'food' | 'medicine';
+export type ItemKind = 'food' | 'medicine' | 'charm';
 
 export interface ItemDef {
   id: string;
   name: string;
   /** 買値（文）。売値は半額。店（フェーズ 2 の町の施設）で使う。 */
   price: number;
-  /** 食べ物・飲み物か、薬か（メニューのアイコン: 団子・薬包）。 */
+  /** 食べ物・飲み物か、薬か、札か（メニューのアイコン: 団子・薬包・お守り）。 */
   kind: ItemKind;
   effect: ItemEffect;
-  /** 対象。今は味方単体の道具だけ。 */
-  target: 'ally';
+  /** 対象。味方単体か、対象を選ばない（パーティ全体に効く。道しるべの札）か。 */
+  target: 'ally' | 'party';
   /** 戦闘の外（メニュー）でも使える。状態異常は戦闘が終わると治るので、治す道具は戦闘中だけ。 */
   field: boolean;
+  /** false なら戦闘中には使えない（戦闘の一覧では選べない）。省くと使える。 */
+  battle?: false;
   description: string;
 }
 
-// 定義順がメニューの並び順になる（体力 → 気力 → 両方 → 状態異常 → 気付け）。
+// 定義順がメニューの並び順になる（体力 → 気力 → 両方 → 状態異常 → 気付け → 旅の札）。
 // 名物の食べ物は、その土地の店（shops.ts）で売る。
 export const ITEMS: Record<string, ItemDef> = {
   // 体力
@@ -69,6 +73,8 @@ export const ITEMS: Record<string, ItemDef> = {
   // 気付け
   kitsukegusuri: { id: 'kitsukegusuri', name: '気付け薬', price: 100, kind: 'medicine', effect: { kind: 'revive', rate: 0.25 }, target: 'ally', field: true, description: '戦闘不能から起こす' },
   ninjin: { id: 'ninjin', name: '朝鮮人参', price: 280, kind: 'medicine', effect: { kind: 'revive', rate: 0.5 }, target: 'ally', field: true, description: '高価な薬の根。戦闘不能から体力の半分で起こす' },
+  // 旅の札（戦闘の外だけ）
+  michishirube: { id: 'michishirube', name: '道しるべの札', price: 24, kind: 'charm', effect: { kind: 'escape' }, target: 'party', field: true, battle: false, description: '洞窟や城の中から、入口の外へひと息に戻る' },
 };
 
 /** 所持品（道具・装備品の ID ごとの個数）。 */
