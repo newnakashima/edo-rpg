@@ -74,7 +74,7 @@ export const KUMAMOTO_BUILDINGS: BuildingDef[] = [
         { name: '行灯', x: 1, y: 1, object: 'andon', lines: ANDON_LINES },
         { name: '屏風', x: 13, y: 1, object: 'byobu', lines: ['梅の枝を描いた金屏風だ。客間の枕元に立ててある。'] },
         { name: '掛け軸', x: 15, y: 1, object: 'kakejiku', lines: ['墨で一字を大書した掛け軸だ。'] },
-        { name: '竈', x: 24, y: 1, object: 'kamado', lines: ['竈に大釜が掛かっている。釜の湯は、底のほうに少し残っているだけだ。'] },
+        { name: '竈', x: 24, y: 1, object: 'kamado', lines: ['竈に大釜が掛かっている。客の足を洗う湯を沸かす釜だ。'] },
         { name: '木箱', x: 24, y: 4, object: 'kibako', lines: ['炭と薪を詰めた木箱だ。'] },
         { name: '帳場の文机', x: 1, y: 5, object: 'fuzukue', lines: ['宿帳と算盤が載っている。'] },
         { name: '行灯', x: 24, y: 7, object: 'andon', lines: ANDON_LINES },
@@ -403,7 +403,7 @@ export const KUMAMOTO_BUILDINGS: BuildingDef[] = [
         lines: ['娘「女湯は、夕方になると長屋のおかみさんたちでいっぱい。井戸端と同じで、町じゅうの噂が聞けるとですよ」'],
       },
       ...furniture('kumamotoYuya', [
-        { name: '湯船', x: 1, y: 1, object: 'yubune', lines: ['男湯の湯船だ。湯気が、もうもうと立ちのぼっている。'] },
+        { name: '湯船', x: 1, y: 1, object: 'yubune', lines: ['男湯の湯船だ。檜の縁が、湯で黒ずんでいる。'] },
         { name: '湯船', x: 23, y: 1, object: 'yubune', lines: ['女湯の湯船だ。'] },
         { name: '乱れ箱', x: 1, y: 4, object: 'kibako', lines: ['脱いだ着物を入れておく乱れ箱だ。'] },
         { name: '乱れ箱', x: 23, y: 4, object: 'kibako', lines: ['女湯の乱れ箱だ。'] },
