@@ -733,8 +733,8 @@ describe('第 8 章の流れ', () => {
     const report = run('kokichi', gashira);
     expect(report.flags.kokichiReport).toBe(true);
     expect(pagesOf('kokichi', report)).toBe(1);
-    // 小吉の知らせのあと、長屋にお鈴が現れる
-    const osuzu = MAPS.edo!.npcs.find((n) => n.id === 'osuzu')!;
+    // 小吉の知らせのあと、大家・源兵衛の家にお鈴が現れる（大家「お鈴ちゃんの面倒は、うちで見るよ」）
+    const osuzu = MAPS.edoGenbeiIe!.npcs.find((n) => n.id === 'osuzu')!;
     expect(npcVisible(osuzu, gashira.flags)).toBe(false);
     expect(npcVisible(osuzu, report.flags)).toBe(true);
   });
