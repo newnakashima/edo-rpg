@@ -13,9 +13,17 @@ describe('火のある場所', () => {
     expect(nearFire(at('shimizu', inn.x - FIRE_RANGE, inn.y))).toBe(true);
   });
 
-  it('よろず屋・刀鍛冶の人は火の元でない。知らないマップは火がない', () => {
-    const shop = MAPS.shimizu!.npcs.find((n) => n.action === 'shop')!;
-    expect(isFireSource(shop)).toBe(false);
+  it('居酒屋の人（燗をつける火）も火の元', () => {
+    const izakaya = MAPS.shimizu!.npcs.find((n) => n.action === 'izakaya')!;
+    expect(isFireSource(izakaya)).toBe(true);
+    expect(nearFire(at('shimizu', izakaya.x + FIRE_RANGE, izakaya.y))).toBe(true);
+  });
+
+  it('よろず屋・刀鍛冶・湯屋・賭場・妓楼の人は火の元でない。知らないマップは火がない', () => {
+    for (const action of ['shop', 'yuya', 'tobaku', 'gyoro']) {
+      const npc = MAPS.shimizu!.npcs.find((n) => n.action === action)!;
+      expect(isFireSource(npc), action).toBe(false);
+    }
     expect(nearFire(at('nowhere', 0, 0))).toBe(false);
   });
 

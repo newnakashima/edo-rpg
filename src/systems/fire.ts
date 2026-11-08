@@ -2,12 +2,12 @@
 import { MAPS, npcVisible, type NpcDef } from '../data/maps';
 import type { GameState } from './gameState';
 
-/** 火のそばとみなす距離（縦・横・斜めのマス数）。茶屋・旅籠の人は台の向こうに立つので、店先から届くようにする。 */
+/** 火のそばとみなす距離（縦・横・斜めのマス数）。茶屋・旅籠・居酒屋の人は台の向こうに立つので、店先から届くようにする。 */
 export const FIRE_RANGE = 2;
 
-/** 火の元になる人・物。茶屋（湯を沸かす火）・旅籠（囲炉裏）の人と、焚き火。 */
+/** 火の元になる人・物。茶屋（湯を沸かす火）・旅籠（囲炉裏）・居酒屋（燗をつける火）の人と、焚き火。 */
 export function isFireSource(npc: NpcDef): boolean {
-  return npc.action === 'teahouse' || npc.action === 'inn' || npc.object === 'takibi';
+  return npc.action === 'teahouse' || npc.action === 'inn' || npc.action === 'izakaya' || npc.object === 'takibi';
 }
 
 /** 今いる場所が火のそばか（FIRE_RANGE のマス以内に、いる火の元がある）。 */
@@ -18,7 +18,7 @@ export function nearFire(state: Pick<GameState, 'mapId' | 'x' | 'y' | 'flags'>):
 
 /**
  * npcs の中に、(x, y) から FIRE_RANGE のマス以内にいる火の元があるか。
- * 壁越しでも火のそばとみなす（今の茶屋・旅籠・焚き火のまわりで壁を挟んで立てるのは店の外の通りなど、火の気の届く近さだけのため）。
+ * 壁越しでも火のそばとみなす（今の茶屋・旅籠・居酒屋・焚き火のまわりで壁を挟んで立てるのは店の外の通りなど、火の気の届く近さだけのため）。
  * 壁の向こうで吸えるのがおかしい場所ができたら、マスの間の見通し（壁を通らないか）を足す。
  */
 export function fireAmong(npcs: readonly NpcDef[], x: number, y: number, flags: Record<string, boolean>): boolean {

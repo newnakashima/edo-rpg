@@ -44,7 +44,7 @@ const FAIL_MESSAGES: Record<Exclude<FieldResult, { ok: true }>['reason'], string
   cannotEquip: '付けられない。',
   full: '外した装備を持ちきれない。',
   guest: 'この人の装備は変えられない。',
-  noFire: '火の気がない。茶屋や旅籠、焚き火のそばで一服しよう。',
+  noFire: '火の気がない。茶屋や旅籠、居酒屋、焚き火のそばで一服しよう。',
   noKiseru: 'キセルを付けていないと吸えない。',
 };
 

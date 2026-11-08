@@ -3,7 +3,25 @@ import { ENCOUNTERS } from '../data/enemies';
 import { closedGateAt, encounterAt, MAPS, npcLines, npcObjectFrame, npcVisible, respawnPoint, START_POSITION, tileAt, townAction, type EventTrigger, type MapDef, type NpcDef } from '../data/maps';
 import { mapTileImages } from '../data/mapParts';
 import { pickGroup, stepOnRoad } from '../systems/encounter';
-import { dangoPrice, eatDango, innPrice, stayAtInn, teahouseChoices } from '../systems/facilities';
+import {
+  CHOHAN_BETS,
+  chohanRollText,
+  chohanWinnings,
+  dangoPrice,
+  drinkAtIzakaya,
+  eatDango,
+  gyoroPrice,
+  innPrice,
+  izakayaPrice,
+  playChohan,
+  stayAtInn,
+  takeBath,
+  teahouseChoices,
+  visitGyoro,
+  yuyaPrice,
+  type ChohanCall,
+  type PurchaseResult,
+} from '../systems/facilities';
 import { prayAtTemple, templePrice } from '../systems/shop';
 import { SHOPS } from '../data/shops';
 import type { Facing } from '../systems/gameState';
@@ -450,6 +468,22 @@ export class FieldScene extends Phaser.Scene {
       if (npc.action === 'shop') this.openShop(npc.shop);
       if (npc.action === 'temple') this.openTemple();
       if (npc.action === 'hikyaku') this.openHikyaku();
+      if (npc.action === 'yuya') {
+        this.openPaidRest(`湯に浸かる（${yuyaPrice(this.map.areaLevel)} 文）`, (s) => takeBath(s, this.map.areaLevel), [
+          '熱い湯に浸かって、体の疲れがほぐれた。体力が回復した。',
+        ], ['番頭「湯銭が足りねえようで……」']);
+      }
+      if (npc.action === 'izakaya') {
+        this.openPaidRest(`一杯やる（${izakayaPrice(this.map.areaLevel)} 文）`, (s) => drinkAtIzakaya(s, this.map.areaLevel), [
+          '熱燗で、気分がすっきりした。気力が回復した。',
+        ], ['亭主「お代が足りねえんじゃ、出せやせんぜ」']);
+      }
+      if (npc.action === 'gyoro') {
+        this.openPaidRest(`座敷に上がる（${gyoroPrice(this.map.areaLevel)} 文）`, (s) => visitGyoro(s, this.map.areaLevel), [
+          '三味線と唄でもてなされ、心も体も晴れ晴れとした。体力と気力が回復した。',
+        ], ['女将「あら、お足りないようで。またのお越しを」']);
+      }
+      if (npc.action === 'tobaku') this.openTobaku();
     });
   }
 
@@ -578,6 +612,82 @@ export class FieldScene extends Phaser.Scene {
         this.closeOverlay(menu);
         if (i === 0) this.openSave();
         else if (i === 1) this.openTrade({ kind: 'storage' });
+      },
+      () => this.closeOverlay(menu),
+    );
+    this.pushOverlay(menu);
+  }
+
+  /** 代金を払って休む施設（湯屋・居酒屋・妓楼）。決めたら run で払って回復し、done を出す。 */
+  private openPaidRest(label: string, run: (s: ReturnType<typeof getState>) => PurchaseResult, done: string[], noMoney: string[]): void {
+    const menu: Menu = new Menu(
+      this,
+      GAME_WIDTH - 170,
+      40,
+      160,
+      [{ label }, { label: 'やめる' }],
+      (i) => {
+        this.closeOverlay(menu);
+        if (i !== 0) return;
+        const result = run(getState());
+        if (!result.ok) {
+          this.message.show(noMoney);
+          return;
+        }
+        setState(result.state);
+        this.message.show(done);
+      },
+      () => this.closeOverlay(menu),
+    );
+    this.pushOverlay(menu);
+  }
+
+  /** 賭場。張る額を選び、丁か半かを張る（さいころの目の和が偶数なら丁、奇数なら半）。 */
+  private openTobaku(): void {
+    const bets = CHOHAN_BETS.filter((b) => b <= getState().money);
+    if (bets.length === 0) {
+      this.message.show([`中盆「${CHOHAN_BETS[0]} 文も持たねえで、賭場に来なさんな」`]);
+      return;
+    }
+    const menu: Menu = new Menu(
+      this,
+      GAME_WIDTH - 140,
+      40,
+      130,
+      [...bets.map((b) => ({ label: `${b} 文張る` })), { label: 'やめる' }],
+      (i) => {
+        this.closeOverlay(menu);
+        const bet = bets[i];
+        if (bet !== undefined) this.openChohanCall(bet);
+      },
+      () => this.closeOverlay(menu),
+    );
+    this.pushOverlay(menu);
+  }
+
+  private openChohanCall(bet: number): void {
+    const calls: ChohanCall[] = ['cho', 'han'];
+    const menu: Menu = new Menu(
+      this,
+      GAME_WIDTH - 140,
+      40,
+      130,
+      [{ label: '丁（偶数）' }, { label: '半（奇数）' }, { label: 'やめる' }],
+      (i) => {
+        this.closeOverlay(menu);
+        const call = calls[i];
+        if (!call) return;
+        const result = playChohan(getState(), bet, call, defaultRng);
+        if (!result.ok) {
+          this.message.show(['中盆「張るだけの銭がねえようだな」']);
+          return;
+        }
+        setState(result.state);
+        this.message.show([
+          `${call === 'cho' ? '丁' : '半'}に ${bet} 文を張った。`,
+          `壺振り「${chohanRollText(result.dice)}！」`,
+          result.win ? `当たった！ 寺銭を引いて ${chohanWinnings(bet)} 文を得た。` : `外れた……。${bet} 文を失った。`,
+        ]);
       },
       () => this.closeOverlay(menu),
     );
