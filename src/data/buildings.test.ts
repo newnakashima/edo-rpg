@@ -27,7 +27,7 @@ const buildings = Object.values(MAPS).filter((m) => buildingTown(m.id));
 
 describe('施設・民家以外の建物の屋内（テストプレイの指摘: あらゆる建物に入れるようにすべき）', () => {
   // 屋内を足した町（町を足したらここにも足す）
-  const TOWNS = ['shimizu', 'sunpu', 'nagoya', 'kyo', 'iga', 'osaka', 'hiroshima', 'nagasaki', 'kanazawa', 'sendai', 'hamamatsu', 'hikone', 'kumamoto', 'aizu'];
+  const TOWNS = ['shimizu', 'sunpu', 'nagoya', 'kyo', 'iga', 'osaka', 'hiroshima', 'nagasaki', 'kanazawa', 'sendai', 'hamamatsu', 'hikone', 'kumamoto', 'aizu', 'edo'];
   // 鍵をかけた戸（入れなくてよい。ユーザーの決定「鍵をかけたもの以外のすべての建物に入れる」）
   const LOCKED: Record<string, [number, number][]> = {
     hiroshima: [[15, 4]], // 城の門（門番が堀の橋をふさぐ）
@@ -37,6 +37,7 @@ describe('施設・民家以外の建物の屋内（テストプレイの指摘:
     hikone: [[14, 5]], // 彦根城の門（門番が堀の橋をふさぐ）
     kumamoto: [[18, 5]], // 熊本城の門（門番が堀の橋をふさぐ）
     aizu: [[24, 6]], // 鶴ヶ城の門（門番が堀の橋をふさぐ）
+    edo: [[32, 5]], // 江戸城の大手門（門番が堀の橋をふさぐ。門が開いたあとは橋の出口から本丸御殿へ入る）
   };
   // 戸のある建物がなく、通りに立つ店（町の通りに残る施設の人）
   const STREET_SHOPS = ['kakibune'];
@@ -143,7 +144,7 @@ describe('施設・民家以外の建物の屋内（テストプレイの指摘:
         }
       }
     }
-    // 清水湊・駿府・名古屋・京・伊賀上野・大坂・広島・長崎・金沢・仙台・浜松・彦根・熊本・会津若松の賭場・居酒屋・妓楼・親分の屋敷（町を足すと増える）
+    // 清水湊・駿府・名古屋・京・伊賀上野・大坂・広島・長崎・金沢・仙台・浜松・彦根・熊本・会津若松・江戸の賭場・居酒屋・妓楼・親分の屋敷（町を足すと増える）
     expect(checked).toBeGreaterThanOrEqual(TOWNS.length * 4);
   });
 
@@ -271,6 +272,44 @@ describe('施設・民家以外の建物の屋内（テストプレイの指摘:
     // 旅籠の商人・居酒屋の馬方・賭場の馬喰・一家の子分は、猪苗代一家の親分の頼み（峠の盗賊）を果たすと台詞が変わる
     for (const [map, id] of [['aizuYado', 'aizuYadoKyaku1'], ['aizuIzakaya', 'aizuIzakayaUmakata'], ['aizuTobakuba', 'aizuTobakuKyaku2'], ['aizuOyabunYashiki', 'aizuOyabunKobun']] as const) {
       expect(MAPS[map]!.npcs.find((n) => n.id === id)?.after?.flag, id).toBe(oyabunRequestId('aizu'));
+    }
+  });
+
+  it('江戸の旅籠の主人・店の人・呉服屋の商人・寺の僧・火消しの頭・お鈴は建物の中にいる。源兵衛・小吉・お春は通りの戸の脇に立つ', () => {
+    expect(MAPS.edoYado!.npcs.find((n) => n.id === 'edoInn')?.action).toBe('inn');
+    expect(MAPS.edoTera!.npcs.find((n) => n.id === 'edoSo')?.action).toBe('temple');
+    expect(MAPS.edoBanya!.npcs.find((n) => n.id === 'hikeshiGashira')?.event).toBe('hikeshiGashira');
+    expect(MAPS.edoGenbeiIe!.npcs.find((n) => n.id === 'osuzu')?.showFlag).toBe('kokichiReport');
+    expect(MAPS.edoGofukuya!.npcs.some((n) => n.id === 'edoShonin')).toBe(true);
+    const moved = ['edoInn', 'edoTeahouse', 'edoHikyaku', 'edoYorozu', 'edoKaji', 'edoShonin', 'edoSo', 'hikeshiGashira', 'osuzu'];
+    expect(MAPS.edo!.npcs.some((n) => moved.includes(n.id))).toBe(false);
+    // 店の人は、店の ID と施設の種類をそのまま持つ
+    const everyone = Object.values(MAPS).filter((m) => buildingTown(m.id) === 'edo').flatMap((m) => m.npcs);
+    for (const [id, action, shop] of [['edoTeahouse', 'teahouse', 'edoChaya'], ['edoYorozu', 'shop', 'edoYorozu'], ['edoKaji', 'shop', 'edoKaji'], ['edoHikyaku', 'hikyaku', undefined]] as const) {
+      const npc = everyone.find((n) => n.id === id);
+      expect({ action: npc?.action, shop: npc?.shop }, id).toEqual({ action, shop });
+    }
+    // 話しかけると戸口・路地・店先の場面になる源兵衛・小吉・お春は、それぞれの家の戸の脇に残す（戸の前はあける）
+    expect(MAPS.edo!.npcs.find((n) => n.id === 'nagayaOoya')).toMatchObject({ x: 11, y: 15 });
+    expect(MAPS.edo!.npcs.find((n) => n.id === 'kokichi')).toMatchObject({ x: 23, y: 15 });
+    expect(MAPS.edo!.npcs.find((n) => n.id === 'oharu')).toMatchObject({ x: 52, y: 32 });
+    expect(MAPS.edo!.exits.find((e) => e.x === 10 && e.y === 14)?.to).toBe('edoGenbeiIe');
+    expect(MAPS.edo!.exits.find((e) => e.x === 22 && e.y === 14)?.to).toBe('edoKokichiIe');
+    expect(MAPS.edo!.exits.find((e) => e.x === 51 && e.y === 31)?.to).toBe('edoYaoya');
+    // 神田の長屋の 3 戸は民家
+    for (const [x, y] of [[4, 14], [4, 19], [16, 19]] as const) expect(MAPS.edo!.exits.find((e) => e.x === x && e.y === y)?.to, `${x},${y}`).toBe(`minka_edo_${x}_${y}`);
+    // 町と建物の中の人で、旅籠・茶屋・店・寺・飛脚・湯屋・賭場・居酒屋・妓楼・親分の屋敷がそろう
+    expect(new Set([...MAPS.edo!.npcs, ...everyone].map((n) => n.action).filter(Boolean))).toEqual(
+      new Set(['inn', 'teahouse', 'shop', 'temple', 'hikyaku', 'yuya', 'tobaku', 'izakaya', 'gyoro', 'oyabun']),
+    );
+    // 屋内の人も、神田の大火・火車からくり・浅草一家の親分の頼み（縁日の旗本奴）で台詞が変わる
+    // 大火のさなかの台詞（taikaStarted）は、火車からくりを倒すと（kashaDefeated）鎮火のあとの台詞に変わる
+    const all = Object.values(MAPS).filter((m) => buildingTown(m.id) === 'edo').flatMap((m) => m.npcs);
+    for (const n of all.filter((n) => n.after?.flag === 'taikaStarted')) expect(n.later?.flag, n.id).toBe('kashaDefeated');
+    expect(MAPS.edoBanya!.npcs.find((n) => n.id === 'edoBanyaMatoimochi')?.after?.flag).toBe('taikaStarted');
+    expect(MAPS.edoTera!.npcs.find((n) => n.id === 'edoTeraKoshou')?.after?.flag).toBe('kashaDefeated');
+    for (const [map, id] of [['edoIzakaya', 'edoIzakayaYashi'], ['edoOyabunYashiki', 'edoOyabunKobun']] as const) {
+      expect(MAPS[map]!.npcs.find((n) => n.id === id)?.after?.flag, id).toBe(oyabunRequestId('edo'));
     }
   });
 });

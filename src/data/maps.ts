@@ -22,6 +22,7 @@ import { HAMAMATSU_BUILDINGS } from './buildingsHamamatsu';
 import { HIKONE_BUILDINGS } from './buildingsHikone';
 import { KUMAMOTO_BUILDINGS } from './buildingsKumamoto';
 import { AIZU_BUILDINGS } from './buildingsAizu';
+import { EDO_BUILDINGS } from './buildingsEdo';
 
 /** タイルの種類。画像は public/assets/tiles/<種類>.png（PixelLab で生成。記録は public/assets/README.md）。 */
 export const TILE_KINDS = ['ground', 'grass', 'road', 'tree', 'water', 'wall', 'roof', 'door', 'floor', 'rock', 'plain', 'town', 'gate'] as const;
@@ -4252,39 +4253,32 @@ MAPS.edo = {
       // 第 8 章を終えて話しかけると、加賀の手形で門を開ける（otemonOpen）
       hideFlag: 'otemonOpen',
     },
+    // 大家の源兵衛は、自分の家（10, 14）の戸の脇に立つ（戸口で一行を迎えるイベント）。家の中には女房と、小吉の知らせのあとはお鈴がいる（src/data/buildingsEdo.ts）
     {
       id: 'nagayaOoya',
       name: '大家',
-      x: 10,
+      x: 11,
       y: 15,
       color: 0x8a7a6a,
       sprite: 'npc_rojin',
       event: 'nagayaOoya',
     },
+    // 小吉は、自分の家（22, 14）の戸の脇に立つ（路地を追われて転がり込んでくるイベント）
     {
       id: 'kokichi',
       name: '小吉',
-      x: 22,
+      x: 23,
       y: 15,
       color: 0x3a3a4a,
       sprite: 'kokichi',
       event: 'kokichi',
       showFlag: 'edoHideout',
     },
-    {
-      id: 'osuzu',
-      name: 'お鈴',
-      x: 4,
-      y: 15,
-      color: 0xc08a9a,
-      sprite: 'npc_musume',
-      lines: ['お鈴「おとっつぁんは……もう、帰ってこないのね」', 'お鈴「でも、おとっつぁんが最後に、わたしのことを頼んでくれたって。……ありがとう」'],
-      showFlag: 'kokichiReport',
-    },
+    // 長屋のおかみは 1 マス左へ、町の子は 1 マス右へずらし、民家の戸口（4, 19 と 16, 19）に入れるようにした
     {
       id: 'nagayaOkami',
       name: 'おかみ',
-      x: 4,
+      x: 3,
       y: 20,
       color: 0xa07a6a,
       sprite: 'npc_okami',
@@ -4293,7 +4287,7 @@ MAPS.edo = {
     {
       id: 'nagayaKodomo',
       name: '町の子',
-      x: 16,
+      x: 17,
       y: 20,
       color: 0x8a9a6a,
       sprite: 'npc_kodomo',
@@ -4308,15 +4302,7 @@ MAPS.edo = {
       sprite: 'npc_roba',
       lines: ['老婆「井戸端で聞いた話じゃ、上様はもう一年も、お城の奥から出てこられんそうな」', '老婆「たまにお出ましになっても、能面みたいに顔が動かんのだと。……くわばら、くわばら」'],
     },
-    {
-      id: 'hikeshiGashira',
-      name: '火消しの頭',
-      x: 40,
-      y: 17,
-      color: 0x8a3a2a,
-      sprite: 'npc_hikeshi',
-      event: 'hikeshiGashira',
-    },
+    // 火消しの頭は番屋の中（src/data/buildingsEdo.ts）。番屋の前には組の火消しが立つ
     {
       id: 'hikeshi1',
       name: '火消し',
@@ -4336,10 +4322,11 @@ MAPS.edo = {
       sprite: 'npc_hikeshi',
       lines: ['火消し「火の見櫓の上からは、江戸じゅうが見渡せる。火が出たら半鐘を鳴らして、組の者を集めるのさ」'],
     },
+    // 町人は、瓦版屋の戸口（56, 16）に入れるよう 1 マス右へずらした
     {
       id: 'edoChonin',
       name: '町人',
-      x: 56,
+      x: 57,
       y: 17,
       color: 0x8a6a4a,
       sprite: 'npc_ninsoku',
@@ -4364,94 +4351,22 @@ MAPS.edo = {
       sprite: 'npc_yakunin',
       lines: ['同心「御老中・鷲尾さまのお達しだ。謀反人の一行が江戸に入り込んだ。渡世人に女の忍び、坊主に鉄砲打ちの娘……」', '同心「……ん？ おぬしら、どこかで見たような。いや、気のせいか」'],
     },
-    {
-      id: 'edoInn',
-      name: '旅籠の主人',
-      x: 5,
-      y: 32,
-      color: 0x5a6b8c,
-      sprite: 'npc_innkeeper',
-      lines: ['旅籠の主人「人相書きなんぞ見ちゃいませんがね、渡世人のお方はお江戸の宿には泊められねえんで。親分さんの屋敷を頼りなせえ」'],
-      action: 'inn',
-    },
-    {
-      id: 'edoTeahouse',
-      name: '茶屋の娘',
-      x: 13,
-      y: 32,
-      color: 0xc76b8f,
-      sprite: 'npc_musume',
-      lines: [
-        '茶屋の娘「いらっしゃいまし。桜餅をおひとついかが？」',
-        '茶屋の娘「御城では、御老中の鷲尾さまが何もかもお決めになるんですって。上様のお声を聞いた人は、もう誰もいないとか」',
-      ],
-      action: 'teahouse',
-      shop: 'edoChaya',
-    },
-    {
-      id: 'edoHikyaku',
-      name: '飛脚',
-      x: 20,
-      y: 32,
-      color: 0x6a8a4a,
-      sprite: 'npc_hikyaku',
-      lines: ['飛脚「日本橋は五街道の起点だ。ここから東海道も奥州街道も始まるのさ」'],
-      action: 'hikyaku',
-    },
-    {
-      id: 'edoYorozu',
-      name: 'よろず屋',
-      x: 36,
-      y: 32,
-      color: 0x8a6a4a,
-      sprite: 'npc_merchant',
-      lines: ['よろず屋「へい、らっしゃい！ 向島の桜餅なら茶屋だよ。今朝届いたばかりだってさ」'],
-      action: 'shop',
-      shop: 'edoYorozu',
-    },
-    {
-      id: 'edoKaji',
-      name: '刀鍛冶',
-      x: 43,
-      y: 32,
-      color: 0x4a4a5a,
-      sprite: 'npc_smith',
-      lines: ['刀鍛冶「四谷の名工の刀に、近江の国友の筒。火消しの刺子半纏もあるぜ」'],
-      action: 'shop',
-      shop: 'edoKaji',
-    },
+    // 日本橋の旅籠・茶屋・飛脚・よろず屋・刀鍛冶の人と呉服屋の商人、寺の僧は、建物の中（src/data/buildingsEdo.ts）。
+    // 八百屋の娘は「店先に座っている」ので通りに残し、八百屋の戸口（51, 31）に入れるよう 1 マス右へずらした
     {
       id: 'oharu',
       name: '八百屋の娘',
-      x: 51,
+      x: 52,
       y: 32,
       color: 0xc76b8f,
       sprite: 'npc_musume',
       event: 'oharu',
     },
-    {
-      id: 'edoShonin',
-      name: '商人',
-      x: 58,
-      y: 32,
-      color: 0x8a6a4a,
-      sprite: 'npc_merchant',
-      lines: ['商人「八百屋の娘さん、このところ思いつめた顔をしててねえ。寺で会った若いのに、のぼせてるって噂だよ」'],
-    },
-    {
-      id: 'edoSo',
-      name: '僧',
-      x: 6,
-      y: 42,
-      color: 0x6a5a4a,
-      sprite: 'npc_so',
-      lines: ['僧「仏の前では、謀反人もお尋ね者もありませぬ。傷ついた者は、お休みなされ」'],
-      action: 'temple',
-    },
+    // 版元・蕎麦屋・芝居小屋・両替商の前の町人・おかみ・呼び込み・老人は、それぞれの戸口に入れるよう 1 マス右へずらした
     {
       id: 'edoMachi1',
       name: '町人',
-      x: 21,
+      x: 22,
       y: 41,
       color: 0x8a6a4a,
       sprite: 'npc_ninsoku',
@@ -4460,7 +4375,7 @@ MAPS.edo = {
     {
       id: 'edoMachi2',
       name: 'おかみ',
-      x: 27,
+      x: 28,
       y: 41,
       color: 0xa07a6a,
       sprite: 'npc_okami',
@@ -4469,7 +4384,7 @@ MAPS.edo = {
     {
       id: 'edoShibai',
       name: '呼び込み',
-      x: 37,
+      x: 38,
       y: 41,
       color: 0x8a6a4a,
       sprite: 'npc_ninsoku',
@@ -4478,7 +4393,7 @@ MAPS.edo = {
     {
       id: 'edoMachi3',
       name: '老人',
-      x: 45,
+      x: 46,
       y: 41,
       color: 0x8a7a6a,
       sprite: 'npc_rojin',
@@ -4855,6 +4770,7 @@ addBuildings(MAPS, 'hamamatsu', HAMAMATSU_BUILDINGS);
 addBuildings(MAPS, 'hikone', HIKONE_BUILDINGS);
 addBuildings(MAPS, 'kumamoto', KUMAMOTO_BUILDINGS);
 addBuildings(MAPS, 'aizu', AIZU_BUILDINGS);
+addBuildings(MAPS, 'edo', EDO_BUILDINGS);
 /** その戸口が屋内へ入る入口か（屋内のある施設の人は、屋内の建物のファイルで屋内に置くので、店先には立たせない）。 */
 const hasInterior = (town: string, door: { x: number; y: number }) => MAPS[town]!.exits.some((e) => e.x === door.x && e.y === door.y);
 // 湯屋・賭場・居酒屋・妓楼（刀鍛冶かよろず屋のあるすべての町。戸口と台詞は src/data/townFacilities.ts）
