@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { ENCOUNTERS } from '../data/enemies';
 import { closedGateAt, encounterAt, MAPS, npcLines, npcObjectFrame, npcVisible, respawnPoint, START_POSITION, tileAt, townAction, type EventTrigger, type MapDef, type NpcDef } from '../data/maps';
 import { mapTileImages } from '../data/mapParts';
-import { pickGroup, step } from '../systems/encounter';
+import { pickGroup, stepOnRoad } from '../systems/encounter';
 import { dangoPrice, eatDango, innPrice, stayAtInn } from '../systems/facilities';
 import { prayAtTemple, templePrice } from '../systems/shop';
 import { SHOPS } from '../data/shops';
@@ -378,8 +378,12 @@ export class FieldScene extends Phaser.Scene {
     if (!encounter) return;
     const table = ENCOUNTERS[encounter];
     if (!table) return;
-    const result = step(state.stepsToEncounter, defaultRng);
-    setState({ ...state, stepsToEncounter: result.stepsLeft });
+    const result = stepOnRoad(state, defaultRng);
+    setState({ ...state, stepsToEncounter: result.stepsToEncounter, wardSteps: result.wardSteps });
+    if (result.wardEnded) {
+      this.message.show(['魔除けの効き目が切れた。']);
+      return;
+    }
     if (!result.encounter) return;
     const group = pickGroup(
       table,

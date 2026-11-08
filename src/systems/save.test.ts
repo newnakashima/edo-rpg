@@ -25,6 +25,18 @@ describe('save', () => {
     expect(load(storage, 1)).toEqual({ version: SAVE_VERSION, savedAt: '2026-10-31T00:00:00.000Z', state: s });
   });
 
+  it('魔除けの残りの歩数を読み戻せ（省いたセーブも読める）、負や小数の歩数は読まない', () => {
+    const storage = memoryStorage();
+    save(storage, 0, { ...state(), wardSteps: 42 });
+    expect(load(storage, 0)?.state.wardSteps).toBe(42);
+    save(storage, 1, state());
+    expect(load(storage, 1)?.state.wardSteps).toBeUndefined();
+    for (const wardSteps of [-1, 1.5, '3']) {
+      save(storage, 2, { ...state(), wardSteps: wardSteps as number });
+      expect(load(storage, 2), String(wardSteps)).toBeNull();
+    }
+  });
+
   it('空きスロットは null', () => {
     const storage = memoryStorage();
     save(storage, 2, state());

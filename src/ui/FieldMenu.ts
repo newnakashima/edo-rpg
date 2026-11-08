@@ -8,7 +8,7 @@ import { portraitFor } from '../data/portraits';
 import { EQUIP_SLOTS, EQUIPMENT, SLOT_NAMES, canEquip, type EquipSlot } from '../data/equipment';
 import { ITEMS, itemCount, itemName, ownedEquipment, ownedItems } from '../data/items';
 import { SKILLS } from '../data/skills';
-import { changeEquipment, escapeInField, skillDescription, fieldSkills, itemUsableOn, statsWithEquipment, swapMembers, useItemInField, useSkillInField, type EscapeResult, type FieldResult } from '../systems/fieldMenu';
+import { changeEquipment, escapeInField, skillDescription, fieldSkills, itemUsableOn, statsWithEquipment, swapMembers, useItemInField, useSkillInField, wardInField, type EscapeResult, type FieldResult, type WardResult } from '../systems/fieldMenu';
 import { memberStats } from '../systems/party';
 import type { Stats } from '../systems/stats';
 import { getState, setState } from '../state';
@@ -223,6 +223,14 @@ export class FieldMenu {
           this.escape(escapeInField(getState(), { item: id }), `${ITEMS[id]?.name ?? ''}を使った。`);
           return;
         }
+        if (ITEMS[id]?.effect.kind === 'ward') {
+          const message = this.ward(wardInField(getState(), { item: id }), `${ITEMS[id]?.name ?? ''}を焚いた。`);
+          // 個数が変わるので、道具の一覧から開き直す
+          this.popToMain();
+          this.openItems();
+          this.setInfo(message);
+          return;
+        }
         this.chooseMember(
           `${ITEMS[id]?.name ?? ''}を誰に使う？`,
           (target) => {
@@ -268,6 +276,14 @@ export class FieldMenu {
           this.escape(escapeInField(getState(), { caster, skill: skill.id }), `${name}は${skill.name}を使った。`);
           return;
         }
+        if (skill.effect.kind === 'ward') {
+          const name = characterName(member.id, getState().gender);
+          const message = this.ward(wardInField(getState(), { caster, skill: skill.id }), `${name}は${skill.name}を唱えた。`);
+          this.popToMain();
+          this.openSkills(caster);
+          this.setInfo(message);
+          return;
+        }
         const done = (r: FieldResult) => {
           const message = this.apply(r, `${skill.name}を使った。`);
           this.popToMain();
@@ -287,6 +303,13 @@ export class FieldMenu {
         if (skill) this.setInfo(skillDescription(skill));
       },
     );
+  }
+
+  /** 魔除けの香・結界の真言の結果。使えたら状態を進め、説明の窓に出す文を返す。 */
+  private ward(result: WardResult, used: string): string {
+    if (!result.ok) return FAIL_MESSAGES[result.reason];
+    setState(result.state);
+    return `${used}${result.steps} 歩のあいだ、敵が寄ってこない。`;
   }
 
   /** 道しるべの札・抜け道の結果。使えたらメニューを閉じて入口の外へ移り、使えなければ説明の窓に理由を出す。 */

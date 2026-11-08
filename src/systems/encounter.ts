@@ -16,6 +16,20 @@ export function step(stepsLeft: number, rng: Rng): { stepsLeft: number; encounte
 }
 
 /**
+ * 敵の出る場所を 1 歩進める。魔除け（wardSteps）が効いていれば、その残りだけを減らして戦闘にならず、
+ * エンカウントまでの歩数は進めない。wardEnded はこの 1 歩で魔除けが切れたか。
+ */
+export function stepOnRoad(
+  current: { stepsToEncounter: number; wardSteps?: number },
+  rng: Rng,
+): { stepsToEncounter: number; wardSteps: number; encounter: boolean; wardEnded: boolean } {
+  const ward = current.wardSteps ?? 0;
+  if (ward > 0) return { stepsToEncounter: current.stepsToEncounter, wardSteps: ward - 1, encounter: false, wardEnded: ward === 1 };
+  const result = step(current.stepsToEncounter, rng);
+  return { stepsToEncounter: result.stepsLeft, wardSteps: 0, encounter: result.encounter, wardEnded: false };
+}
+
+/**
  * 出現表から敵グループを重みに従って選ぶ。敵の数は「味方の人数 + 1」以下に制限し、
  * minPartyLevel に届かない組は除く（docs/balance.md の「エンカウント」）。条件に合う組がなければ null。
  */

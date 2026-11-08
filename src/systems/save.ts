@@ -120,6 +120,7 @@ export function isGameState(v: unknown): v is GameState {
   if (!isInventory(v.items) || !isInventory(v.storage)) return false;
   if (!isObject(v.flags) || !Object.values(v.flags).every((f) => typeof f === 'boolean')) return false;
   if (!isNonNegativeInteger(v.stepsToEncounter) || !isFiniteNumber(v.playTimeSec) || v.playTimeSec < 0) return false;
+  if (v.wardSteps !== undefined && !isNonNegativeInteger(v.wardSteps)) return false;
   return true;
 }
 

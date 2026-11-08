@@ -24,6 +24,8 @@ export interface GameState {
   flags: Record<string, boolean>;
   /** 次のエンカウントまでの残り歩数。 */
   stepsToEncounter: number;
+  /** 魔除けの香・結界の真言が効いている残りの歩数（敵の出る場所を歩くと減る）。省くと 0（効いていない）。 */
+  wardSteps?: number;
   playTimeSec: number;
 }
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ENCOUNTERS, type EncounterTable } from '../data/enemies';
-import { ENCOUNTER_STEPS_MAX, ENCOUNTER_STEPS_MIN, nextEncounterSteps, pickGroup, step } from './encounter';
+import { ENCOUNTER_STEPS_MAX, ENCOUNTER_STEPS_MIN, nextEncounterSteps, pickGroup, step, stepOnRoad } from './encounter';
 import { seededRng, seqRng } from './testUtils';
 
 describe('歩数', () => {
@@ -12,6 +12,31 @@ describe('歩数', () => {
   it('残りが 0 になると戦闘になり、歩数を引き直す', () => {
     expect(step(5, seqRng(0))).toEqual({ stepsLeft: 4, encounter: false });
     expect(step(1, seqRng(0))).toEqual({ stepsLeft: ENCOUNTER_STEPS_MIN, encounter: true });
+  });
+});
+
+describe('魔除け（魔除けの香・結界の真言）', () => {
+  it('効いているあいだは残りの歩数だけが減り、戦闘にならず、エンカウントまでの歩数も進まない', () => {
+    expect(stepOnRoad({ stepsToEncounter: 1, wardSteps: 3 }, seqRng(0))).toEqual({ stepsToEncounter: 1, wardSteps: 2, encounter: false, wardEnded: false });
+  });
+
+  it('最後の 1 歩で切れたことを知らせ、その歩では戦闘にならない', () => {
+    expect(stepOnRoad({ stepsToEncounter: 1, wardSteps: 1 }, seqRng(0))).toEqual({ stepsToEncounter: 1, wardSteps: 0, encounter: false, wardEnded: true });
+  });
+
+  it('切れたあと（省いたときも）は、いつもどおり歩数を数えて戦闘になる', () => {
+    expect(stepOnRoad({ stepsToEncounter: 1, wardSteps: 0 }, seqRng(0))).toEqual({ stepsToEncounter: ENCOUNTER_STEPS_MIN, wardSteps: 0, encounter: true, wardEnded: false });
+    expect(stepOnRoad({ stepsToEncounter: 5 }, seqRng(0))).toEqual({ stepsToEncounter: 4, wardSteps: 0, encounter: false, wardEnded: false });
+  });
+
+  it('150 歩のあいだは一度も戦闘にならない', () => {
+    let cur = { stepsToEncounter: 1, wardSteps: 150 };
+    for (let i = 0; i < 150; i++) {
+      const r = stepOnRoad(cur, seededRng(i));
+      expect(r.encounter).toBe(false);
+      cur = r;
+    }
+    expect(cur.wardSteps).toBe(0);
   });
 });
 
