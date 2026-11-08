@@ -9,6 +9,22 @@ import { memberStats, restoreAll } from './party';
 /** 仁義ポイントの上限（ユーザーの決定、2026-11-07）。 */
 export const JINGI_MAX = 100;
 
+/**
+ * 「名が通る」仁義ポイント（ユーザーの決定、2026-11-07）。これ以上あるあいだは、各地の親分の屋敷で贈り物（レアな装飾品）をもらえる
+ * （src/data/oyabunGifts.ts）。メニューの仁義ポイントの横にも「名が通る」と出す。
+ */
+export const JINGI_RENOWN = 90;
+
+/** 名が通っているか（仁義ポイントが JINGI_RENOWN 以上）。 */
+export function isRenowned(jingi: number): boolean {
+  return jingi >= JINGI_RENOWN;
+}
+
+/** メニューに出す仁義ポイント（名が通っていれば、そう添える）。 */
+export function jingiLabel(jingi: number): string {
+  return isRenowned(jingi) ? `仁義 ${jingi}（名が通る）` : `仁義 ${jingi}`;
+}
+
 /** 旅立ちのときの仁義ポイント（序盤の屋敷に 10 回泊まれる）。 */
 export const JINGI_START = 10;
 
