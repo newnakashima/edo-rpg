@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
+import { findTerms, termsIn, type GlossaryEntry } from '../data/glossary';
 import { FACE_MARGIN, messageTextLayout, TEXT_PADDING } from './messageLayout';
 import { scrollOffset, wrapIndex } from './menuScroll';
+import { termSegments } from './termLayout';
 import { COLORS, textStyle } from './theme';
 import { CURSOR_SCALE, CURSOR_TEXTURE, ICON_SCALE, ICON_TEXTURE, iconFrame, WINDOW_SLICES, WINDOW_TEXTURE, windowSliceRects, type IconName } from './uiImages';
 import type { Controls } from './input';
@@ -25,39 +27,100 @@ export interface PageView {
   face?: string;
 }
 
+export interface MessageWindowOptions {
+  /**
+   * TIPS（用語の解説）を使う。ページの中の用語（src/data/glossary.ts）に色と下線を付け、
+   * 取消で解説の窓を開く（決定で次の用語、最後の用語か取消で閉じる）。
+   */
+  glossary?: boolean;
+}
+
+/** 解説の窓の高さ（縁 4 の内側に、見出し 1 行と説明 2 行）。 */
+const TIPS_HEIGHT = 60;
+
 /**
  * ページ送りのメッセージウィンドウ。決定ボタンで次のページへ進む。
  * view を渡すと、ページごとに画面に出す文と顔のテクスチャのキーを引き、顔があれば左に出して文字を右へずらす
  * （台詞の表情の印〈怒〉などは view が外す）。
  */
 export class MessageWindow {
+  private readonly scene: Phaser.Scene;
   private readonly container: Phaser.GameObjects.Container;
   private readonly text: Phaser.GameObjects.Text;
   private readonly arrow: Phaser.GameObjects.Text;
   private readonly face: Phaser.GameObjects.Image | null;
+  /** 用語の装飾（色を替えた文字と下線）。ページごとに作り直す。 */
+  private readonly marks: Phaser.GameObjects.Container;
+  /** キーボードで遊ぶときの「X:用語」の案内（タッチの端末では取消ボタンの文字が「用語」に替わるので出さない）。 */
+  private readonly hint: Phaser.GameObjects.Text | null;
+  private readonly tips: Phaser.GameObjects.Container;
+  private readonly tipsTitle: Phaser.GameObjects.Text;
+  private readonly tipsBody: Phaser.GameObjects.Text;
+  private readonly tipsCount: Phaser.GameObjects.Text;
   private readonly x: number;
   private readonly w: number;
   private readonly view: ((page: string) => PageView) | undefined;
+  private readonly glossary: boolean;
   private pages: string[] = [];
   private index = 0;
   private onDone: (() => void) | null = null;
+  /** 今のページに出てくる用語（出てきた順）。 */
+  private terms: GlossaryEntry[] = [];
+  /** 解説の窓で見せている用語の番号。閉じていれば null。 */
+  private tipsIndex: number | null = null;
 
-  constructor(scene: Phaser.Scene, x: number, y: number, w: number, h: number, view?: (page: string) => PageView) {
+  constructor(
+    scene: Phaser.Scene,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    view?: (page: string) => PageView,
+    options: MessageWindowOptions = {},
+  ) {
+    this.scene = scene;
     this.x = x;
     this.w = w;
     this.view = view;
+    this.glossary = options.glossary ?? false;
     const bg = drawWindow(scene, x, y, w, h);
     this.text = scene.add.text(x + TEXT_PADDING, y + 6, '', { ...textStyle(11), wordWrap: { width: w - TEXT_PADDING * 2, useAdvancedWrap: true }, lineSpacing: 3 });
     this.arrow = scene.add.text(x + w - 14, y + h - 14, '▼', textStyle(8, COLORS.accent));
     // 顔はウィンドウの縦の中央に置く（フィールドの高さ 58 なら、縁 4 の内側 50 に 48 の顔が収まり、上下に 1 ずつ空く）
     this.face = view ? scene.add.image(x + FACE_MARGIN, y + Math.floor(h / 2), '__DEFAULT').setOrigin(0, 0.5).setVisible(false) : null;
-    const parts: Phaser.GameObjects.GameObject[] = [bg, this.text, this.arrow];
+    this.marks = scene.add.container(0, 0);
+    const coarse = typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches;
+    this.hint = this.glossary && !coarse ? scene.add.text(x + w - 16, y + h - 14, 'X:用語', textStyle(8, COLORS.accent)).setOrigin(1, 0).setVisible(false) : null;
+    const parts: Phaser.GameObjects.GameObject[] = [bg, this.text, this.marks, this.arrow];
+    if (this.hint) parts.push(this.hint);
     if (this.face) parts.push(this.face);
     this.container = scene.add.container(0, 0, parts).setScrollFactor(0).setDepth(100).setVisible(false);
+
+    // 解説の窓は画面の上に出す（下のメッセージウィンドウの台詞を見ながら読める）
+    const tipsBg = drawWindow(scene, x, 8, w, TIPS_HEIGHT);
+    this.tipsTitle = scene.add.text(x + TEXT_PADDING, 8 + 6, '', textStyle(11, COLORS.accent));
+    this.tipsBody = scene.add.text(x + TEXT_PADDING, 8 + 6 + 15, '', { ...textStyle(11), wordWrap: { width: w - TEXT_PADDING * 2, useAdvancedWrap: true }, lineSpacing: 3 });
+    this.tipsCount = scene.add.text(x + w - TEXT_PADDING, 8 + 6, '', textStyle(8, COLORS.dim)).setOrigin(1, 0);
+    const tipsArrow = scene.add.text(x + w - 14, 8 + TIPS_HEIGHT - 14, '▼', textStyle(8, COLORS.accent));
+    this.tips = scene.add
+      .container(0, 0, [tipsBg, this.tipsTitle, this.tipsBody, this.tipsCount, tipsArrow])
+      .setScrollFactor(0)
+      .setDepth(101)
+      .setVisible(false);
   }
 
   get isOpen(): boolean {
     return this.container.visible;
+  }
+
+  /** 今のページに用語がある（取消で解説を見られる）。 */
+  get hasTerms(): boolean {
+    return this.isOpen && this.terms.length > 0;
+  }
+
+  /** 用語の解説の窓を開いている。 */
+  get tipsOpen(): boolean {
+    return this.tipsIndex !== null;
   }
 
   show(pages: string[], onDone?: () => void): void {
@@ -71,12 +134,14 @@ export class MessageWindow {
   /** 決定ボタンが押されたら呼ぶ。最後のページなら閉じて onDone を呼ぶ。 */
   advance(): void {
     if (!this.isOpen) return;
+    this.closeTips();
     this.index++;
     if (this.index < this.pages.length) {
       this.showPage(this.pages[this.index] ?? '');
       return;
     }
     this.container.setVisible(false);
+    this.terms = [];
     const done = this.onDone;
     this.onDone = null;
     done?.();
@@ -91,14 +156,84 @@ export class MessageWindow {
     this.text.setX(this.x + left);
     this.text.setWordWrapWidth(wrapWidth, true);
     this.text.setText(text);
+    this.decorate(text);
+  }
+
+  /** 用語に、色を替えた文字を重ね、下線を引く。 */
+  private decorate(text: string): void {
+    this.marks.removeAll(true);
+    this.terms = this.glossary ? termsIn(text) : [];
+    this.hint?.setVisible(this.terms.length > 0);
+    if (this.terms.length === 0) return;
+    const lines = this.text.getWrappedText(text);
+    const segments = termSegments(text, lines, findTerms(text));
+    // 文字の幅は、この Text が描くときと同じ字体で測る
+    const ctx = this.text.context;
+    this.text.style.syncFont(this.text.canvas, ctx);
+    const metrics = this.text.style.getTextMetrics();
+    const lineStep = metrics.fontSize + this.text.style.strokeThickness + this.text.lineSpacing;
+    const underline = this.scene.add.graphics().fillStyle(Number.parseInt(COLORS.accent.slice(1), 16), 1);
+    const words: Phaser.GameObjects.Text[] = [];
+    for (const seg of segments) {
+      const line = lines[seg.line] ?? '';
+      const word = line.slice(seg.start, seg.end);
+      const left = this.text.x + ctx.measureText(line.slice(0, seg.start)).width;
+      const top = this.text.y + seg.line * lineStep;
+      words.push(this.scene.add.text(left, top, word, textStyle(11, COLORS.accent)));
+      underline.fillRect(left, top + metrics.ascent + 2, ctx.measureText(word).width, 1);
+    }
+    this.marks.add([underline, ...words]);
+  }
+
+  private openTips(): void {
+    if (this.terms.length === 0) return;
+    this.tipsIndex = 0;
+    this.showTip();
+    this.tips.setVisible(true);
+  }
+
+  private showTip(): void {
+    const entry = this.tipsIndex === null ? undefined : this.terms[this.tipsIndex];
+    if (!entry) return;
+    this.tipsTitle.setText(`${entry.term}（${entry.reading}）`);
+    this.tipsBody.setText(entry.description);
+    this.tipsCount.setText(this.terms.length > 1 ? `${(this.tipsIndex ?? 0) + 1}/${this.terms.length}` : '');
+  }
+
+  /** 決定で次の用語へ。最後の用語なら閉じる。 */
+  private nextTip(): void {
+    if (this.tipsIndex === null) return;
+    if (this.tipsIndex + 1 >= this.terms.length) {
+      this.closeTips();
+      return;
+    }
+    this.tipsIndex++;
+    this.showTip();
+  }
+
+  private closeTips(): void {
+    this.tipsIndex = null;
+    this.tips.setVisible(false);
   }
 
   update(controls: Controls): void {
-    if (this.isOpen && controls.okPressed()) this.advance();
+    if (!this.isOpen) return;
+    if (this.tipsOpen) {
+      if (controls.okPressed()) this.nextTip();
+      else if (controls.cancelPressed()) this.closeTips();
+      return;
+    }
+    if (controls.okPressed()) {
+      this.advance();
+      return;
+    }
+    // 用語を使うウィンドウでは、取消を読んでいる間に溜めない（閉じた後にメニューが開かないように）
+    if (this.glossary && controls.cancelPressed()) this.openTips();
   }
 
   destroy(): void {
     this.container.destroy();
+    this.tips.destroy();
   }
 }
 

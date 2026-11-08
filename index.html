@@ -34,6 +34,8 @@
       .actions .btn { width: 64px; height: 64px; border-radius: 50%; background: center / 64px 64px no-repeat; image-rendering: pixelated; }
       .actions .ok { margin-bottom: 30px; background-image: url(assets/ui/button_ok.png); }
       .actions .cancel { background-image: url(assets/ui/button_cancel.png); }
+      /* 取消ボタンが今は何もしないとき（src/ui/cancelLabel.ts） */
+      .actions .btn.dim { color: #8a8476; }
       .actions .btn.active { filter: brightness(1.35); transform: translateY(2px); }
     </style>
   </head>

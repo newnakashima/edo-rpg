@@ -1,6 +1,7 @@
 // キーボードと画面上の仮想パッド（DOM のボタン）の入力をまとめる。
 import Phaser from 'phaser';
 import type { Facing } from '../systems/gameState';
+import { CANCEL, type CancelLabel } from './cancelLabel';
 import { bindButton, bindDpad, padSink } from './dpad';
 
 export type Button = 'ok' | 'cancel';
@@ -43,6 +44,21 @@ export function bindVirtualPad(root: HTMLElement): void {
   }
   // タブを切り替えたときに押しっぱなしにならないようにする
   window.addEventListener('blur', () => pad.clear());
+}
+
+let shownCancel: CancelLabel | null = null;
+
+/**
+ * 仮想パッドの取消ボタンの文字を替える（「状態」「用語」など）。enabled が false なら薄く出す。
+ * 同じ表示なら DOM に触らない（毎フレーム呼んでよい）。
+ */
+export function setCancelLabel(next: CancelLabel): void {
+  if (shownCancel && shownCancel.label === next.label && shownCancel.enabled === next.enabled) return;
+  const el = typeof document === 'undefined' ? null : document.querySelector<HTMLElement>('#pad [data-key="cancel"]');
+  if (!el) return;
+  shownCancel = next;
+  el.textContent = next.label;
+  el.classList.toggle('dim', !next.enabled);
 }
 
 const KEY_MAP: Record<string, Button | Facing> = {
@@ -100,6 +116,8 @@ export class Controls {
     });
     // 前のシーンで押された入力を持ち越さない（押し続けている方向は持ち越す）
     pad.clearPressed();
+    // 取消ボタンの表示は、シーンが替わったら「取消」に戻す（フィールドは毎フレーム場面に合わせて替える）
+    setCancelLabel(CANCEL);
   }
 
   /**
