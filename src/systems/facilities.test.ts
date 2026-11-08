@@ -1,11 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { dangoPrice, eatDango, innPrice, reviveAfterDefeat, stayAtInn } from './facilities';
+import { dangoPrice, eatDango, innPrice, reviveAfterDefeat, stayAtInn, teahouseChoices } from './facilities';
 import { newGame } from './gameState';
 import { createMember, memberStats } from './party';
 
 const start = { mapId: 'shimizu', x: 1, y: 1 };
 
 describe('施設', () => {
+  it('茶屋のメニューは、品を売る店があれば「団子を食べる・品を買う・やめる」、なければ「団子を食べる・やめる」', () => {
+    expect(teahouseChoices(true)).toEqual(['eat', 'buy', 'cancel']);
+    expect(teahouseChoices(false)).toEqual(['eat', 'cancel']);
+  });
+
   it('値段は docs/balance.md の「経済」のとおり', () => {
     expect(innPrice(1)).toBe(14);
     expect(dangoPrice(1)).toBe(6);
