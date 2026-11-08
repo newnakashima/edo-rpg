@@ -26,9 +26,23 @@ export type PurchaseResult = { ok: true; state: GameState } | { ok: false; reaso
 
 /** 旅籠に泊まる。全員の HP・MP を全回復する（戦闘不能も治る）。 */
 export function stayAtInn(state: GameState, areaLevel: number): PurchaseResult {
-  const price = innPrice(areaLevel);
+  return payAndRestoreAll(state, innPrice(areaLevel));
+}
+
+/** 代金を払い、全員の HP・MP を全回復する（旅籠・もぐりの宿）。 */
+function payAndRestoreAll(state: GameState, price: number): PurchaseResult {
   if (state.money < price) return { ok: false, reason: 'money' };
   return { ok: true, state: { ...state, money: state.money - price, party: restoreAll(state.party) } };
+}
+
+/** もぐりの宿（ワールドマップの非合法な旅籠）の宿代。町の旅籠の 4 倍（妓楼の 3 倍より高い、いちばん高い全回復）。 */
+export function moguriInnPrice(areaLevel: number): number {
+  return innPrice(areaLevel) * 4;
+}
+
+/** もぐりの宿に泊まる。町の旅籠と同じく全員の HP・MP を全回復する（戦闘不能も治る）。 */
+export function stayAtMoguriInn(state: GameState, areaLevel: number): PurchaseResult {
+  return payAndRestoreAll(state, moguriInnPrice(areaLevel));
 }
 
 /** 茶屋で団子を食べる。戦闘不能でない全員の HP を少し回復する。 */

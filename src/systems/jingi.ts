@@ -1,6 +1,7 @@
 // 仁義ポイントと親分の屋敷（docs/balance.md の「仁義ポイント」）。
 // 渡世人の一行は、各地の親分の屋敷に仁義ポイントを使って泊まり、体力と気力を全回復する。
 // ポイントは賭場・居酒屋・妓楼の頼まれごとや、親分の頼み（シナリオ）で得る（得る場面は別に足す）。
+// ポイントが足りないときは、ワールドマップのもぐりの宿（src/data/moguriYado.ts）にお金で泊まる。
 import type { GameState } from './gameState';
 import { memberStats, restoreAll } from './party';
 

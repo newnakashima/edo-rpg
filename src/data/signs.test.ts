@@ -23,8 +23,8 @@ describe('施設の看板', () => {
       if (npc.sign === false) continue;
       expect(signPosition(map, npc), `${map.id} ${npc.id}`).not.toBeNull();
     }
-    // 掛けない施設は、戸のない施設と城の中の人だけ
-    const none = facilities.filter((f) => f.npc.sign === false).map((f) => f.npc.id);
+    // 掛けない施設は、戸のない施設と城の中の人、ワールドマップのもぐりの宿（届けの出ていない宿。src/data/moguriYado.ts）だけ
+    const none = facilities.filter((f) => f.npc.sign === false && f.npc.action !== 'moguriInn').map((f) => f.npc.id);
     expect(none.sort()).toEqual(['kakibune', 'kanazawaHikyaku', 'kintaRoka', 'kokichiJo', 'sengenKannushi']);
   });
 

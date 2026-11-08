@@ -19,6 +19,12 @@ describe('火のある場所', () => {
     expect(nearFire(at('shimizu', izakaya.x + FIRE_RANGE, izakaya.y))).toBe(true);
   });
 
+  it('ワールドマップのもぐりの宿の小屋（囲炉裏）も火の元', () => {
+    const hut = MAPS.world!.npcs.find((n) => n.action === 'moguriInn')!;
+    expect(isFireSource(hut)).toBe(true);
+    expect(nearFire(at('world', hut.x, hut.y + 1))).toBe(true);
+  });
+
   it('よろず屋・刀鍛冶・湯屋・賭場・妓楼の人は火の元でない。知らないマップは火がない', () => {
     for (const action of ['shop', 'yuya', 'tobaku', 'gyoro']) {
       const npc = MAPS.shimizu!.npcs.find((n) => n.action === action)!;

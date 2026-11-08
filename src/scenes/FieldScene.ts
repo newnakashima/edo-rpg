@@ -13,8 +13,10 @@ import {
   gyoroPrice,
   innPrice,
   izakayaPrice,
+  moguriInnPrice,
   playChohan,
   stayAtInn,
+  stayAtMoguriInn,
   takeBath,
   teahouseChoices,
   visitGyoro,
@@ -24,7 +26,7 @@ import {
 } from '../systems/facilities';
 import { prayAtTemple, templePrice } from '../systems/shop';
 import { SHOPS } from '../data/shops';
-import type { Facing } from '../systems/gameState';
+import type { Facing, GameState } from '../systems/gameState';
 import { memberLevel } from '../systems/party';
 import { defaultRng } from '../systems/random';
 import { playBgm } from '../systems/audio';
@@ -32,6 +34,7 @@ import { browserStorage } from '../systems/save';
 import { getState, holdEventWhileAway, setState, shouldRunEnterEvent, takePendingEvent } from '../state';
 import { EVENTS } from '../data/events';
 import { mapSigns, signKey } from '../data/signs';
+import { moguriYadoById } from '../data/moguriYado';
 import { OYABUN, oyabunWelcome } from '../data/oyabun';
 import { oyabunStayCost, stayAtOyabun } from '../systems/jingi';
 import { CHAR_DISPLAY_ORIGIN, heroSprite, idleFrame, objectDepth, objectDisplayOrigin, objectKey, oppositeFacing, personDepth, shouldStandStill, spriteKey, walkAnimKey, walkDepthRow, type CharacterSpriteId } from '../data/sprites';
@@ -465,7 +468,14 @@ export class FieldScene extends Phaser.Scene {
         const s = getState();
         setState({ ...s, flags: { ...s.flags, [npc.setsFlag]: true } });
       }
-      if (npc.action === 'inn') this.openInn();
+      if (npc.action === 'inn') {
+        this.openInn(innPrice(this.map.areaLevel), (st) => stayAtInn(st, this.map.areaLevel), '旅籠の主人');
+      }
+      if (npc.action === 'moguriInn') {
+        // もぐりの宿はワールドマップ（敵レベル 1 のマップ）にあるので、値段は宿ごとに決めた街道の敵レベルで決める
+        const level = moguriYadoById(npc.id)?.areaLevel ?? this.map.areaLevel;
+        this.openInn(moguriInnPrice(level), (st) => stayAtMoguriInn(st, level), '亭主');
+      }
       if (npc.action === 'oyabun') this.openOyabun();
       if (npc.action === 'teahouse') this.openTeahouse(npc.shop);
       if (npc.action === 'shop') this.openShop(npc.shop);
@@ -516,11 +526,15 @@ export class FieldScene extends Phaser.Scene {
         if (i === 0) {
           const result = stayAtOyabun(getState(), this.map.areaLevel);
           if (!result.ok) {
-            this.message.show([
+            this.message.show(
               result.reason === 'full'
-                ? '若い衆「みなさん、まだまだお元気そうでござんすね。草鞋を脱ぐのは、疲れなすったときにしなせえ」'
-                : `若い衆「すまねえが、仁義の足りねえお方をお泊めしちゃ、親分に叱られやす……」（仁義 ${getState().jingi}／${cost} 要る）`,
-            ]);
+                ? ['若い衆「みなさん、まだまだお元気そうでござんすね。草鞋を脱ぐのは、疲れなすったときにしなせえ」']
+                : [
+                    `若い衆「すまねえが、仁義の足りねえお方をお泊めしちゃ、親分に叱られやす……」（仁義 ${getState().jingi}／${cost} 要る）`,
+                    // ワールドマップのもぐりの宿（src/data/moguriYado.ts）へ導く
+                    '若い衆「街道筋の脇道に、お上に届けの出てねえ宿があると聞きやす。代は高えが、そこなら誰でも泊めてくれやすぜ」',
+                  ],
+            );
             return;
           }
           setState(result.state);
@@ -552,8 +566,8 @@ export class FieldScene extends Phaser.Scene {
     });
   }
 
-  private openInn(): void {
-    const price = innPrice(this.map.areaLevel);
+  /** 旅籠・もぐりの宿。お金で泊まって全回復し、そのあと記録もできる。host は台詞の話し手。 */
+  private openInn(price: number, stay: (state: GameState) => PurchaseResult, host: string): void {
     const menu: Menu = new Menu(
       this,
       GAME_WIDTH - 140,
@@ -563,13 +577,13 @@ export class FieldScene extends Phaser.Scene {
       (i) => {
         this.closeOverlay(menu);
         if (i === 0) {
-          const result = stayAtInn(getState(), this.map.areaLevel);
+          const result = stay(getState());
           if (!result.ok) {
-            this.message.show(['旅籠の主人「お代が足りねえようで……」']);
+            this.message.show([`${host}「お代が足りねえようで……」`]);
             return;
           }
           setState(result.state);
-          this.sleepThen(['ぐっすり眠った。体力と気力が回復した。', '旅籠の主人「記録もつけていきなさるかい？」']);
+          this.sleepThen(['ぐっすり眠った。体力と気力が回復した。', `${host}「記録もつけていきなさるかい？」`]);
         } else if (i === 1) {
           this.openSave();
         }
