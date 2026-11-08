@@ -82,7 +82,8 @@ describe('人でない物の画像（テストプレイの指摘: 主要人物�
   });
 
   it('物の画像はどれもどこかで使う', () => {
-    const used = new Set(things.map((t) => t.npc.object));
+    const marks = Object.values(MAPS).flatMap((m) => (m.marks ?? []).map((k) => k.object));
+    const used = new Set([...things.map((t) => t.npc.object), ...marks]);
     for (const id of OBJECT_SPRITES) expect(used.has(id), id).toBe(true);
   });
 
@@ -1719,5 +1720,38 @@ describe('寄り道の熊本', () => {
     for (const id of ['kumamotoMonban2', 'ichoRojin', 'kumamotoKusuriuri', 'kumamotoInn', 'kumamotoTeahouse', 'kumamotoOkami', 'kumamotoKodomo', 'idobataMusume', 'idobataRoba', 'suizenjiNiwashi']) {
       expect(kumamoto.npcs.find((n) => n.id === id)?.after?.flag, id).toBe('kumamotoIdoFound');
     }
+  });
+});
+
+describe('入口の目印（テストプレイの指摘: 南蛮寺跡・島原の地下研究所の入口が入口に見えない）', () => {
+  const marks = Object.values(MAPS).flatMap((m) => (m.marks ?? []).map((mark) => ({ map: m, mark })));
+
+  it('目印は出口のマスの上にあり、目印の下の出口はどれも通れる', () => {
+    expect(marks.length).toBeGreaterThan(0);
+    for (const { map, mark } of marks) {
+      // 0.5 刻みなら左右の 2 マス、整数ならそのマス
+      const xs = Number.isInteger(mark.x) ? [mark.x] : [Math.floor(mark.x), Math.ceil(mark.x)];
+      expect(Number.isInteger(mark.x * 2), `${map.id} ${mark.x}`).toBe(true);
+      for (const x of xs) {
+        expect(map.exits.some((e) => e.x === x && e.y === mark.y), `${map.id} (${x},${mark.y}) が出口`).toBe(true);
+        expect(tileAt(map, x, mark.y)?.blocked, `${map.id} (${x},${mark.y}) が通れる`).toBe(false);
+      }
+    }
+  });
+
+  it('長崎の南蛮寺跡への出口と、原城跡の地下の研究所への出口には目印がある', () => {
+    for (const [mapId, to] of [['nagasaki', 'nanbanji'], ['harajo', 'kenkyujo']] as const) {
+      const map = MAPS[mapId]!;
+      const exits = map.exits.filter((e) => e.to === to);
+      expect(exits.length, mapId).toBeGreaterThan(0);
+      for (const e of exits) {
+        const marked = (map.marks ?? []).some((k) => k.y === e.y && Math.abs(k.x - e.x) <= 0.5);
+        expect(marked, `${mapId} (${e.x},${e.y})`).toBe(true);
+      }
+    }
+  });
+
+  it('熊本の清正の古井戸は井戸の画像で描く（石段の穴の画像を使い回さない）', () => {
+    expect(MAPS.kumamoto!.npcs.find((n) => n.id === 'furuido')?.object).toBe('ido');
   });
 });

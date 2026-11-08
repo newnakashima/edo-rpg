@@ -101,6 +101,11 @@ export class FieldScene extends Phaser.Scene {
         .setOrigin(0.5, 1)
         .setDepth(5);
     }
+    // 入口の目印（洞窟の口・石段・門）。地面のすぐ上に描き、人はその上を歩く
+    for (const mark of map.marks ?? []) {
+      const origin = objectDisplayOrigin(mark.object);
+      this.add.image(mark.x * TILE, mark.y * TILE, objectKey(mark.object), 0).setDisplayOrigin(origin.x, origin.y).setDepth(1);
+    }
     this.npcSprites = new Map();
     this.npcObjects = new Map();
     for (const npc of map.npcs) {

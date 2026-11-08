@@ -174,12 +174,25 @@ export interface ExitDef {
   toY: number;
 }
 
+/**
+ * 入口の目印（洞窟の口・地下への石段・門など）。物の画像を地面の上に描くだけで、通れるかは変えない
+ * （npcs の object と違い、そのマスをふさがない）。出口（exits）のマスに置き、入口だと分かるようにする。
+ * x に 0.5 刻みを使うと、2 マスの出口の真ん中に置ける。画像の合わせ方は npcs の object と同じ（下端の中央をマスの下端の中央に）。
+ */
+export interface MarkDef {
+  x: number;
+  y: number;
+  object: ObjectSpriteId;
+}
+
 export interface MapDef {
   id: string;
   name: string;
   rows: string[];
   npcs: NpcDef[];
   exits: ExitDef[];
+  /** 入口の目印（通れるまま、物の画像を地面の上に描く）。 */
+  marks?: MarkDef[];
   /** 地域ごとのタイルの見た目（TILESETS）。省くと共通の見た目。 */
   tileset?: TilesetId;
   /** エンカウントの出現表の ID。町など戦闘のない場所は省略する。 */
@@ -2985,12 +2998,12 @@ MAPS.nagasaki = {
   areaLevel: 19,
   rows: [
     'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
-    'T~~~~~~~~~~~=,,,,,,,,,,,=,,,,,^^^^^^^^^^^^^T',
-    'T~~~~~~~~~~~=,RRRRRR,,,,=,RRRR^^^^,,TTTT,,^T',
-    'T~~~~~~~~~~~=,WWDWWW,,,,=,WDWW^^^^,,,,,,,,^T',
-    'T~~~~~~~~~~~=........,,,=.....^^^^,,,,,,,,^T',
-    'T~~~~~~~~~~~=T,,,,,,,,,T=,,,,,^^^^,,,,,,,,^T',
-    'T~~~~~~~~~~~=,,,,,,,,,,,=,,,,,^^^^,,,,,,,,^T',
+    'T~~~~~~~~~~~=,,,,,,,,,,,=,,,,,^^^^^^^==^^^^T',
+    'T~~~~~~~~~~~=,RRRRRR,,,,=,RRRR^^^^,TT==TT,^T',
+    'T~~~~~~~~~~~=,WWDWWW,,,,=,WDWW^^^^,,,==,,,^T',
+    'T~~~~~~~~~~~=........,,,=.....^^^^,,,==,,,^T',
+    'T~~~~~~~~~~~=T,,,,,,,,,T=,,,,,^^^^,,,==,,,^T',
+    'T~~~~~~~~~~~=,,,,,,,,,,,=,,,,,^^^^,,,==,,,^T',
     'T~~~~~~~~~~~=,RRRR.RRRR,=,RRRR,,,^^^^==^^^^T',
     'T~~~~~~~~~~~=,WDWW.WDWW,=,WWDW,,,^^^^==^^^^T',
     'T~~~~~~~~~~~=...........=......T,^^^^==^^^^T',
@@ -3173,9 +3186,11 @@ MAPS.nagasaki = {
     { x: 43, y: 26, to: 'world', toX: 8, toY: 47 },
     // 出島の表門へ
     { x: 7, y: 14, to: 'dejima', toX: 30, toY: 9 },
-    // 東の山の南蛮寺跡へ（通詞の話を聞くまでは役人が石段をふさぐ）
-    { x: 35, y: 2, to: 'nanbanji', toX: 17, toY: 25 },
+    // 東の山の南蛮寺跡へ（通詞の話を聞くまでは役人が石段をふさぐ）。山の上の崩れた門をくぐる
+    { x: 37, y: 1, to: 'nanbanji', toX: 17, toY: 25 },
+    { x: 38, y: 1, to: 'nanbanji', toX: 18, toY: 25 },
   ],
+  marks: [{ x: 37.5, y: 1, object: 'nanbanjiMon' }],
   respawn: { x: 29, y: 9 },
   onEnter: { event: 'nagasakiEnter', unless: 'chapter6Cleared' },
 };
@@ -3337,8 +3352,8 @@ MAPS.nanbanji = {
     },
   ],
   exits: [
-    { x: 17, y: 26, to: 'nagasaki', toX: 35, toY: 3 },
-    { x: 18, y: 26, to: 'nagasaki', toX: 35, toY: 3 },
+    { x: 17, y: 26, to: 'nagasaki', toX: 37, toY: 2 },
+    { x: 18, y: 26, to: 'nagasaki', toX: 38, toY: 2 },
   ],
   encounter: 'nagasaki',
   respawnMap: 'nagasaki',
@@ -3359,7 +3374,7 @@ MAPS.harajo = {
     'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
     'TTT..TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT~~~~~~~T',
     'TTT..TTTTTTTTTTTTT^^^^^^^^^^^^^^^^^^^^~~~~~~~T',
-    'TTT..TTTTTTTTTTTTT^,,,,,,,,,,,,^..__.^~~~~~~~T',
+    'TTT..TTTTTTTTTTTTT^,,,,,,,,,,,,^.....^~~~~~~~T',
     'TTT..TTTTTTTTTTTTT^,T,,,,,,,,T,^.....^~~~~~~~T',
     'TTT..,,,,,,,,,,,,,^,,,,,,,,,,,,^.....^~~~~~~~T',
     'TTT..^^^^^^^^^^^^^^,,,,^^^^^^,,^,^^^^^~~~~~~~T',
@@ -3415,24 +3430,16 @@ MAPS.harajo = {
       ],
       after: { flag: 'nanbanOzutsuDefeated', lines: ['櫓台の跡に、静かな風が吹いている。'] },
     },
-    {
-      id: 'harajoIshidan',
-      name: '石段',
-      x: 33,
-      y: 4,
-      color: 0x7a7a6a,
-      object: 'ishidan',
-      lines: ['本丸の奥に、新しく積み直した石段がある。地の底から、歯車の音が響いてくる。'],
-    },
   ],
   exits: [
     // 北西の入口からワールドマップへ（島原の印の西の街道）
     { x: 3, y: 1, to: 'world', toX: 15, toY: 53 },
     { x: 4, y: 1, to: 'world', toX: 15, toY: 53 },
-    // 本丸の奥の石段から地下の研究所へ
+    // 本丸の奥の、木の枠を組んだ石段から地下の研究所へ
     { x: 34, y: 3, to: 'kenkyujo', toX: 15, toY: 1 },
     { x: 35, y: 3, to: 'kenkyujo', toX: 16, toY: 1 },
   ],
+  marks: [{ x: 34.5, y: 3, object: 'chikaKaidan' }],
   encounter: 'harajo',
   respawnMap: 'nagasaki',
 };
@@ -4855,7 +4862,7 @@ MAPS.kumamoto = {
       object: 'sekihi',
       lines: ['「清正公お手植えの大銀杏」と刻まれている。籠城のとき、実を兵糧にするために植えたと伝わる。'],
     },
-    { id: 'furuido', name: '清正の古井戸', x: 38, y: 6, color: 0x7a7a6a, object: 'ishidan', event: 'kumamotoFuruido' },
+    { id: 'furuido', name: '清正の古井戸', x: 38, y: 6, color: 0x7a7a6a, object: 'ido', event: 'kumamotoFuruido' },
     {
       id: 'ichoRojin',
       name: 'ご隠居',
