@@ -298,7 +298,14 @@ describe('施設・民家以外の建物の屋内（テストプレイの指摘:
     expect(MAPS.edo!.exits.find((e) => e.x === 51 && e.y === 31)?.to).toBe('edoYaoya');
     // 神田の長屋の 3 戸は民家
     for (const [x, y] of [[4, 14], [4, 19], [16, 19]] as const) expect(MAPS.edo!.exits.find((e) => e.x === x && e.y === y)?.to, `${x},${y}`).toBe(`minka_edo_${x}_${y}`);
+    // 町と建物の中の人で、旅籠・茶屋・店・寺・飛脚・湯屋・賭場・居酒屋・妓楼・親分の屋敷がそろう
+    expect(new Set([...MAPS.edo!.npcs, ...everyone].map((n) => n.action).filter(Boolean))).toEqual(
+      new Set(['inn', 'teahouse', 'shop', 'temple', 'hikyaku', 'yuya', 'tobaku', 'izakaya', 'gyoro', 'oyabun']),
+    );
     // 屋内の人も、神田の大火・火車からくり・浅草一家の親分の頼み（縁日の旗本奴）で台詞が変わる
+    // 大火のさなかの台詞（taikaStarted）は、火車からくりを倒すと（kashaDefeated）鎮火のあとの台詞に変わる
+    const all = Object.values(MAPS).filter((m) => buildingTown(m.id) === 'edo').flatMap((m) => m.npcs);
+    for (const n of all.filter((n) => n.after?.flag === 'taikaStarted')) expect(n.later?.flag, n.id).toBe('kashaDefeated');
     expect(MAPS.edoBanya!.npcs.find((n) => n.id === 'edoBanyaMatoimochi')?.after?.flag).toBe('taikaStarted');
     expect(MAPS.edoTera!.npcs.find((n) => n.id === 'edoTeraKoshou')?.after?.flag).toBe('kashaDefeated');
     for (const [map, id] of [['edoIzakaya', 'edoIzakayaYashi'], ['edoOyabunYashiki', 'edoOyabunKobun']] as const) {

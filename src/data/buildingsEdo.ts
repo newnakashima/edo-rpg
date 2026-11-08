@@ -99,7 +99,7 @@ export const EDO_BUILDINGS: BuildingDef[] = [
     npcs: furniture('edoKokichiIe', [
       { name: '行灯', x: 1, y: 1, object: 'andon', lines: ANDON_LINES },
       { name: '千両箱', x: 7, y: 1, object: 'senryobako', lines: ['蓋の開いた千両箱だ。中は空っぽで、小判は一枚も残っていない。'] },
-      { name: '竈', x: 7, y: 11, object: 'kamado', lines: ['竈は冷えている。ここで飯を炊いた跡は、あまりない。'] },
+      { name: '竈', x: 7, y: 11, object: 'kamado', lines: ['竈に小さな釜が掛かっている。焚き口の火は、つけっぱなしだ。'] },
       { name: '木箱', x: 1, y: 14, object: 'kibako', lines: ['頬かむりの手拭いと、黒い股引が丸めて突っ込んである。'] },
     ]),
   },
@@ -144,6 +144,7 @@ export const EDO_BUILDINGS: BuildingDef[] = [
         sprite: 'npc_rojin',
         lines: ['隠居「湯上がりに、ここで将棋を指すのが楽しみでな。……近頃は、人相書きの噂で持ちきりじゃが」'],
         after: { flag: 'taikaStarted', lines: ['隠居「半鐘が鳴りっぱなしじゃ。神田のほうの空が赤い。……湯どころではないわい」'] },
+        later: { flag: 'kashaDefeated', lines: ['隠居「神田の火は、一町焼けただけで収まったそうな。今夜は、ゆっくり湯に浸かれるわい」'] },
       },
       {
         id: 'edoYuyaTobi',
@@ -248,7 +249,8 @@ export const EDO_BUILDINGS: BuildingDef[] = [
         color: 0x8a3a2a,
         sprite: 'npc_hikeshi',
         lines: ['火消し「付け火の噂で、毎晩番屋に詰めっきりよ。一杯ひっかけたら、すぐ戻らなきゃならねえ」'],
-        after: { flag: 'kashaDefeated', lines: ['火消し「神田の火は、一町焼けただけで済んだ。あんたらのおかげだ。今夜は、おれのおごりだ！」'] },
+        after: { flag: 'taikaStarted', lines: ['火消し「半鐘だ！ 酒どころじゃねえ、おれも神田へ駆けつける！」'] },
+        later: { flag: 'kashaDefeated', lines: ['火消し「神田の火は、一町焼けただけで済んだ。あんたらのおかげだ。今夜は、おれのおごりだ！」'] },
       },
       {
         id: 'edoIzakayaYashi',
@@ -267,7 +269,7 @@ export const EDO_BUILDINGS: BuildingDef[] = [
         y: 8,
         color: 0x6a8a9a,
         sprite: 'npc_sendo',
-        lines: ['若い衆「日本橋の魚河岸は、朝が早え。夜明け前に初鰹が揚がったら、千両でも買うのが江戸っ子さ」'],
+        lines: ['若い衆「日本橋の魚河岸は、朝が早え。夜明け前に揚がった魚を、昼前には江戸じゅうに売りさばくのさ」'],
       },
       ...furniture('edoIzakaya', [
         { name: '竈', x: 1, y: 1, object: 'kamado', lines: ['竈で燗の湯が沸いている。鍋では、葱と鮪のねぎま鍋が煮えている。'] },
@@ -319,6 +321,7 @@ export const EDO_BUILDINGS: BuildingDef[] = [
         sprite: 'npc_hikeshi',
         lines: ['纏持ち「纏は組の看板よ。火事場じゃ屋根に上って、こいつを振って、ここで火を止めるって町じゅうに知らせるのさ」'],
         after: { flag: 'taikaStarted', lines: ['纏持ち「半鐘が鳴った！ 神田だ！ 纏を持て、行くぞ！」'] },
+        later: { flag: 'kashaDefeated', lines: ['纏持ち「神田の焼け跡で、一晩じゅう纏を振ってたぜ。……火が止まったときの町の衆の顔は、忘れられねえ」'] },
       },
       {
         id: 'edoBanyaWakaimono',
@@ -327,7 +330,7 @@ export const EDO_BUILDINGS: BuildingDef[] = [
         y: 11,
         color: 0x8a3a2a,
         sprite: 'npc_hikeshi',
-        lines: ['若い火消し「頭は小吉さんの幼なじみなんだ。昔は二人して、長屋の悪たれだったって話さ」'],
+        lines: ['若い火消し「頭には、長屋の悪たれだった時分からの幼なじみがいるんだとさ。今じゃ何をして食ってるのやら、頭も笑って教えちゃくれねえ」'],
       },
       {
         id: 'edoBanyaBanta',
@@ -344,7 +347,7 @@ export const EDO_BUILDINGS: BuildingDef[] = [
         { name: '木箱', x: 12, y: 1, object: 'kibako', lines: ['鳶口と刺股をしまった木箱だ。'] },
         { name: '木箱', x: 14, y: 1, object: 'kibako', lines: ['火事場で羽織る刺子の半纏が、濡らしてしまってある。'] },
         { name: '荷車', x: 22, y: 1, object: 'niguruma', lines: ['筵と縄を積んだ荷車だ。火事場へ道具を運ぶのに使う。'] },
-        { name: '刀掛け', x: 22, y: 7, object: 'katanakake', lines: ['刀掛けに、刀ではなく鳶口が二本立ててある。'] },
+        { name: '刀掛け', x: 22, y: 7, object: 'katanakake', lines: ['刀掛けに、頭の長脇差が二振り立ててある。'] },
       ]),
     ],
   },
@@ -380,6 +383,7 @@ export const EDO_BUILDINGS: BuildingDef[] = [
         sprite: 'npc_merchant',
         lines: ['瓦版屋「さあさあ、鼠小僧、またもお旗本の屋敷から千両箱！ ……おっと、御老中の悪口だけは書けねえ。首が飛ぶからな」'],
         after: { flag: 'taikaStarted', lines: ['瓦版屋「神田で大火！ 火元に車輪の焼け跡！ ……こいつは刷る前から売り切れるぜ」'] },
+        later: { flag: 'kashaDefeated', lines: ['瓦版屋「神田の大火、一町で鎮まる！ 火消しの働き、天晴れ！ ……今日の瓦版は、昼前に売り切れちまったよ」'] },
       },
       {
         id: 'edoKawarabanSurishi',
@@ -558,7 +562,7 @@ export const EDO_BUILDINGS: BuildingDef[] = [
         y: 9,
         color: 0xd0c8b0,
         sprite: 'npc_roba',
-        lines: ['巡礼「坂東三十三所の札所を巡っております。浅草の観音さまに参ったら、次は東へ向かいますのじゃ」'],
+        lines: ['巡礼「坂東三十三所の札所を巡っております。浅草の観音さまに参ったら、次の札所へ向かいますのじゃ」'],
       },
       ...furniture('edoYado', [
         { name: '行灯', x: 1, y: 1, object: 'andon', lines: ANDON_LINES },
@@ -728,7 +732,7 @@ export const EDO_BUILDINGS: BuildingDef[] = [
       },
       ...furniture('edoYorozuya', [
         { name: '品棚', x: 1, y: 1, object: 'shinadana', lines: ['薬の箱と壺が並んだ品棚だ。'] },
-        { name: '品棚', x: 3, y: 1, object: 'shinadana', lines: ['煙草の葉の包みと、キセルの箱が並んでいる。'] },
+        { name: '品棚', x: 3, y: 1, object: 'shinadana', lines: ['印籠や小箱と、薬の壺が並んだ品棚だ。'] },
         { name: '品棚', x: 5, y: 1, object: 'shinadana', lines: ['道中に使う品の箱と壺が並んだ品棚だ。'] },
         { name: '木箱', x: 10, y: 1, object: 'kibako', lines: ['下総から届いた荷の木箱だ。'] },
         { name: '箪笥', x: 27, y: 1, object: 'tansu', lines: ['売り上げの帳面をしまった箪笥だ。'] },
@@ -824,8 +828,9 @@ export const EDO_BUILDINGS: BuildingDef[] = [
         y: 2,
         color: 0xa07a6a,
         sprite: 'npc_okami',
-        lines: ['おかみ「お春ったら、近頃お寺参りばかりでねえ。信心深いのはいいけど、帰ってくると、ぼうっとしてるんだよ」'],
+        lines: ['おかみ「お春ったら、去年の火事からこっち、物思いばかりでねえ。店先に座っても、ぼうっとしてるんだよ」'],
         after: { flag: 'taikaStarted', lines: ['おかみ「お春が……お春が火付けの手引きを……。ああ、なんてこと」'] },
+        later: { flag: 'kashaDefeated', lines: ['おかみ「お春は、町の衆に詫びて回ってますよ。……あの子が人の口車に乗せられたのは、母親のわたしが気づいてやれなかったせいです」'] },
       },
       {
         id: 'edoYaoyaKozo',
@@ -1030,7 +1035,7 @@ export const EDO_BUILDINGS: BuildingDef[] = [
         y: 2,
         color: 0x6a6a7a,
         sprite: 'npc_rojin',
-        lines: ['絵師「富士を三十六通りに描いてみようと思うてな。……東海道を上ってきたのなら、どの富士が一番だったか聞かせてくれ」'],
+        lines: ['絵師「富士を三十六通りに描いてみようと思うてな。……東海道を旅してきたのなら、どの富士が一番だったか聞かせてくれ」'],
       },
       {
         id: 'edoHanmotoSurishi',
@@ -1050,6 +1055,7 @@ export const EDO_BUILDINGS: BuildingDef[] = [
         sprite: 'npc_merchant',
         lines: ['手代「蔵の版木は、うちの身代そのものです。火事になったら、何より先にこれを運び出すんですよ」'],
         after: { flag: 'taikaStarted', lines: ['手代「神田から火が！ 版木を穴蔵へ運ばなきゃ……旦那さま、手を貸してください！」'] },
+        later: { flag: 'kashaDefeated', lines: ['手代「神田の火が収まって、版木を穴蔵から出したところです。……一枚も焦がさずに済みました」'] },
       },
       {
         id: 'edoHanmotoKyaku',
@@ -1203,7 +1209,7 @@ export const EDO_BUILDINGS: BuildingDef[] = [
         y: 10,
         color: 0x8a6a4a,
         sprite: 'npc_ninsoku',
-        lines: ['職人「よっ、成田屋！ ……いや、今日の役者は成田屋じゃなかった。まあいいや、掛け声は景気だからな」'],
+        lines: ['職人「よっ、日本一！ ……誰に掛けたかって？ 誰でもいいのさ、掛け声は景気だからな」'],
       },
       {
         id: 'edoShibaiKidoban',
@@ -1270,7 +1276,7 @@ export const EDO_BUILDINGS: BuildingDef[] = [
         y: 2,
         color: 0x6a5a4a,
         sprite: 'npc_ninsoku',
-        lines: ['蔵番「鼠小僧は大名屋敷しか狙わねえって話だが、こっちは毎晩、寝ずの番よ。蔵の錠前は、三重にしてある」'],
+        lines: ['蔵番「鼠小僧は武家屋敷しか狙わねえって話だが、こっちは毎晩、寝ずの番よ。蔵の錠前は、三重にしてある」'],
       },
       {
         id: 'edoRyogaeBushi',
@@ -1349,7 +1355,7 @@ export const EDO_BUILDINGS: BuildingDef[] = [
         color: 0x8a9a6a,
         sprite: 'npc_kodomo',
         lines: ['清「去年の火事のとき、八百屋さんの娘さんが、このお寺に逃げてこられました。……お元気でいらっしゃるでしょうか」'],
-        after: { flag: 'kashaDefeated', lines: ['清「八百屋のお春さんが、泣きながら詫びに来られました。……わたしも一緒に、町の衆に頭を下げて回ります」'] },
+        after: { flag: 'kashaDefeated', lines: ['清「八百屋のお春さんが、わたしにも詫びに来られると聞きました。……お春さんが来られたら、一緒に町の衆に頭を下げて回ります」'] },
       },
       {
         id: 'edoTeraKobozu',
@@ -1358,7 +1364,7 @@ export const EDO_BUILDINGS: BuildingDef[] = [
         y: 11,
         color: 0x8a9a6a,
         sprite: 'npc_kodomo',
-        lines: ['小坊主「この前、見かけないお坊さまが、本堂の陰で八百屋の娘さんに何か手渡してたの。……あんなお坊さま、うちのお寺にはいないよ」'],
+        lines: ['小坊主「この前、お使いの帰りに、見かけないお坊さまが八百屋の娘さんに何か手渡してるのを見たの。……あんなお坊さま、うちのお寺にはいないよ」'],
       },
       {
         id: 'edoTeraSankei',
