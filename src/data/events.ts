@@ -1,5 +1,6 @@
 // イベントのデータ。シナリオ（フェーズ 4）はここに足していく。形は eventTypes.ts を参照。
 import type { EventDef, EventStep } from './eventTypes';
+import { JINGI_REQUEST_EVENTS } from './jingiRequests';
 
 /** 辰五郎の頼み（野狐を倒す前）。 */
 const TATSUGORO_REQUEST: EventStep[] = [
@@ -2933,4 +2934,6 @@ export const EVENTS: Record<string, EventDef> = {
   worldChestKoyaJuzu: chest('worldChestKoyaJuzu', 'kodamaJuzu', '木霊の数珠'),
   worldChestIzumoIdaten: chest('worldChestIzumoIdaten', 'idatenMamori', '韋駄天の守り'),
   worldChestAsoKagebunshin: chest('worldChestAsoKagebunshin', 'kagebunshin', '影分身の秘伝書'),
+  // 賭場・居酒屋・妓楼の頼まれごと（仁義ポイントを得る。src/data/jingiRequests.ts）
+  ...JINGI_REQUEST_EVENTS,
 };

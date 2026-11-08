@@ -4,6 +4,10 @@ import { memberStats, restoreAll, type PartyMember } from './party';
 import type { Stats } from './stats';
 import { randInt, type Rng } from './random';
 
+/**
+ * 町の旅籠の宿代。旅籠は渡世人の一行を泊めない（親分の屋敷か、もぐりの宿に泊まる）が、
+ * 湯屋・居酒屋・妓楼・もぐりの宿の値段の基準として使う。
+ */
 export function innPrice(areaLevel: number): number {
   return 10 + areaLevel * 4;
 }
@@ -24,25 +28,16 @@ export function teahouseChoices(hasShop: boolean): TeahouseChoice[] {
 
 export type PurchaseResult = { ok: true; state: GameState } | { ok: false; reason: 'money' };
 
-/** 旅籠に泊まる。全員の HP・MP を全回復する（戦闘不能も治る）。 */
-export function stayAtInn(state: GameState, areaLevel: number): PurchaseResult {
-  return payAndRestoreAll(state, innPrice(areaLevel));
-}
-
-/** 代金を払い、全員の HP・MP を全回復する（旅籠・もぐりの宿）。 */
-function payAndRestoreAll(state: GameState, price: number): PurchaseResult {
-  if (state.money < price) return { ok: false, reason: 'money' };
-  return { ok: true, state: { ...state, money: state.money - price, party: restoreAll(state.party) } };
-}
-
 /** もぐりの宿（ワールドマップの非合法な旅籠）の宿代。町の旅籠の 4 倍（妓楼の 3 倍より高い、いちばん高い全回復）。 */
 export function moguriInnPrice(areaLevel: number): number {
   return innPrice(areaLevel) * 4;
 }
 
-/** もぐりの宿に泊まる。町の旅籠と同じく全員の HP・MP を全回復する（戦闘不能も治る）。 */
+/** もぐりの宿に泊まる。全員の HP・MP を全回復する（戦闘不能も治る）。 */
 export function stayAtMoguriInn(state: GameState, areaLevel: number): PurchaseResult {
-  return payAndRestoreAll(state, moguriInnPrice(areaLevel));
+  const price = moguriInnPrice(areaLevel);
+  if (state.money < price) return { ok: false, reason: 'money' };
+  return { ok: true, state: { ...state, money: state.money - price, party: restoreAll(state.party) } };
 }
 
 /** 茶屋で団子を食べる。戦闘不能でない全員の HP を少し回復する。 */
@@ -57,7 +52,7 @@ export function eatDango(state: GameState, areaLevel: number): PurchaseResult {
   return { ok: true, state: { ...state, money: state.money - price, party } };
 }
 
-/** 湯屋の湯銭（体力だけを戻す。旅籠の半分ほど）。 */
+/** 湯屋の湯銭（体力だけを戻す。宿代 innPrice の半分ほど）。 */
 export function yuyaPrice(areaLevel: number): number {
   return 6 + areaLevel * 2;
 }
@@ -67,14 +62,14 @@ export function izakayaPrice(areaLevel: number): number {
   return 6 + areaLevel * 2;
 }
 
-/** 妓楼の座敷の値段（体力と気力を戻す。旅籠の 3 倍）。 */
+/** 妓楼の座敷の値段（体力と気力を戻す。宿代 innPrice の 3 倍）。 */
 export function gyoroPrice(areaLevel: number): number {
   return innPrice(areaLevel) * 3;
 }
 
 /**
  * 代金を払い、戦闘不能でない全員を heal で回復する。
- * 旅籠（stayAtInn）と同じく、回復する余地がなくても代金を取る。直すなら旅籠と合わせて、満タンのときは { ok: false, reason: 'full' } を返す。
+ * もぐりの宿（stayAtMoguriInn）と同じく、回復する余地がなくても代金を取る。直すなら合わせて、満タンのときは { ok: false, reason: 'full' } を返す。
  */
 function payAndHeal(
   state: GameState,
@@ -139,7 +134,7 @@ export function playChohan(state: GameState, bet: number, call: ChohanCall, rng:
   return { ok: true, state: { ...state, money: state.money + gain }, dice, win, gain };
 }
 
-/** 全滅したとき。所持金を半分にし、全員を全回復して旅籠の前に戻す。 */
+/** 全滅したとき。所持金を半分にし、全員を全回復して町の旅籠の前（町の人に介抱される）に戻す。 */
 export function reviveAfterDefeat(state: GameState, respawn: { mapId: string; x: number; y: number }): GameState {
   return {
     ...state,

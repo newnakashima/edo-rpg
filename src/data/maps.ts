@@ -113,6 +113,7 @@ export const TILES: Record<string, TileDef> = {
 /**
  * 施設の処理。湯屋（yuya）・賭場（tobaku）・居酒屋（izakaya）・妓楼（gyoro）は src/data/townFacilities.ts、
  * 親分の屋敷（oyabun）は src/data/oyabun.ts で町ごとに置く。
+ * 町の旅籠（inn）は渡世人の一行を泊めない（主人が台詞で親分の屋敷へ導く。看板と火の元のためだけに残す）。
  */
 export type NpcAction = 'inn' | 'teahouse' | 'shop' | 'temple' | 'hikyaku' | 'yuya' | 'tobaku' | 'izakaya' | 'gyoro' | 'oyabun' | 'moguriInn';
 
@@ -291,7 +292,7 @@ export const MAPS: Record<string, MapDef> = {
         y: 15,
         color: 0x5a6b8c,
         sprite: 'npc_innkeeper',
-        lines: ['旅籠の主人「お泊まりですかい。ゆっくり休んでいきなせえ」'],
+        lines: ['旅籠の主人「おや、渡世人のお方ですかい。うちは堅気のお客しかお泊めできねえ決まりで……。草鞋を脱ぐなら、親分さんの屋敷を訪ねなせえ」'],
         action: 'inn',
       },
       {
@@ -846,7 +847,7 @@ MAPS.sunpu = {
       y: 20,
       color: 0x5a6b8c,
       sprite: 'npc_innkeeper',
-      lines: ['旅籠の主人「駿府へようこそ。お泊まりですかい」'],
+      lines: ['旅籠の主人「駿府へようこそ。……と言いてえが、御城下の宿は渡世人を泊めちゃならねえとお達しがありやして。この町の親分さんを頼りなせえ」'],
       action: 'inn',
     },
     {
@@ -1320,7 +1321,7 @@ MAPS.nagoya = {
       y: 15,
       color: 0x5a6b8c,
       sprite: 'npc_innkeeper',
-      lines: ['旅籠の主人「名古屋へようこそ。お泊まりですかい」'],
+      lines: ['旅籠の主人「名古屋へようこそ。あいにく、渡世人のお方はお断りしておりやす。親分さんの屋敷なら、一宿一飯の世話をしてくれやすよ」'],
       action: 'inn',
     },
     {
@@ -1776,7 +1777,7 @@ MAPS.kyo = {
       y: 10,
       color: 0x5a6b8c,
       sprite: 'npc_innkeeper',
-      lines: ['旅籠の主人「ようお越しやす。お泊まりどすか」'],
+      lines: ['旅籠の主人「ようお越しやす。……渡世人さんはお泊めでけしまへんのや。親分さんのお屋敷を訪ねておくれやす」'],
       action: 'inn',
     },
     {
@@ -2194,7 +2195,7 @@ MAPS.iga = {
       y: 16,
       color: 0x5a6b8c,
       sprite: 'npc_innkeeper',
-      lines: ['旅籠の主人「お泊まりですかい。伊賀の山の夜は冷えますよ」'],
+      lines: ['旅籠の主人「伊賀の山の夜は冷えますよ。けど、渡世人のお方はうちには泊められねえ。親分さんの屋敷へお行きなせえ」'],
       action: 'inn',
     },
     {
@@ -2587,8 +2588,8 @@ MAPS.osaka = {
       y: 20,
       color: 0x5a6b8c,
       sprite: 'npc_innkeeper',
-      lines: ['旅籠の主人「お泊まりでっか。……飯は麦がちでかんにんしとくなはれ」'],
-      after: { flag: 'chapter5Cleared', lines: ['旅籠の主人「お泊まりでっか。米が戻って、ようやく白い飯をお出しできますわ」'] },
+      lines: ['旅籠の主人「渡世人さんは、うちには泊められまへんのや。……泊めたところで、飯は麦がちでっけどな。親分さんのお屋敷を訪ねなはれ」'],
+      after: { flag: 'chapter5Cleared', lines: ['旅籠の主人「米が戻って、ようやく白い飯をお出しできますわ。……渡世人さんは泊められまへんけど、親分さんのお屋敷でもきっと白い飯が出まっせ」'] },
       action: 'inn',
     },
     {
@@ -2946,7 +2947,7 @@ MAPS.hiroshima = {
       y: 18,
       color: 0x5a6b8c,
       sprite: 'npc_innkeeper',
-      lines: ['旅籠の主人「お泊まりかの。夕餉は牡蠣の土手鍋じゃ。ゆっくり休んでいきんさい」'],
+      lines: ['旅籠の主人「夕餉は牡蠣の土手鍋じゃが、渡世人さんは泊められんのじゃ。親分さんの屋敷を訪ねんさい」'],
       action: 'inn',
     },
     {
@@ -3107,7 +3108,7 @@ MAPS.nagasaki = {
       y: 9,
       color: 0x5a6b8c,
       sprite: 'npc_innkeeper',
-      lines: ['旅籠の主人「よう来なさった。卓袱料理でもてなしますけん、ゆっくり休んでいきなっせ」'],
+      lines: ['旅籠の主人「よう来なさった。ばってん、渡世人さんはお泊めできんとです。親分さんの屋敷を訪ねなっせ」'],
       action: 'inn',
     },
     {
@@ -3694,7 +3695,7 @@ MAPS.kanazawa = {
       y: 22,
       color: 0x5a6b8c,
       sprite: 'npc_innkeeper',
-      lines: ['旅籠の主人「ようおいでました。治部煮でもあがって、ゆっくり休んでいってくだし」'],
+      lines: ['旅籠の主人「ようおいでました。あいにく、渡世人のお方はお泊めできんがです。親分さんのお屋敷を訪ねてくだし」'],
       action: 'inn',
     },
     {
@@ -4231,7 +4232,7 @@ MAPS.sendai = {
       y: 26,
       color: 0x5a6b8c,
       sprite: 'npc_innkeeper',
-      lines: ['旅籠の主人「遠いところをよくおいでくださいました。ゆっくりお休みくだされ」'],
+      lines: ['旅籠の主人「遠いところをよくおいでくださいました。なれど、渡世人のお方はお泊めできませぬ。親分さんのお屋敷をお訪ねくだされ」'],
       action: 'inn',
     },
     {
@@ -4419,7 +4420,7 @@ MAPS.hamamatsu = {
       y: 19,
       color: 0x5a6b8c,
       sprite: 'npc_innkeeper',
-      lines: ['旅籠の主人「ようこそ浜松の宿へ。合戦が近いんで、今夜はちと騒がしいかもしれませんよ」'],
+      lines: ['旅籠の主人「ようこそ浜松の宿へ。……おっと、渡世人のお方はお断りで。合戦が近いんで、親分さんの屋敷のほうが心強うござんすよ」'],
       action: 'inn',
     },
     {
@@ -4670,7 +4671,7 @@ MAPS.hikone = {
       y: 19,
       color: 0x5a6b8c,
       sprite: 'npc_innkeeper',
-      lines: ['旅籠の主人「ようこそ彦根の宿へ。窓を開ければ、琵琶湖が一望できますよ」'],
+      lines: ['旅籠の主人「窓を開ければ琵琶湖が一望できる宿ですが、渡世人のお方はお泊めできませんで。親分さんの屋敷を訪ねなされ」'],
       action: 'inn',
     },
     {
@@ -4942,8 +4943,8 @@ MAPS.kumamoto = {
       y: 18,
       color: 0x5a6b8c,
       sprite: 'npc_innkeeper',
-      lines: ['旅籠の主人「ようこそ熊本の宿へ。……湯を沸かす水にも事欠く始末で、相すみません」'],
-      after: { flag: 'kumamotoIdoFound', lines: ['旅籠の主人「ようこそ熊本の宿へ。井戸の水が戻って、湯もたっぷり沸かせますよ」'] },
+      lines: ['旅籠の主人「渡世人さんはお泊めできんとです。……どのみち、湯を沸かす水にも事欠く始末で。親分さんの屋敷を訪ねなっせ」'],
+      after: { flag: 'kumamotoIdoFound', lines: ['旅籠の主人「井戸の水が戻って、湯もたっぷり沸かせますよ。渡世人さんは泊められんけん、親分さんの屋敷でゆっくりしなっせ」'] },
       action: 'inn',
     },
     {
@@ -5269,7 +5270,7 @@ MAPS.aizu = {
       y: 20,
       color: 0x5a6b8c,
       sprite: 'npc_innkeeper',
-      lines: ['旅籠の主人「雪の中をよう来なすった。囲炉裏で温まっていきなされ」'],
+      lines: ['旅籠の主人「雪の中をよう来なすった。囲炉裏で温まるくれえはいいが、渡世人さんは泊められねえ。親分さんの屋敷へ行きなされ」'],
       action: 'inn',
     },
     {
@@ -5591,7 +5592,7 @@ MAPS.edo = {
       y: 32,
       color: 0x5a6b8c,
       sprite: 'npc_innkeeper',
-      lines: ['旅籠の主人「お泊まりで？ 人相書きなんぞ、うちは見ちゃいませんよ。へい、ごゆっくり」'],
+      lines: ['旅籠の主人「人相書きなんぞ見ちゃいませんがね、渡世人のお方はお江戸の宿には泊められねえんで。親分さんの屋敷を頼りなせえ」'],
       action: 'inn',
     },
     {

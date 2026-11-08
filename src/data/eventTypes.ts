@@ -3,7 +3,7 @@ import type { CharacterId } from './characters';
 
 /**
  * イベントの 1 手順。
- * 台詞の中の {hero} は主人公の名前に置き換える。linesF があれば、主人公が女のときはそちらを使う。
+ * 台詞の中の {hero} は主人公の名前に、{jingi} はその時点の仁義ポイントに置き換える。linesF があれば、主人公が女のときはそちらを使う。
  */
 export type EventStep =
   | { type: 'say'; lines: string[]; linesF?: string[] }
@@ -15,6 +15,8 @@ export type EventStep =
   /** 道具・装備品を渡す。持ちきれない（99 個を超える）ときは渡さず、ifFull があればそれを行う。 */
   | { type: 'giveItem'; item: string; count?: number; ifFull?: EventStep[] }
   | { type: 'giveMoney'; amount: number }
+  /** 仁義ポイントを増やす（負なら減らす。0〜上限に収める。src/systems/jingi.ts）。 */
+  | { type: 'addJingi'; amount: number }
   /**
    * 新しい仲間を加える（その時点のパーティーの平均レベル〈切り捨て、最低 1〉で、加入時の装備を付けて）。ゲストは決まったレベル（guestLevel）で、
    * 加入時のレベルが決まっている仲間（joinLevel。お凛は Lv1）はそのレベルで加わる。平均レベルには joinLevel のある仲間を数えない。

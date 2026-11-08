@@ -3,6 +3,7 @@ import { CHARACTERS, characterName, isGuest } from '../data/characters';
 import type { EventStep } from '../data/eventTypes';
 import { addItem, isKnownItem, itemCount, MAX_ITEM_COUNT } from '../data/items';
 import type { GameState } from './gameState';
+import { addJingi } from './jingi';
 import { createMember, memberLevel, memberStats, restoreAll } from './party';
 import { totalExpForLevel } from './stats';
 
@@ -71,11 +72,11 @@ export function leaveParty(state: GameState, member: GameState['party'][number][
   return { ...state, party, away };
 }
 
-/** 台詞の {hero} を主人公の名前に置き換え、女主人公なら linesF を使う。 */
+/** 台詞の {hero} を主人公の名前に、{jingi} をその時点の仁義ポイントに置き換え、女主人公なら linesF を使う。 */
 export function sayPages(step: Extract<EventStep, { type: 'say' }>, state: GameState): string[] {
   const lines = state.gender === 'f' && step.linesF ? step.linesF : step.lines;
   const hero = characterName('hero', state.gender);
-  return lines.map((l) => l.replaceAll('{hero}', hero));
+  return lines.map((l) => l.replaceAll('{hero}', hero).replaceAll('{jingi}', String(state.jingi)));
 }
 
 export class EventRunner {
@@ -145,6 +146,9 @@ export class EventRunner {
         }
         case 'giveMoney':
           s = { ...s, money: Math.max(0, s.money + step.amount) };
+          break;
+        case 'addJingi':
+          s = addJingi(s, step.amount);
           break;
         case 'join':
           s = joinParty(s, step.member);

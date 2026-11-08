@@ -1,6 +1,7 @@
 // 仁義ポイントと親分の屋敷（docs/balance.md の「仁義ポイント」）。
 // 渡世人の一行は、各地の親分の屋敷に仁義ポイントを使って泊まり、体力と気力を全回復する。
-// ポイントは賭場・居酒屋・妓楼の頼まれごとや、親分の頼み（シナリオ）で得る（得る場面は別に足す）。
+// ポイントは賭場・居酒屋・妓楼の頼まれごと（src/data/jingiRequests.ts）や、博徒の紹介・親分の頼み（シナリオ。別に足す）で得る。
+// 町の旅籠は渡世人を泊めないので、泊まるのは親分の屋敷か、もぐりの宿。
 // ポイントが足りないときは、ワールドマップのもぐりの宿（src/data/moguriYado.ts）にお金で泊まる。
 import type { GameState } from './gameState';
 import { memberStats, restoreAll } from './party';
@@ -30,8 +31,8 @@ export function addJingi(state: GameState, amount: number): GameState {
 export type OyabunStayResult = { ok: true; state: GameState; cost: number } | { ok: false; reason: 'jingi' | 'full'; cost: number };
 
 /**
- * 親分の屋敷に泊まる。仁義ポイントを使い、全員の体力・気力を全回復する（旅籠と同じく戦闘不能も治る）。
- * 旅籠と違い、全員の体力・気力が満タンなら泊めず（full）、ポイントを使わない（得る手段の限られた資源をむだにしないため）。
+ * 親分の屋敷に泊まる。仁義ポイントを使い、全員の体力・気力を全回復する（もぐりの宿と同じく戦闘不能も治る）。
+ * もぐりの宿と違い、全員の体力・気力が満タンなら泊めず（full）、ポイントを使わない（得る手段の限られた資源をむだにしないため）。
  */
 export function stayAtOyabun(state: GameState, areaLevel: number): OyabunStayResult {
   const cost = oyabunStayCost(areaLevel);
