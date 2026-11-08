@@ -7,6 +7,8 @@ export interface EnemyAction {
   skill: string;
   /** 選ばれる重み。 */
   weight: number;
+  /** 残りの HP がこの割合（0〜1）未満のときだけ選ぶ（からくり俵の自爆）。省くといつでも選ぶ。 */
+  whenHpBelow?: number;
 }
 
 export interface EnemyDef {
@@ -27,6 +29,12 @@ export interface EnemyDef {
   rewardScale?: number;
   /** 1 ターンに動く回数（終章のからくり大権現は 2）。省くと 1。 */
   actionsPerTurn?: number;
+  /** 通常攻撃・物理の技が外れる確率（攻撃が高いが命中の低い敵。必中の技は外れない）。省くと 0。 */
+  missRate?: number;
+  /** 味方の通常攻撃・物理の技をかわす確率（体力が極めて少ないが回避の高い敵。術と必中の技はかわせない）。省くと 0。 */
+  evasion?: number;
+  /** 経験値とお金に掛ける倍率（逃げる高報酬の敵）。rewardScale と掛け合わせる。省くと 1。 */
+  reward?: { exp?: number; money?: number };
 }
 
 /** 敵の画像のテクスチャのキー。 */
@@ -156,11 +164,15 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: '赤鬼',
     color: 0xc04030,
     image: true,
-    factors: { hp: 1.4, atk: 1.3, def: 1.0, spd: 0.8 },
+    // 攻撃は非常に高いが命中が低く、金棒を振り回して自分を打つ
+    factors: { hp: 1.4, atk: 1.8, def: 1.0, spd: 0.8 },
     weak: ['holy'],
+    missRate: 0.35,
     actions: [
-      { skill: 'attack', weight: 4 },
+      { skill: 'attack', weight: 3 },
       { skill: 'kanabo', weight: 1 },
+      { skill: 'kanaboFurimawashi', weight: 1 },
+      { skill: 'akubi', weight: 1 },
     ],
   },
   ittanmomen: {
@@ -168,8 +180,10 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: '一反木綿',
     color: 0xe0e0d0,
     image: true,
-    factors: { hp: 0.8, atk: 1.0, def: 0.7, spd: 1.3 },
+    // 体力は極めて少なく一撃で倒れるが、ひらひらとかわす
+    factors: { hp: 0.35, atk: 1.0, def: 0.7, spd: 1.3 },
     weak: ['fire'],
+    evasion: 0.5,
     actions: [
       { skill: 'attack', weight: 3 },
       { skill: 'makitsuki', weight: 1 },
@@ -180,10 +194,13 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: '生臭坊主',
     color: 0x8a6a5a,
     image: true,
+    // 支え役。眠りの経と、仲間の守りを固める読経を繰り返す
     factors: { hp: 1.0, atk: 0.9, def: 1.0, spd: 0.9 },
     actions: [
-      { skill: 'attack', weight: 3 },
-      { skill: 'jaho', weight: 2 },
+      { skill: 'attack', weight: 1 },
+      { skill: 'jaho', weight: 1 },
+      { skill: 'nemuriNoKyo', weight: 2 },
+      { skill: 'dokyo', weight: 2 },
     ],
   },
   karakuriGissha: {
@@ -191,7 +208,8 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: 'からくり牛車',
     color: 0x6a4a3a,
     image: true,
-    factors: { hp: 1.3, atk: 1.1, def: 1.4, spd: 0.7 },
+    // 防御が非常に高い（術・機の技で崩す）
+    factors: { hp: 1.3, atk: 1.1, def: 2.6, spd: 0.7 },
     weak: ['mech'],
     actions: [
       { skill: 'attack', weight: 3 },
@@ -228,11 +246,14 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: 'からくり鷹',
     color: 0x8a7a5a,
     image: true,
-    factors: { hp: 0.8, atk: 1.1, def: 1.0, spd: 1.4 },
+    // 防御と素早さが高く、すぐ飛び去る。倒せれば経験値とお金が多い
+    factors: { hp: 0.6, atk: 1.1, def: 2.4, spd: 2.0 },
     weak: ['mech', 'thunder'],
+    reward: { exp: 4, money: 4 },
     actions: [
-      { skill: 'attack', weight: 3 },
+      { skill: 'attack', weight: 2 },
       { skill: 'kyukoka', weight: 1 },
+      { skill: 'tobisaru', weight: 2 },
     ],
   },
   // 大坂（第 5 章）
@@ -263,11 +284,13 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: 'からくり俵',
     color: 0xc0a060,
     image: true,
+    // 体力が半分を切ると、詰めた火薬に火がつき自爆する
     factors: { hp: 1.3, atk: 1.0, def: 1.4, spd: 0.7 },
     weak: ['mech', 'fire'],
     actions: [
       { skill: 'attack', weight: 3 },
       { skill: 'tawaraGoroshi', weight: 1 },
+      { skill: 'kayakuBakuhatsu', weight: 6, whenHpBelow: 0.5 },
     ],
   },
   bakeNezumi: {
@@ -275,11 +298,13 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: '化け鼠',
     color: 0x7a6a6a,
     image: true,
+    // 仲間を呼んでばかりいる
     factors: { hp: 0.8, atk: 1.0, def: 0.8, spd: 1.3 },
     actions: [
-      { skill: 'attack', weight: 3 },
+      { skill: 'attack', weight: 1 },
       { skill: 'kamitsuki', weight: 1 },
       { skill: 'dokueki', weight: 1 },
+      { skill: 'nezumiYobi', weight: 4 },
     ],
   },
   // 西国街道・長崎・島原（第 6 章）
@@ -288,7 +313,8 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: '南蛮からくり兵',
     color: 0x8a8a9a,
     image: true,
-    factors: { hp: 1.2, atk: 1.2, def: 1.4, spd: 0.9 },
+    // 鎧が非常に固い
+    factors: { hp: 1.2, atk: 1.2, def: 2.4, spd: 0.9 },
     weak: ['mech', 'thunder'],
     actions: [
       { skill: 'attack', weight: 3 },
@@ -300,7 +326,8 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: '海坊主',
     color: 0x2a3a4a,
     image: true,
-    factors: { hp: 1.4, atk: 1.2, def: 1.0, spd: 0.8 },
+    // 体力が非常に多い
+    factors: { hp: 2.4, atk: 1.2, def: 1.0, spd: 0.8 },
     weak: ['holy'],
     actions: [
       { skill: 'attack', weight: 3 },
@@ -324,11 +351,13 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: '外法使い',
     color: 0x4a2a5a,
     image: true,
+    // 支え役。惑わしの香と縛りの呪を繰り返す
     factors: { hp: 0.9, atk: 1.0, def: 0.8, spd: 1.1 },
     actions: [
-      { skill: 'attack', weight: 2 },
-      { skill: 'gehoHomura', weight: 2 },
-      { skill: 'madowashi', weight: 1 },
+      { skill: 'attack', weight: 1 },
+      { skill: 'gehoHomura', weight: 1 },
+      { skill: 'madowashi', weight: 2 },
+      { skill: 'shibariNoJu', weight: 2 },
     ],
   },
   // 瀬戸内の浜に出る。docs/balance.md の表にない、西国街道の雑魚敵（テストプレイで雑魚敵の種類が少ないと言われたため足した）
@@ -337,7 +366,8 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: '平家蟹',
     color: 0x9a4a3a,
     image: true,
-    factors: { hp: 1.1, atk: 1.1, def: 1.4, spd: 0.8 },
+    // 甲羅が非常に固い（雷・術で崩す）
+    factors: { hp: 1.1, atk: 1.1, def: 2.8, spd: 0.8 },
     weak: ['thunder'],
     actions: [
       { skill: 'attack', weight: 3 },
@@ -454,7 +484,8 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: '青鬼',
     color: 0x4a6ab0,
     image: true,
-    factors: { hp: 1.3, atk: 1.2, def: 1.1, spd: 0.9 },
+    // 体力が非常に多い（赤鬼は攻撃、青鬼は体力）
+    factors: { hp: 2.4, atk: 1.2, def: 1.1, spd: 0.9 },
     weak: ['holy'],
     actions: [
       { skill: 'attack', weight: 3 },
@@ -495,7 +526,9 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: '伊賀のくノ一',
     color: 0x6a3a7a,
     image: true,
-    factors: { hp: 0.9, atk: 1.1, def: 0.9, spd: 1.4 },
+    // 体力は少ないが、身軽にかわす
+    factors: { hp: 0.45, atk: 1.1, def: 0.9, spd: 1.4 },
+    evasion: 0.45,
     actions: [
       { skill: 'attack', weight: 3 },
       { skill: 'igaShuriken', weight: 1 },
@@ -545,11 +578,14 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: '牛鬼',
     color: 0x2a2a2a,
     image: true,
-    factors: { hp: 1.4, atk: 1.3, def: 1.1, spd: 0.9 },
+    // 攻撃は非常に高いが命中が低く、岩をかじって遊ぶ
+    factors: { hp: 1.4, atk: 1.9, def: 1.1, spd: 0.9 },
     weak: ['holy'],
+    missRate: 0.35,
     actions: [
       { skill: 'attack', weight: 3 },
       { skill: 'dokueki', weight: 1 },
+      { skill: 'iwaKajiri', weight: 1 },
     ],
   },
   /** 長崎の沖の海賊。 */
@@ -570,7 +606,8 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: 'がしゃどくろ',
     color: 0xd0c0e0,
     image: true,
-    factors: { hp: 1.5, atk: 1.3, def: 1.2, spd: 0.7 },
+    // 体力が非常に多い
+    factors: { hp: 2.8, atk: 1.3, def: 1.2, spd: 0.7 },
     weak: ['holy'],
     actions: [
       { skill: 'attack', weight: 3 },
@@ -583,8 +620,10 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: '怨霊',
     color: 0xe0e0e0,
     image: true,
-    factors: { hp: 0.9, atk: 1.1, def: 0.8, spd: 1.2 },
+    // 体力は極めて少ないが、刀がすり抜ける（祓・術で倒す）
+    factors: { hp: 0.4, atk: 1.1, def: 0.8, spd: 1.2 },
     weak: ['holy'],
+    evasion: 0.5,
     actions: [
       { skill: 'attack', weight: 2 },
       { skill: 'urami', weight: 1 },
@@ -743,12 +782,14 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: '雪女',
     color: 0xd0e0f0,
     image: true,
+    // 凍える息で痺れさせ、雪化粧で仲間の姿をくらます
     factors: { hp: 0.9, atk: 1.2, def: 0.9, spd: 1.2 },
     weak: ['fire'],
     actions: [
-      { skill: 'attack', weight: 3 },
+      { skill: 'attack', weight: 2 },
       { skill: 'fubuki', weight: 1 },
-      { skill: 'kogoe', weight: 1 },
+      { skill: 'kogoe', weight: 2 },
+      { skill: 'yukiGomori', weight: 1 },
     ],
   },
   kagaShinobi: {
@@ -756,7 +797,9 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: '加賀の忍び',
     color: 0x3a3a4a,
     image: true,
-    factors: { hp: 0.9, atk: 1.2, def: 0.9, spd: 1.4 },
+    // 体力は少ないが、身軽にかわす
+    factors: { hp: 0.45, atk: 1.2, def: 0.9, spd: 1.4 },
+    evasion: 0.45,
     actions: [
       { skill: 'attack', weight: 3 },
       { skill: 'nirengeki', weight: 1 },
@@ -768,7 +811,8 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: '雪入道',
     color: 0xe0e8f0,
     image: true,
-    factors: { hp: 1.5, atk: 1.2, def: 1.0, spd: 0.7 },
+    // 体力が非常に多い
+    factors: { hp: 2.2, atk: 1.2, def: 1.0, spd: 0.7 },
     weak: ['fire', 'holy'],
     actions: [
       { skill: 'attack', weight: 3 },
@@ -781,11 +825,14 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: '金箔からくり',
     color: 0xd0b040,
     image: true,
-    factors: { hp: 1.0, atk: 1.0, def: 1.4, spd: 1.1 },
+    // 防御と素早さが非常に高く、すぐ逃げ出す。倒せれば経験値とお金が非常に多い
+    factors: { hp: 0.7, atk: 1.0, def: 3.0, spd: 2.0 },
     weak: ['mech', 'thunder'],
+    reward: { exp: 5, money: 8 },
     actions: [
-      { skill: 'attack', weight: 3 },
+      { skill: 'attack', weight: 2 },
       { skill: 'kinpakuMai', weight: 1 },
+      { skill: 'nigeru', weight: 2 },
     ],
   },
   /** 第 7 章の中ボス。加賀の殿様に化けていたからくりの影武者。からくり藩士を呼び、影の太刀で斬る。 */
@@ -861,11 +908,14 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: '旗本奴',
     color: 0x7a3a6a,
     image: true,
-    factors: { hp: 1.2, atk: 1.4, def: 1.1, spd: 1.0 },
+    // 攻撃は非常に高いが命中が低く、見得を切ってばかりいる
+    factors: { hp: 1.2, atk: 2.0, def: 1.1, spd: 1.0 },
+    missRate: 0.3,
     actions: [
       { skill: 'attack', weight: 3 },
       { skill: 'kenkaZappo', weight: 1 },
       { skill: 'odoshi', weight: 1 },
+      { skill: 'mie', weight: 2 },
     ],
   },
   /** 表にない追加（どの出現表も 5 種類以上にするため）。大火の町に出る、火の中に棲む鼠。 */
@@ -874,12 +924,14 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: '火鼠',
     color: 0xd06030,
     image: true,
+    // 火の玉になって飛び込み、自爆する
     factors: { hp: 0.8, atk: 1.1, def: 0.8, spd: 1.4 },
     weak: ['holy'],
     resist: ['fire'],
     actions: [
       { skill: 'attack', weight: 3 },
       { skill: 'hinoko', weight: 1 },
+      { skill: 'hinotama', weight: 1 },
     ],
   },
   /** 表にない追加。奥州街道の夜道で旅人のあとをつける狼。 */
@@ -888,11 +940,13 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: '送り狼',
     color: 0x6a6a7a,
     image: true,
+    // 呼び声で群れを呼んでばかりいる
     factors: { hp: 1.1, atk: 1.3, def: 0.9, spd: 1.3 },
     actions: [
-      { skill: 'attack', weight: 3 },
+      { skill: 'attack', weight: 1 },
       { skill: 'okuriKiba', weight: 1 },
       { skill: 'toboe', weight: 1 },
+      { skill: 'ookamiYobi', weight: 4 },
     ],
   },
   /** 第 8 章のボス。鷲尾が江戸の町に火を放つために作った、炎の車輪のからくり。火炎車（全体・火）と亡者の手（麻痺）。 */
@@ -941,7 +995,8 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: 'からくり旗本',
     color: 0x2a2a2a,
     image: true,
-    factors: { hp: 1.4, atk: 1.4, def: 1.5, spd: 0.9 },
+    // 防御が非常に高い
+    factors: { hp: 1.4, atk: 1.4, def: 2.4, spd: 0.9 },
     weak: ['mech', 'thunder'],
     actions: [
       { skill: 'attack', weight: 3 },
