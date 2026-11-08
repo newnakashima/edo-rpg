@@ -732,7 +732,7 @@ export const EDO_BUILDINGS: BuildingDef[] = [
       },
       ...furniture('edoYorozuya', [
         { name: '品棚', x: 1, y: 1, object: 'shinadana', lines: ['薬の箱と壺が並んだ品棚だ。'] },
-        { name: '品棚', x: 3, y: 1, object: 'shinadana', lines: ['印籠や小箱と、薬の壺が並んだ品棚だ。'] },
+        { name: '品棚', x: 3, y: 1, object: 'shinadana', lines: ['丸薬の包みを入れた箱と、膏薬の壺が並んだ品棚だ。'] },
         { name: '品棚', x: 5, y: 1, object: 'shinadana', lines: ['道中に使う品の箱と壺が並んだ品棚だ。'] },
         { name: '木箱', x: 10, y: 1, object: 'kibako', lines: ['下総から届いた荷の木箱だ。'] },
         { name: '箪笥', x: 27, y: 1, object: 'tansu', lines: ['売り上げの帳面をしまった箪笥だ。'] },
