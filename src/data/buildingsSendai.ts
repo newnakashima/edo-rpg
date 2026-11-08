@@ -73,9 +73,10 @@ export const SENDAI_BUILDINGS: BuildingDef[] = [
         color: 0x4a4a5a,
         sprite: 'npc_yakunin',
         lines: ['家来「屋敷のまわりを、見慣れぬ町人がうろついておる。江戸の者の手先であろう。旦那様のお客人なら、奥の書院へ通られよ」'],
+        after: { flag: 'sendaiHeard', lines: ['家来「旦那様をお守りくだされた御礼を申す。屋敷のまわりをうろついていた町人も、とんと見なくなった」'] },
       },
       ...furniture('sendaiTatewakiYashiki', [
-        { name: '掛け軸', x: 1, y: 1, object: 'kakejiku', lines: ['伊達の竹に雀の紋を描いた掛け軸だ。'] },
+        { name: '掛け軸', x: 1, y: 1, object: 'kakejiku', lines: ['伊達家ゆかりの書を表装した掛け軸だ。「義」の一字が力強い。'] },
         { name: '刀掛け', x: 9, y: 1, object: 'katanakake', lines: ['帯刀の大小が掛けてある。すぐに手に取れるよう、柄を手前に向けてある。'] },
         { name: '文机', x: 1, y: 4, object: 'fuzukue', lines: ['江戸の老中に宛てた書状の下書きが広げてある。「伊達の家中、断じて」とだけ読める。'] },
         { name: '石灯籠', x: 12, y: 1, object: 'toro', lines: ['坪庭の石灯籠だ。苔むした笠に、雪が薄く積もっている。'] },
@@ -384,7 +385,7 @@ export const SENDAI_BUILDINGS: BuildingDef[] = [
         x: 14,
         y: 5,
         color: 0x4a4a5a,
-        sprite: 'npc_ronin',
+        sprite: 'npc_yakunin',
         lines: ['藩士「片平さまのご家来衆が、急に刀を研ぎに出しに来るようになった。……何か、ただならぬことが起きておるのか」'],
         after: { flag: 'sendaiHeard', lines: ['藩士「片平さまのお屋敷に、刺客が出たそうだな。研ぎに出しておいた刀が、さっそく役に立ったと聞いた」'] },
       },
@@ -469,7 +470,7 @@ export const SENDAI_BUILDINGS: BuildingDef[] = [
       },
       ...furniture('sendaiYado', [
         { name: '行灯', x: 6, y: 1, object: 'andon', lines: ANDON_LINES },
-        { name: '屏風', x: 8, y: 1, object: 'byobu', lines: ['松島の島々を描いた屏風だ。'] },
+        { name: '屏風', x: 8, y: 1, object: 'byobu', lines: ['金地に梅の枝を描いた屏風だ。'] },
         { name: '文机', x: 13, y: 1, object: 'fuzukue', lines: ['書きかけの句が載っている。「松島や」とだけ書いて、あとが続かない。'] },
         { name: '箪笥', x: 20, y: 1, object: 'tansu', lines: ['客の夜具をしまった箪笥だ。'] },
         { name: '宿帳の文机', x: 1, y: 8, object: 'fuzukue', lines: ['宿帳が広げてある。泊まり客の名と、どこから来たかが書きつけてある。'] },
@@ -872,7 +873,7 @@ export const SENDAI_BUILDINGS: BuildingDef[] = [
         lines: ['若い者「へい、いらっしゃいまし。お二階のお座敷は、今夜もふさがっておりやす。下でお待ちくだせえ」'],
       },
       ...furniture('sendaiGyoro', [
-        { name: '屏風', x: 6, y: 1, object: 'byobu', lines: ['七夕の飾りを描いた屏風だ。色とりどりの吹き流しが、風に揺れているように見える。'] },
+        { name: '屏風', x: 6, y: 1, object: 'byobu', lines: ['梅の枝を描いた金屏風だ。座敷の仕切りにしてある。'] },
         { name: '掛け軸', x: 8, y: 1, object: 'kakejiku', lines: ['雪月花と書いた掛け軸だ。'] },
         { name: '行灯', x: 12, y: 1, object: 'andon', lines: ANDON_LINES },
         { name: '箪笥', x: 1, y: 9, object: 'tansu', lines: ['着物と帯をしまった箪笥だ。'] },
