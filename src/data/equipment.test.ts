@@ -35,6 +35,15 @@ describe('装備のデータ', () => {
     expect(equipmentBonus({})).toEqual({ maxHp: 0, maxMp: 0, atk: 0, def: 0, mag: 0, spd: 0, luck: 0 });
   });
 
+  it('お凛の銃は弾の威力になる術力も足す（攻撃より小さい）', () => {
+    const guns = Object.values(EQUIPMENT).filter((e) => e.slot === 'weapon' && e.wearers.includes('orin'));
+    expect(guns.length).toBeGreaterThan(0);
+    for (const gun of guns) {
+      expect(gun.bonus.mag ?? 0).toBeGreaterThan(0);
+      expect(gun.bonus.mag ?? 0).toBeLessThan(gun.bonus.atk ?? 0);
+    }
+  });
+
   it('付けられる人物を判定する', () => {
     expect(canEquip('hero', 'dotanuki')).toBe(true);
     expect(canEquip('kasumi', 'dotanuki')).toBe(false);

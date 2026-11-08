@@ -92,9 +92,11 @@ export const STAT_KEYS: readonly (keyof Stats)[] = ['maxHp', 'maxMp', 'atk', 'de
 
 /**
  * レベル L の能力値: `lv1 * (lv32 / lv1) ^ (t ^ p)`（t = (L - 1) / 31、p は曲線の指数）。小数点以下は切り捨てる。
- * p = 1 なら毎レベル同じ割合で伸びる。Lv32 を超えても同じ式で伸び続ける（早熟は鈍く、晩成は大きく）。
+ * p = 1 なら毎レベル同じ割合で伸びる。Lv32 を超えた分は、曲線によらず Lv32 の値から毎レベル GROWTH_RATE 倍で伸ばす
+ * （t ^ p をそのまま延ばすと、晩成の能力値が Lv50 で桁違いに大きくなるため）。
  */
 export function grownStat(growth: StatGrowth, level: number): number {
+  if (level > GROWTH_REFERENCE_LEVEL) return Math.floor(growth.lv32 * GROWTH_RATE ** (level - GROWTH_REFERENCE_LEVEL) + 1e-9);
   const t = (level - 1) / (GROWTH_REFERENCE_LEVEL - 1);
   const value = growth.lv1 * (growth.lv32 / growth.lv1) ** (t ** CURVE_EXPONENT[growth.curve]);
   // 浮動小数点の誤差で Lv32 の値が 1 小さくならないようにする

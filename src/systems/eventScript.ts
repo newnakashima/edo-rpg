@@ -26,9 +26,14 @@ interface Frame {
   index: number;
 }
 
-/** その時点のパーティーの平均レベル（切り捨て、最低 1）。 */
+/**
+ * その時点のパーティーの平均レベル（切り捨て、最低 1）。加入時のレベルが決まっている仲間（Lv1 で加わるお凛）は数えない
+ * （お凛の加入直後に戻る仲間のレベルが引き下げられないように）。その仲間しかいなければ全員で数える。
+ */
 function averageLevel(state: GameState): number {
-  return Math.max(1, Math.floor(state.party.reduce((s, m) => s + memberLevel(m), 0) / Math.max(1, state.party.length)));
+  const counted = state.party.filter((m) => CHARACTERS[m.id].joinLevel === undefined);
+  const members = counted.length > 0 ? counted : state.party;
+  return Math.max(1, Math.floor(members.reduce((s, m) => s + memberLevel(m), 0) / Math.max(1, members.length)));
 }
 
 /**

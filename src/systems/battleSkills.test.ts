@@ -78,6 +78,13 @@ describe('技', () => {
     expect(orin('katami')).toEqual([expect.objectContaining({ damage: expected(24, 0) })]);
   });
 
+  it('早合は 1 発目で敵が倒れたら 2 発目を撃たない', () => {
+    const b = sleepEnemies(createBattle([{ ...createMember('orin', 30, {}), mp: 99 }], 'm', ['ogaeru'], 1));
+    const { events } = resolveTurn(b, { p0: { kind: 'skill', skill: 'hayago', target: 'e0' } }, seqRng(0.5));
+    expect(events.filter((e) => e.type === 'damage')).toHaveLength(1);
+    expect(events).toContainEqual({ type: 'defeated', target: 'e0' });
+  });
+
   it('回復は最大 HP を超えない、戦闘不能には効かない', () => {
     // 玄道の Lv1 の最大 HP は 36
     const party = [{ ...createMember('gendo', 1), hp: 32 }, { ...createMember('hero', 1), hp: 0 }];

@@ -77,6 +77,17 @@ describe('能力値', () => {
     }
   });
 
+  it('Lv32 を超えた分は、曲線によらず Lv32 の値から毎レベル 1.075 倍で伸びる', () => {
+    for (const id of MEMBERS) {
+      for (const key of STAT_KEYS) {
+        const lv32 = CHARACTERS[id].growth[key].lv32;
+        expect(at(id, 40)[key]).toBe(Math.floor(lv32 * growthFactor(9) + 1e-9));
+      }
+    }
+    // 晩成でも Lv99 で桁違いにならない（霞の運は Lv32 の 1.075 ^ 67 倍）
+    expect(at('kasumi', 99).luck).toBeLessThan(320 * 200);
+  });
+
   it('同じ Lv1・Lv32 の値なら、途中のレベルでは早熟 > 普通 > 晩成', () => {
     const row = { lv1: 10, lv32: 90 };
     for (const level of [4, 13, 22, 31]) {

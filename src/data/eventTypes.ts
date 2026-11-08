@@ -16,7 +16,8 @@ export type EventStep =
   | { type: 'giveItem'; item: string; count?: number; ifFull?: EventStep[] }
   | { type: 'giveMoney'; amount: number }
   /**
-   * 新しい仲間を加える（その時点のパーティーの平均レベル〈切り捨て、最低 1〉で、加入時の装備を付けて）。ゲストは決まったレベル（guestLevel）で加わる。
+   * 新しい仲間を加える（その時点のパーティーの平均レベル〈切り捨て、最低 1〉で、加入時の装備を付けて）。ゲストは決まったレベル（guestLevel）で、
+   * 加入時のレベルが決まっている仲間（joinLevel。お凛は Lv1）はそのレベルで加わる。平均レベルには joinLevel のある仲間を数えない。
    * 加入済み・一時離脱中（away にいる）・満員なら何もしない。一時離脱からの復帰は rejoin を使う。
    */
   | { type: 'join'; member: CharacterId }
