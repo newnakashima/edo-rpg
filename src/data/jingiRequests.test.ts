@@ -7,9 +7,9 @@ import {
   JINGI_REQUEST_EVENTS,
   JINGI_REQUEST_KINDS,
   jingiRequestEnemies,
-  jingiRequestFlag,
   jingiRequestId,
-  jingiRequestKindOf,
+  facilityMenu,
+  JINGI_REQUEST_LABELS,
   jingiRequestLevel,
   jingiRequestReward,
   pendingJingiRequest,
@@ -44,12 +44,11 @@ describe('仁義ポイントを得る頼まれごと', () => {
       for (const kind of JINGI_REQUEST_KINDS) {
         const id = jingiRequestId(town, kind);
         expect(EVENTS[id]?.id, id).toBe(id);
-        expect(jingiRequestKindOf(id)).toBe(kind);
+        expect(pendingJingiRequest(town, kind, {})).toEqual({ id, kind, label: JINGI_REQUEST_LABELS[kind] });
         // 施設の人がその町にいる
         expect(MAPS[town]!.npcs.some((n) => n.action === kind), id).toBe(true);
       }
     }
-    expect(jingiRequestKindOf('tatsugoro')).toBeNull();
   });
 
   it('ポイントはその町の親分の屋敷の 2 泊分（序盤 2・中盤 4・終盤 6）、敵は町の敵レベル + 1', () => {
@@ -62,15 +61,15 @@ describe('仁義ポイントを得る頼まれごと', () => {
   it('引き受けて勝つと仁義ポイントを得てフラグが立ち、施設のメニューから消える', () => {
     const id = jingiRequestId('kyo', 'tobaku');
     const s = { ...newGame('m', start), jingi: 10 };
-    expect(pendingJingiRequest('kyo', 'tobaku', s.flags)).toBe(id);
+    expect(pendingJingiRequest('kyo', 'tobaku', s.flags)?.id).toBe(id);
     const { state, battles } = run(id, s, 0, 'victory');
     expect(battles).toEqual([{ kind: 'battle', enemies: jingiRequestEnemies('tobaku', 10), level: 11, canEscape: false, loseOk: true }]);
     expect(state.jingi).toBe(14);
-    expect(state.flags[jingiRequestFlag('kyo', 'tobaku')]).toBe(true);
+    expect(state.flags[id]).toBe(true);
     expect(pendingJingiRequest('kyo', 'tobaku', state.flags)).toBeNull();
     // ほかの町・施設の頼まれごとは残る
-    expect(pendingJingiRequest('kyo', 'izakaya', state.flags)).toBe(jingiRequestId('kyo', 'izakaya'));
-    expect(pendingJingiRequest('osaka', 'tobaku', state.flags)).toBe(jingiRequestId('osaka', 'tobaku'));
+    expect(pendingJingiRequest('kyo', 'izakaya', state.flags)?.id).toBe(jingiRequestId('kyo', 'izakaya'));
+    expect(pendingJingiRequest('osaka', 'tobaku', state.flags)?.id).toBe(jingiRequestId('osaka', 'tobaku'));
   });
 
   it('負けても全滅にはならず、ポイントもフラグも変わらない（また引き受けられる）。断っても同じ', () => {
@@ -83,13 +82,49 @@ describe('仁義ポイントを得る頼まれごと', () => {
       const { state, battles } = run(id, s, choice, outcome);
       expect(battles).toHaveLength(choice === 0 ? 1 : 0);
       expect(state.jingi).toBe(3);
-      expect(pendingJingiRequest('edo', 'gyoro', state.flags)).toBe(id);
+      expect(pendingJingiRequest('edo', 'gyoro', state.flags)?.id).toBe(id);
     }
   });
 
-  it('ポイントは上限を超えない', () => {
-    const { state } = run(jingiRequestId('sendai', 'izakaya'), { ...newGame('m', start), jingi: JINGI_MAX - 1 }, 0, 'victory');
-    expect(state.jingi).toBe(JINGI_MAX);
+  it('ポイントは上限を超えず、知らせには増えた量ではなく今の仁義ポイントを出す', () => {
+    const runner = new EventRunner(EVENTS[jingiRequestId('sendai', 'izakaya')]!.steps);
+    let r = runner.next({ ...newGame('m', start), jingi: JINGI_MAX - 1 });
+    const pages: string[] = [];
+    for (let i = 0; i < 50 && r.request.kind !== 'done'; i++) {
+      if (r.request.kind === 'say') pages.push(...r.request.pages);
+      const input: EventInput | undefined =
+        r.request.kind === 'choice' ? { kind: 'choice', index: 0 } : r.request.kind === 'battle' ? { kind: 'battle', outcome: 'victory' } : undefined;
+      r = runner.next(r.state, input);
+    }
+    expect(r.state.jingi).toBe(JINGI_MAX);
+    expect(pages).toContain(`渡世人としての名が上がった。（仁義 ${JINGI_MAX}）`);
+  });
+
+  it('得られるポイントの合計は docs/balance.md のとおり 198', () => {
+    const total = Object.keys(TOWN_FACILITY_DOORS).reduce((sum, town) => sum + jingiRequestReward(MAPS[town]!.areaLevel) * JINGI_REQUEST_KINDS.length, 0);
+    expect(total).toBe(198);
+  });
+
+  it('施設のメニューは、本来の項目・頼まれごと・やめる の順で、選んだ番号から選んだものが分かる', () => {
+    const request = pendingJingiRequest('kyo', 'tobaku', {});
+    const bets = [10, 100].map((b) => ({ label: `${b} 文張る`, value: b }));
+    const withReq = facilityMenu(bets, request);
+    expect(withReq.labels).toEqual(['10 文張る', '100 文張る', 'イカサマ客を懲らしめる', 'やめる']);
+    expect([0, 1, 2, 3].map(withReq.pick)).toEqual([
+      { kind: 'main', value: 10 },
+      { kind: 'main', value: 100 },
+      { kind: 'request', id: jingiRequestId('kyo', 'tobaku') },
+      { kind: 'cancel' },
+    ]);
+    // 頼まれごとが済んでいれば出さない
+    const without = facilityMenu(bets, null);
+    expect(without.labels).toEqual(['10 文張る', '100 文張る', 'やめる']);
+    expect(without.pick(2)).toEqual({ kind: 'cancel' });
+    // 張る銭がなくても、頼まれごとは選べる
+    const noBets = facilityMenu([], request);
+    expect(noBets.labels).toEqual(['イカサマ客を懲らしめる', 'やめる']);
+    expect(noBets.pick(0)).toEqual({ kind: 'request', id: jingiRequestId('kyo', 'tobaku') });
+    expect(noBets.pick(1)).toEqual({ kind: 'cancel' });
   });
 
   it('湯屋や、施設のない町には頼まれごとがない', () => {
@@ -105,7 +140,11 @@ describe('町の旅籠', () => {
     expect(inns.length).toBeGreaterThan(0);
     for (const { map, n } of inns) {
       expect(TOWN_FACILITY_DOORS[map], map).toBeDefined();
-      for (const line of [...(n.lines ?? []), ...(n.after?.lines ?? []), ...(n.later?.lines ?? [])]) expect(line, map).toMatch(/親分/);
+      for (const line of [...(n.lines ?? []), ...(n.after?.lines ?? []), ...(n.later?.lines ?? [])]) {
+        expect(line, map).toMatch(/親分/);
+        // 泊められない・お断り、とはっきり言う
+        expect(line, map).toMatch(/泊め(られ|でけ|でき)|泊められ|お断り|泊めちゃならねえ/);
+      }
     }
   });
 });

@@ -31,8 +31,8 @@ export function addJingi(state: GameState, amount: number): GameState {
 export type OyabunStayResult = { ok: true; state: GameState; cost: number } | { ok: false; reason: 'jingi' | 'full'; cost: number };
 
 /**
- * 親分の屋敷に泊まる。仁義ポイントを使い、全員の体力・気力を全回復する（旅籠と同じく戦闘不能も治る）。
- * 旅籠と違い、全員の体力・気力が満タンなら泊めず（full）、ポイントを使わない（得る手段の限られた資源をむだにしないため）。
+ * 親分の屋敷に泊まる。仁義ポイントを使い、全員の体力・気力を全回復する（もぐりの宿と同じく戦闘不能も治る）。
+ * もぐりの宿と違い、全員の体力・気力が満タンなら泊めず（full）、ポイントを使わない（得る手段の限られた資源をむだにしないため）。
  */
 export function stayAtOyabun(state: GameState, areaLevel: number): OyabunStayResult {
   const cost = oyabunStayCost(areaLevel);

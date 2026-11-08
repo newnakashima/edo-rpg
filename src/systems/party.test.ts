@@ -32,7 +32,7 @@ describe('party', () => {
     expect(levelUps).toEqual([]);
   });
 
-  it('旅籠で全回復する', () => {
+  it('全回復する（親分の屋敷・もぐりの宿）', () => {
     const m = { ...createMember('gendo', 3), hp: 0, mp: 0 };
     const [r] = restoreAll([m]);
     expect(r?.hp).toBe(memberStats(m).maxHp);

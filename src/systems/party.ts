@@ -44,7 +44,7 @@ export function createMember(id: CharacterId, level = 1, equip: Equipped = START
   return { ...member, hp: stats.maxHp, mp: stats.maxMp };
 }
 
-/** 全員の HP・MP を全回復する（旅籠）。 */
+/** 全員の HP・MP を全回復する（親分の屋敷・もぐりの宿・全滅のあと）。 */
 export function restoreAll(party: PartyMember[]): PartyMember[] {
   return party.map((m) => {
     const s = memberStats(m);

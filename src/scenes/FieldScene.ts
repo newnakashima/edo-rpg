@@ -24,7 +24,7 @@ import {
 } from '../systems/facilities';
 import { prayAtTemple, templePrice } from '../systems/shop';
 import { SHOPS } from '../data/shops';
-import type { Facing, GameState } from '../systems/gameState';
+import type { Facing } from '../systems/gameState';
 import { memberLevel } from '../systems/party';
 import { defaultRng } from '../systems/random';
 import { playBgm } from '../systems/audio';
@@ -33,7 +33,7 @@ import { getState, holdEventWhileAway, setState, shouldRunEnterEvent, takePendin
 import { EVENTS } from '../data/events';
 import { mapSigns, signKey } from '../data/signs';
 import { moguriYadoById } from '../data/moguriYado';
-import { JINGI_REQUEST_LABELS, jingiRequestKindOf, pendingJingiRequest } from '../data/jingiRequests';
+import { facilityMenu, pendingJingiRequest, type PendingJingiRequest } from '../data/jingiRequests';
 import { OYABUN, oyabunWelcome } from '../data/oyabun';
 import { oyabunStayCost, stayAtOyabun } from '../systems/jingi';
 import { CHAR_DISPLAY_ORIGIN, heroSprite, idleFrame, objectDepth, objectDisplayOrigin, objectKey, oppositeFacing, personDepth, shouldStandStill, spriteKey, walkAnimKey, walkDepthRow, type CharacterSpriteId } from '../data/sprites';
@@ -471,7 +471,7 @@ export class FieldScene extends Phaser.Scene {
       if (npc.action === 'moguriInn') {
         // もぐりの宿はワールドマップ（敵レベル 1 のマップ）にあるので、値段は宿ごとに決めた街道の敵レベルで決める
         const level = moguriYadoById(npc.id)?.areaLevel ?? this.map.areaLevel;
-        this.openInn(moguriInnPrice(level), (st) => stayAtMoguriInn(st, level), '亭主');
+        this.openMoguriInn(level);
       }
       if (npc.action === 'oyabun') this.openOyabun();
       if (npc.action === 'teahouse') this.openTeahouse(npc.shop);
@@ -563,8 +563,10 @@ export class FieldScene extends Phaser.Scene {
     });
   }
 
-  /** もぐりの宿。お金で泊まって全回復し、そのあと記録もできる。host は台詞の話し手。 */
-  private openInn(price: number, stay: (state: GameState) => PurchaseResult, host: string): void {
+  /** もぐりの宿。お金で泊まって全回復し、そのあと記録もできる。level は小屋の建つ街道の敵レベル（宿代を決める）。 */
+  private openMoguriInn(level: number): void {
+    const price = moguriInnPrice(level);
+    const host = '亭主';
     const menu: Menu = new Menu(
       this,
       GAME_WIDTH - 140,
@@ -574,7 +576,7 @@ export class FieldScene extends Phaser.Scene {
       (i) => {
         this.closeOverlay(menu);
         if (i === 0) {
-          const result = stay(getState());
+          const result = stayAtMoguriInn(getState(), level);
           if (!result.ok) {
             this.message.show([`${host}「お代が足りねえようで……」`]);
             return;
@@ -684,21 +686,23 @@ export class FieldScene extends Phaser.Scene {
     run: (s: ReturnType<typeof getState>) => PurchaseResult,
     done: string[],
     noMoney: string[],
-    request: string | null,
+    request: PendingJingiRequest | null,
   ): void {
+    const items = facilityMenu([{ label, value: 'rest' }], request);
     const menu: Menu = new Menu(
       this,
       GAME_WIDTH - 170,
       40,
       160,
-      [{ label }, ...this.requestItems(request), { label: 'やめる' }],
+      items.labels.map((l) => ({ label: l })),
       (i) => {
         this.closeOverlay(menu);
-        if (request && i === 1) {
-          this.startEvent(request);
+        const pick = items.pick(i);
+        if (pick.kind === 'request') {
+          this.startEvent(pick.id);
           return;
         }
-        if (i !== 0) return;
+        if (pick.kind !== 'main') return;
         const result = run(getState());
         if (!result.ok) {
           this.message.show(noMoney);
@@ -712,33 +716,31 @@ export class FieldScene extends Phaser.Scene {
     this.pushOverlay(menu);
   }
 
-  /** 頼まれごとのメニューの項目（request がなければ空）。 */
-  private requestItems(request: string | null): { label: string }[] {
-    const kind = request ? jingiRequestKindOf(request) : null;
-    return kind ? [{ label: JINGI_REQUEST_LABELS[kind] }] : [];
-  }
-
   /**
    * 賭場。張る額を選び、丁か半かを張る（さいころの目の和が偶数なら丁、奇数なら半）。
    * request（まだ果たしていないイカサマ客の頼まれごと）があれば、張る額の後ろに出す（張る銭がなくても引き受けられる）。
    */
-  private openTobaku(request: string | null): void {
+  private openTobaku(request: PendingJingiRequest | null): void {
     const bets = CHOHAN_BETS.filter((b) => b <= getState().money);
     if (bets.length === 0 && !request) {
       this.message.show([`中盆「${CHOHAN_BETS[0]} 文も持たねえで、賭場に来なさんな」`]);
       return;
     }
+    const items = facilityMenu(
+      bets.map((b) => ({ label: `${b} 文張る`, value: b })),
+      request,
+    );
     const menu: Menu = new Menu(
       this,
       GAME_WIDTH - 170,
       40,
       160,
-      [...bets.map((b) => ({ label: `${b} 文張る` })), ...this.requestItems(request), { label: 'やめる' }],
+      items.labels.map((l) => ({ label: l })),
       (i) => {
         this.closeOverlay(menu);
-        const bet = bets[i];
-        if (bet !== undefined) this.openChohanCall(bet);
-        else if (request && i === bets.length) this.startEvent(request);
+        const pick = items.pick(i);
+        if (pick.kind === 'main') this.openChohanCall(pick.value);
+        else if (pick.kind === 'request') this.startEvent(pick.id);
       },
       () => this.closeOverlay(menu),
     );

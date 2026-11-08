@@ -21,9 +21,6 @@ export function jingiRequestId(town: string, kind: JingiRequestKind): string {
   return `jingi_${town}_${kind}`;
 }
 
-/** 頼まれごとを果たしたら立つフラグ（イベントの ID と同じ）。 */
-export const jingiRequestFlag = jingiRequestId;
-
 /**
  * 頼まれごとで得る仁義ポイント。その町の親分の屋敷の 2 泊分（序盤 2・中盤 4・終盤 6）。
  * 町ごとに 1 回ずつなので、得られる量には限りがある（足りなければもぐりの宿にお金で泊まる）。
@@ -117,8 +114,10 @@ export function jingiRequestEvent(town: string, kind: JingiRequestKind, areaLeve
     },
     { type: 'say', lines: text.thanks },
     { type: 'addJingi', amount: reward },
-    { type: 'say', lines: [`渡世人としての名が上がった。（仁義 +${reward}）`] },
-    { type: 'setFlag', flag: jingiRequestFlag(town, kind) },
+    // 上限で丸められたときに増えた量を偽らないよう、数値は今の仁義ポイント（{jingi}）を出す
+    { type: 'say', lines: ['渡世人としての名が上がった。（仁義 {jingi}）'] },
+    // 果たしたら、イベントの ID と同じ名前のフラグを立てる（pendingJingiRequest が見る）
+    { type: 'setFlag', flag: id },
   ];
   return {
     id,
@@ -146,16 +145,43 @@ export const JINGI_REQUEST_EVENTS: Record<string, EventDef> = Object.fromEntries
   }),
 );
 
-/** 頼まれごとのイベントの ID から施設の種類を返す（頼まれごとでなければ null）。 */
-export function jingiRequestKindOf(id: string): JingiRequestKind | null {
-  const kind = id.split('_').pop();
-  return id.startsWith('jingi_') && (JINGI_REQUEST_KINDS as readonly string[]).includes(kind ?? '') ? (kind as JingiRequestKind) : null;
+/** まだ果たしていない頼まれごと（施設のメニューに出す）。 */
+export interface PendingJingiRequest {
+  /** イベントの ID（果たしたら立つフラグと同じ）。 */
+  id: string;
+  kind: JingiRequestKind;
+  /** メニューの項目の名前。 */
+  label: string;
 }
 
-/** その施設で、まだ果たしていない頼まれごとのイベントの ID（ない・済んだら null）。 */
-export function pendingJingiRequest(town: string, action: string | undefined, flags: Record<string, boolean>): string | null {
-  if (!(JINGI_REQUEST_KINDS as readonly string[]).includes(action ?? '')) return null;
-  const id = jingiRequestId(town, action as JingiRequestKind);
-  if (!JINGI_REQUEST_EVENTS[id] || flags[jingiRequestFlag(town, action as JingiRequestKind)]) return null;
-  return id;
+/** その施設で、まだ果たしていない頼まれごと（ない・済んだら null）。 */
+export function pendingJingiRequest(town: string, action: string | undefined, flags: Record<string, boolean>): PendingJingiRequest | null {
+  const kind = JINGI_REQUEST_KINDS.find((k) => k === action);
+  if (!kind) return null;
+  const id = jingiRequestId(town, kind);
+  if (!JINGI_REQUEST_EVENTS[id] || flags[id]) return null;
+  return { id, kind, label: JINGI_REQUEST_LABELS[kind] };
+}
+
+/** 施設のメニューで選んだもの（施設の本来の品・頼まれごと・やめる）。 */
+export type FacilityPick<T> = { kind: 'main'; value: T } | { kind: 'request'; id: string } | { kind: 'cancel' };
+
+/**
+ * 施設のメニュー（main の項目、頼まれごと〈request があれば〉、やめる の順）の項目の名前と、選んだ番号から選んだものを返す関数。
+ * 画面（FieldScene の賭場・居酒屋・妓楼）はこれでメニューを作り、番号の対応を自分で数えない。
+ */
+export function facilityMenu<T>(
+  main: readonly { label: string; value: T }[],
+  request: PendingJingiRequest | null,
+): { labels: string[]; pick: (index: number) => FacilityPick<T> } {
+  const labels = [...main.map((m) => m.label), ...(request ? [request.label] : []), 'やめる'];
+  return {
+    labels,
+    pick: (index) => {
+      const m = main[index];
+      if (m) return { kind: 'main', value: m.value };
+      if (request && index === main.length) return { kind: 'request', id: request.id };
+      return { kind: 'cancel' };
+    },
+  };
 }

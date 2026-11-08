@@ -3,7 +3,7 @@ import type { CharacterId } from './characters';
 
 /**
  * イベントの 1 手順。
- * 台詞の中の {hero} は主人公の名前に置き換える。linesF があれば、主人公が女のときはそちらを使う。
+ * 台詞の中の {hero} は主人公の名前に、{jingi} はその時点の仁義ポイントに置き換える。linesF があれば、主人公が女のときはそちらを使う。
  */
 export type EventStep =
   | { type: 'say'; lines: string[]; linesF?: string[] }
