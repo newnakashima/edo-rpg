@@ -214,10 +214,24 @@ describe('レア装備の特性', () => {
   it('木霊の数珠で回復の術も 2 回効く。状態異常の術や、戦いが決まった後には発動しない', () => {
     const party = [createMember('gendo', 10, { accessory: 'kodamaJuzu' }), createMember('hero', 10)];
     const b = createBattle(party, 'm', ['yamainu'], 1);
+    // 1 回目で満タンにならないよう、体力の上限を大きくする
+    b.combatants[1]!.stats = { ...b.combatants[1]!.stats, maxHp: 9999 };
     b.combatants[1]!.hp = 1;
     b.combatants[2]!.hp = 9999;
-    const heal = resolveTurn(b, { p0: { kind: 'skill', skill: 'yakushi', target: 'p1' }, p1: { kind: 'guard' } }, seededRng(6)).events;
-    expect(heal.filter((e) => e.type === 'heal' && e.target === 'p1')).toHaveLength(2);
+    // 敵が眠っていて、主人公が先に倒されることはない
+    b.combatants[2]!.status = { sleep: 3 };
+    const healed = resolveTurn(b, { p0: { kind: 'skill', skill: 'yakushi', target: 'p1' }, p1: { kind: 'guard' } }, seededRng(6));
+    const heals = healed.events.flatMap((e) => (e.type === 'heal' && e.target === 'p1' ? [e.amount] : []));
+    expect(heals).toHaveLength(2);
+    expect(heals.every((n) => n > 0)).toBe(true);
+    expect(healed.state.combatants[1]!.hp).toBe(1 + heals[0]! + heals[1]!);
+
+    // 1 回目が効かない（倒れた味方への回復）ときは、もう一度は発動しない
+    const fallen = createBattle(party, 'm', ['yamainu'], 1);
+    fallen.combatants[1]!.hp = 0;
+    fallen.combatants[2]!.status = { sleep: 3 };
+    const none = resolveTurn(fallen, { p0: { kind: 'skill', skill: 'yakushi', target: 'p1' } }, seededRng(6)).events;
+    expect(none.some((e) => e.type === 'again')).toBe(false);
 
     const sleepy = createBattle([createMember('kasumi', 20, { accessory: 'kodamaJuzu' })], 'm', ['yamainu'], 1);
     const smoke = resolveTurn(sleepy, { p0: { kind: 'skill', skill: 'kemuridama' } }, seededRng(7)).events;
@@ -228,6 +242,22 @@ describe('レア装備の特性', () => {
     const won = resolveTurn(weak, { p0: { kind: 'skill', skill: 'neraiuchi', target: 'e0' } }, seededRng(8));
     expect(won.state.outcome).toBe('victory');
     expect(won.events.some((e) => e.type === 'again')).toBe(false);
+  });
+
+  it('木霊の数珠の単体の術は、1 回目で狙いが倒れたら 2 回目は別の敵を狙う', () => {
+    const b = createBattle([createMember('orin', 10, { accessory: 'kodamaJuzu' })], 'm', ['onibi', 'onibi'], 1);
+    b.combatants[1]!.hp = 1;
+    b.combatants[2]!.hp = 9999;
+    const events = resolveTurn(b, { p0: { kind: 'skill', skill: 'neraiuchi', target: 'e0' } }, seededRng(9)).events;
+    expect(events.flatMap((e) => (e.type === 'damage' ? [e.target] : []))).toEqual(['e0', 'e1']);
+  });
+
+  it('混乱した霞は、影分身の秘伝書を付けていても 1 回しか攻撃しない', () => {
+    const b = createBattle([createMember('kasumi', 20, { accessory: 'kagebunshin' })], 'm', ['yamainu'], 1);
+    b.combatants[0]!.status = { confusion: 3 };
+    b.combatants[1]!.hp = 9999;
+    const events = resolveTurn(b, { p0: { kind: 'attack', target: 'e0' } }, seededRng(10)).events;
+    expect(events.some((e) => e.type === 'again')).toBe(false);
   });
 
   it('韋駄天の守りは素早さを大きく上げる', () => {

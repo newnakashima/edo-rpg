@@ -2929,7 +2929,8 @@ export const EVENTS: Record<string, EventDef> = {
   worldChestFuji: chest('worldChestFuji', 'kitsukegusuri', '気付け薬'),
   worldChestHiei: chest('worldChestHiei', 'matcha', '宇治の抹茶'),
   worldChestIse: chest('worldChestIse', 'mankintan', '万金丹'),
-  worldChestKoya: chest('worldChestKoya', 'kodamaJuzu', '木霊の数珠'),
-  worldChestIzumo: chest('worldChestIzumo', 'idatenMamori', '韋駄天の守り'),
-  worldChestAso: chest('worldChestAso', 'kagebunshin', '影分身の秘伝書'),
+  // レア装備の葛籠は、中身を変える前に開けた記録でも手に入るよう、前の葛籠（worldChestKoya など）と別の ID にする
+  worldChestKoyaJuzu: chest('worldChestKoyaJuzu', 'kodamaJuzu', '木霊の数珠'),
+  worldChestIzumoIdaten: chest('worldChestIzumoIdaten', 'idatenMamori', '韋駄天の守り'),
+  worldChestAsoKagebunshin: chest('worldChestAsoKagebunshin', 'kagebunshin', '影分身の秘伝書'),
 };

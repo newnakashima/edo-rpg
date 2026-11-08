@@ -26,6 +26,7 @@ const FAIL: Record<Exclude<TradeResult, { ok: true }>['reason'], string> = {
   full: 'これ以上は持てない。',
   none: 'もう持っていない。',
   unknown: '扱っていない品だ。',
+  unsellable: 'これは手放せない品だ。',
 };
 
 /** 1 つの一覧の作り方（買う・売る・預ける・引き出す）。 */
@@ -178,7 +179,7 @@ export class TradeMenu {
     return {
       title: '売る',
       ids: () => Object.keys(getState().items).filter((id) => itemCount(getState().items, id) > 0),
-      note: (id) => `${sellPrice(id)} 文 ×${itemCount(getState().items, id)}`,
+      note: (id) => (EQUIPMENT[id]?.unsellable ? `売れない ×${itemCount(getState().items, id)}` : `${sellPrice(id)} 文 ×${itemCount(getState().items, id)}`),
       act: (id) => sell(getState(), id),
       done: (id) => `${itemName(id)}を ${sellPrice(id)} 文で売った。`,
     };

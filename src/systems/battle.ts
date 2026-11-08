@@ -181,7 +181,7 @@ function memberTraits(m: PartyMember): Partial<Record<EquipTrait, string>> {
 }
 
 /** 術がもう一度発動する技か（ダメージの術と回復の術）。 */
-export function canDoubleCast(skill: SkillDef): boolean {
+function canDoubleCast(skill: SkillDef): boolean {
   return skill.effect.kind === 'magic' || skill.effect.kind === 'heal';
 }
 
@@ -400,10 +400,14 @@ class TurnContext {
     }
     actor.mp -= skill.mp;
     this.events.push({ type: 'skill', actor: actor.key, skill: skill.id });
+    const before = this.events.length;
     this.skillEffect(actor, skill, targetKey);
-    // 木霊の数珠: 術がもう一度発動する（気力は使わない）。戦いが決まっていたら発動しない
+    // 木霊の数珠: 術がもう一度発動する（気力は使わない）。戦いが決まっていたら、1 回目が効かなかったら（倒れた・満タンの味方に回復）発動しない
     const echo = actor.traits?.doubleCast;
-    if (echo && canDoubleCast(skill) && isAlive(actor) && judge(this.state) === 'ongoing') {
+    const worked = this.events
+      .slice(before)
+      .some((e) => e.type === 'damage' || (e.type === 'heal' && e.amount > 0));
+    if (echo && canDoubleCast(skill) && worked && isAlive(actor) && judge(this.state) === 'ongoing') {
       this.events.push({ type: 'again', actor: actor.key, equip: echo, trait: 'doubleCast' });
       this.skillEffect(actor, skill, targetKey);
     }
