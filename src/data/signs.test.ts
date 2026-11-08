@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { pngSize } from '../systems/testUtils';
 import { MAPS } from './maps';
-import { allSigns, mapSigns, SIGN_GLYPHS, SIGN_KINDS, signKind, signPosition } from './signs';
+import { mapSigns, SIGN_KINDS, signKind, signPosition, type SignKind } from './signs';
+
+// 看板の字は描いたスクリプト（scripts/draw_signs.py の SIGNS）が正
+const script = Object.values(import.meta.glob<string>('../../scripts/draw_signs.py', { eager: true, query: '?raw', import: 'default' }))[0]!;
+const GLYPHS: Record<string, string> = Object.fromEntries([...script.matchAll(/^ {4}'(\w+)': \('(.)'/gm)].map((m) => [m[1], m[2]]));
+
+const allSigns = () => Object.values(MAPS).flatMap((map) => mapSigns(map).map((sign) => ({ map, sign })));
 
 // 施設の人（action のある人）
 const facilities = Object.values(MAPS).flatMap((map) => map.npcs.filter((n) => n.action).map((npc) => ({ map, npc })));
@@ -40,12 +46,13 @@ describe('施設の看板', () => {
     }
   });
 
-  it('戸口の隣に掛ける（看板の左右どちらかが戸）', () => {
-    for (const { map, sign } of allSigns()) {
-      const row = map.rows[sign.y]!;
-      // 京の茶屋は戸のない店先なので除く
-      if (map.id === 'kyo' && sign.x === 4 && sign.y === 9) continue;
-      expect([row[sign.x - 1], row[sign.x + 1]], `${map.id} (${sign.x}, ${sign.y})`).toContain('D');
+  it('位置を書いていない施設は、戸口の隣に掛ける（看板の左右どちらかが戸）', () => {
+    for (const { map, npc } of facilities) {
+      const pos = signPosition(map, npc);
+      // 位置を書いた施設（戸から離れて立つ人、京の戸のない店先の茶屋）は除く
+      if (!pos || npc.sign) continue;
+      const row = map.rows[pos.y]!;
+      expect([row[pos.x - 1], row[pos.x + 1]], `${map.id} ${npc.id}`).toContain('D');
     }
   });
 
@@ -67,18 +74,16 @@ describe('施設の看板', () => {
     for (const [f, url] of Object.entries(files)) expect(pngSize(url), f).toEqual({ w: 16, h: 16 });
   });
 
-  it('看板の字は描いた画像（scripts/draw_signs.py）と同じ', () => {
-    const script = Object.values(import.meta.glob<string>('../../scripts/draw_signs.py', { eager: true, query: '?raw', import: 'default' }))[0]!;
-    const drawn = Object.fromEntries([...script.matchAll(/^ {4}'(\w+)': \('(.)'/gm)].map((m) => [m[1], m[2]]));
-    expect(drawn).toEqual(SIGN_GLYPHS);
+  it('描くスクリプト（scripts/draw_signs.py）の看板の種類は SIGN_KINDS と同じ', () => {
+    expect(Object.keys(GLYPHS).sort()).toEqual([...SIGN_KINDS].sort());
   });
 
   it('よろず屋は「万」、刀鍛冶は「刀」、旅籠は「宿」、茶屋は「茶」の看板', () => {
     const shimizu = MAPS.shimizu!;
-    const kindOf = (id: string) => signKind(shimizu.npcs.find((n) => n.id === id)!);
-    expect(SIGN_GLYPHS[kindOf('yorozuya')!]).toBe('万');
-    expect(SIGN_GLYPHS[kindOf('kaji')!]).toBe('刀');
-    expect(SIGN_GLYPHS[kindOf('innkeeper')!]).toBe('宿');
-    expect(SIGN_GLYPHS[kindOf('teahouse')!]).toBe('茶');
+    const kindOf = (id: string) => signKind(shimizu.npcs.find((n) => n.id === id)!) as SignKind;
+    expect(GLYPHS[kindOf('yorozuya')]).toBe('万');
+    expect(GLYPHS[kindOf('kaji')]).toBe('刀');
+    expect(GLYPHS[kindOf('innkeeper')]).toBe('宿');
+    expect(GLYPHS[kindOf('teahouse')]).toBe('茶');
   });
 });

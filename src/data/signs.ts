@@ -1,25 +1,12 @@
 // 施設の看板（テストプレイで「看板がないと各施設を見分けることが非常に困難」と指摘されたため足した）。
 // 施設の人（maps.ts の NpcDef の action）が立つ戸口の隣の壁に、施設の種類ごとの看板（板の色と漢字 1 字）を掛ける。
 // 画像は public/assets/signs/<種類>.png（16 × 16。scripts/draw_signs.py で描いた。記録は public/assets/README.md）。
-import { MAPS, type MapDef, type NpcDef } from './maps';
+import type { MapDef, NpcDef } from './maps';
 
 /** 看板の種類（scripts/draw_signs.py の SIGNS と同じ）。 */
 export const SIGN_KINDS = ['yado', 'chaya', 'yorozu', 'kaji', 'hikyaku', 'tera', 'yashiro', 'shokan', 'kinpaku', 'renkon'] as const;
 export type SignKind = (typeof SIGN_KINDS)[number];
-
-/** 看板の字（画像に描いた字。テストと説明のため）。 */
-export const SIGN_GLYPHS: Record<SignKind, string> = {
-  yado: '宿',
-  chaya: '茶',
-  yorozu: '万',
-  kaji: '刀',
-  hikyaku: '飛',
-  tera: '寺',
-  yashiro: '社',
-  shokan: '商',
-  kinpaku: '金',
-  renkon: '蓮',
-};
+// 看板の字（宿・茶・万など）は scripts/draw_signs.py の SIGNS が正（テストで種類がそろっているかを確かめる）。
 
 /** よろず屋・刀鍛冶以外の店の看板（SHOPS の ID）。 */
 const SHOP_SIGNS: Record<string, SignKind> = {
@@ -88,9 +75,4 @@ export function mapSigns(map: MapDef): SignDef[] {
     if (kind && pos) signs.push({ ...pos, kind });
   }
   return signs;
-}
-
-/** すべてのマップの看板（テスト用）。 */
-export function allSigns(): { map: MapDef; sign: SignDef }[] {
-  return Object.values(MAPS).flatMap((map) => mapSigns(map).map((sign) => ({ map, sign })));
 }

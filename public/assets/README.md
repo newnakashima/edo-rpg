@@ -832,6 +832,8 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 テストプレイで「看板がないと各施設を見分けることが非常に困難」と指摘されたため足した。16 × 16 の 1 枚で、`src/data/signs.ts` が施設の人（マップの NPC の `action`）の戸口の隣の壁に掛ける（人より奥、depth 1）。
 `python3 scripts/draw_signs.py public/assets/signs` で手で描いた（PixelLab は使っていない）。板は x 1〜14・y 0〜14 の 1px の濃い輪郭で、内側の上と左を明るく、下と右を暗くし、右と下に影を付けた。字は IPA ゴシック（`/usr/share/fonts/opentype/ipafont-gothic/ipag.ttf`）の 12px を 1 ビット（ぼかさず）で描いた。
 
+色と字は `scripts/draw_signs.py` の `SIGNS` が正（下の表は 2026-11 時点の写し。変えたら表も直す）。
+
 | ID | 字 | 板 / 字の色 | 施設 |
 | --- | --- | --- | --- |
 | yado | 宿 | 藍 / 白 | 旅籠 |
