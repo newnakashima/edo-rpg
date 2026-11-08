@@ -117,8 +117,8 @@ export const HIROSHIMA_BUILDINGS: BuildingDef[] = [
       },
       ...furniture('hiroshimaYorozuya', [
         { name: '文机', x: 2, y: 1, object: 'fuzukue', lines: ['大福帳と算盤が載っている。'] },
-        { name: '箪笥', x: 4, y: 1, object: 'tansu', lines: ['売り物の手拭いと足袋をしまった箪笥だ。'] },
-        { name: '木箱', x: 7, y: 1, object: 'kibako', lines: ['瀬戸の島から届いた塩の包みを詰めた木箱だ。'] },
+        { name: '箪笥', x: 4, y: 1, object: 'tansu', lines: ['帳場の着替えと手拭いをしまった箪笥だ。'] },
+        { name: '木箱', x: 7, y: 1, object: 'kibako', lines: ['仕入れたばかりの煙草の葉の包みを詰めた木箱だ。'] },
         { name: '木箱', x: 10, y: 1, object: 'kibako', lines: ['薬の包みを詰めた木箱だ。「熊の胆」の札が付いている。'] },
         { name: '品棚', x: 1, y: 5, object: 'shinadana', lines: ['金創膏と毒消しが、ずらりと並んでいる。'] },
         { name: '品棚', x: 11, y: 5, object: 'shinadana', lines: ['キセルと煙草の葉、魔除けの香が並んでいる。'] },
@@ -166,7 +166,7 @@ export const HIROSHIMA_BUILDINGS: BuildingDef[] = [
         y: 1,
         color: 0x6a5a4a,
         sprite: 'npc_ninsoku',
-        lines: ['弟子「親方の向こう鎚を打っとります。鉄は中国山地のたたらで吹いた玉鋼じゃ。ええ刀になりますけえ」'],
+        lines: ['弟子「親方の向こう鎚を打っとります。鉄は中国山地のたたらで吹いた鋼じゃ。ええ刀になりますけえ」'],
       },
       {
         id: 'hiroshimaKajiKyaku',
@@ -300,7 +300,7 @@ export const HIROSHIMA_BUILDINGS: BuildingDef[] = [
       ]),
     ],
   },
-  // 湯屋: 手前に土間の入口、中ほどに板の間の脱衣場（奥半分を壁で二つに分ける）、奥に柘榴口を抜けた洗い場と湯船
+  // 湯屋: 手前に土間の入口、中ほどに板の間の脱衣場（手前半分を壁で二つに分ける）、奥に柘榴口を抜けた洗い場と湯船
   {
     door: { x: 11, y: 16 },
     id: 'hiroshimaYuya',
@@ -586,13 +586,13 @@ export const HIROSHIMA_BUILDINGS: BuildingDef[] = [
         color: 0x8a5a6a,
         sprite: 'npc_okami',
         lines: ['女「船に乗っとる亭主の無事を、毎朝お願いに来とるんです。瀬戸の海は、このごろ荒れとるけえ……」'],
-        after: { flag: 'chapter6Cleared', lines: ['女「このごろ海が静かになって、亭主の船も無事に戻ってくるようになりました。ありがたいことです」'] },
+        after: { flag: 'chapter6Cleared', lines: ['女「長崎の騒ぎが収まったと聞いて、ほっとしました。亭主の船が戻るまで、こうしてお願いは続けますけど」'] },
       },
       ...furniture('hiroshimaTera', [
         { name: '本尊の厨子', x: 8, y: 1, object: 'jizo', lines: ['須弥壇の厨子に、阿弥陀如来が祀られている。扉の前には、お前立ちの小さな像が立っている。'] },
         { name: '行灯', x: 6, y: 1, object: 'andon', lines: ANDON_LINES },
         { name: '行灯', x: 10, y: 1, object: 'andon', lines: ANDON_LINES },
-        { name: '経箱', x: 14, y: 1, object: 'tansu', lines: ['お経の巻物をしまった箪笥だ。'] },
+        { name: '箪笥', x: 14, y: 1, object: 'tansu', lines: ['お経の巻物をしまった箪笥だ。'] },
       ]),
     ],
   },
@@ -663,7 +663,7 @@ export const HIROSHIMA_BUILDINGS: BuildingDef[] = [
         { name: '囲炉裏', x: 5, y: 6, object: 'irori', lines: ['囲炉裏の自在鉤に鍋が掛かり、潮待ちの客の汁が煮えている。'] },
         { name: '行灯', x: 6, y: 1, object: 'andon', lines: ANDON_LINES },
         { name: '木箱', x: 1, y: 9, object: 'kibako', lines: ['繕いかけの網と、予備の櫂がしまってある。'] },
-        { name: '木箱', x: 12, y: 12, object: 'kibako', lines: ['船に積む水と米の樽を、縄でくくって置いてある。'] },
+        { name: '木箱', x: 12, y: 12, object: 'kibako', lines: ['船に積む米と干し魚を詰めた木箱だ。縄でくくってある。'] },
       ]),
     ],
   },
