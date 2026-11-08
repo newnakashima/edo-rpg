@@ -61,7 +61,7 @@ export const HAMAMATSU_BUILDINGS: BuildingDef[] = [
         lines: ['後家「うちの人は、天竜川の筏乗りでね。川で亡くしてから、月に一度はこうして手を合わせに来るんだに」'],
       },
       ...furniture('hamamatsuTera', [
-        { name: '石仏', x: 10, y: 1, object: 'butsuzo', lines: ['内陣に、石の仏が据えてある。丸い顔が、外陣の参拝の人を静かに見下ろしている。'] },
+        { name: '石仏', x: 10, y: 1, object: 'butsuzo', lines: ['内陣に、首から上のない石の仏が据えてある。欠けた丸い頭が、足もとに転がっている。長い年月で崩れたのだろう。'] },
         { name: '行灯', x: 8, y: 1, object: 'andon', lines: ANDON_LINES },
         { name: '行灯', x: 12, y: 1, object: 'andon', lines: ANDON_LINES },
         { name: '掛け軸', x: 1, y: 1, object: 'kakejiku', lines: ['和尚の書いた掛け軸だ。「無」の一字が、墨痕あざやかに書いてある。'] },
@@ -122,7 +122,7 @@ export const HAMAMATSU_BUILDINGS: BuildingDef[] = [
       },
       ...furniture('hamamatsuTakoshiIe', [
         { name: '張り上がった凧', x: 1, y: 1, object: 'oodako', lines: ['張り上がったばかりの凧だ。白い和紙の真ん中に、赤い丸が大きく描いてある。'] },
-        { name: '張り上がった凧', x: 5, y: 1, object: 'oodako', lines: ['もう一枚の凧だ。糸目を付ける前で、骨がまだ白い。'] },
+        { name: '張り上がった凧', x: 5, y: 1, object: 'oodako', lines: ['もう一枚の凧だ。赤い丸の筆が乾くのを待っている。'] },
         { name: '竹の木箱', x: 8, y: 1, object: 'kibako', lines: ['削りかけの竹ひごと、糊を入れた壺が詰めてある。'] },
         { name: '箪笥', x: 17, y: 1, object: 'tansu', lines: ['弥平の家の箪笥だ。いちばん上の引き出しから、凧糸の束がはみ出している。'] },
         { name: '絵付けの文机', x: 17, y: 7, object: 'fuzukue', lines: ['凧に描く絵の下書きが広げてある。町ごとの印が、いくつも描き分けてある。'] },
@@ -184,7 +184,7 @@ export const HAMAMATSU_BUILDINGS: BuildingDef[] = [
         y: 2,
         color: 0x4a4a5a,
         sprite: 'npc_yakunin',
-        lines: ['侍「大井川の川止めで、ここに三日も足止めよ。凧揚げの合戦を見物して、退屈をしのいでおる」'],
+        lines: ['侍「大井川が川止めで、手前の金谷の宿はどこも満杯と聞いてな。ここで水が引くのを待ちながら、凧揚げの合戦を見物しておる」'],
       },
       ...furniture('hamamatsuYado', [
         { name: '竈', x: 21, y: 1, object: 'kamado', lines: ['竈に大釜が掛かっている。茶葉を入れて炊いた茶飯の香りがする。'] },
@@ -285,7 +285,7 @@ export const HAMAMATSU_BUILDINGS: BuildingDef[] = [
         y: 2,
         color: 0x5a4a3a,
         sprite: 'npc_merchant',
-        lines: ['番頭「大井川が川止めになると、江戸からの文がここで山になっちまうんだに。水が引いたら、飛脚が総出で担いで走るんだら」'],
+        lines: ['番頭「大井川が川止めになると、江戸へ送る文がここで山になっちまうんだに。水が引いたら、飛脚が総出で担いで走るんだら」'],
       },
       {
         id: 'hamamatsuHikyakuHashiri',
@@ -294,7 +294,7 @@ export const HAMAMATSU_BUILDINGS: BuildingDef[] = [
         y: 6,
         color: 0x6a5a4a,
         sprite: 'npc_hikyaku',
-        lines: ['走り飛脚「遠州の空っ風は、向かい風になるときついぜ。西へ走るときゃ、背中を押してくれるんだがな」'],
+        lines: ['走り飛脚「遠州の空っ風は、西へ走るときゃ向かい風できついぜ。東へ走るときゃ、背中を押してくれるんだがな」'],
       },
       ...furniture('hamamatsuHikyakuya', [
         { name: '文机', x: 1, y: 1, object: 'fuzukue', lines: ['預かった文の宛先を書きつけた帳面が載っている。'] },
