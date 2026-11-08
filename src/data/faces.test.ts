@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { pngSize } from '../systems/testUtils';
 import { CHARACTERS } from './characters';
+import { PORTRAITS } from './portraits';
 import { EXPRESSION_FACES, EXPRESSIONS, FACE_IMAGES, FACE_SIZE, FACES, faceForPage, pageText, SPEAKER_FACES, speakerOf } from './faces';
 
 describe('顔グラフィック', () => {
@@ -121,5 +122,11 @@ describe('表情差分', () => {
         expect(used, `${id} ${mark}`).toBe(true);
       }
     }
+  });
+});
+
+describe('メニューの仲間の顔', () => {
+  it('メニューは立ち絵と同じ名前（portraitFor）で顔を引くので、どの立ち絵にも顔がある', () => {
+    for (const id of PORTRAITS) expect(FACES, id).toContain(id);
   });
 });

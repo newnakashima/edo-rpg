@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { SKILLS, skillsAtLevel } from '../data/skills';
-import { changeEquipment, expLine, fieldSkills, itemUsableOn, skillDescription, statsWithEquipment, statusSheet, useItemInField, useSkillInField } from './fieldMenu';
+import { changeEquipment, expToNext, fieldSkills, itemUsableOn, skillDescription, statsWithEquipment, statusSheet, useItemInField, useSkillInField } from './fieldMenu';
 import { newGame, type GameState } from './gameState';
 import { createMember, memberStats } from './party';
 import { expRemainingToNext, MAX_LEVEL } from './stats';
@@ -142,16 +142,14 @@ describe('装備', () => {
   });
 });
 
-describe('経験値の行', () => {
-  it('累計と次のレベルまでの残りを出す', () => {
-    expect(expLine({ ...createMember('hero', 1), exp: 7 })).toBe('経験 7  次 13');
-    expect(expLine(createMember('hero', 2))).toBe('経験 20  次 56');
-    expect(expLine(createMember('hero', 2), ' ')).toBe('経験 20 次 56');
+describe('次のレベルまでの経験値', () => {
+  it('次のレベルまでの残りを返す', () => {
+    expect(expToNext({ ...createMember('hero', 1), exp: 7 })).toBe(13);
+    expect(expToNext(createMember('hero', 2))).toBe(56);
   });
 
-  it('最大レベルでは残りを出さない', () => {
-    const m = createMember('hero', MAX_LEVEL);
-    expect(expLine(m)).toBe(`経験 ${m.exp}  次 ――`);
+  it('最大レベルでは null', () => {
+    expect(expToNext(createMember('hero', MAX_LEVEL))).toBeNull();
   });
 });
 
@@ -168,8 +166,8 @@ describe('ゲストの装備と経験値の表示', () => {
   });
 
   it('ゲストは次のレベルまでの経験値を出さない', () => {
-    expect(expLine(createMember('hyogo', 18))).toMatch(/次 ――$/);
-    expect(expLine(createMember('hero', 18))).not.toMatch(/――/);
+    expect(expToNext(createMember('hyogo', 18))).toBeNull();
+    expect(expToNext(createMember('hero', 18))).not.toBeNull();
   });
 });
 

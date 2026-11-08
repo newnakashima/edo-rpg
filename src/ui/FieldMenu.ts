@@ -1,11 +1,15 @@
-// フィールドのメニュー画面（取消ボタンで開く）。道具・技・装備・ステータスと、仲間の強さの表示。
+// フィールドのメニュー画面（取消ボタンで開く）。道具・技・装備・ステータスと、所持金・次にすべきこと・仲間の顔（体力・気力）の表示。
+// 仲間の能力値・装備はステータス画面（StatusScreen）で見る。
 import Phaser from 'phaser';
 import { characterName, isGuest } from '../data/characters';
+import { faceKey } from '../data/faces';
+import { nextObjective } from '../data/objectives';
+import { portraitFor } from '../data/portraits';
 import { EQUIP_SLOTS, EQUIPMENT, SLOT_NAMES, canEquip, type EquipSlot } from '../data/equipment';
 import { ITEMS, itemCount, itemName, ownedEquipment, ownedItems } from '../data/items';
 import { SKILLS } from '../data/skills';
-import { changeEquipment, expLine, skillDescription, fieldSkills, itemUsableOn, statsWithEquipment, useItemInField, useSkillInField, type FieldResult } from '../systems/fieldMenu';
-import { memberLevel, memberStats } from '../systems/party';
+import { changeEquipment, skillDescription, fieldSkills, itemUsableOn, statsWithEquipment, useItemInField, useSkillInField, type FieldResult } from '../systems/fieldMenu';
+import { memberStats } from '../systems/party';
 import type { Stats } from '../systems/stats';
 import { getState, setState } from '../state';
 import type { Controls } from './input';
@@ -18,8 +22,16 @@ const MAIN_X = 8;
 const MAIN_W = 80;
 const SUB_X = 96;
 const SUB_W = 180;
-const STATUS_X = 96;
-/** 下の説明の窓。 */
+/** 右上の所持金と次にすべきことの窓。 */
+const MONEY_X = 96;
+const MONEY_Y = 8;
+const MONEY_H = 46;
+/** 下の仲間の顔の窓（顔の上に体力・気力）。 */
+const PARTY_H = 82;
+const PARTY_Y = GAME_HEIGHT - PARTY_H - 6;
+/** 仲間 1 人の列の幅（5 人まで並ぶ）。 */
+const PARTY_COL_W = 72;
+/** 下の説明の窓（説明があるときだけ、仲間の顔の窓の下の方に重ねて出す）。 */
 const INFO_H = 30;
 const INFO_Y = GAME_HEIGHT - INFO_H - 6;
 
@@ -50,20 +62,21 @@ export class FieldMenu {
   ) {
     const bg = drawWindow(scene, 8, INFO_Y, GAME_WIDTH - 16, INFO_H);
     this.infoText = scene.add.text(16, INFO_Y + 4, '', { ...textStyle(10), wordWrap: { width: GAME_WIDTH - 32, useAdvancedWrap: true } });
-    this.info = scene.add.container(0, 0, [bg, this.infoText]).setScrollFactor(0).setDepth(120);
+    this.info = scene.add.container(0, 0, [bg, this.infoText]).setScrollFactor(0).setDepth(120).setVisible(false);
     this.refreshStatus();
     this.openMain();
   }
 
   private setInfo(text: string): void {
     this.infoText.setText(text);
+    this.info.setVisible(text !== '');
   }
 
   private push(items: MenuItem[], x: number, y: number, width: number, onSelect: (i: number) => void, onMove?: (i: number) => void, onCancel?: () => void): Menu {
     this.controls.flush();
-    // 長い一覧は、説明の窓に重ならない行数だけ見せてずらす
-    const maxRows = maxMenuRows(4, INFO_Y - 2);
-    const top = Math.min(y, INFO_Y - 2 - menuHeight(Math.min(items.length, maxRows)));
+    // 長い一覧は、下の仲間の顔の窓（体力・気力）に重ならない行数だけ見せてずらす
+    const maxRows = maxMenuRows(4, PARTY_Y - 2);
+    const top = Math.min(y, PARTY_Y - 2 - menuHeight(Math.min(items.length, maxRows)));
     // 下に重なるメニューは、クリックも含めて操作できないようにする
     this.menus[this.menus.length - 1]?.setActive(false);
     const menu = new Menu(this.scene, x, Math.max(4, top), width, items, onSelect, onCancel ?? (() => this.pop()), onMove, maxRows);
@@ -123,7 +136,7 @@ export class FieldMenu {
   private openStatusScreen(): void {
     this.controls.flush();
     this.menus[this.menus.length - 1]?.setActive(false);
-    // 下の窓との隙間から、裏の仲間の強さの窓が透けて見えないように隠す
+    // 下の窓との隙間から、裏の所持金・仲間の顔の窓が透けて見えないように隠す
     this.status?.setVisible(false);
     this.statusScreen = new StatusScreen(this.scene, INFO_Y - 12, 0, (text) => this.setInfo(text), () => {
       this.statusScreen?.destroy();
@@ -291,8 +304,8 @@ export class FieldMenu {
     );
   }
 
-  private statsLine(s: Stats, withHp = true, sep = '  '): string {
-    return [`攻 ${s.atk}`, `防 ${s.def}`, `術 ${s.mag}`, `速 ${s.spd}`, `運 ${s.luck}`, ...(withHp ? [`体 ${s.maxHp}`] : [])].join(sep);
+  private statsLine(s: Stats): string {
+    return [`攻 ${s.atk}`, `防 ${s.def}`, `術 ${s.mag}`, `速 ${s.spd}`, `運 ${s.luck}`, `体 ${s.maxHp}`].join('  ');
   }
 
   private compareLine(before: Stats, after: Stats): string {
@@ -328,36 +341,37 @@ export class FieldMenu {
     return `${success}${lines.join('')}`;
   }
 
-  /** 右側の仲間の強さの窓を作り直す。 */
+  /** 所持金と次にすべきことの窓、仲間の顔の窓を作り直す。 */
   private refreshStatus(): void {
     this.status?.destroy();
     const state = getState();
-    const x = STATUS_X;
-    const y = 8;
-    const w = GAME_WIDTH - x - 8;
-    const lineH = 12;
-    const h = Math.min(INFO_Y - 12, 22 + state.party.length * lineH * 3);
-    const objs: Phaser.GameObjects.GameObject[] = [drawWindow(this.scene, x, y, w, h)];
-    objs.push(addIcon(this.scene, x + 8, y + 12, MONEY_ICON));
-    objs.push(this.scene.add.text(x + 8 + MENU_ICON_SPACE, y + 6, `所持金 ${state.money} 文`, textStyle(10, COLORS.accent)));
+    const objs: Phaser.GameObjects.GameObject[] = [];
+    // 右上: 所持金と、本筋で次にすべきこと
+    const mw = GAME_WIDTH - MONEY_X - 8;
+    objs.push(drawWindow(this.scene, MONEY_X, MONEY_Y, mw, MONEY_H));
+    objs.push(addIcon(this.scene, MONEY_X + 8, MONEY_Y + 12, MONEY_ICON));
+    objs.push(this.scene.add.text(MONEY_X + 8 + MENU_ICON_SPACE, MONEY_Y + 6, `所持金 ${state.money} 文`, textStyle(10, COLORS.accent)));
+    objs.push(
+      this.scene.add.text(MONEY_X + 8, MONEY_Y + 20, `次：${nextObjective(state.flags)}`, {
+        ...textStyle(9),
+        wordWrap: { width: mw - 16, useAdvancedWrap: true },
+      }),
+    );
+    // 下: 仲間の顔。顔の上に体力・気力
+    const pw = GAME_WIDTH - 16;
+    objs.push(drawWindow(this.scene, 8, PARTY_Y, pw, PARTY_H));
+    const left = 8 + Math.floor((pw - PARTY_COL_W * state.party.length) / 2);
     state.party.forEach((m, i) => {
       const s = memberStats(m);
-      const top = y + 20 + i * lineH * 3;
-      const name = characterName(m.id, state.gender);
-      objs.push(this.scene.add.text(x + 8, top, `${name}  Lv${memberLevel(m)}  体力 ${m.hp}/${s.maxHp}  気力 ${m.mp}/${s.maxMp}`, textStyle(10)));
-      // 窓の高さに余裕がないので、経験値は能力値と同じ行の右端に寄せる。数値が大きく重なるときは間を詰める。
-      const statsText = this.scene.add.text(x + 8, top + lineH, this.statsLine(s, false), textStyle(9, COLORS.dim));
-      const expText = this.scene.add.text(x + w - 8, top + lineH, expLine(m), textStyle(9, COLORS.dim)).setOrigin(1, 0);
-      if (statsText.width + 6 > w - 16 - expText.width) {
-        statsText.setText(this.statsLine(s, false, ' '));
-        expText.setText(expLine(m, ' '));
-      }
-      objs.push(statsText, expText);
-      const equips = EQUIP_SLOTS.map((slot) => {
-        const id = m.equip[slot];
-        return id ? itemName(id) : '――';
-      }).join(' / ');
-      objs.push(this.scene.add.text(x + 8, top + lineH * 2, equips, textStyle(9, COLORS.dim)));
+      const cx = left + i * PARTY_COL_W + PARTY_COL_W / 2;
+      const down = m.hp <= 0;
+      const hpColor = down ? COLORS.danger : m.hp <= s.maxHp / 4 ? COLORS.accent : COLORS.text;
+      objs.push(this.scene.add.text(cx, PARTY_Y + 6, `体 ${m.hp}/${s.maxHp}`, textStyle(9, hpColor)).setOrigin(0.5, 0));
+      objs.push(this.scene.add.text(cx, PARTY_Y + 17, `気 ${m.mp}/${s.maxMp}`, textStyle(9)).setOrigin(0.5, 0));
+      const face = this.scene.add.image(cx, PARTY_Y + 29, faceKey(portraitFor(m.id, state.gender))).setOrigin(0.5, 0);
+      // 倒れた仲間は顔を暗くする
+      if (down) face.setTint(0x555555);
+      objs.push(face);
     });
     this.status = this.scene.add.container(0, 0, objs).setScrollFactor(0).setDepth(105);
   }
