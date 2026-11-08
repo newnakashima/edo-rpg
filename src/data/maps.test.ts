@@ -1543,6 +1543,8 @@ describe('終章の江戸城', () => {
 describe('寄り道の会津若松', () => {
   const world = MAPS.world!;
   const aizu = MAPS.aizu!;
+  // 町と、町の建物の中の人
+  const everyone = [aizu, ...Object.values(MAPS).filter((m) => buildingTown(m.id) === 'aizu')].flatMap((m) => m.npcs);
   const town = world.towns!.find((t) => t.name === '会津若松')!;
 
   it('仙台で重臣の話を聞く（sendaiHeard）まで入れず、聞いたら入れる。町から出ると印の隣の脇道に出る', () => {
@@ -1571,7 +1573,8 @@ describe('寄り道の会津若松', () => {
 
   it('町に入ると aizuEnter を行い、着いたあとは行わない。旅籠・茶屋・店・寺・飛脚・湯屋・賭場・居酒屋・妓楼・親分の屋敷がそろう', () => {
     expect(aizu.onEnter).toEqual({ event: 'aizuEnter', unless: 'aizuIntro' });
-    const actions = new Set(aizu.npcs.map((n) => n.action).filter(Boolean));
+    // 施設の人は建物の中にいる（src/data/buildingsAizu.ts）
+    const actions = new Set(everyone.map((n) => n.action).filter(Boolean));
     expect(actions).toEqual(new Set(['inn', 'teahouse', 'shop', 'temple', 'hikyaku', 'yuya', 'tobaku', 'izakaya', 'gyoro', 'oyabun']));
     expect(aizu.areaLevel).toBe(25);
   });
@@ -1588,7 +1591,7 @@ describe('寄り道の会津若松', () => {
 
   it('町の人の台詞は、平太が戻る（heitaFound）・什の一件が済む（aizuJuuDone）と変わる', () => {
     const want: Record<string, string> = { aizuTeahouse: 'heitaFound', oyakuenBannin: 'heitaFound', juuBoy2: 'aizuJuuDone', heitaHome: 'aizuJuuDone', aizuOkami: 'aizuJuuDone' };
-    for (const [id, flag] of Object.entries(want)) expect(aizu.npcs.find((n) => n.id === id)?.after?.flag, id).toBe(flag);
+    for (const [id, flag] of Object.entries(want)) expect(everyone.find((n) => n.id === id)?.after?.flag, id).toBe(flag);
   });
 });
 

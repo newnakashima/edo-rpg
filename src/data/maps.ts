@@ -21,6 +21,7 @@ import { SENDAI_BUILDINGS } from './buildingsSendai';
 import { HAMAMATSU_BUILDINGS } from './buildingsHamamatsu';
 import { HIKONE_BUILDINGS } from './buildingsHikone';
 import { KUMAMOTO_BUILDINGS } from './buildingsKumamoto';
+import { AIZU_BUILDINGS } from './buildingsAizu';
 
 /** タイルの種類。画像は public/assets/tiles/<種類>.png（PixelLab で生成。記録は public/assets/README.md）。 */
 export const TILE_KINDS = ['ground', 'grass', 'road', 'tree', 'water', 'wall', 'roof', 'door', 'floor', 'rock', 'plain', 'town', 'gate'] as const;
@@ -4137,91 +4138,12 @@ MAPS.aizu = {
       lines: ['山の神を祀る小さな祠。供えられた握り飯が、雪をかぶっている。'],
     },
     { id: 'aizuChest1', name: '葛籠', x: 43, y: 3, color: 0x8a6a3a, object: 'tsuzura', event: 'aizuChest1' },
-    // 大町通りの店並び
-    {
-      id: 'aizuInn',
-      name: '旅籠の主人',
-      x: 5,
-      y: 20,
-      color: 0x5a6b8c,
-      sprite: 'npc_innkeeper',
-      lines: ['旅籠の主人「雪の中をよう来なすった。囲炉裏で温まるくれえはいいが、渡世人さんは泊められねえ。親分さんの屋敷へ行きなされ」'],
-      action: 'inn',
-    },
-    {
-      id: 'aizuTeahouse',
-      name: '茶屋の娘',
-      x: 13,
-      y: 20,
-      color: 0xc76b8f,
-      sprite: 'npc_musume',
-      lines: [
-        '茶屋の娘「いらっしゃいませ。身不知柿はいかが？ 身のほども知らずに、枝が折れるほど実がなる柿なんです」',
-        '茶屋の娘「日新館の子たちは、毎日あの掟を唱えてるの。……そういえば、平太ちゃんを今日は見ないわね」',
-      ],
-      after: {
-        flag: 'heitaFound',
-        lines: ['茶屋の娘「いらっしゃいませ。平太ちゃん、飯盛山から無事に帰ってきたんですってね。……よかった」'],
-      },
-      action: 'teahouse',
-      shop: 'aizuChaya',
-    },
-    {
-      id: 'aizuHikyaku',
-      name: '飛脚',
-      x: 20,
-      y: 20,
-      color: 0x6a8a4a,
-      sprite: 'npc_hikyaku',
-      lines: ['飛脚「江戸へは、東の奥州街道に戻って南だ。……このごろ江戸へ出す便りは、封を開けて読まれていることが多くてな」'],
-      action: 'hikyaku',
-    },
-    {
-      id: 'aizuYorozu',
-      name: 'よろず屋',
-      x: 29,
-      y: 20,
-      color: 0x8a6a4a,
-      sprite: 'npc_merchant',
-      lines: ['よろず屋「いらっしゃい。会津の身不知柿は茶屋で売ってるよ。渋を抜いてあるから甘いんだ」'],
-      action: 'shop',
-      shop: 'aizuYorozu',
-    },
-    {
-      id: 'aizuKaji',
-      name: '刀鍛冶',
-      x: 36,
-      y: 20,
-      color: 0x4a4a5a,
-      sprite: 'npc_smith',
-      lines: ['刀鍛冶「会津の兼定は、代々の御抱え刀工よ。雪国の鉄は、粘りが違うぞ」'],
-      action: 'shop',
-      shop: 'aizuKaji',
-    },
-    {
-      id: 'aizuBanto',
-      name: '造り酒屋の番頭',
-      x: 45,
-      y: 20,
-      color: 0x8a6a4a,
-      sprite: 'npc_merchant',
-      lines: ['番頭「会津の酒は、寒の水で仕込むから、すっきりした味になるんですよ。……旅の方には、まだ売れませんがね。今は仕込みの最中でして」'],
-    },
-    // 七日町通りの南
-    {
-      id: 'aizuTemple',
-      name: '寺の僧',
-      x: 6,
-      y: 29,
-      color: 0xd0c8b0,
-      sprite: 'npc_so',
-      lines: ['僧「雪の中をよう参られた。仏の加護がありますように」'],
-      action: 'temple',
-    },
+    // 大町通りの店並びの旅籠・茶屋・飛脚・よろず屋・刀鍛冶の人と造り酒屋の番頭、七日町通りの南の寺の僧・藩士・塗師は、建物の中（src/data/buildingsAizu.ts）
+    // 七日町通りの南（長屋の戸 15, 28 の前に立っていたおかみは、民家に入れるよう 1 マス左へずらした）
     {
       id: 'aizuOkami',
       name: '長屋のおかみ',
-      x: 15,
+      x: 14,
       y: 29,
       color: 0xa07a6a,
       sprite: 'npc_okami',
@@ -4236,24 +4158,6 @@ MAPS.aizu = {
       color: 0x8a9a6a,
       sprite: 'npc_kodomo',
       lines: ['町の子「飯盛山の洞門は、猪苗代の湖の水を町まで引くために掘ったんだって。山の上には狼が出るから、近づいちゃだめなんだよ」'],
-    },
-    {
-      id: 'aizuHanshi',
-      name: '藩士',
-      x: 30,
-      y: 29,
-      color: 0x5a5a7a,
-      sprite: 'npc_yakunin',
-      lines: ['藩士「わが藩の家訓は、将軍家に忠勤を励むこと。……その将軍家の御下知が、このごろ妙なのだ。人の情というものが、まるで感じられぬ」'],
-    },
-    {
-      id: 'aizuNushi',
-      name: '塗師',
-      x: 40,
-      y: 29,
-      color: 0x8a7a6a,
-      sprite: 'npc_rojin',
-      lines: ['塗師「会津塗の椀は、漆を何度も塗り重ねて作る。人も同じでな、一度で出来上がりはせんのよ」'],
     },
     {
       id: 'oyakuenBannin',
@@ -4950,6 +4854,7 @@ addBuildings(MAPS, 'sendai', SENDAI_BUILDINGS);
 addBuildings(MAPS, 'hamamatsu', HAMAMATSU_BUILDINGS);
 addBuildings(MAPS, 'hikone', HIKONE_BUILDINGS);
 addBuildings(MAPS, 'kumamoto', KUMAMOTO_BUILDINGS);
+addBuildings(MAPS, 'aizu', AIZU_BUILDINGS);
 /** その戸口が屋内へ入る入口か（屋内のある施設の人は、屋内の建物のファイルで屋内に置くので、店先には立たせない）。 */
 const hasInterior = (town: string, door: { x: number; y: number }) => MAPS[town]!.exits.some((e) => e.x === door.x && e.y === door.y);
 // 湯屋・賭場・居酒屋・妓楼（刀鍛冶かよろず屋のあるすべての町。戸口と台詞は src/data/townFacilities.ts）
