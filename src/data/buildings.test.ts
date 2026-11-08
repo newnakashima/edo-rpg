@@ -27,7 +27,7 @@ const buildings = Object.values(MAPS).filter((m) => buildingTown(m.id));
 
 describe('施設・民家以外の建物の屋内（テストプレイの指摘: あらゆる建物に入れるようにすべき）', () => {
   // 屋内を足した町（町を足したらここにも足す）
-  const TOWNS = ['shimizu', 'sunpu', 'nagoya', 'kyo', 'iga', 'osaka', 'hiroshima', 'nagasaki', 'kanazawa', 'sendai', 'hamamatsu', 'hikone'];
+  const TOWNS = ['shimizu', 'sunpu', 'nagoya', 'kyo', 'iga', 'osaka', 'hiroshima', 'nagasaki', 'kanazawa', 'sendai', 'hamamatsu', 'hikone', 'kumamoto'];
   // 鍵をかけた戸（入れなくてよい。ユーザーの決定「鍵をかけたもの以外のすべての建物に入れる」）
   const LOCKED: Record<string, [number, number][]> = {
     hiroshima: [[15, 4]], // 城の門（門番が堀の橋をふさぐ）
@@ -35,6 +35,7 @@ describe('施設・民家以外の建物の屋内（テストプレイの指摘:
     sendai: [[6, 13]], // 青葉城の門（門番が固める）
     hamamatsu: [[11, 5]], // 浜松城の門（門番が堀の橋をふさぐ）
     hikone: [[14, 5]], // 彦根城の門（門番が堀の橋をふさぐ）
+    kumamoto: [[18, 5]], // 熊本城の門（門番が堀の橋をふさぐ）
   };
   // 戸のある建物がなく、通りに立つ店（町の通りに残る施設の人）
   const STREET_SHOPS = ['kakibune'];
@@ -141,7 +142,7 @@ describe('施設・民家以外の建物の屋内（テストプレイの指摘:
         }
       }
     }
-    // 清水湊・駿府・名古屋・京・伊賀上野・大坂・広島・長崎・金沢・仙台・浜松・彦根の賭場・居酒屋・妓楼・親分の屋敷（町を足すと増える）
+    // 清水湊・駿府・名古屋・京・伊賀上野・大坂・広島・長崎・金沢・仙台・浜松・彦根・熊本の賭場・居酒屋・妓楼・親分の屋敷（町を足すと増える）
     expect(checked).toBeGreaterThanOrEqual(TOWNS.length * 4);
   });
 
@@ -227,5 +228,20 @@ describe('施設・民家以外の建物の屋内（テストプレイの指摘:
     expect(deshi.x).not.toBe(40);
     // 居酒屋の漁師は、芹川一家の親分の頼み（網を切る荒くれ）を果たすと台詞が変わる
     expect(MAPS.hikoneIzakaya!.npcs.find((n) => n.id === 'hikoneIzakayaKyaku1')?.after?.flag).toBe(oyabunRequestId('hikone'));
+  });
+
+  it('熊本の旅籠の主人・店の人・畳屋・寺の僧は建物の中にいる。井戸の水が戻ると、屋内の人の台詞も変わる', () => {
+    expect(MAPS.kumamotoYado!.npcs.find((n) => n.id === 'kumamotoInn')?.action).toBe('inn');
+    expect(MAPS.kumamotoTera!.npcs.find((n) => n.id === 'kumamotoTemple')?.action).toBe('temple');
+    expect(MAPS.kumamotoRenkonya!.npcs.find((n) => n.id === 'kumamotoRenkon')?.shop).toBe('kumamotoRenkon');
+    expect(MAPS.kumamotoTatamiyaIe!.npcs.some((n) => n.id === 'kumamotoTatamiya')).toBe(true);
+    const moved = ['kumamotoInn', 'kumamotoTeahouse', 'kumamotoHikyaku', 'kumamotoYorozu', 'kumamotoKaji', 'kumamotoRenkon', 'kumamotoTatamiya', 'kumamotoTemple'];
+    expect(MAPS.kumamoto!.npcs.some((n) => moved.includes(n.id))).toBe(false);
+    for (const [map, id] of [['kumamotoYado', 'kumamotoYadoJochu'], ['kumamotoYuya', 'kumamotoYuyaSansuke'], ['kumamotoTera', 'kumamotoTeraKozo'], ['kumamotoOyabunYashiki', 'kumamotoOyabunAnesan']] as const) {
+      expect(MAPS[map]!.npcs.find((n) => n.id === id)?.after?.flag, id).toBe('kumamotoIdoFound');
+    }
+    // 居酒屋の人足と一家の子分は、白川一家の親分の頼み（普請場の浪人）を果たすと台詞が変わる
+    expect(MAPS.kumamotoIzakaya!.npcs.find((n) => n.id === 'kumamotoIzakayaKyaku1')?.after?.flag).toBe(oyabunRequestId('kumamoto'));
+    expect(MAPS.kumamotoOyabunYashiki!.npcs.find((n) => n.id === 'kumamotoOyabunKobun')?.after?.flag).toBe(oyabunRequestId('kumamoto'));
   });
 });

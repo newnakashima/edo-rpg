@@ -20,6 +20,7 @@ import { KANAZAWA_BUILDINGS } from './buildingsKanazawa';
 import { SENDAI_BUILDINGS } from './buildingsSendai';
 import { HAMAMATSU_BUILDINGS } from './buildingsHamamatsu';
 import { HIKONE_BUILDINGS } from './buildingsHikone';
+import { KUMAMOTO_BUILDINGS } from './buildingsKumamoto';
 
 /** タイルの種類。画像は public/assets/tiles/<種類>.png（PixelLab で生成。記録は public/assets/README.md）。 */
 export const TILE_KINDS = ['ground', 'grass', 'road', 'tree', 'water', 'wall', 'roof', 'door', 'floor', 'rock', 'plain', 'town', 'gate'] as const;
@@ -3897,78 +3898,12 @@ MAPS.kumamoto = {
       lines: ['薬売り「わしは越中の薬売り。熊本の水は、阿蘇の山から地の下を流れてくる。この町の井戸の水は、うまいので有名なんじゃが……」'],
       after: { flag: 'kumamotoIdoFound', lines: ['薬売り「わしは越中の薬売り。熊本の井戸の水は、やっぱりうまいのう。阿蘇の山から、地の下を流れてくるそうじゃ」'] },
     },
-    // 街道の南の店並び
-    {
-      id: 'kumamotoInn',
-      name: '旅籠の主人',
-      x: 9,
-      y: 18,
-      color: 0x5a6b8c,
-      sprite: 'npc_innkeeper',
-      lines: ['旅籠の主人「渡世人さんはお泊めできんとです。……どのみち、湯を沸かす水にも事欠く始末で。親分さんの屋敷を訪ねなっせ」'],
-      after: { flag: 'kumamotoIdoFound', lines: ['旅籠の主人「井戸の水が戻って、湯もたっぷり沸かせますよ。渡世人さんは泊められんけん、親分さんの屋敷でゆっくりしなっせ」'] },
-      action: 'inn',
-    },
-    {
-      id: 'kumamotoTeahouse',
-      name: '茶屋の娘',
-      x: 16,
-      y: 18,
-      color: 0xc76b8f,
-      sprite: 'npc_musume',
-      lines: ['茶屋の娘「いらっしゃいませ。お茶をいれる水も、遠くの川まで汲みに行ってるんですよ」'],
-      after: { flag: 'kumamotoIdoFound', lines: ['茶屋の娘「いらっしゃいませ。井戸の水が戻って、お茶がおいしくいれられるようになりました！」'] },
-      action: 'teahouse',
-      shop: 'kumamotoChaya',
-    },
-    {
-      id: 'kumamotoHikyaku',
-      name: '飛脚',
-      x: 22,
-      y: 18,
-      color: 0x6a8a4a,
-      sprite: 'npc_hikyaku',
-      lines: ['飛脚「長崎へも島原へも、川尻の湊から渡し船が出てるぜ」'],
-      action: 'hikyaku',
-    },
-    {
-      id: 'kumamotoYorozu',
-      name: 'よろず屋',
-      x: 32,
-      y: 18,
-      color: 0x8a6a4a,
-      sprite: 'npc_merchant',
-      lines: ['よろず屋「いらっしゃい。旅の支度なら、なんでもそろうよ」'],
-      action: 'shop',
-      shop: 'kumamotoYorozu',
-    },
-    {
-      id: 'kumamotoKaji',
-      name: '刀鍛冶',
-      x: 39,
-      y: 18,
-      color: 0x4a4a5a,
-      sprite: 'npc_smith',
-      lines: ['刀鍛冶「肥後の職人は、鍔の細工にうるさくてな。鉄に金や銀を打ち込む象嵌は、肥後が本場よ」'],
-      action: 'shop',
-      shop: 'kumamotoKaji',
-    },
-    {
-      id: 'kumamotoRenkon',
-      name: '辛子蓮根の店',
-      x: 46,
-      y: 18,
-      color: 0x8a6a4a,
-      sprite: 'npc_merchant',
-      lines: ['店の主人「辛子蓮根はいかが。蓮根の穴に辛子味噌を詰めて揚げたもんです。体の弱い殿様に、精をつけていただこうと作られたんですよ」'],
-      action: 'shop',
-      shop: 'kumamotoRenkon',
-    },
-    // 長屋
+    // 街道の南の店並びの旅籠・茶屋・飛脚・よろず屋・刀鍛冶・辛子蓮根の店の人、長屋の畳屋、寺の僧は、建物の中（src/data/buildingsKumamoto.ts）
+    // 長屋（湯屋・賭場と同じ棟の西の戸の前に立っていたおかみと町の子は、民家に入れるよう 1 マス左へずらした）
     {
       id: 'kumamotoOkami',
       name: '長屋のおかみ',
-      x: 8,
+      x: 7,
       y: 23,
       color: 0xa07a6a,
       sprite: 'npc_okami',
@@ -3978,24 +3913,12 @@ MAPS.kumamoto = {
     {
       id: 'kumamotoKodomo',
       name: '町の子',
-      x: 15,
+      x: 14,
       y: 23,
       color: 0x8a9a6a,
       sprite: 'npc_kodomo',
       lines: ['町の子「大銀杏のとこの古井戸、夜になると、ごうん、ごうんって鳴るんだよ！ 清正公の幽霊かなあ」'],
       after: { flag: 'kumamotoIdoFound', lines: ['町の子「古井戸の音、からくりだったの？ 幽霊じゃなかったんだ……ちょっと残念」'] },
-    },
-    {
-      id: 'kumamotoTatamiya',
-      name: '畳屋',
-      x: 22,
-      y: 23,
-      color: 0x7a6a5a,
-      sprite: 'npc_smith',
-      lines: [
-        '畳屋「お城の畳の芯は、藁じゃなくて芋茎なんだとさ。籠城して食べ物が尽きたら、畳をはがして食うんだそうだ」',
-        '畳屋「壁には干瓢を塗り込めてあるって話もある。清正公は、籠城の備えにかけちゃ抜かりのねえお方よ」',
-      ],
     },
     // 町の井戸端
     { id: 'mosaku', name: '井戸掘りの茂作', x: 40, y: 22, color: 0x6a5a4a, sprite: 'npc_ninsoku', event: 'kumamotoMosaku' },
@@ -4030,17 +3953,7 @@ MAPS.kumamoto = {
       sprite: 'npc_ninsoku',
       lines: ['人足「この川尻の湊から、肥後の米を大坂へ積み出すのよ。蔵の米俵を、船まで担いでいくのがおいらの仕事さ」'],
     },
-    // 寺
-    {
-      id: 'kumamotoTemple',
-      name: '寺の僧',
-      x: 19,
-      y: 31,
-      color: 0xd0c8b0,
-      sprite: 'npc_so',
-      lines: ['僧「遠路ようこそ。この寺には、清正公を慕う人々が今もお参りに来られます」'],
-      action: 'temple',
-    },
+    // 寺の墓所
     { id: 'kumamotoHaka', name: '墓', x: 17, y: 34, color: 0x8a8a8a, object: 'haka', lines: ['苔むした墓石だ。供えられた花が、水を切らして萎れている。'] },
     // 水前寺の池
     {
@@ -5036,6 +4949,7 @@ addBuildings(MAPS, 'kanazawa', KANAZAWA_BUILDINGS);
 addBuildings(MAPS, 'sendai', SENDAI_BUILDINGS);
 addBuildings(MAPS, 'hamamatsu', HAMAMATSU_BUILDINGS);
 addBuildings(MAPS, 'hikone', HIKONE_BUILDINGS);
+addBuildings(MAPS, 'kumamoto', KUMAMOTO_BUILDINGS);
 /** その戸口が屋内へ入る入口か（屋内のある施設の人は、屋内の建物のファイルで屋内に置くので、店先には立たせない）。 */
 const hasInterior = (town: string, door: { x: number; y: number }) => MAPS[town]!.exits.some((e) => e.x === door.x && e.y === door.y);
 // 湯屋・賭場・居酒屋・妓楼（刀鍛冶かよろず屋のあるすべての町。戸口と台詞は src/data/townFacilities.ts）

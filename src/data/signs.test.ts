@@ -50,6 +50,24 @@ describe('施設の看板', () => {
     }
   });
 
+  it('入口の看板は、戸の左隣の壁の向こうがまた戸なら右隣に掛ける（二つの戸の間に掛けて、隣の戸と見まちがえないように）', () => {
+    const kumamoto = MAPS.kumamoto!;
+    // 湯屋 (10, 22)・賭場 (17, 22)・妓楼 (11, 30) は、左の壁の向こうが民家の戸なので右へ。居酒屋 (7, 30) は左のまま
+    expect(doorSignPosition(kumamoto, { x: 10, y: 22 })).toEqual({ x: 11, y: 22 });
+    expect(doorSignPosition(kumamoto, { x: 17, y: 22 })).toEqual({ x: 18, y: 22 });
+    expect(doorSignPosition(kumamoto, { x: 11, y: 30 })).toEqual({ x: 12, y: 30 });
+    expect(doorSignPosition(kumamoto, { x: 7, y: 30 })).toEqual({ x: 6, y: 30 });
+    // 屋内に施設のある戸口の看板は、どれも、別の戸との間に挟まれない（両隣とも戸に挟まれる壁しかないときを除く）
+    for (const town of Object.values(MAPS)) {
+      for (const e of town.exits.filter((e) => e.sign)) {
+        const pos = doorSignPosition(town, e)!;
+        const beyond = town.rows[pos.y]?.[pos.x + (pos.x - e.x)];
+        const other = town.rows[e.y]?.[e.x - (pos.x - e.x)] === 'W' && town.rows[e.y]?.[e.x - 2 * (pos.x - e.x)] !== 'D';
+        expect(beyond !== 'D' || !other, `${town.id} ${e.x},${e.y}`).toBe(true);
+      }
+    }
+  });
+
   it('看板は壁のマスに掛け、その施設の人の近く（上 1〜3 マス、左右 3 マス以内）にある', () => {
     for (const { map, npc } of facilities) {
       const pos = signPosition(map, npc);
