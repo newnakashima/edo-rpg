@@ -1268,7 +1268,7 @@ const KOME_KURA: EncounterTable = {
     { members: ['yojinbo', 'yojinbo', 'teppoAshigaru'], weight: 2 },
     { members: ['karakuriTawara', 'karakuriTawara', 'bakeNezumi'], weight: 2 },
     { members: ['yojinbo', 'karakuriTawara', 'teppoAshigaru'], weight: 2 },
-    { members: ['nekomata', 'bakeNezumi', 'bakeNezumi'], weight: 2 },
+    { members: ['nekomata', 'yojinbo', 'bakeNezumi'], weight: 2 },
     { members: ['bakeNezumi', 'bakeNezumi', 'nekomata', 'karakuriTawara'], weight: 1 },
     { members: ['teppoAshigaru', 'yojinbo', 'teppoAshigaru', 'karakuriTawara'], weight: 1 },
     { members: ['bakeNezumi', 'yojinbo', 'bakeNezumi', 'teppoAshigaru'], weight: 1 },

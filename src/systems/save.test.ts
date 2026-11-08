@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { STARTING_EQUIPMENT } from '../data/equipment';
 import { newGame, STARTING_ITEMS } from './gameState';
-import { createMember } from './party';
+import { createMember, memberLevel } from './party';
 import { MAPS, TILES } from '../data/maps';
 import { MAX_WARD_STEPS } from '../data/skills';
 import { ITEMS } from '../data/items';
@@ -192,13 +192,22 @@ describe('版 5（一時離脱の仲間）', () => {
     expect(withAway([kasumi], [...ok.state.party, kasumi])).toBeNull();
     expect(withAway([kasumi, kasumi])).toBeNull();
     expect(withAway([createMember('hero', 1)])).toBeNull();
-    expect(withAway([createMember('hyogo', 18)])).toBeNull();
+    expect(withAway([createMember('hyogo', 25)])).toBeNull();
     expect(withAway([{ ...kasumi, hp: 9999, mp: 9999 }])?.state.away[0]).toEqual(kasumi);
   });
 
   it('ゲスト（兵庫）がパーティーにいるセーブを読み戻せる', () => {
-    const s = { ...state(), party: [...state().party, createMember('hyogo', 18)] };
+    const s = { ...state(), party: [...state().party, createMember('hyogo', 25)] };
     expect(deserialize(serialize(s))?.state).toEqual(s);
+  });
+
+  it('兵庫が Lv18 だったころのセーブは、読み込むと Lv25（今の guestLevel）になる。HP・MP はそのまま', () => {
+    const old = createMember('hyogo', 18);
+    const s = { ...state(), party: [...state().party, old] };
+    const hyogo = deserialize(serialize(s))!.state.party[1]!;
+    expect(memberLevel(hyogo)).toBe(25);
+    expect(hyogo.hp).toBe(old.hp);
+    expect(hyogo.mp).toBe(old.mp);
   });
 });
 
