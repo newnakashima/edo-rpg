@@ -7,6 +7,7 @@ PixelLab MCP で生成した画像の記録です。作り直すときは、こ�
 共通の設定: `create_character`（mode `standard`、4 方向、size 24、proportions `chibi`、view `low top-down`、黒の 1px 輪郭）。
 歩行は `animate_character`（mode `v3`、4 コマ、`keep_first_frame: false`、下・左・右・上）。
 ダウンロードした ZIP を展開し、`python3 scripts/pack_character.py <展開したフォルダ> public/assets/chars/<ID>.png` で 1 枚のシートにまとめる（行: 下・左・右・上、列: 立ち＋歩行 4 コマ）。
+hero_f は、そのあと `python3 scripts/fix_hero_f_walk_down.py public/assets/chars/hero_f.png` で下向きの歩行の足を描き直す（下の「主人公」を参照）。
 
 | ID | PixelLab のキャラクター ID | 生成プロンプト | 歩行の action_description |
 | --- | --- | --- | --- |
@@ -35,7 +36,7 @@ standard の size 24 では笠と合羽が描き分けられないため、主�
 - hero_f の下向きの歩行（2026-11-08）: テストプレイで「下向きに歩くとき足が動いておらず、歩いているように見えない」と指摘された。合羽が揺れるだけで、4 コマとも足が同じ形だった。
   - 1 回目: `animate_character`（v3、south、4 コマ、action_description: walking toward the viewer, legs clearly alternating: left foot steps forward and lifts while right foot stays back, then right foot steps forward and lifts, feet visible below the cape, …。グループ 71f631d2…）。両足がそろって上下するだけで、交互に動かなかった。
   - 2 回目: template `walking-4-frames`（south。グループ 3dffafa7…）。足は交互に動いたが、合羽が細くなり刀の位置も変わって、ほかの向きと別人に見えた。
-  - 3 回目: 採用済みのコマの足だけを `scripts/fix_hero_f_walk_down.py` で描き直して採用（列 1 で左足を上げ右足を 1px 前へ、列 3 でその逆）。`pack_character.py` でシートを作り直したときは、このスクリプトをもう一度実行する。
+  - 3 回目: 採用済みのコマの足だけを `scripts/fix_hero_f_walk_down.py` で描き直して採用（列 1 で左足を上げ右足を 1px 前へ、列 3 でその逆。列 1・3 はコマ全体を 1px 上げ、前に出した足を足元の行にそろえる）。`pack_character.py` でシートを作り直したときは、このスクリプトをもう一度実行する。
 
 ### 敵方の人物（`chars/yashamaru.png`・`chars/oboro.png`・`chars/borei.png`）
 

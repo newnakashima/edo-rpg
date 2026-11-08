@@ -9,6 +9,8 @@ PixelLab の歩行（v3）は、下向きだと合羽が揺れるだけで 4 コ
 
 - 列 1: 左足（画面の左）を 1px 上げて裾に隠し、右足を 1px 前（下）に出す。列 3: その逆。列 2・4: 両足をそろえたまま
 - 前に出した足と裾の間は、元の脚絆の行で埋める
+- 列 1・3 はコマ全体を 1px 上げる（一歩ごとに体が浮く。前に出した足のつま先を、ほかのコマと同じ足元の行 BOT にそろえる。
+  scripts/pack_character.py の FOOT_Y と src/data/sprites.ts の CHAR_DISPLAY_ORIGIN の前提）
 """
 import sys
 
@@ -39,9 +41,22 @@ def move(frame: Image.Image, side: str, dy: int) -> None:
             frame.putpixel((x, ny), c)
 
 
+def lift(frame: Image.Image) -> Image.Image:
+    """コマ全体を 1px 上げる（いちばん上の行は透明なので、何も切れない）。"""
+    if frame.getbbox()[1] == 0:
+        raise SystemExit("エラー: コマのいちばん上まで絵があり、1px 上げられません")
+    out = Image.new("RGBA", frame.size, (0, 0, 0, 0))
+    out.paste(frame.crop((0, 1, FRAME, FRAME)), (0, 0))
+    return out
+
+
 def main(path: str) -> None:
     sheet = Image.open(path).convert("RGBA")
+    if sheet.size != (FRAME * 5, FRAME * 4):
+        raise SystemExit(f"エラー: シートの大きさが {sheet.size} です（1 コマ {FRAME} × {FRAME}、5 列 4 行を想定）")
     row = [sheet.crop((c * FRAME, 0, c * FRAME + FRAME, FRAME)) for c in range(5)]
+    if all(px[3] == 0 for px in shoes(row[2])):
+        raise SystemExit("エラー: 下向きの歩行の足の位置に絵がありません（シートの形が変わっています）")
     # 描き直さない列 2 と比べる（立ち姿の列 0 とは輪郭の黒がわずかに違う）
     if any(shoes(row[c]) != shoes(row[2]) for c in (1, 3, 4)):
         raise SystemExit("エラー: 下向きの歩行の 4 コマで足が同じではありません（すでに描き直したか、シートの形が変わっています）")
@@ -49,7 +64,7 @@ def main(path: str) -> None:
         frame = row[col]
         for side, dy in moves.items():
             move(frame, side, dy)
-        sheet.paste(frame, (col * FRAME, 0))
+        sheet.paste(lift(frame), (col * FRAME, 0))
     sheet.save(path)
 
 
