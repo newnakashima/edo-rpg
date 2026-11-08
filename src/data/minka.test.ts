@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canStep, MAPS, tileAt, type MapDef } from './maps';
+import { canStep, MAPS, respawnPoint, tileAt, type MapDef } from './maps';
 import { isMinka, MINKA_DOORS, MINKA_KINDS, minkaMapId } from './minka';
 import { TOWN_FACILITY_DOORS } from './townFacilities';
 import { OYABUN } from './oyabun';
@@ -41,7 +41,6 @@ describe('民家の屋内（テストプレイの指摘: あらゆる建物に�
       expect(town.rows[d.y]?.[d.x], label).toBe('D');
       expect(tileAt(town, d.x, d.y + 1)?.blocked, label).toBe(false);
       expect(town.npcs.some((n) => n.x === d.x && n.y === d.y + 1), label).toBe(false);
-      expect(town.npcs.some((n) => n.action && n.x === d.x && n.y === d.y + 1), label).toBe(false);
       const facilities = Object.values(TOWN_FACILITY_DOORS[d.town] ?? {});
       expect(facilities.some((f) => f.x === d.x && f.y === d.y), label).toBe(false);
       expect(OYABUN[d.town] && OYABUN[d.town]!.door.x === d.x && OYABUN[d.town]!.door.y === d.y, label).toBeFalsy();
@@ -64,11 +63,24 @@ describe('民家の屋内（テストプレイの指摘: あらゆる建物に�
     }
   });
 
-  it('民家以外の戸口（出口のない戸）には、今までどおり入れない', () => {
-    const shimizu = MAPS.shimizu!;
-    const temple = { x: 9, y: 4 };
-    expect(shimizu.rows[temple.y]?.[temple.x]).toBe('D');
-    expect(canStep(shimizu, temple.x, temple.y)).toBe(false);
+  it('寺社・城の戸口は民家にしない（出口のない戸には、今までどおり入れない）', () => {
+    // 寺社・城の建物の中は、民家の使い回しでなく建物ごとに固有のマップを作る（別の作業）
+    const notMinka: Record<string, [number, number][]> = {
+      shimizu: [[9, 4]], // 寺
+      sunpu: [[7, 6]], // 浅間神社
+      kyo: [[21, 28]], // 五重塔の寺の本堂
+      hiroshima: [[15, 4]], // 城
+      kanazawa: [[8, 35], [20, 35], [41, 35], [28, 13]], // 犀川の南の寺町、城
+      kumamoto: [[18, 5]], // 城
+    };
+    for (const [townId, list] of Object.entries(notMinka)) {
+      const town = MAPS[townId]!;
+      for (const [x, y] of list) {
+        expect(town.rows[y]?.[x], `${townId} ${x},${y}`).toBe('D');
+        expect(MINKA_DOORS[townId]?.some((d) => d.x === x && d.y === y), `${townId} ${x},${y}`).toBeFalsy();
+        expect(canStep(town, x, y), `${townId} ${x},${y}`).toBe(false);
+      }
+    }
   });
 
   it('入ったところから、住人と家具のすべてに話しかけられる', () => {
@@ -86,7 +98,7 @@ describe('民家の屋内（テストプレイの指摘: あらゆる建物に�
   });
 
   it('住人は戸口ごとに顔ぶれが変わり、町の人と同じく台詞を話す。家具は通れない床の上に置かない', () => {
-    const residents = houses.map((h) => h.npcs.find((n) => n.sprite)!);
+    const residents = houses.flatMap((h) => h.npcs.filter((n) => n.sprite));
     expect(new Set(residents.map((r) => r.name)).size).toBeGreaterThanOrEqual(5);
     for (const house of houses) {
       for (const npc of house.npcs) {
@@ -96,20 +108,34 @@ describe('民家の屋内（テストプレイの指摘: あらゆる建物に�
     }
   });
 
+  it('敵地の伊賀者の里の家には住人がいない（旅人をもてなす町の住人は場面に合わない）。ほかの家には住人が 1 人いる', () => {
+    for (const d of doors) {
+      const house = MAPS[minkaMapId(d.town, d)]!;
+      expect(house.npcs.filter((n) => n.sprite), house.id).toHaveLength(d.town === 'igaSato' ? 0 : 1);
+    }
+  });
+
+  it('民家の名前は町の名前つき（セーブの一覧や入ったときの表示で、どの町の家か分かる）', () => {
+    expect(MAPS[minkaMapId('shimizu', { x: 3, y: 20 })]!.name).toBe('駿河・清水湊の長屋');
+  });
+
   it('農家の囲炉裏と、民家の竈は火の元（煙草の葉を吸える）', () => {
-    const noka = houses.find((h) => h.name === '農家')!;
+    const noka = houses.find((h) => h.name.endsWith('の農家'))!;
     const irori = noka.npcs.find((n) => n.object === 'irori')!;
     expect(fireAmong(noka.npcs, irori.x - 1, irori.y, {})).toBe(true);
-    const nagaya = houses.find((h) => h.name === '長屋')!;
+    const nagaya = houses.find((h) => h.name.endsWith('の長屋'))!;
     const kamado = nagaya.npcs.find((n) => n.object === 'kamado')!;
     expect(fireAmong(nagaya.npcs, kamado.x - 1, kamado.y, {})).toBe(true);
   });
 
-  it('民家で全滅したら、その町の戻り先へ戻る（ダンジョンでもないので、抜け道などは使えない）', () => {
+  it('民家で全滅したら、その町と同じ戻り先へ戻る（ダンジョンでもないので、抜け道などは使えない）', () => {
     for (const d of doors) {
       const house = MAPS[minkaMapId(d.town, d)]!;
+      const town = MAPS[d.town]!;
       expect(house.encounter, house.id).toBeUndefined();
-      expect(house.respawnMap ?? MAPS[d.town]!.respawnMap, house.id).toBeDefined();
+      expect(respawnPoint(house.id), house.id).toEqual(town.respawn ? { mapId: town.id, ...town.respawn } : respawnPoint(town.id));
     }
+    // 伊賀者の里（ダンジョンの中の里）の家は、里と同じく伊賀上野へ戻る
+    expect(respawnPoint(minkaMapId('igaSato', { x: 7, y: 14 })).mapId).toBe('iga');
   });
 });

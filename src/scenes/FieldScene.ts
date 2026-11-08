@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { ENCOUNTERS } from '../data/enemies';
 import { canStep, closedGateAt, encounterAt, MAPS, npcLines, npcObjectFrame, npcVisible, respawnPoint, START_POSITION, tileAt, townAction, type EventTrigger, type MapDef, type NpcDef } from '../data/maps';
 import { mapTileImages } from '../data/mapParts';
+import { cameraScroll } from '../ui/cameraScroll';
 import { pickGroup, stepOnRoad } from '../systems/encounter';
 import {
   CHOHAN_BETS,
@@ -269,10 +270,8 @@ export class FieldScene extends Phaser.Scene {
   private followPlayer(): void {
     const mapW = (this.map.rows[0]?.length ?? 0) * TILE;
     const mapH = this.map.rows.length * TILE;
-    // 画面より小さいマップ（民家の中など）は、画面の真ん中に置く
-    const clamp = (v: number, max: number) => (max < 0 ? max / 2 : Math.max(0, Math.min(v, max)));
-    const x = clamp(this.player.x + TILE / 2 - GAME_WIDTH / 2, mapW - GAME_WIDTH);
-    const y = clamp(this.player.y + TILE / 2 - GAME_HEIGHT / 2, mapH - GAME_HEIGHT);
+    const x = cameraScroll(this.player.x + TILE / 2, mapW, GAME_WIDTH);
+    const y = cameraScroll(this.player.y + TILE / 2, mapH, GAME_HEIGHT);
     this.cameras.main.setScroll(Math.round(x), Math.round(y));
   }
 

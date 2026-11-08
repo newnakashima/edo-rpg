@@ -126,24 +126,33 @@ const RESIDENTS: { name: string; sprite: CharacterSpriteId; color: number; lines
   { name: '浪人', sprite: 'npc_ronin', color: 0x3a3030, lines: ['浪人「傘張りの内職で、どうにか食いつないでおる。武士は食わねど高楊枝、よ」'] },
 ];
 
-/** 町ごとの民家の戸口と間取り（maps.ts の rows の D のマス。前の 1 マスが通れて、人が立っていない戸口だけ）。 */
-type MinkaDoor = { x: number; y: number; kind: MinkaKind };
+/**
+ * 町ごとの民家の戸口と間取り（maps.ts の rows の D のマス。前の 1 マスが通れて、人が立っていない戸口だけ）。
+ * vacant の家には住人を置かない（敵地の伊賀者の里。旅人をもてなす町の住人は場面に合わないため、里の者は出払っている）。
+ * 屋内マップの ID は戸口の座標から作るので、セーブはこの座標に結びつく。戸口を動かす・消すときは、
+ * src/systems/save.ts の移行（MAPS_REBUILT_IN_V6 と同じやり方）で、その民家にいるセーブを町の戻り先へ移す。
+ */
+type MinkaDoor = { x: number; y: number; kind: MinkaKind; vacant?: true };
 const m = (x: number, y: number): MinkaDoor => ({ x, y, kind: 'machiya' });
 const n = (x: number, y: number): MinkaDoor => ({ x, y, kind: 'nagaya' });
 const k = (x: number, y: number): MinkaDoor => ({ x, y, kind: 'noka' });
+const vacant = (door: MinkaDoor): MinkaDoor => ({ ...door, vacant: true });
 
 export const MINKA_DOORS: Record<string, MinkaDoor[]> = {
   // 南の長屋の二棟（湯屋・賭場・居酒屋・妓楼と同じ棟に並ぶ家も長屋）
   shimizu: [n(3, 20), n(9, 20), n(16, 20), n(19, 20), n(22, 20), n(6, 23), n(19, 23)],
   // 南の町家。北東の二つの戸口が並ぶ家（14, 27・15, 27）は、一軒として西の戸口だけを入口にする
   nagoya: [m(14, 27), m(19, 27), m(23, 27), m(37, 27), m(41, 27), m(15, 33), m(21, 33), m(31, 33), m(39, 33)],
-  kyo: [m(46, 16), m(50, 16), m(2, 22), m(29, 22), m(5, 28), m(21, 28), m(32, 28), m(3, 34), m(12, 34), m(22, 34), m(30, 34)],
-  igaSato: [k(7, 14), k(14, 14), k(28, 14)],
+  // 西の五重塔の寺の本堂（21, 28）は民家でないので入れない
+  kyo: [m(46, 16), m(50, 16), m(2, 22), m(29, 22), m(5, 28), m(32, 28), m(3, 34), m(12, 34), m(22, 34), m(30, 34)],
+  igaSato: [vacant(k(7, 14)), vacant(k(14, 14)), vacant(k(28, 14))],
   kagiya: [k(6, 5), k(22, 5), k(32, 5), k(6, 16), k(24, 16)],
   // 船場の町家と、南西の長屋の二棟
   osaka: [m(29, 11), n(3, 23), n(6, 23), n(9, 23), n(15, 23), m(46, 23), n(3, 26), n(6, 26), n(9, 26), n(12, 26), n(15, 26)],
-  hiroshima: [m(2, 3), m(2, 10), m(6, 10), m(6, 17), m(38, 17)],
-  kanazawa: [m(6, 21), m(52, 21), m(8, 35), m(41, 35)],
+  // 西の川沿いの長屋（長屋のおかみが立つ並び）と、東の町家
+  hiroshima: [n(2, 3), n(2, 10), n(6, 10), n(6, 17), m(38, 17)],
+  // 犀川の南の寺町（y = 35 の並び）は寺なので入れない
+  kanazawa: [m(6, 21), m(52, 21)],
   kumamoto: [m(9, 30)],
 };
 
@@ -159,13 +168,13 @@ export function minkaMap(town: MapDef, door: MinkaDoor, residentIndex: number): 
   const resident = RESIDENTS[residentIndex % RESIDENTS.length]!;
   return {
     id,
-    name: plan.name,
+    name: `${town.name}の${plan.name}`,
     tileset: 'interior',
     areaLevel: town.areaLevel,
     rows: [...plan.rows],
     npcs: [
       ...plan.furniture.map((f, i) => ({ ...f, id: `${id}_furniture${i}` })),
-      { id: `${id}_resident`, ...plan.resident, ...resident, lines: [...resident.lines] },
+      ...(door.vacant ? [] : [{ id: `${id}_resident`, ...plan.resident, ...resident, lines: [...resident.lines] }]),
     ],
     exits: [{ x: plan.exit.x, y: plan.exit.y, to: town.id, toX: door.x, toY: door.y + 1 }],
     // 全滅したら町（の旅籠の前）へ戻る。ダンジョンの中の里（伊賀者の里）は、その里の戻り先に合わせる
