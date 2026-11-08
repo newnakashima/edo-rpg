@@ -3,8 +3,10 @@
 // - ほかの屋敷のある 14 町: 屋敷の若い衆のメニューに「親分の頼みを聞く」が出る。若い衆が親分の頼み（一家の縄張りを荒らす連中を追い払う）を伝え、
 //   引き受けると、ちょうど屋敷へ押しかけてきた相手と戦う。勝つと仁義ポイントを得る。町ごとに 1 回。
 //   親分は屋敷の奥にいて画面に出ないので、話すのは若い衆と、押しかけてきた相手だけにする。
-import type { EventDef, EventStep } from './eventTypes';
-import type { MenuRequest } from './jingiRequests';
+//   押しかけてきた相手はマップに出していない（町の頼まれごとと同じ。イベントで人を出して動かす仕組みがまだない）。
+//   本来は相手を戸口の前に出して歩かせてから喋らせるべきで、フェーズ 5「キャラクターを出して動かす」でまとめて直す。
+import type { EventDef } from './eventTypes';
+import { jingiBattleSteps, type MenuRequest } from './jingiRequests';
 import { MAPS } from './maps';
 import { OYABUN } from './oyabun';
 import { oyabunStayCost } from '../systems/jingi';
@@ -174,19 +176,15 @@ export const OYABUN_REQUESTS: Record<string, OyabunRequestDef> = {
 /** 親分の頼みのイベント。勝てば仁義ポイントを得てフラグを立てる。負けても全滅にはせず、また引き受けられる。 */
 export function oyabunRequestEvent(town: string, def: OyabunRequestDef, areaLevel: number): EventDef {
   const id = oyabunRequestId(town);
-  const accept: EventStep[] = [
-    { type: 'say', lines: ['若い衆「ありがてえ！ ……と、噂をすりゃあ、来やがった！」', ...def.confront] },
-    {
-      type: 'battle',
-      enemies: def.enemies,
-      level: oyabunRequestLevel(areaLevel),
-      ifLose: [{ type: 'say', lines: ['相手は、言いたいことだけ言って引き上げていった……', '若い衆「面目ねえ……。また奴らが来たら、頼みやすぜ」'] }, { type: 'end' }],
-    },
-    { type: 'say', lines: def.thanks },
-    { type: 'addJingi', amount: oyabunRequestReward(areaLevel) },
-    { type: 'say', lines: ['渡世人としての名が上がった。（仁義 {jingi}）'] },
-    { type: 'setFlag', flag: id },
-  ];
+  const accept = jingiBattleSteps({
+    confront: ['若い衆「ありがてえ！ ……と、噂をすりゃあ、来やがった！」', ...def.confront],
+    enemies: def.enemies,
+    level: oyabunRequestLevel(areaLevel),
+    lose: ['相手は、言いたいことだけ言って引き上げていった……', '若い衆「面目ねえ……。また奴らが来たら、頼みやすぜ」'],
+    thanks: def.thanks,
+    reward: oyabunRequestReward(areaLevel),
+    flag: id,
+  });
   return {
     id,
     steps: [

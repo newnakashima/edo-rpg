@@ -133,6 +133,23 @@ describe('仁義ポイントを得る頼まれごと', () => {
     expect(noBets.pick(1)).toEqual({ kind: 'cancel' });
   });
 
+  it('頼みが複数あれば、null を飛ばして渡した順に並べ、番号を数え違えない（親分の屋敷の、親分の頼みと博徒の紹介）', () => {
+    const main = [
+      { label: '泊めてもらう', value: 'stay' },
+      { label: '記録する', value: 'save' },
+    ];
+    const a = { id: 'a', label: '親分の頼みを聞く' };
+    const b = { id: 'b', label: '博徒を引き合わせる' };
+    const both = facilityMenu(main, [a, b]);
+    expect(both.labels).toEqual(['泊めてもらう', '記録する', '親分の頼みを聞く', '博徒を引き合わせる', 'やめる']);
+    expect([2, 3, 4].map(both.pick)).toEqual([{ kind: 'request', id: 'a' }, { kind: 'request', id: 'b' }, { kind: 'cancel' }]);
+    const onlyB = facilityMenu(main, [null, b]);
+    expect(onlyB.labels).toEqual(['泊めてもらう', '記録する', '博徒を引き合わせる', 'やめる']);
+    expect([2, 3].map(onlyB.pick)).toEqual([{ kind: 'request', id: 'b' }, { kind: 'cancel' }]);
+    const onlyA = facilityMenu(main, [a, null]);
+    expect([2, 3].map(onlyA.pick)).toEqual([{ kind: 'request', id: 'a' }, { kind: 'cancel' }]);
+  });
+
   it('湯屋や、施設のない町には頼まれごとがない', () => {
     expect(pendingJingiRequest('kyo', 'yuya', {})).toBeNull();
     expect(pendingJingiRequest('kyo', undefined, {})).toBeNull();
