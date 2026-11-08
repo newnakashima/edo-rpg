@@ -250,7 +250,7 @@ export const SKILLS: Record<string, SkillDef> = {
   tobisaru: { id: 'tobisaru', name: '飛び去る', mp: 0, target: 'self', effect: { kind: 'flee' }, description: '' },
   nigeru: { id: 'nigeru', name: '逃げ出す', mp: 0, target: 'self', effect: { kind: 'flee' }, description: '' },
   nezumiYobi: { id: 'nezumiYobi', name: '仲間を呼ぶ', mp: 0, target: 'self', effect: { kind: 'summon', enemy: 'bakeNezumi', max: 2, level: 16 }, description: '' },
-  ookamiYobi: { id: 'ookamiYobi', name: '呼び声', mp: 0, target: 'self', effect: { kind: 'summon', enemy: 'okuriOkami', max: 2, level: 25 }, description: '' },
+  ookamiYobi: { id: 'ookamiYobi', name: '呼び声', mp: 0, target: 'self', effect: { kind: 'summon', enemy: 'okuriOkami', max: 1, level: 25 }, description: '' },
   nemuriNoKyo: { id: 'nemuriNoKyo', name: '眠りの経', mp: 0, target: 'allEnemies', effect: { kind: 'status', status: 'sleep', turns: 2, chance: 0.35 }, description: '' },
   dokyo: { id: 'dokyo', name: '読経', mp: 0, target: 'allAllies', effect: { kind: 'status', status: 'defUp', turns: 3 }, description: '' },
   shibariNoJu: { id: 'shibariNoJu', name: '縛りの呪', mp: 0, target: 'enemy', effect: { kind: 'status', status: 'paralysis', turns: 2, chance: 0.4 }, description: '' },

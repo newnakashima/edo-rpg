@@ -130,6 +130,9 @@ export function aliveOf(state: BattleState, side: Side): Combatant[] {
   return state.combatants.filter((c) => c.side === side && isAlive(c));
 }
 
+/** 戦闘の画面に並べる敵の数の上限。これだけ残っていれば、仲間を呼ばない（画像が重ならないように）。 */
+export const MAX_ENEMIES = 4;
+
 /** 同じ種族が複数いるとき「鬼火 甲」「鬼火 乙」のように呼び分ける。 */
 const SUFFIXES = ['甲', '乙', '丙', '丁'];
 
@@ -223,7 +226,7 @@ function pick<T>(items: T[], rng: Rng): T | undefined {
   return items[Math.floor(rng() * items.length)];
 }
 
-/** 勝ち負け。敵の自爆で敵味方が同時に倒れたときは負けにする。 */
+/** 勝ち負け。敵味方が同時に倒れたとき（敵の自爆、ターンの終わりの毒）は負けにする。 */
 function judge(state: BattleState): Outcome {
   if (aliveOf(state, 'party').length === 0) return 'defeat';
   if (aliveOf(state, 'enemy').length === 0) return 'victory';
@@ -235,8 +238,9 @@ function innateMiss(c: Combatant): number {
   return c.enemyId ? (ENEMIES[c.enemyId]?.missRate ?? 0) : 0;
 }
 
-/** 生まれつきかわす確率（敵の evasion）。 */
+/** 生まれつきかわす確率（敵の evasion）。眠り・麻痺・影縫いで動けないあいだはかわせない。 */
 function innateEvasion(c: Combatant): number {
+  if (c.status.sleep || c.status.paralysis || c.status.bind) return 0;
   return c.enemyId ? (ENEMIES[c.enemyId]?.evasion ?? 0) : 0;
 }
 
@@ -550,9 +554,10 @@ class TurnContext {
     this.events.push({ type: 'fled', actor: actor.key });
   }
 
-  /** 呼べる数に達しているか（呼んだ同じ種族の敵が max 体生きている）。 */
+  /** 呼べる数に達しているか（呼んだ同じ種族の敵が max 体生きている、または敵が MAX_ENEMIES 体残っている）。 */
   summonFull(actor: Combatant, effect: { enemy: string; max: number }): boolean {
-    return this.alive(actor.side).filter((c) => c.summoned && c.enemyId === effect.enemy).length >= effect.max;
+    const alive = this.alive(actor.side);
+    return alive.length >= MAX_ENEMIES || alive.filter((c) => c.summoned && c.enemyId === effect.enemy).length >= effect.max;
   }
 
   /** 敵を 1 体呼ぶ。名前は同じ種族の数で「甲」「乙」……と呼び分ける。 */

@@ -946,7 +946,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
       { skill: 'attack', weight: 1 },
       { skill: 'okuriKiba', weight: 1 },
       { skill: 'toboe', weight: 1 },
-      { skill: 'ookamiYobi', weight: 4 },
+      { skill: 'ookamiYobi', weight: 3 },
     ],
   },
   /** 第 8 章のボス。鷲尾が江戸の町に火を放つために作った、炎の車輪のからくり。火炎車（全体・火）と亡者の手（麻痺）。 */

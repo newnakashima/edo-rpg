@@ -135,6 +135,100 @@ describe('HP が減ったときの行動（whenHpBelow）', () => {
     expect(exploded).toBeGreaterThan(45);
     expect(exploded).toBeLessThan(75);
   });
+
+  it('HP がちょうど半分のときは自爆しない（半分を「切った」ときだけ）', () => {
+    const b = createBattle([createMember('hero', 40)], 'm', ['karakuriTawara'], 16);
+    const e = get(b, 'e0');
+    e.stats = { ...e.stats, maxHp: 100 };
+    e.hp = 50;
+    const rng = seededRng(6);
+    for (let i = 0; i < 100; i++) expect(resolveTurn(b, guardAll(b), rng).events.some((x) => x.type === 'exploded')).toBe(false);
+    e.hp = 49;
+    let exploded = 0;
+    for (let i = 0; i < 100; i++) if (resolveTurn(b, guardAll(b), rng).events.some((x) => x.type === 'exploded')) exploded++;
+    expect(exploded).toBeGreaterThan(0);
+  });
+});
+
+describe('仲間を呼ぶ敵', () => {
+  it('化け鼠は行動の半分以上で仲間を呼ぶ', () => {
+    const b = createBattle([createMember('hero', 40)], 'm', ['bakeNezumi'], 16);
+    const rng = seededRng(11);
+    let summoned = 0;
+    const n = 500;
+    for (let i = 0; i < n; i++) if (resolveTurn(b, guardAll(b), rng).events.some((e) => e.type === 'summon')) summoned++;
+    // 重みは 4/7
+    expect(summoned / n).toBeGreaterThan(0.5);
+    expect(summoned / n).toBeLessThan(0.65);
+  });
+
+  it('敵が 4 体残っていれば、呼ぶ代わりに通常攻撃をする', () => {
+    const id = testEnemy('testCaller', { actions: [{ skill: 'nezumiYobi', weight: 1 }] });
+    const b = createBattle([createMember('hero', 40)], 'm', [id, 'ogaeru', 'ogaeru', 'ogaeru'], 16);
+    for (const key of ['e1', 'e2', 'e3']) get(b, key).status.sleep = 99;
+    const r = resolveTurn(b, guardAll(b), seededRng(12));
+    expect(r.events.some((e) => e.type === 'summon')).toBe(false);
+    expect(r.events.some((e) => (e.type === 'attack' || e.type === 'miss') && 'target' in e && e.target === 'p0')).toBe(true);
+  });
+
+  it('逃げた敵がいても、呼ばれた敵の key は重ならない', () => {
+    const id = testEnemy('testCaller', { actions: [{ skill: 'nezumiYobi', weight: 1 }] });
+    const b = createBattle([createMember('hero', 40)], 'm', [id, 'ogaeru'], 16);
+    get(b, 'e1').fled = true;
+    const r = resolveTurn(b, guardAll(b), seededRng(12));
+    expect(r.events).toContainEqual({ type: 'summon', actor: 'e0', target: 'e2' });
+    expect(new Set(r.state.combatants.map((c) => c.key)).size).toBe(r.state.combatants.length);
+  });
+});
+
+describe('支え役の技', () => {
+  /** 敵がその技を使ったターンのイベント（味方は防御だけ）。 */
+  function used(skill: string, allies: string[] = []) {
+    const id = testEnemy('testSupport', { actions: [{ skill, weight: 1 }] });
+    const b = createBattle([createMember('hero', 25), createMember('gendo', 25)], 'm', [id, ...allies], 22);
+    for (const c of b.combatants) if (c.side === 'enemy' && c.key !== 'e0') c.status.sleep = 99;
+    return resolveTurn(b, guardAll(b), seededRng(13)).events;
+  }
+
+  it('眠りの経・縛りの呪は味方に状態異常をかけようとする', () => {
+    const sleep = used('nemuriNoKyo').filter((e) => e.type === 'status' || e.type === 'statusFailed');
+    expect(sleep.map((e) => ('target' in e ? e.target : '')).sort()).toEqual(['p0', 'p1']);
+    for (const e of sleep) expect(e).toMatchObject({ status: 'sleep' });
+    const bind = used('shibariNoJu').filter((e) => e.type === 'status' || e.type === 'statusFailed');
+    expect(bind).toHaveLength(1);
+    expect(bind[0]).toMatchObject({ status: 'paralysis' });
+  });
+
+  it('読経・雪化粧は敵の仲間全員に必ず防御↑・回避↑ をかける', () => {
+    for (const [skill, status] of [['dokyo', 'defUp'], ['yukiGomori', 'evade']] as const) {
+      const events = used(skill, ['ogaeru']).filter((e) => e.type === 'status');
+      expect(events.map((e) => ('target' in e ? e.target : '')).sort(), skill).toEqual(['e0', 'e1']);
+      for (const e of events) expect(e).toMatchObject({ status });
+    }
+  });
+});
+
+describe('同時に倒れたとき', () => {
+  it('ターンの終わりの毒で敵味方が同時に倒れたら負けになる', () => {
+    const b = createBattle([createMember('hero', 10)], 'm', ['ogaeru'], 10);
+    for (const c of b.combatants) {
+      c.hp = 1;
+      c.status.poison = 99;
+    }
+    get(b, 'e0').status.sleep = 99;
+    const r = resolveTurn(b, { p0: { kind: 'guard' } }, seededRng(14));
+    expect(get(r.state, 'p0').hp).toBe(0);
+    expect(get(r.state, 'e0').hp).toBe(0);
+    expect(r.state.outcome).toBe('defeat');
+  });
+
+  it('1 ターンに 2 回動く敵が 1 回目で逃げたら、2 回目は動かない', () => {
+    const id = testEnemy('testFlee', { actionsPerTurn: 2, actions: [{ skill: 'nigeru', weight: 1 }] });
+    const b = createBattle([createMember('hero', 10)], 'm', [id, 'ogaeru'], 10);
+    get(b, 'e1').status.sleep = 99;
+    const r = resolveTurn(b, guardAll(b), seededRng(15));
+    expect(r.events.filter((e) => 'actor' in e && e.actor === 'e0')).toEqual([{ type: 'fled', actor: 'e0' }]);
+  });
 });
 
 describe('命中の低い敵・回避の高い敵', () => {
@@ -156,10 +250,21 @@ describe('命中の低い敵・回避の高い敵', () => {
     expect(miss / n).toBeLessThan(0.4);
   });
 
+  it('missRate は物理の技にも効く', () => {
+    const id = testEnemy('testWild', { missRate: 0.35, actions: [{ skill: 'kanabo', weight: 1 }] });
+    const b = createBattle([createMember('hero', 30)], 'm', [id], 10);
+    const rng = seededRng(9);
+    let miss = 0;
+    const n = 1000;
+    for (let i = 0; i < n; i++) if (resolveTurn(b, guardAll(b), rng).events.some((e) => e.type === 'miss')) miss++;
+    expect(miss / n).toBeGreaterThan(0.3);
+    expect(miss / n).toBeLessThan(0.4);
+  });
+
   it('evasion の敵は、味方の通常攻撃をその割合ほどかわすが、術はかわせない', () => {
-    const id = testEnemy('testDodge', { evasion: 0.5 });
+    // 敵は何もしない（あくびだけ）
+    const id = testEnemy('testDodge', { evasion: 0.5, actions: [{ skill: 'akubi', weight: 1 }] });
     const b = createBattle([createMember('orin', 30)], 'm', [id], 10);
-    get(b, 'e0').status.sleep = 99;
     const rng = seededRng(8);
     let miss = 0;
     const n = 1000;
@@ -169,6 +274,19 @@ describe('命中の低い敵・回避の高い敵', () => {
     for (let i = 0; i < 50; i++) {
       const r = resolveTurn(b, { p0: { kind: 'skill', skill: 'neraiuchi', target: 'e0' } }, rng);
       expect(r.events.some((e) => e.type === 'miss')).toBe(false);
+    }
+  });
+
+  it('眠り・麻痺・影縫いで動けない敵はかわせない', () => {
+    const id = testEnemy('testDodge', { evasion: 0.5, actions: [{ skill: 'akubi', weight: 1 }] });
+    const rng = seededRng(10);
+    for (const status of ['sleep', 'paralysis', 'bind'] as const) {
+      const b = createBattle([createMember('hero', 30)], 'm', [id], 10);
+      get(b, 'e0').status[status] = 9;
+      for (let i = 0; i < 100; i++) {
+        const r = resolveTurn(b, { p0: { kind: 'attack', target: 'e0' } }, rng);
+        expect(r.events.some((e) => e.type === 'miss'), status).toBe(false);
+      }
     }
   });
 });
