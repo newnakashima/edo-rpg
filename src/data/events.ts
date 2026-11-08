@@ -1,6 +1,7 @@
 // イベントのデータ。シナリオ（フェーズ 4）はここに足していく。形は eventTypes.ts を参照。
 import type { EventDef, EventStep } from './eventTypes';
 import { BAKUTO_INTRO_EVENTS, JINGI_REQUEST_EVENTS } from './jingiRequests';
+import { OYABUN_GIFT_EVENTS } from './oyabunGifts';
 import { OYABUN_REQUEST_EVENTS, TATSUGORO_JINGI } from './oyabunRequests';
 
 /** 辰五郎の頼み（野狐を倒す前）。 */
@@ -2942,4 +2943,5 @@ export const EVENTS: Record<string, EventDef> = {
   ...JINGI_REQUEST_EVENTS,
   ...BAKUTO_INTRO_EVENTS,
   ...OYABUN_REQUEST_EVENTS,
+  ...OYABUN_GIFT_EVENTS,
 };

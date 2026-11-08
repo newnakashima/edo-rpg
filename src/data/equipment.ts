@@ -127,6 +127,23 @@ export const EQUIPMENT: Record<string, EquipDef> = {
   idatenMamori: { id: 'idatenMamori', name: '韋駄天の守り', slot: 'accessory', price: 2600, bonus: { spd: 30 }, wearers: ALL, description: '足の速い韋駄天の御守り。素早さが大きく上がる', unsellable: true },
   // 阿蘇の葛籠（霞が戻った第 6 章から現れる）。霞だけが使いこなせる
   kagebunshin: { id: 'kagebunshin', name: '影分身の秘伝書', slot: 'accessory', price: 3000, bonus: { spd: 3 }, wearers: ['kasumi'], description: '読み解いた忍びは影を分けて斬りかかる。たたかうで 2 回攻撃する（霞のみ）', traits: ['doubleAttack'], unsellable: true },
+  // 名が通ったとき（仁義ポイント 90 以上）に、各地の親分の屋敷で 1 つずつもらう品（src/data/oyabunGifts.ts、docs/balance.md の「仁義ポイント」）。
+  // 店には置かず、売れない。もらえるのは早くても中盤なので、どの町の品も中盤から終盤の敵のレアドロップと同じくらいの強さにする
+  daimonFuda: { id: 'daimonFuda', name: '代紋の木札', slot: 'accessory', price: 2000, bonus: { maxHp: 30, def: 5, luck: 5 }, wearers: ALL, description: '辰五郎一家の代紋を刻んだ木札。どこの一家の者も一目置く', unsellable: true },
+  sakinBukuro: { id: 'sakinBukuro', name: '安倍川の砂金袋', slot: 'accessory', price: 2000, bonus: { luck: 18, spd: 4 }, wearers: ALL, description: '安倍川でさらった砂金を詰めた、ずしりと重い袋', unsellable: true },
+  atsutaKozuka: { id: 'atsutaKozuka', name: '熱田の小柄', slot: 'accessory', price: 2000, bonus: { atk: 9, spd: 3 }, wearers: ALL, description: '熱田の刀工が打った、鞘に差して持ち歩く小刀', unsellable: true },
+  ikadaTekko: { id: 'ikadaTekko', name: '筏師の手甲', slot: 'accessory', price: 2000, bonus: { def: 6, spd: 8 }, wearers: ALL, description: '天竜川の筏師が、流れの中で手を守る革の手甲', unsellable: true },
+  yuzenMamori: { id: 'yuzenMamori', name: '友禅の守り袋', slot: 'accessory', price: 2600, bonus: { mag: 10, luck: 8 }, wearers: ALL, description: '京の染め師が友禅の端切れで仕立てた守り袋', unsellable: true },
+  benzaitenMamori: { id: 'benzaitenMamori', name: '弁財天の御守', slot: 'accessory', price: 2600, bonus: { maxMp: 25, mag: 6, luck: 5 }, wearers: ALL, description: '湖に浮かぶ島の弁財天の御守り。術の冴えを授けるという', unsellable: true },
+  tsugeMino: { id: 'tsugeMino', name: '柘植の隠れ蓑', slot: 'accessory', price: 2600, bonus: { spd: 14, luck: 4 }, wearers: ALL, description: '山の一家に伝わる、着ると身が軽くなる蓑', unsellable: true },
+  naniwaSoroban: { id: 'naniwaSoroban', name: '浪花の算盤', slot: 'accessory', price: 2600, bonus: { luck: 25 }, wearers: ALL, description: '大坂の両替商が使い込んだ算盤。弾けば福が寄るという', unsellable: true },
+  miyajimaShakushi: { id: 'miyajimaShakushi', name: '宮島の杓子', slot: 'accessory', price: 3000, bonus: { maxHp: 40, maxMp: 15 }, wearers: ALL, description: '宮島の杓子。飯をすくうように福をすくうという', unsellable: true },
+  kaichuTokei: { id: 'kaichuTokei', name: '南蛮の懐中時計', slot: 'accessory', price: 3000, bonus: { spd: 12, def: 4 }, wearers: ALL, description: '出島から流れてきた、刻を刻む南蛮の時計', unsellable: true },
+  higonokami: { id: 'higonokami', name: '肥後守', slot: 'accessory', price: 3000, bonus: { atk: 12, spd: 3 }, wearers: ALL, description: '肥後の鍛冶が打った、よく切れる折りたたみの小刀', unsellable: true },
+  yuzenObi: { id: 'yuzenObi', name: '加賀友禅の帯', slot: 'accessory', price: 3400, bonus: { mag: 14, def: 4 }, wearers: ALL, description: '加賀の染め師が草花を描いた友禅の帯', unsellable: true },
+  kawaraIshi: { id: 'kawaraIshi', name: '広瀬川の守り石', slot: 'accessory', price: 3400, bonus: { maxHp: 30, def: 10 }, wearers: ALL, description: '広瀬川の河原で拾われた、どっしり重い守り石', unsellable: true },
+  akabeko: { id: 'akabeko', name: '赤べこ', slot: 'accessory', price: 3400, bonus: { maxHp: 50, def: 5 }, wearers: ALL, description: '首を振る会津の張り子の赤い牛。病を払うという', unsellable: true },
+  kazariMatoi: { id: 'kazariMatoi', name: '飾り纏', slot: 'accessory', price: 3600, bonus: { atk: 10, def: 6, spd: 6, luck: 6 }, wearers: ALL, description: '火消しの纏をかたどった、浅草一家の名入りの飾り', unsellable: true },
   inro: { id: 'inro', name: '印籠', slot: 'accessory', price: 150, bonus: { maxHp: 10 }, wearers: ALL, description: '薬を入れる小箱' },
   // 敵のレアドロップ（その敵だけが落とす。店には置かない。src/data/drops.ts、docs/balance.md の「敵のドロップ」）。
   // 何度でも手に入るので売れる。強さは、その地域の店の品より一段上か、能力値の偏った品にする

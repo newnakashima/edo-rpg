@@ -35,6 +35,7 @@ import { mapSigns, signKey } from '../data/signs';
 import { moguriYadoById } from '../data/moguriYado';
 import { facilityMenu, pendingBakutoIntro, pendingJingiRequest, type MenuRequest } from '../data/jingiRequests';
 import { OYABUN, oyabunWelcome } from '../data/oyabun';
+import { pendingOyabunGift } from '../data/oyabunGifts';
 import { pendingOyabunRequest } from '../data/oyabunRequests';
 import { oyabunStayCost, stayAtOyabun } from '../systems/jingi';
 import { CHAR_DISPLAY_ORIGIN, heroSprite, idleFrame, objectDepth, objectDisplayOrigin, objectKey, oppositeFacing, personDepth, shouldStandStill, spriteKey, walkAnimKey, walkDepthRow, type CharacterSpriteId } from '../data/sprites';
@@ -512,7 +513,8 @@ export class FieldScene extends Phaser.Scene {
   /**
    * 親分の屋敷。仁義ポイントを使って泊めてもらう（体力と気力を全回復）か、記録する。
    * まだ果たしていない親分の頼み（src/data/oyabunRequests.ts の pendingOyabunRequest）と、
-   * 町の博徒を屋敷へ向かわせていれば引き合わせる項目（src/data/jingiRequests.ts の pendingBakutoIntro）も出す。
+   * 町の博徒を屋敷へ向かわせていれば引き合わせる項目（src/data/jingiRequests.ts の pendingBakutoIntro）、
+   * 名が通っていれば親分の贈り物（src/data/oyabunGifts.ts の pendingOyabunGift）も出す。
    */
   private openOyabun(): void {
     const def = OYABUN[this.map.id];
@@ -523,7 +525,7 @@ export class FieldScene extends Phaser.Scene {
         { label: `泊めてもらう（仁義 ${cost}）`, value: 'stay' as const },
         { label: '記録する', value: 'save' as const },
       ],
-      [pendingOyabunRequest(this.map.id, getState().flags), pendingBakutoIntro(this.map.id, getState().flags)],
+      [pendingOyabunRequest(this.map.id, getState().flags), pendingBakutoIntro(this.map.id, getState().flags), pendingOyabunGift(this.map.id, getState())],
     );
     const menu: Menu = new Menu(
       this,

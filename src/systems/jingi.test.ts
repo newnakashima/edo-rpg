@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { newGame } from './gameState';
-import { addJingi, JINGI_MAX, JINGI_START, oyabunStayCost, stayAtOyabun } from './jingi';
+import { addJingi, isRenowned, JINGI_MAX, JINGI_RENOWN, JINGI_START, jingiLabel, oyabunStayCost, stayAtOyabun } from './jingi';
 import { createMember, memberStats } from './party';
 import { MAPS } from '../data/maps';
 import { OYABUN } from '../data/oyabun';
@@ -8,6 +8,13 @@ import { OYABUN } from '../data/oyabun';
 const start = { mapId: 'shimizu', x: 1, y: 1 };
 
 describe('仁義ポイント', () => {
+  it('90 以上で名が通り、メニューの表示にもそう添える', () => {
+    expect(JINGI_RENOWN).toBe(90);
+    expect([0, 89, 90, 100].map(isRenowned)).toEqual([false, false, true, true]);
+    expect(jingiLabel(89)).toBe('仁義 89');
+    expect(jingiLabel(90)).toBe('仁義 90（名が通る）');
+  });
+
   it('旅立ちのときは JINGI_START を持つ', () => {
     expect(newGame('m', start).jingi).toBe(JINGI_START);
     expect(JINGI_START).toBeGreaterThan(0);
