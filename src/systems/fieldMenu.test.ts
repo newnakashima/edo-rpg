@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { SKILLS, skillsAtLevel } from '../data/skills';
-import { changeEquipment, escapeInField, expToNext, fieldSkills, itemUsableOn, skillDescription, statsWithEquipment, statusSheet, swapMembers, useItemInField, useSkillInField } from './fieldMenu';
+import { ITEMS } from '../data/items';
+import { SKILLS, skillsAtLevel, WARD_STEPS } from '../data/skills';
+import { changeEquipment, escapeInField, expToNext, fieldSkills, itemUsableOn, skillDescription, statsWithEquipment, statusSheet, swapMembers, useItemInField, useSkillInField, wardInField } from './fieldMenu';
 import { newGame, type GameState } from './gameState';
 import { createMember, memberStats } from './party';
 import { expRemainingToNext, MAX_LEVEL } from './stats';
@@ -70,8 +71,8 @@ describe('道具をメニューで使う（続き）', () => {
 });
 
 describe('技をメニューで使う', () => {
-  it('回復の技と抜け道だけが使える', () => {
-    expect(fieldSkills(createMember('gendo', 19))).toEqual(['yakushi', 'hannya']);
+  it('回復の技と抜け道・結界の真言だけが使える', () => {
+    expect(fieldSkills(createMember('gendo', 19))).toEqual(['yakushi', 'kekkai', 'hannya']);
     expect(fieldSkills(createMember('kasumi', 30))).toEqual(['nukemichi']);
   });
 
@@ -306,5 +307,55 @@ describe('道しるべの札・抜け道（ダンジョンから入口の外へ�
     expect(itemUsableOn('michishirube', createMember('hero', 1))).toBe(false);
     expect(skillDescription(SKILLS.nukemichi!)).toContain('戦闘の外だけで使う');
     expect(skillDescription(SKILLS.nukemichi!, true)).not.toContain('戦闘の外でも使える');
+  });
+});
+
+describe('しばらく敵に出会わなくする（魔除けの香・結界の真言）', () => {
+  it('魔除けの香を 1 つ焚き、150 歩のあいだ効く', () => {
+    const s = game({ items: { mayokeKo: 2 } });
+    const r = wardInField(s, { item: 'mayokeKo' });
+    expect(r).toMatchObject({ ok: true, steps: 150 });
+    expect(r.ok && r.state.items).toEqual({ mayokeKo: 1 });
+    expect(r.ok && r.state.wardSteps).toBe(150);
+  });
+
+  it('玄道の結界の真言は気力を 5 使い、町の中でも使える', () => {
+    const s = game({ mapId: 'kyo', party: [createMember('hero', 1), createMember('gendo', 1)] });
+    const before = s.party[1]!.mp;
+    const r = wardInField(s, { caster: 1, skill: 'kekkai' });
+    expect(r.ok && r.state.party[1]?.mp).toBe(before - 5);
+    expect(r.ok && r.state.wardSteps).toBe(150);
+  });
+
+  it('効いているうちに使い直すと、残りを足さずに 150 歩へ戻す', () => {
+    const r = wardInField(game({ items: { mayokeKo: 1 }, wardSteps: 100 }), { item: 'mayokeKo' });
+    expect(r.ok && r.state.wardSteps).toBe(150);
+  });
+
+  it('香がない・気力が足りない・倒れている・覚えていないときは使えない', () => {
+    const s = game({ party: [createMember('hero', 1), { ...createMember('gendo', 1), mp: 4 }, { ...createMember('gendo', 1), hp: 0 }] });
+    expect(wardInField(s, { item: 'mayokeKo' })).toEqual({ ok: false, reason: 'noItem' });
+    expect(wardInField(s, { item: 'kizugusuri' })).toEqual({ ok: false, reason: 'notField' });
+    expect(wardInField(s, { caster: 1, skill: 'kekkai' })).toEqual({ ok: false, reason: 'noMp' });
+    expect(wardInField(s, { caster: 2, skill: 'kekkai' })).toEqual({ ok: false, reason: 'casterDown' });
+    expect(wardInField(s, { caster: 0, skill: 'kekkai' })).toEqual({ ok: false, reason: 'notField' });
+  });
+
+  it('結界の真言はメニューの技に出て、戦闘の技の一覧には出ない', () => {
+    expect(fieldSkills(createMember('gendo', 1))).toContain('kekkai');
+    expect(SKILLS.kekkai?.fieldOnly).toBe(true);
+  });
+
+  it('香と結界の真言は同じ歩数だけ効く', () => {
+    const item = ITEMS.mayokeKo?.effect;
+    const skill = SKILLS.kekkai?.effect;
+    expect(item?.kind === 'ward' && item.steps).toBe(WARD_STEPS);
+    expect(skill?.kind === 'ward' && skill.steps).toBe(WARD_STEPS);
+  });
+
+  it('香は仲間に使う道具としては効かない（減らさない）', () => {
+    const s = game({ party: [{ ...createMember('hero', 1), hp: 5 }], items: { mayokeKo: 1 } });
+    expect(itemUsableOn('mayokeKo', s.party[0]!)).toBe(false);
+    expect(useItemInField(s, 'mayokeKo', 0)).toEqual({ ok: false, reason: 'noEffect' });
   });
 });

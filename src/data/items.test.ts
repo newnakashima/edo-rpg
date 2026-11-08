@@ -40,6 +40,11 @@ describe('道具の品ぞろえ', () => {
     }
   });
 
+  it('魔除けの香はどの町のよろず屋でも買え、戦闘中は使えない', () => {
+    for (const shop of Object.values(SHOPS).filter((x) => x.name === 'よろず屋')) expect(shop.goods, shop.id).toContain('mayokeKo');
+    expect(ITEMS.mayokeKo?.battle).toBe(false);
+  });
+
   it('道しるべの札はどの町のよろず屋でも買える', () => {
     const yorozu = Object.values(SHOPS).filter((shop) => shop.name === 'よろず屋');
     expect(yorozu.length).toBeGreaterThan(0);

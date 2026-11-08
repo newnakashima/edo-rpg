@@ -106,6 +106,32 @@ export function escapeInField(state: GameState, by: { item: string } | { caster:
   return { ok: true, state: next, to };
 }
 
+export type WardResult =
+  | { ok: true; state: GameState; steps: number }
+  | { ok: false; reason: 'noItem' | 'notField' | 'noMp' | 'casterDown' };
+
+/**
+ * しばらく敵に出会わなくする道具（魔除けの香）か技（結界の真言）を使う。by が道具の ID か、技を使う仲間と技の ID。
+ * どのマップでも使える（町で使っても、歩数は敵の出る場所を歩いたときだけ減る）。効いているうちに使い直すと、
+ * 残りの歩数を steps に戻す（足し合わせない）。
+ */
+export function wardInField(state: GameState, by: { item: string } | { caster: number; skill: string }): WardResult {
+  if ('item' in by) {
+    const item = ITEMS[by.item];
+    if (!item || item.effect.kind !== 'ward') return { ok: false, reason: 'notField' };
+    const rest = removeItem(state.items, by.item);
+    if (!rest) return { ok: false, reason: 'noItem' };
+    return { ok: true, state: { ...state, items: rest, wardSteps: item.effect.steps }, steps: item.effect.steps };
+  }
+  const skill = SKILLS[by.skill];
+  const c = state.party[by.caster];
+  if (!skill || !c || skill.effect.kind !== 'ward' || !fieldSkills(c).includes(by.skill)) return { ok: false, reason: 'notField' };
+  if (c.hp <= 0) return { ok: false, reason: 'casterDown' };
+  if (c.mp < skill.mp) return { ok: false, reason: 'noMp' };
+  const steps = skill.effect.steps;
+  return { ok: true, state: { ...setMember(state, by.caster, { ...c, mp: c.mp - skill.mp }), wardSteps: steps }, steps };
+}
+
 /**
  * 装備を付け替える。equipId が null なら外す。外した装備は所持品に戻す。
  * 最大 HP・MP が減ったら、今の HP・MP を最大値に収める。
@@ -171,6 +197,7 @@ export function itemUsableOn(itemId: string, member: PartyMember): boolean {
       return member.hp > 0 && (member.hp < s.maxHp || member.mp < s.maxMp);
     case 'cure':
     case 'escape':
+    case 'ward':
       return false;
   }
 }

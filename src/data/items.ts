@@ -1,5 +1,6 @@
 // 道具（消耗品）と所持品。装備品の定義は equipment.ts にあり、所持品には両方が入る。
 import { EQUIPMENT } from './equipment';
+import { WARD_STEPS } from './skills';
 
 export type ItemEffect =
   /** HP を amount 回復する。 */
@@ -13,7 +14,9 @@ export type ItemEffect =
   /** 戦闘不能から HP の rate の割合で起き上がらせる。 */
   | { kind: 'revive'; rate: number }
   /** ダンジョンの入口（外のマップ）へ戻る（maps.ts の escapePoint）。対象を選ばない。 */
-  | { kind: 'escape' };
+  | { kind: 'escape' }
+  /** steps 歩のあいだ、敵に出会わない（魔除けの香。GameState の wardSteps）。対象を選ばない。 */
+  | { kind: 'ward'; steps: number };
 
 export type ItemKind = 'food' | 'medicine' | 'charm';
 
@@ -25,7 +28,7 @@ export interface ItemDef {
   /** 食べ物・飲み物か、薬か、札か（メニューのアイコン: 団子・薬包・お守り）。 */
   kind: ItemKind;
   effect: ItemEffect;
-  /** 対象。味方単体か、対象を選ばない（パーティ全体に効く。道しるべの札）か。 */
+  /** 対象。味方単体か、対象を選ばない（パーティ全体に効く。道しるべの札・魔除けの香）か。 */
   target: 'ally' | 'party';
   /** 戦闘の外（メニュー）でも使える。状態異常は戦闘が終わると治るので、治す道具は戦闘中だけ。 */
   field: boolean;
@@ -75,6 +78,7 @@ export const ITEMS: Record<string, ItemDef> = {
   ninjin: { id: 'ninjin', name: '朝鮮人参', price: 280, kind: 'medicine', effect: { kind: 'revive', rate: 0.5 }, target: 'ally', field: true, description: '高価な薬の根。戦闘不能から体力の半分で起こす' },
   // 旅の札（戦闘の外だけ）
   michishirube: { id: 'michishirube', name: '道しるべの札', price: 24, kind: 'charm', effect: { kind: 'escape' }, target: 'party', field: true, battle: false, description: '洞窟や城の中から、入口の外へひと息に戻る' },
+  mayokeKo: { id: 'mayokeKo', name: '魔除けの香', price: 40, kind: 'charm', effect: { kind: 'ward', steps: WARD_STEPS }, target: 'party', field: true, battle: false, description: `焚くと、${WARD_STEPS} 歩のあいだ敵が寄ってこない` },
 };
 
 /** 所持品（道具・装備品の ID ごとの個数）。 */

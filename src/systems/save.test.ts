@@ -3,6 +3,7 @@ import { STARTING_EQUIPMENT } from '../data/equipment';
 import { newGame, STARTING_ITEMS } from './gameState';
 import { createMember } from './party';
 import { MAPS, TILES } from '../data/maps';
+import { WARD_STEPS } from '../data/skills';
 import { deserialize, listSlots, load, MAPS_REBUILT_IN_V6, readSlot, save, SAVE_VERSION, serialize, SLOT_COUNT, slotKey, WORLD_TOWNS_BEFORE_V7, type KeyValueStorage } from './save';
 
 function memoryStorage(): KeyValueStorage & { data: Map<string, string> } {
@@ -23,6 +24,20 @@ describe('save', () => {
     const s = { ...state(), money: 123, flags: { intro: true } };
     save(storage, 1, s, new Date('2026-10-31T00:00:00Z'));
     expect(load(storage, 1)).toEqual({ version: SAVE_VERSION, savedAt: '2026-10-31T00:00:00.000Z', state: s });
+  });
+
+  it('魔除けの残りの歩数を読み戻せ（省いたセーブも読める）、多すぎる歩数は収め、負や小数の歩数は読まない', () => {
+    const storage = memoryStorage();
+    save(storage, 0, { ...state(), wardSteps: 42 });
+    expect(load(storage, 0)?.state.wardSteps).toBe(42);
+    save(storage, 1, state());
+    expect(load(storage, 1)?.state.wardSteps).toBeUndefined();
+    save(storage, 2, { ...state(), wardSteps: 9999 });
+    expect(load(storage, 2)?.state.wardSteps).toBe(WARD_STEPS);
+    for (const wardSteps of [-1, 1.5, '3']) {
+      save(storage, 2, { ...state(), wardSteps: wardSteps as number });
+      expect(load(storage, 2), String(wardSteps)).toBeNull();
+    }
   });
 
   it('空きスロットは null', () => {

@@ -1,6 +1,9 @@
 // docs/characters.md の「技の一覧」と、敵が使う技。
 import type { CharacterId } from './characters';
 
+/** 魔除け（結界の真言・魔除けの香）が効く歩数。道具と技で同じにする。 */
+export const WARD_STEPS = 150;
+
 /** 属性。祓は妖怪、機はからくりに効く。 */
 export type Element = 'fire' | 'thunder' | 'holy' | 'mech';
 
@@ -76,7 +79,9 @@ export type SkillEffect =
    */
   | { kind: 'charge'; next: string }
   /** 戦闘の外だけで使う。ダンジョンの入口（外のマップ）へ戻る（maps.ts の escapePoint）。 */
-  | { kind: 'escape' };
+  | { kind: 'escape' }
+  /** 戦闘の外だけで使う。steps 歩のあいだ、敵に出会わない（GameState の wardSteps。魔除けの香と同じ）。 */
+  | { kind: 'ward'; steps: number };
 
 export interface SkillDef {
   id: string;
@@ -90,7 +95,7 @@ export interface SkillDef {
   priority?: boolean;
   /** 戦闘の外（メニュー）でも使える（回復の技）。 */
   field?: boolean;
-  /** 戦闘の外だけで使い、戦闘の技の一覧に出さない（抜け道）。field を付けなくてもメニューで使える。 */
+  /** 戦闘の外だけで使い、戦闘の技の一覧に出さない（抜け道・結界の真言）。field を付けなくてもメニューで使える。 */
   fieldOnly?: boolean;
   /** 説明（メニューに出す）。 */
   description: string;
@@ -120,6 +125,7 @@ export const SKILLS: Record<string, SkillDef> = {
   katon: { id: 'katon', name: '火遁の術', mp: 9, target: 'allEnemies', effect: { kind: 'magic', power: 14 }, elements: ['fire'], description: '敵全体に火の術' },
   // 玄道（破戒僧）
   yakushi: { id: 'yakushi', name: '薬師の真言', mp: 3, target: 'ally', effect: { kind: 'heal', power: 10 }, field: true, description: '味方 1 人を回復する' },
+  kekkai: { id: 'kekkai', name: '結界の真言', mp: 5, target: 'self', effect: { kind: 'ward', steps: WARD_STEPS }, fieldOnly: true, description: `結界を張り、${WARD_STEPS} 歩のあいだ敵を寄せつけない` },
   oharai: { id: 'oharai', name: 'お祓い', mp: 3, target: 'ally', effect: { kind: 'cure' }, description: '状態異常を治す' },
   katsu: { id: 'katsu', name: '喝', mp: 4, target: 'enemy', effect: { kind: 'magic', power: 10 }, elements: ['holy'], description: '妖怪・からくりに効く祓いの一喝' },
   kongoriki: { id: 'kongoriki', name: '金剛力', mp: 5, target: 'ally', effect: { kind: 'status', status: 'atkUp', turns: 3 }, description: '3 ターン攻撃を上げる' },
@@ -252,6 +258,7 @@ export const LEARNSETS: Record<CharacterId, LearnableSkill[]> = {
     { skill: 'yakushi', level: 1 },
     { skill: 'oharai', level: 1 },
     { skill: 'katsu', level: 1 },
+    { skill: 'kekkai', level: 1 },
     { skill: 'kongoriki', level: 15 },
     { skill: 'hannya', level: 19 },
     { skill: 'fudo', level: 25 },

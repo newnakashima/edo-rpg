@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { ENCOUNTERS } from '../data/enemies';
 import { closedGateAt, encounterAt, MAPS, npcLines, npcObjectFrame, npcVisible, respawnPoint, START_POSITION, tileAt, townAction, type EventTrigger, type MapDef, type NpcDef } from '../data/maps';
 import { mapTileImages } from '../data/mapParts';
-import { pickGroup, step } from '../systems/encounter';
+import { pickGroup, stepOnRoad } from '../systems/encounter';
 import { dangoPrice, eatDango, innPrice, stayAtInn } from '../systems/facilities';
 import { prayAtTemple, templePrice } from '../systems/shop';
 import { SHOPS } from '../data/shops';
@@ -375,11 +375,15 @@ export class FieldScene extends Phaser.Scene {
     const trigger = this.map.triggers?.find((t) => t.x === state.x && t.y === state.y);
     if (trigger && this.startTrigger(trigger)) return;
     const encounter = encounterAt(this.map, state.x, state.y, state.flags);
-    if (!encounter) return;
-    const table = ENCOUNTERS[encounter];
+    const table = encounter ? ENCOUNTERS[encounter] : undefined;
+    // 敵の出ない場所（町の中など）では、エンカウントまでの歩数も魔除けの残りも変わらない
+    const result = stepOnRoad(state, table !== undefined, defaultRng);
+    setState({ ...state, stepsToEncounter: result.stepsToEncounter, wardSteps: result.wardSteps });
     if (!table) return;
-    const result = step(state.stepsToEncounter, defaultRng);
-    setState({ ...state, stepsToEncounter: result.stepsLeft });
+    if (result.wardEnded) {
+      this.message.show(['魔除けの効き目が切れた。']);
+      return;
+    }
     if (!result.encounter) return;
     const group = pickGroup(
       table,

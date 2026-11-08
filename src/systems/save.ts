@@ -3,6 +3,7 @@ import { CHARACTERS, isGuest, type CharacterId } from '../data/characters';
 import { EQUIP_SLOTS, EQUIPMENT, STARTING_EQUIPMENT, type EquipSlot } from '../data/equipment';
 import { isKnownItem, MAX_ITEM_COUNT } from '../data/items';
 import { MAPS, respawnPoint } from '../data/maps';
+import { WARD_STEPS } from '../data/skills';
 import { STARTING_ITEMS, type GameState } from './gameState';
 import { memberStats } from './party';
 
@@ -120,6 +121,7 @@ export function isGameState(v: unknown): v is GameState {
   if (!isInventory(v.items) || !isInventory(v.storage)) return false;
   if (!isObject(v.flags) || !Object.values(v.flags).every((f) => typeof f === 'boolean')) return false;
   if (!isNonNegativeInteger(v.stepsToEncounter) || !isFiniteNumber(v.playTimeSec) || v.playTimeSec < 0) return false;
+  if (v.wardSteps !== undefined && !isNonNegativeInteger(v.wardSteps)) return false;
   return true;
 }
 
@@ -176,7 +178,10 @@ export function deserialize(text: string): SaveData | null {
     const s = memberStats(m);
     return { ...m, hp: Math.min(m.hp, s.maxHp), mp: Math.min(m.mp, s.maxMp) };
   };
-  return { version: SAVE_VERSION, savedAt: data.savedAt, state: { ...migrated, party: migrated.party.map(clamp), away: migrated.away.map(clamp) } };
+  const state: GameState = { ...migrated, party: migrated.party.map(clamp), away: migrated.away.map(clamp) };
+  // 魔除けの残りは、香・結界の真言で付く歩数（WARD_STEPS）に収める（歩数を減らす調整をしても、古いセーブを捨てない）
+  if (state.wardSteps !== undefined) state.wardSteps = Math.min(state.wardSteps, WARD_STEPS);
+  return { version: SAVE_VERSION, savedAt: data.savedAt, state };
 }
 
 /** 書き込む。保存領域が一杯などで失敗したら false。 */

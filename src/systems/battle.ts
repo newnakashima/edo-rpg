@@ -661,6 +661,7 @@ export function itemWorks(effect: ItemEffect, target: Combatant): boolean {
     case 'cure':
       return Object.keys(target.status).some((id) => isAilment(id as StatusId) && (!effect.ailment || id === effect.ailment));
     case 'escape':
+    case 'ward':
       return false;
   }
 }
