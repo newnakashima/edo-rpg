@@ -34,9 +34,9 @@ function hasUserActivation(): boolean {
  *
  * 決定はキー・ボタンを押した瞬間に溜め、次のフレームの update で取り出すので、ここはイベントの外で呼ばれる。
  * キーボード・マウスはそれでも操作の直後として扱われるが、タッチは指を離すまで操作の直後にならない。
- * その場合は、次に指を離したとき（pointerup・touchend）に開く。
+ * その場合は、次に指を離したとき（pointerup・touchend）に開く。そのときに shouldOpen が false なら（メニューを離れた、選び直した）開かない。
  */
-export function pickTextFile(onText: (text: string) => void, onError: () => void): void {
+export function pickTextFile(onText: (text: string) => void, onError: () => void, shouldOpen: () => boolean = () => true): void {
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = '.json,application/json';
@@ -50,7 +50,13 @@ export function pickTextFile(onText: (text: string) => void, onError: () => void
       onError();
       return;
     }
-    file.text().then(onText).catch(onError);
+    file
+      .text()
+      .then(onText)
+      .catch((e: unknown) => {
+        console.error(e);
+        onError();
+      });
   });
   input.addEventListener('cancel', cleanup);
   document.body.appendChild(input);
@@ -69,7 +75,8 @@ export function pickTextFile(onText: (text: string) => void, onError: () => void
   const events = ['pointerup', 'touchend'] as const;
   const onRelease = () => {
     for (const type of events) window.removeEventListener(type, onRelease, true);
-    open();
+    if (shouldOpen()) open();
+    else cleanup();
   };
   for (const type of events) window.addEventListener(type, onRelease, true);
 }

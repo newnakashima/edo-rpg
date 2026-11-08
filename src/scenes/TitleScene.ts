@@ -104,6 +104,7 @@ export class TitleScene extends Phaser.Scene {
       () => {
         if (current()) this.notify(['ファイルを読めませんでした。']);
       },
+      current,
     );
   }
 
