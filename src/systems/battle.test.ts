@@ -85,11 +85,11 @@ describe('resolveTurn', () => {
   });
 
   it('逃走率は生きている味方の平均素早さで決まる', () => {
-    // 霞（速 13）と主人公（速 8）の平均 10.5、大蛙（速 4）との差 6.5 で 63%
+    // 霞（速 14）と主人公（速 8）の平均 11、大蛙（速 4）との差 7 で 64%
     const party = [createMember('hero', 1), createMember('kasumi', 1)];
     const b = createBattle(party, 'm', ['ogaeru'], 1);
-    expect(resolveTurn(b, { p0: { kind: 'escape' } }, seqRng(0.62)).state.outcome).toBe('escaped');
-    expect(resolveTurn(b, { p0: { kind: 'escape' } }, seqRng(0.64, 0.5)).state.outcome).toBe('ongoing');
+    expect(resolveTurn(b, { p0: { kind: 'escape' } }, seqRng(0.63)).state.outcome).toBe('escaped');
+    expect(resolveTurn(b, { p0: { kind: 'escape' } }, seqRng(0.65, 0.5)).state.outcome).toBe('ongoing');
   });
 
   it('会心と撃破のイベントを出す', () => {

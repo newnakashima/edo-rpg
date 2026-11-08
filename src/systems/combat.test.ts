@@ -17,10 +17,10 @@ describe('物理ダメージ', () => {
     expect(physicalDamage(20, 100, 0, seqRng(0, 0.5))).toEqual({ damage: 30, critical: true });
   });
 
-  it('会心率は 3% + 運 / 10 %、上限 25%', () => {
+  it('会心率は 3% + 運 / 10 %、上限 50%', () => {
     expect(criticalRate(0)).toBeCloseTo(0.03);
     expect(criticalRate(70)).toBeCloseTo(0.1);
-    expect(criticalRate(1000)).toBe(0.25);
+    expect(criticalRate(1000)).toBe(0.5);
   });
 });
 
@@ -61,6 +61,9 @@ describe('術・回復・属性・状態異常', () => {
     expect(ailmentChance(0.75, 20, 10)).toBeCloseTo(0.85);
     expect(ailmentChance(0.75, 100, 0)).toBe(0.95);
     expect(ailmentChance(0.1, 0, 100)).toBe(0.05);
+    // 運の差は ±25 までしか効かない（Lv32 の霞の運 320 と Lv32 の敵の運 35）
+    expect(ailmentChance(0.5, 320, 35)).toBeCloseTo(0.75);
+    expect(ailmentChance(0.5, 35, 320)).toBeCloseTo(0.25);
   });
 
   it('命中↓と回避↑で外れる確率', () => {

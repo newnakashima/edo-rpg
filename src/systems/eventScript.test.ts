@@ -149,6 +149,19 @@ describe('仲間の加入', () => {
     expect(kasumi.hp).toBe(memberStats(kasumi).maxHp);
   });
 
+  it('お凛はパーティーの平均レベルに関係なく Lv1 で加わる（joinLevel）', () => {
+    const s = game({ party: [createMember('hero', 15), createMember('kasumi', 15), createMember('gendo', 15)] });
+    const orin = joinParty(s, 'orin').party[3]!;
+    expect(memberLevel(orin)).toBe(1);
+    expect(orin.equip.weapon).toBe('karakuriju');
+    expect(orin.hp).toBe(memberStats(orin).maxHp);
+  });
+
+  it('平均レベルには Lv1 で加わったお凛を数えない（後から加わる・戻る仲間のレベルを下げない）', () => {
+    const s = game({ party: [createMember('hero', 15), createMember('gendo', 15), createMember('orin', 1)] });
+    expect(memberLevel(joinParty(s, 'kasumi').party[3]!)).toBe(15);
+  });
+
   it('加入済み・満員なら何もしない', () => {
     const s = game();
     expect(joinParty(s, 'hero')).toBe(s);

@@ -26,18 +26,24 @@ interface Frame {
   index: number;
 }
 
-/** その時点のパーティーの平均レベル（切り捨て、最低 1）。 */
+/**
+ * その時点のパーティーの平均レベル（切り捨て、最低 1）。加入時のレベルが決まっている仲間（Lv1 で加わるお凛）は数えない
+ * （お凛の加入直後に戻る仲間のレベルが引き下げられないように）。その仲間しかいなければ全員で数える。
+ */
 function averageLevel(state: GameState): number {
-  return Math.max(1, Math.floor(state.party.reduce((s, m) => s + memberLevel(m), 0) / Math.max(1, state.party.length)));
+  const counted = state.party.filter((m) => CHARACTERS[m.id].joinLevel === undefined);
+  const members = counted.length > 0 ? counted : state.party;
+  return Math.max(1, Math.floor(members.reduce((s, m) => s + memberLevel(m), 0) / Math.max(1, members.length)));
 }
 
 /**
- * 仲間に加える。加入済み・満員なら何もしない。レベルはその時点のパーティーの平均（切り捨て、最低 1）。ゲストは guestLevel。
+ * 仲間に加える。加入済み・満員なら何もしない。レベルはその時点のパーティーの平均（切り捨て、最低 1）。ゲストは guestLevel、
+ * 加入時のレベルが決まっている仲間（お凛は Lv1）は joinLevel。
  * 一時離脱中（away にいる）の仲間も何もしない（新しく作ると二重になるため。away から戻すのは rejoinParty）。
  */
 export function joinParty(state: GameState, member: GameState['party'][number]['id']): GameState {
   if (state.party.some((m) => m.id === member) || state.away.some((m) => m.id === member) || state.party.length >= MAX_PARTY) return state;
-  return { ...state, party: [...state.party, createMember(member, CHARACTERS[member].guestLevel ?? averageLevel(state))] };
+  return { ...state, party: [...state.party, createMember(member, CHARACTERS[member].guestLevel ?? CHARACTERS[member].joinLevel ?? averageLevel(state))] };
 }
 
 /**

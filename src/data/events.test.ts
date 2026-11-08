@@ -474,12 +474,12 @@ describe('第 6 章の流れ', () => {
     flags: { intro: true, chapter4Cleared: true, kasumiAway: true, chapter5Cleared: true },
   };
 
-  it('広島に入ると霞が戻る（kasumiRejoined）。装備はそのまま、平均レベル（Lv19）まで引き上げる', () => {
+  it('広島に入ると霞が戻る（kasumiRejoined）。装備はそのまま、平均レベル（お凛を数えない主人公・玄道の Lv20）まで引き上げる', () => {
     const back = run('hiroshimaEnter', ch5);
     expect(back.flags.kasumiRejoined).toBe(true);
     expect(back.party.map((m) => m.id)).toEqual(['hero', 'gendo', 'orin', 'kasumi']);
     expect(back.away).toEqual([]);
-    expect(memberLevel(back.party[3]!)).toBe(19);
+    expect(memberLevel(back.party[3]!)).toBe(20);
     expect(back.party[3]!.equip).toEqual(kasumi.equip);
   });
 

@@ -421,10 +421,14 @@ class TurnContext {
         }
         case 'magic': {
           const rate = elementMultiplier(elements, target.weak, target.resist);
-          const raw = magicDamage(effect.power * growthFactor(actor.level), actor.stats.mag, effectiveDef(target), this.rng);
-          const damage = applyGuard(Math.max(1, Math.floor(raw * rate)), target.guarding);
-          this.events.push({ type: 'damage', target: target.key, damage, critical: false, weak: rate > 1, resisted: rate < 1 });
-          this.hurt(target, damage);
+          const hits = effect.hits ?? 1;
+          for (let i = 0; i < hits && isAlive(target); i++) {
+            const def = effect.ignoreDefense ? 0 : effectiveDef(target);
+            const raw = magicDamage(effect.power * growthFactor(actor.level), actor.stats.mag, def, this.rng);
+            const damage = applyGuard(Math.max(1, Math.floor(raw * rate)), target.guarding);
+            this.events.push({ type: 'damage', target: target.key, damage, critical: false, weak: rate > 1, resisted: rate < 1 });
+            this.hurt(target, damage);
+          }
           break;
         }
         case 'heal': {

@@ -6,9 +6,12 @@ export interface DamageResult {
   critical: boolean;
 }
 
-/** 会心の確率（0〜0.25）。 */
+/** 会心の確率の上限。運が大きく伸びる霞（晩成）が終盤に届く。 */
+export const CRITICAL_RATE_CAP = 0.5;
+
+/** 会心の確率（0〜CRITICAL_RATE_CAP）。 */
 export function criticalRate(luck: number): number {
-  return Math.min(0.25, 0.03 + luck / 1000);
+  return Math.min(CRITICAL_RATE_CAP, 0.03 + luck / 1000);
 }
 
 /** 物理攻撃のダメージ。会心は防御を無視して攻撃 × 1.5。critBonus は会心率に足す値（無念無想など）。 */
@@ -52,9 +55,16 @@ export function elementMultiplier(elements: readonly string[], weak: readonly st
   return 1;
 }
 
-/** 状態異常がかかる確率。基本の確率に運の差 × 1% を足し、5〜95% に収める。 */
+/**
+ * 状態異常で効かせる運の差の上限。晩成の霞は終盤に運が 300 を超えるので、差をそのまま足すと
+ * 霞のかける状態異常は必ずかかり、霞にかかる状態異常はほぼ効かなくなる。運の差は ±25 までにする。
+ */
+export const AILMENT_LUCK_DIFF_CAP = 25;
+
+/** 状態異常がかかる確率。基本の確率に運の差（±25 まで）× 1% を足し、5〜95% に収める。 */
 export function ailmentChance(base: number, actorLuck: number, targetLuck: number): number {
-  return Math.min(0.95, Math.max(0.05, base + (actorLuck - targetLuck) * 0.01));
+  const diff = Math.min(AILMENT_LUCK_DIFF_CAP, Math.max(-AILMENT_LUCK_DIFF_CAP, actorLuck - targetLuck));
+  return Math.min(0.95, Math.max(0.05, base + diff * 0.01));
 }
 
 /** 命中を下げられている・回避を上げているときに外れる確率（それぞれ 35%、合わせて上限 70%）。 */

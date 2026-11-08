@@ -19,7 +19,7 @@ export function memberLevel(member: PartyMember): number {
 
 /** 装備を含めた能力値。 */
 export function memberStats(member: PartyMember): Stats {
-  const base = statsAtLevel(CHARACTERS[member.id].base, memberLevel(member));
+  const base = statsAtLevel(CHARACTERS[member.id].growth, memberLevel(member));
   const bonus = equipmentBonus(member.equip);
   return {
     maxHp: base.maxHp + bonus.maxHp,

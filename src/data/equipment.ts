@@ -64,14 +64,14 @@ export const EQUIPMENT: Record<string, EquipDef> = {
   kongoShakujo: { id: 'kongoShakujo', name: '金剛錫杖', slot: 'weapon', price: 1700, bonus: { atk: 13, mag: 11 }, wearers: ['gendo'], description: '金剛の輪を下げた錫杖' },
   // 第 4 章でお凛の初期装備をからくり銃に変えたので、今はどこからも手に入らない。
   // 寄り道の町の店に安い銃として置く候補なので、定義は残す（置くかは寄り道の町を作るときに決める）
-  hinawaju: { id: 'hinawaju', name: '火縄銃', slot: 'weapon', price: 60, bonus: { atk: 4 }, wearers: ['orin'], description: '使い込んだ火縄銃' },
-  karakuriju: { id: 'karakuriju', name: 'からくり銃', slot: 'weapon', price: 380, bonus: { atk: 9 }, wearers: ['orin'], description: 'ゼンマイで弾を込める銃' },
-  nanbanju: { id: 'nanbanju', name: '南蛮銃', slot: 'weapon', price: 1300, bonus: { atk: 15 }, wearers: ['orin'], description: '南蛮渡りの燧石の銃' },
-  gewehr: { id: 'gewehr', name: 'ゲベール銃', slot: 'weapon', price: 2400, bonus: { atk: 21 }, wearers: ['orin'], description: '出島から渡ったオランダの銃' },
-  kagaZutsu: { id: 'kagaZutsu', name: '加賀筒', slot: 'weapon', price: 3300, bonus: { atk: 25 }, wearers: ['orin'], description: '加賀の鉄砲鍛冶が打った長筒' },
-  kunitomoZutsu: { id: 'kunitomoZutsu', name: '国友筒', slot: 'weapon', price: 4500, bonus: { atk: 30 }, wearers: ['orin'], description: '近江の鉄砲鍛冶が打った筒。江戸で売られている' },
-  aoiZutsu: { id: 'aoiZutsu', name: '葵の御筒', slot: 'weapon', price: 5400, bonus: { atk: 35 }, wearers: ['orin'], description: '将軍家の鉄砲蔵の筒。終章の江戸城で手に入る' },
-  renpatsuju: { id: 'renpatsuju', name: '連発からくり銃', slot: 'weapon', price: 1800, bonus: { atk: 18 }, wearers: ['orin'], description: 'ゼンマイで弾を続けて送る銃' },
+  hinawaju: { id: 'hinawaju', name: '火縄銃', slot: 'weapon', price: 60, bonus: { atk: 4, mag: 3 }, wearers: ['orin'], description: '使い込んだ火縄銃' },
+  karakuriju: { id: 'karakuriju', name: 'からくり銃', slot: 'weapon', price: 380, bonus: { atk: 9, mag: 6 }, wearers: ['orin'], description: 'ゼンマイで弾を込める銃' },
+  nanbanju: { id: 'nanbanju', name: '南蛮銃', slot: 'weapon', price: 1300, bonus: { atk: 15, mag: 10 }, wearers: ['orin'], description: '南蛮渡りの燧石の銃' },
+  gewehr: { id: 'gewehr', name: 'ゲベール銃', slot: 'weapon', price: 2400, bonus: { atk: 21, mag: 14 }, wearers: ['orin'], description: '出島から渡ったオランダの銃' },
+  kagaZutsu: { id: 'kagaZutsu', name: '加賀筒', slot: 'weapon', price: 3300, bonus: { atk: 25, mag: 17 }, wearers: ['orin'], description: '加賀の鉄砲鍛冶が打った長筒' },
+  kunitomoZutsu: { id: 'kunitomoZutsu', name: '国友筒', slot: 'weapon', price: 4500, bonus: { atk: 30, mag: 20 }, wearers: ['orin'], description: '近江の鉄砲鍛冶が打った筒。江戸で売られている' },
+  aoiZutsu: { id: 'aoiZutsu', name: '葵の御筒', slot: 'weapon', price: 5400, bonus: { atk: 35, mag: 24 }, wearers: ['orin'], description: '将軍家の鉄砲蔵の筒。終章の江戸城で手に入る' },
+  renpatsuju: { id: 'renpatsuju', name: '連発からくり銃', slot: 'weapon', price: 1800, bonus: { atk: 18, mag: 12 }, wearers: ['orin'], description: 'ゼンマイで弾を続けて送る銃' },
   // 榊兵庫（第 5 章のゲスト）だけが付ける。店には置かない
   hyogoKatana: { id: 'hyogoKatana', name: '与力の差料', slot: 'weapon', price: 0, bonus: { atk: 14 }, wearers: ['hyogo'], description: '兵庫が与力のころから差す刀' },
   // 防具

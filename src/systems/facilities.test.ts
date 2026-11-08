@@ -45,7 +45,7 @@ describe('施設', () => {
   it('旅籠では MP も回復する', () => {
     const s = { ...newGame('m', start), money: 14, party: [{ ...createMember('hero', 1), mp: 0 }] };
     const r = stayAtInn(s, 1);
-    expect(r.ok && r.state.party[0]?.mp).toBe(6);
+    expect(r.ok && r.state.party[0]?.mp).toBe(8);
   });
 
   it('全滅すると所持金が半分になり、旅籠の前で全回復する', () => {

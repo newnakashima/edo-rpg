@@ -74,7 +74,7 @@ describe('save', () => {
   it('HP・MP が最大値を超えるデータは最大値に収める', () => {
     const s = { ...state(), party: [{ ...createMember('hero', 1), hp: 999, mp: 999 }] };
     const loaded = deserialize(serialize(s));
-    expect(loaded?.state.party[0]).toMatchObject({ hp: 30, mp: 6 });
+    expect(loaded?.state.party[0]).toMatchObject({ hp: 30, mp: 8 });
   });
 
   it('範囲外のスロットは例外にする', () => {

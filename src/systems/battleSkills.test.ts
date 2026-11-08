@@ -59,12 +59,39 @@ describe('技', () => {
     expect(fire).toMatchObject({ type: 'damage', resisted: true });
   });
 
+  it('お凛の弾は術力で威力が決まる（早合は 2 回、父の形見は防御を無視する）', () => {
+    // 装備なしの Lv30 のお凛が Lv30 の大蛙を撃つ。乱数 0.5 で 1.0 倍
+    const orin = (skill: string) => {
+      const b = sleepEnemies(createBattle([{ ...createMember('orin', 30, {}), mp: 99 }], 'm', ['ogaeru'], 30));
+      get(b, 'e0').hp = 99999;
+      return resolveTurn(b, { p0: { kind: 'skill', skill, target: 'e0' } }, seqRng(0.5)).events.filter((e) => e.type === 'damage');
+    };
+    const stats = memberStats(createMember('orin', 30, {}));
+    const enemy = get(createBattle([createMember('orin', 30, {})], 'm', ['ogaeru'], 30), 'e0');
+    const growth = 1.075 ** 29;
+    const expected = (power: number, def: number) => Math.floor(power * growth + stats.mag * 1.2 - def / 4);
+    expect(orin('neraiuchi')).toEqual([expect.objectContaining({ damage: expected(8, enemy.stats.def) })]);
+    expect(orin('hayago')).toEqual([
+      expect.objectContaining({ damage: expected(6, enemy.stats.def) }),
+      expect.objectContaining({ damage: expected(6, enemy.stats.def) }),
+    ]);
+    expect(orin('katami')).toEqual([expect.objectContaining({ damage: expected(24, 0) })]);
+  });
+
+  it('早合は 1 発目で敵が倒れたら 2 発目を撃たない', () => {
+    const b = sleepEnemies(createBattle([{ ...createMember('orin', 30, {}), mp: 99 }], 'm', ['ogaeru'], 1));
+    const { events } = resolveTurn(b, { p0: { kind: 'skill', skill: 'hayago', target: 'e0' } }, seqRng(0.5));
+    expect(events.filter((e) => e.type === 'damage')).toHaveLength(1);
+    expect(events).toContainEqual({ type: 'defeated', target: 'e0' });
+  });
+
   it('回復は最大 HP を超えない、戦闘不能には効かない', () => {
-    const party = [{ ...createMember('gendo', 1), hp: 30 }, { ...createMember('hero', 1), hp: 0 }];
+    // 玄道の Lv1 の最大 HP は 36
+    const party = [{ ...createMember('gendo', 1), hp: 32 }, { ...createMember('hero', 1), hp: 0 }];
     const b = sleepEnemies(createBattle(party, 'm', ['ogaeru'], 1));
     const r = resolveTurn(b, { p0: { kind: 'skill', skill: 'yakushi', target: 'p0' } }, seqRng(0.5));
     expect(r.events).toContainEqual({ type: 'heal', target: 'p0', amount: 4 });
-    expect(get(r.state, 'p0').hp).toBe(34);
+    expect(get(r.state, 'p0').hp).toBe(36);
     // 戦闘不能の仲間を選んでいたら自分を回復する
     const r2 = resolveTurn(b, { p0: { kind: 'skill', skill: 'yakushi', target: 'p1' } }, seqRng(0.5));
     expect(get(r2.state, 'p1').hp).toBe(0);
