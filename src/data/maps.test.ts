@@ -8,7 +8,7 @@ import { EQUIPMENT } from './equipment';
 import { ITEMS, MAX_ITEM_COUNT } from './items';
 import { EventRunner } from '../systems/eventScript';
 import { newGame } from '../systems/gameState';
-import { closedGateAt, encounterAt, MAPS, npcObjectFrame, npcVisible, respawnPoint, START_POSITION, TILE_KINDS, tileAt, TILES, TILESETS, tileTextureKey, townAction, type MapDef } from './maps';
+import { closedGateAt, encounterAt, MAPS, npcLines, npcObjectFrame, npcVisible, respawnPoint, START_POSITION, TILE_KINDS, tileAt, TILES, TILESETS, tileTextureKey, townAction, type MapDef } from './maps';
 
 describe('タイルの画像', () => {
   it('全ての種類の画像が public/assets/tiles/ にあり、全ての種類が使われている', () => {
@@ -966,6 +966,15 @@ describe('第 5 章の大坂', () => {
     const kikai = kura.npcs.find((n) => n.id === 'komeKuraKikai')!;
     expect(near(area, kikai.x, kikai.y)).toBe(true);
     expect(near(reachable(wallTriggers(kura), landing, {}, true), kikai.x, kikai.y)).toBe(false);
+  });
+
+  it('米が町に配られたあと（chapter5Cleared）は、米が無いという台詞を話さない', () => {
+    const short = /米のほか|麦がち|小さいお団子|小そうなって|小さなって/;
+    for (const id of ['osakaYorozu', 'osakaInn', 'osakaTeahouse']) {
+      const npc = osaka.npcs.find((n) => n.id === id)!;
+      expect(npcLines(npc, { heardOsakaRumor: true }).some((l) => short.test(l)), id).toBe(true);
+      expect(npcLines(npc, { heardOsakaRumor: true, chapter5Cleared: true }).some((l) => short.test(l)), id).toBe(false);
+    }
   });
 
   it('米蔵の地下で全滅したら大坂の旅籠の前に戻る', () => {

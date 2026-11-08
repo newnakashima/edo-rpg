@@ -80,6 +80,20 @@ function run(id: string, state: GameState, outcome: 'victory' | 'defeat' = 'vict
   return r.state;
 }
 
+/** イベントの要求を順に集める（選択肢は最初、戦闘は outcome）。 */
+function requests(id: string, state: GameState, outcome: 'victory' | 'defeat' = 'victory') {
+  const runner = new EventRunner(EVENTS[id]!.steps);
+  let r = runner.next(state);
+  const list = [r.request];
+  for (let guard = 0; guard < 80 && r.request.kind !== 'done'; guard++) {
+    if (r.request.kind === 'choice') r = runner.next(r.state, { kind: 'choice', index: 0 });
+    else if (r.request.kind === 'battle') r = runner.next(r.state, { kind: 'battle', outcome });
+    else r = runner.next(r.state);
+    list.push(r.request);
+  }
+  return list;
+}
+
 describe('序章の流れ', () => {
   const start = newGame('m', { mapId: 'shimizu', x: 14, y: 7 });
 
@@ -626,6 +640,17 @@ describe('第 7 章の流れ', () => {
     // 金沢の onEnter は chapter7Cleared で止まる（2 回目の褒美はない）
     expect(MAPS.kanazawa!.onEnter).toEqual({ event: 'kanazawaEnter', unless: 'chapter7Cleared' });
   });
+
+  it('第 7 章の終わりでは、手形をもらったあと江戸へ直に向かわず、北国街道を東へ陸路で仙台へ向かうよう促す', () => {
+    const rescued = run('tonoRescue', run('yashamaruBattle', run('kagemusha', opened)));
+    const pages = requests('kanazawaEnter', rescued).flatMap((r) => (r.kind === 'say' ? r.pages : []));
+    const tegata = pages.findIndex((p) => p.includes('江戸城の手形を授かった'));
+    expect(tegata).toBeGreaterThanOrEqual(0);
+    const last = pages[pages.length - 1]!;
+    expect(last).toContain('北国街道');
+    expect(last).toContain('仙台');
+    expect(pages.slice(tegata).some((p) => p.includes('陸路'))).toBe(true);
+  });
 });
 
 describe('第 8 章の流れ', () => {
@@ -781,19 +806,6 @@ describe('終章の流れ', () => {
     ...base,
     party: [createMember('hero', 29), createMember('gendo', 29), createMember('orin', 29), createMember('kasumi', 29)],
     flags: { intro: true, kagaTegata: true, chapter7Cleared: true, edoIntro: true, kashaDefeated: true, chapter8Cleared: true },
-  };
-  /** イベントの要求を順に集める（選択肢は最初、戦闘は outcome）。 */
-  const requests = (id: string, state: GameState, outcome: 'victory' | 'defeat' = 'victory') => {
-    const runner = new EventRunner(EVENTS[id]!.steps);
-    let r = runner.next(state);
-    const list = [r.request];
-    for (let guard = 0; guard < 80 && r.request.kind !== 'done'; guard++) {
-      if (r.request.kind === 'choice') r = runner.next(r.state, { kind: 'choice', index: 0 });
-      else if (r.request.kind === 'battle') r = runner.next(r.state, { kind: 'battle', outcome });
-      else r = runner.next(r.state);
-      list.push(r.request);
-    }
-    return list;
   };
   const battles = (id: string, state: GameState, outcome: 'victory' | 'defeat' = 'victory') =>
     requests(id, state, outcome).filter((r) => r.kind === 'battle');
