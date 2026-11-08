@@ -16,7 +16,11 @@ export function nearFire(state: Pick<GameState, 'mapId' | 'x' | 'y' | 'flags'>):
   return map ? fireAmong(map.npcs, state.x, state.y, state.flags) : false;
 }
 
-/** npcs の中に、(x, y) から FIRE_RANGE のマス以内にいる火の元があるか。 */
+/**
+ * npcs の中に、(x, y) から FIRE_RANGE のマス以内にいる火の元があるか。
+ * 壁越しでも火のそばとみなす（今の茶屋・旅籠・焚き火のまわりで壁を挟んで立てるのは店の外の通りなど、火の気の届く近さだけのため）。
+ * 壁の向こうで吸えるのがおかしい場所ができたら、マスの間の見通し（壁を通らないか）を足す。
+ */
 export function fireAmong(npcs: readonly NpcDef[], x: number, y: number, flags: Record<string, boolean>): boolean {
   return npcs.some((n) => isFireSource(n) && npcVisible(n, flags) && Math.max(Math.abs(n.x - x), Math.abs(n.y - y)) <= FIRE_RANGE);
 }

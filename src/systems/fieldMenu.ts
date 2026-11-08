@@ -27,10 +27,9 @@ export function useItemInField(state: GameState, itemId: string, target: number)
   if (!rest) return { ok: false, reason: 'noItem' };
   const m = state.party[target];
   const e = item.effect;
-  // 煙草の葉: 火のそばで、キセルを付けた人だけが吸える（火がないことを先に断る）
-  if (e.kind === 'fullMp' && e.smoke) {
-    if (!nearFire(state)) return { ok: false, reason: 'noFire' };
-    if (m && !hasKiseru(m)) return { ok: false, reason: 'noKiseru' };
+  if (isSmoke(itemId)) {
+    const blocked = smokeBlocked(state, m ? [m] : []);
+    if (blocked) return { ok: false, reason: blocked };
   }
   if (!m || !itemUsableOn(itemId, m)) return { ok: false, reason: 'noEffect' };
   const s = memberStats(m);
@@ -187,6 +186,21 @@ export function swapMembers(state: GameState, a: number, b: number): GameState {
   const mb = state.party[b];
   if (!ma || !mb || a === b) return state;
   return { ...state, party: state.party.map((m, i) => (i === a ? mb : i === b ? ma : m)) };
+}
+
+/** 吸う道具（煙草の葉）か。 */
+export function isSmoke(itemId: string): boolean {
+  const effect = ITEMS[itemId]?.effect;
+  return effect?.kind === 'fullMp' && !!effect.smoke;
+}
+
+/**
+ * 煙草の葉を吸えない理由。火のそばでなければ noFire（先に断る）、smokers の誰もキセルを付けていなければ noKiseru、吸えれば null。
+ * メニューでは誰に使うかを聞く前にパーティ全員で、使うときは吸う人 1 人で確かめる。
+ */
+export function smokeBlocked(state: GameState, smokers: readonly PartyMember[]): 'noFire' | 'noKiseru' | null {
+  if (!nearFire(state)) return 'noFire';
+  return smokers.some(hasKiseru) ? null : 'noKiseru';
 }
 
 /** 煙草の葉を吸うのに使うキセル（装飾品）を付けているか。 */

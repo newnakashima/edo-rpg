@@ -27,7 +27,10 @@ describe('火のある場所', () => {
         expect(TILES[map.rows[fire.y]![fire.x]!]?.blocked, map.id).toBe(false);
         expect(map.exits.some((e) => e.x === fire.x && e.y === fire.y), map.id).toBe(false);
         expect(isFireSource(fire)).toBe(true);
-        expect(nearFire(at(map.id, fire.x, fire.y + 1))).toBe(true);
+        // 隣の立てるマス（上下左右）が 1 つ以上あり、どれからも火に当たれる
+        const around = [[0, 1], [0, -1], [1, 0], [-1, 0]].map(([dx, dy]) => ({ x: fire.x + dx!, y: fire.y + dy! })).filter((c) => TILES[map.rows[c.y]?.[c.x] ?? '']?.blocked === false);
+        expect(around.length, map.id).toBeGreaterThan(0);
+        for (const c of around) expect(nearFire(at(map.id, c.x, c.y)), `${map.id} ${c.x},${c.y}`).toBe(true);
       }
     }
   });

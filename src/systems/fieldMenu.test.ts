@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ITEMS } from '../data/items';
 import { SKILLS, skillsAtLevel, WARD_STEPS } from '../data/skills';
 import { MAPS } from '../data/maps';
-import { changeEquipment, escapeInField, expToNext, fieldSkills, hasKiseru, itemUsableOn, skillDescription, statsWithEquipment, statusSheet, swapMembers, useItemInField, useSkillInField, wardInField } from './fieldMenu';
+import { changeEquipment, escapeInField, expToNext, fieldSkills, hasKiseru, isSmoke, itemUsableOn, smokeBlocked, skillDescription, statsWithEquipment, statusSheet, swapMembers, useItemInField, useSkillInField, wardInField } from './fieldMenu';
 import { newGame, type GameState } from './gameState';
 import { createMember, memberStats } from './party';
 import { expRemainingToNext, MAX_LEVEL } from './stats';
@@ -47,6 +47,18 @@ describe('道具をメニューで使う', () => {
     expect(itemUsableOn('tabako', plain)).toBe(false);
     expect(hasKiseru(smoker)).toBe(true);
     expect(hasKiseru(plain)).toBe(false);
+  });
+
+  it('煙草の葉を吸えない理由: 火がなければ noFire を先に、キセルを付けた人がいなければ noKiseru', () => {
+    const teahouse = MAPS.shimizu!.npcs.find((n) => n.action === 'teahouse')!;
+    const smoker = { ...createMember('hero', 10), equip: { accessory: 'kiseru' } };
+    const plain = createMember('kasumi', 10);
+    const nearby = game({ x: teahouse.x, y: teahouse.y + 1 });
+    expect(isSmoke('tabako')).toBe(true);
+    expect(isSmoke('sake')).toBe(false);
+    expect(smokeBlocked(nearby, [plain, smoker])).toBeNull();
+    expect(smokeBlocked(nearby, [plain])).toBe('noKiseru');
+    expect(smokeBlocked({ ...nearby, y: teahouse.y + 10 }, [plain])).toBe('noFire');
   });
 
   it('効かないときは使わない', () => {
