@@ -6,6 +6,7 @@ import { MAPS, TILES } from '../data/maps';
 import { MAX_WARD_STEPS } from '../data/skills';
 import { ITEMS } from '../data/items';
 import { deserialize, EXPORT_FORMAT, exportFileName, exportText, importText, listSlots, writeSaveData, load, MAPS_REBUILT_IN_V6, readSlot, save, SAVE_VERSION, serialize, SLOT_COUNT, slotKey, WORLD_TOWNS_BEFORE_V7, type KeyValueStorage } from './save';
+import { JINGI_MAX, JINGI_START } from './jingi';
 
 function memoryStorage(): KeyValueStorage & { data: Map<string, string> } {
   const data = new Map<string, string>();
@@ -283,6 +284,28 @@ describe('版 7（ワールドマップを広げた）', () => {
 
   it('ワールドマップ以外のマップの位置はそのまま', () => {
     expect(v6('osaka', 26, 9)).toMatchObject({ mapId: 'osaka', x: 26, y: 9 });
+  });
+});
+
+describe('版 8（仁義ポイント）', () => {
+  it('版 7 のセーブには仁義ポイントがないので、新しく始めたときと同じだけ持たせる', () => {
+    const old: Record<string, unknown> = { ...state(), money: 120 };
+    delete old.jingi;
+    const s = deserialize(JSON.stringify({ version: 7, savedAt: '2026-10-31T00:00:00.000Z', state: old }))?.state;
+    expect(s).toMatchObject({ money: 120, jingi: JINGI_START });
+  });
+
+  it('仁義ポイントは記録して読み戻せる', () => {
+    expect(deserialize(serialize({ ...state(), jingi: 0 }))?.state.jingi).toBe(0);
+    expect(deserialize(serialize({ ...state(), jingi: JINGI_MAX }))?.state.jingi).toBe(JINGI_MAX);
+  });
+
+  it('版 8 で仁義ポイントがない、負・小数・上限を超える記録は読まない', () => {
+    const missing: Record<string, unknown> = { ...state() };
+    delete missing.jingi;
+    for (const st of [missing, { ...state(), jingi: -1 }, { ...state(), jingi: 1.5 }, { ...state(), jingi: JINGI_MAX + 1 }]) {
+      expect(deserialize(JSON.stringify({ version: 8, savedAt: '2026-10-31T00:00:00.000Z', state: st })), String(st.jingi)).toBeNull();
+    }
   });
 });
 

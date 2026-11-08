@@ -4,7 +4,7 @@
 import type { MapDef, NpcDef } from './maps';
 
 /** 看板の種類（scripts/draw_signs.py の SIGNS と同じ）。 */
-export const SIGN_KINDS = ['yado', 'chaya', 'yorozu', 'kaji', 'hikyaku', 'tera', 'yashiro', 'shokan', 'kinpaku', 'renkon', 'yuya', 'tobaku', 'izakaya', 'gyoro'] as const;
+export const SIGN_KINDS = ['yado', 'chaya', 'yorozu', 'kaji', 'hikyaku', 'tera', 'yashiro', 'shokan', 'kinpaku', 'renkon', 'yuya', 'tobaku', 'izakaya', 'gyoro', 'oyabun'] as const;
 export type SignKind = (typeof SIGN_KINDS)[number];
 // 看板の字（宿・茶・万など）は scripts/draw_signs.py の SIGNS が正（テストで種類がそろっているかを確かめる）。
 
@@ -38,6 +38,7 @@ export function signKind(npc: NpcDef): SignKind | null {
     case 'tobaku':
     case 'izakaya':
     case 'gyoro':
+    case 'oyabun':
       return npc.action;
     case 'temple':
       return npc.sprite === 'npc_kannushi' ? 'yashiro' : 'tera';

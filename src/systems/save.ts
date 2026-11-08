@@ -5,6 +5,7 @@ import { isKnownItem, MAX_ITEM_COUNT } from '../data/items';
 import { MAPS, respawnPoint } from '../data/maps';
 import { MAX_WARD_STEPS } from '../data/skills';
 import { STARTING_ITEMS, type GameState } from './gameState';
+import { JINGI_MAX, JINGI_START } from './jingi';
 import { memberStats } from './party';
 import { totalExpForLevel } from './stats';
 
@@ -17,8 +18,9 @@ import { totalExpForLevel } from './stats';
  * - 5: 一時離脱の仲間（away）を追加
  * - 6: 序章〜第 5 章の町・ダンジョンを作り直した（古い位置は、新しい形では壁の中や見張りの向こうになりうる）
  * - 7: ワールドマップを 150×60 に広げた（古い座標は海や野原の上になりうるので、いちばん近い町の印の上へ移す）
+ * - 8: 仁義ポイント（jingi）を追加
  */
-export const SAVE_VERSION = 7;
+export const SAVE_VERSION = 8;
 
 /** 版 6 で形を作り直したマップ。版 5 までのセーブがこの中にいたら、旅籠の前（ダンジョンなら近くの町の旅籠の前）へ移す。 */
 export const MAPS_REBUILT_IN_V6: readonly string[] = [
@@ -124,6 +126,7 @@ export function isGameState(v: unknown): v is GameState {
   if (!isObject(v.flags) || !Object.values(v.flags).every((f) => typeof f === 'boolean')) return false;
   if (!isNonNegativeInteger(v.stepsToEncounter) || !isFiniteNumber(v.playTimeSec) || v.playTimeSec < 0) return false;
   if (v.wardSteps !== undefined && !isNonNegativeInteger(v.wardSteps)) return false;
+  if (!isNonNegativeInteger(v.jingi) || v.jingi > JINGI_MAX) return false;
   return true;
 }
 
@@ -158,6 +161,9 @@ function migrate(version: unknown, state: unknown): unknown {
     } else if (v === 6 && s.mapId === 'world' && typeof s.x === 'number' && typeof s.y === 'number') {
       // 版 6 までのワールドマップの座標は、広げたワールドマップでは海や野原の上になる
       s = { ...s, ...worldPositionV7(s.x, s.y) };
+    } else if (v === 7) {
+      // 版 7 には仁義ポイントがない。新しく始めた場合と同じだけ持たせる
+      s = { ...s, jingi: JINGI_START };
     }
     v++;
   }

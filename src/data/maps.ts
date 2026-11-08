@@ -2,6 +2,7 @@
 // タイルの文字の意味は TILES を参照。
 import type { Facing } from '../systems/gameState';
 import { OBJECT_DEFS, type CharacterSpriteId, type ObjectSpriteId } from './sprites';
+import { OYABUN, oyabunNpc } from './oyabun';
 import { TOWN_FACILITY_DOORS, townFacilityNpcs } from './townFacilities';
 
 /** タイルの種類。画像は public/assets/tiles/<種類>.png（PixelLab で生成。記録は public/assets/README.md）。 */
@@ -108,8 +109,11 @@ export const TILES: Record<string, TileDef> = {
   G: { kind: 'gate', blocked: false },
 };
 
-/** 施設の処理。湯屋（yuya）・賭場（tobaku）・居酒屋（izakaya）・妓楼（gyoro）は src/data/townFacilities.ts で町ごとに置く。 */
-export type NpcAction = 'inn' | 'teahouse' | 'shop' | 'temple' | 'hikyaku' | 'yuya' | 'tobaku' | 'izakaya' | 'gyoro';
+/**
+ * 施設の処理。湯屋（yuya）・賭場（tobaku）・居酒屋（izakaya）・妓楼（gyoro）は src/data/townFacilities.ts、
+ * 親分の屋敷（oyabun）は src/data/oyabun.ts で町ごとに置く。
+ */
+export type NpcAction = 'inn' | 'teahouse' | 'shop' | 'temple' | 'hikyaku' | 'yuya' | 'tobaku' | 'izakaya' | 'gyoro' | 'oyabun';
 
 export interface NpcDef {
   id: string;
@@ -771,7 +775,7 @@ MAPS.sunpu = {
     'T,TT.......TT,,,~~^^WWWWWWWWWW^^~~,,.WWWWW_WWWWW,T',
     'T,TT.T...T.TT,,,~~^^^^^^..^^^^^^~~,,.,,,,,.,,,,,,T',
     'T,TTTT...TTTT,,,~~^^^^^^..^^^^^^~~,,.RRRRR.RRRRR,T',
-    'TRRRRR,,,RRRRR,,~~~~~~~~==~~~~~~~~,,.WWWWW.WWWWW,T',
+    'TRRRRR,,,RRRRR,,~~~~~~~~==~~~~~~~~,,.WWDWW.WWWWW,T',
     'TWWDWW,,,WWDWW,,~~~~~~~~==~~~~~~~~,,.,,,,,.,,,,,,T',
     'T,,,,,,,,,,,,,,,,,,,,,,,,=,,,,,,,,,,,,,,,,,,,,,,,T',
     '==================================================',
@@ -2113,11 +2117,11 @@ MAPS.iga = {
     'TTTTTTTTTTT..TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
     'TTTTTTTTTTT..TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
     'T,,,,,T,,,,..,,,,,^^^^^^^^^^^^^^^^,,,,,,T,,,,,,,,T',
-    'T,,,,,,,,,,..,,,,,^^^,,RRRRRR,,^^^,,,,,,,,,,,,,,,T',
-    'T,,,,,,,,,,......,^^^,,RRRRRR,,^^^,,,,,,,,,,,,T,,T',
-    'T,,,,,,,,,,......,^^^,,RRRRRR,,^^^,,,,,,,,,,,,,,,T',
-    'T,,,,,,,,,,,,,,..,^^^,,WWWWWW,,^^^,,,,,,,,,,,,,,,T',
-    'T,,,,,,,,,,,,,,..,^^^,........,^^^,,,,,,,,,,,,,,,T',
+    'T,,,,,,,,,,..,,,,,^^^,,RRRRRR,,^^^,,,,RRRRRRR,,,,T',
+    'T,,,,,,,,,,......,^^^,,RRRRRR,,^^^,,,,RRRRRRR,T,,T',
+    'T,,,,,,,,,,......,^^^,,RRRRRR,,^^^,,,,RRRRRRR,,,,T',
+    'T,,,,,,,,,,,,,,..,^^^,,WWWWWW,,^^^,,,,WWWDWWW,,,,T',
+    'T,,,,,,,,,,,,,,..,^^^,........,^^^,,,,.......,,,,T',
     'T,,,,,,,,,,,,,,..,^^^,,,,,,,,,,^^^,,,,,,,,,,,,,,,T',
     'T,,,,,,,,,,,,,,..,^^^^^^^..^^^^^^^,,,,,,,,,,,,,,,T',
     'T,,,,,,,,,,,,,,..,^^^^^^^..^^^^^^^,,,,,,,,,,,,,,,T',
@@ -3041,10 +3045,10 @@ MAPS.nagasaki = {
     'T~~~~~~~~~~~=,RRRR.RRRR,=,RRRR,,,^^^^==^^^^T',
     'T~~~~~~~~~~~=,WDWW.WDWW,=,WWDW,,,^^^^==^^^^T',
     'T~~~~~~~~~~~=...........=......T,^^^^==^^^^T',
-    'T~~~~~~~~~~~=,RRRR,RRRR,=,,,,,,,,^^^^==^^^^T',
-    'T~~~RRR~~~~~=,WDWW,WWDW,=,,,,,T,,^^^^==^^^^T',
-    'T~~RRRRR~~~~=,,,,,,,,,,,=T,,,,,,,^^^^==^^^^T',
-    'T~~RRRRW~~~~=,,,,,,,,,,,=,,,,,,,,===========',
+    'T~~~~~~~~~~~=,RRRR,RRRR,=,RRRRRR,^^^^==^^^^T',
+    'T~~~RRR~~~~~=,WDWW,WWDW,=,RRRRRR,^^^^==^^^^T',
+    'T~~RRRRR~~~~=,,,,,,,,,,,=TWWDWWW,^^^^==^^^^T',
+    'T~~RRRRW~~~~=,,,,,,,,,,,=,......,===========',
     'T~~RRRR_=============================^^^^^^T',
     'T~~RRRRW~~~~=,,,,,,,,,,,=,,,,,,,,^^^^^^^^^^T',
     'T~~RRRRR~~~~=,RRRR.RRRR,=,RRRRRR,^^^^^^^^^^T',
@@ -4137,10 +4141,10 @@ MAPS.sendai = {
     'TTTTTTTTTTTT~~~.................=..................T',
     'TTTTTTTTTTTT~~~.===================================T',
     'TTTTTTTTTTTT~~~.................=..................T',
-    'TTTTTTTTTTTT~~~.RRRRRRR.RRRRRR..=.,,,,,,,,,,TTT,,,.T',
-    'TTTTTTTTTTTT~~~.RRRRRRR.RRRRRR..=.,,TTTTT,,,TTT,,,.T',
-    'TTTTTTTTTTTT~~~.RRRRRRR.RRRRRR..=.,,TTTTT,,,TTT,,,.T',
-    'TTTTTTTTTTTT~~~.WWWDWDW.WWDWDW..=.,,,,,,,,,,,,,,,,.T',
+    'TTTTTTTTTTTT~~~.RRRRRRR.RRRRRR..=.,RRRRRRR,,TTT,,,.T',
+    'TTTTTTTTTTTT~~~.RRRRRRR.RRRRRR..=.,RRRRRRR,,TTT,,,.T',
+    'TTTTTTTTTTTT~~~.RRRRRRR.RRRRRR..=.,WWWWWDW,,TTT,,,.T',
+    'TTTTTTTTTTTT~~~.WWWDWDW.WWDWDW..=.,.......,,,,,,,,.T',
     'TTTTTTTTTTTT~~~...................,,,,,,,,,,,,,,,,.T',
     'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
   ],
@@ -4335,9 +4339,9 @@ MAPS.hamamatsu = {
     'TTTTTTTTTTTTTTTTTTTTTTTTT==TTTTTTTTTTTTTTTTTTTTTTTTT',
     'TTTTTTTTTTTTTTTTTTTTTTTTT==TTTTTTTTTTTTTTTTTTTTTTTTT',
     'TTTTTTTTTTTTTT...........==.....................T..T',
-    'TT......TT...T.,,,,,,,,..==.........TT.,,,,,,,,,,,,T',
-    'TT,TT,,,,,,,.T.,,,,,,,,......,,,,,,,...,,,,,TT,,,,,T',
-    'TT,,,,,,,,,,.T.,,,,,,,,......,,,,,,,...,,,...,,,,,,T',
+    'TT......TT...T.RRRRRRR,..==.........TT.,,,,,,,,,,,,T',
+    'TT,TT,,,,,,,.T.RRRRRRR,......,,,,,,,...,,,,,TT,,,,,T',
+    'TT,,,,,,,,,,.T.WWWDWWW,......,,,,,,,...,,,...,,,,,,T',
     'TT.................................................T',
     'T~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~T',
     'T~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~T',
@@ -4594,10 +4598,10 @@ MAPS.hikone = {
     'T~~~,,,,WWWWDWWWW,,,,,,,,==,T.T.TTTTTTTTTTTTT.TTTTTT',
     'T~~~,.......................T.T............TT.TTTTTT',
     'T~~~,,,,,,,,,,,,,,,,,,,,,,,.T.TTTTTTT.TTTTTTT.TTTTTT',
-    'T~~~,,,,,,,,,,,,,T,,,,,,,,,.T.TTTTTTT.........TTTTTT',
-    'T~~~,,,,,,,,,,,,,,,,,,,,,,,...TTTTTTTTTTTTTTTTTTTTTT',
-    'T~~~,,,,,,,,,,,,,,,,,,T,,,,,TTTTTTTTTTTTTTTTTTTTTTTT',
-    'T~~~,,,,,,,,,,T,,,,,,,,,,,,,TTTTTTTTTTTTTTTTTTTTTTTT',
+    'T~~~,,,,,,,,,,,,,TRRRRRRR,,.T.TTTTTTT.........TTTTTT',
+    'T~~~,,,,,,,,,,,,,,RRRRRRR,,...TTTTTTTTTTTTTTTTTTTTTT',
+    'T~~~,,,,,,,,,,,,,,WWWDWWW,,,TTTTTTTTTTTTTTTTTTTTTTTT',
+    'T~~~,,,,,,,,,,T,,,.......,,,TTTTTTTTTTTTTTTTTTTTTTTT',
     'T~~~,,,,,,,,,,,,,,,,,,,,,,,,TTTTTTTTTTTTTTTTTTTTTTTT',
     'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
   ],
@@ -4869,10 +4873,10 @@ MAPS.kumamoto = {
     'T===..........T,,,,,,,,,,,==,,,.,~~~,,,,,,~~~~,.,,,T',
     'T~~~..........T,,,,,,,,,,,==,,,.,~~~~~~~~~~~~~,.,,,T',
     'T~~~,,,,,,,,,,T,,,,,,,,,,,==,,,.,~~~~~~~~~~~~~,.,,,T',
-    'T~~~,,,,,,,,,,T,,,,,,,,,,,==,,,.................,,,T',
-    'T~~~,,,,,,,,,,T,,,,,,,,,,,==,,,,,,,,,,,,,,,,,,,,,,,T',
-    'T~~~,,,,,,,,,,T,,,,,,,,,,,==,TTTTTTTTTTTTTTTTTTTT,TT',
-    'T~~~,,,,,,,,,,,,,,,,,,,,,,,,,TTTTTTTTTTTTTTTTTTTTTTT',
+    'T~~~,,,,,,,,,,T,,,RRRRRRR,==,,,.................,,,T',
+    'T~~~,,,,,,,,,,T,,,RRRRRRR,==,,,,,,,,,,,,,,,,,,,,,,,T',
+    'T~~~,,,,,,,,,,T,,,WWWDWWW,==,TTTTTTTTTTTTTTTTTTTT,TT',
+    'T~~~,,,,,,,,,,,,,,.......,,,,TTTTTTTTTTTTTTTTTTTTTTT',
     'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
 
   ],
@@ -5185,10 +5189,10 @@ MAPS.aizu = {
     'T.WWWWDWWWW.WWWDWWWDWWW.=.WWWWDWWWDW..WWDWWW.,,,,,,T',
     'T.......................=.....................,,,,,T',
     'T.......................=.....................,,,,,T',
-    'T,,TTT,,,,,,,,TTT.......=,TT,~~~~~~~,,TT,,,,TT,,,,,T',
-    'T,,TTT,,,,,,,,TTT.......=,,,,~~~~~~~,,TT,,,,TT,,,,,T',
-    'T,,,,,,,,,,,,,,,,.......=....~~~~~~~,,,,,,,,,,,,,,,T',
-    'T,,,,,,,,,,,,,,,,.......=....,,,,,,,,,,,,,,,,,,,,,,T',
+    'T,,TTTRRRRRRR,TTT.......=,TT,~~~~~~~,,TT,,,,TT,,,,,T',
+    'T,,TTTRRRRRRR,TTT.......=,,,,~~~~~~~,,TT,,,,TT,,,,,T',
+    'T,,,,,WWWDWWW,,,,.......=....~~~~~~~,,,,,,,,,,,,,,,T',
+    'T,,,,,.......,,,,.......=....,,,,,,,,,,,,,,,,,,,,,,T',
     'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
   ],
   npcs: [
@@ -5443,10 +5447,10 @@ MAPS.edo = {
     'T...............................=..............................T',
     'T...............................=..............................T',
     'T==============================================================T',
-    'T...................,,,,,,,,....=...,,,,,,.....................T',
-    'T.RRRRRRRRR.,,,,,,.RRRRRRRRRRRR.=.RRRRRRRR.RRRRRR.,,,,,,,,,,,,.T',
-    'T.RRRRRRRRR.,,,,,,.RRRRRRRRRRRR.=.RRRRRRRR.RRRRRR.,,TTT,,,,,,,.T',
-    'T.RRRRRRRRR.,,,,,,.RRRRRRRRRRRR.=.RRRRRRRR.RRRRRR.,,TTT,,,,,,,.T',
+    'T...................,,,,,,,,....=...,,,,,,.............RRRRRRR.T',
+    'T.RRRRRRRRR.,,,,,,.RRRRRRRRRRRR.=.RRRRRRRR.RRRRRR.,,,,,RRRRRRR.T',
+    'T.RRRRRRRRR.,,,,,,.RRRRRRRRRRRR.=.RRRRRRRR.RRRRRR.,,TTTWWWDWWW.T',
+    'T.RRRRRRRRR.,,,,,,.RRRRRRRRRRRR.=.RRRRRRRR.RRRRRR.,,TTT........T',
     'T.RRRRRRRRR.,,,,,,.RRRRRRRRRRRR.=.RRRRRRRR.RRRRRR.,,TTT,,,,,,,.T',
     'T.RRRRRRRRR.,,,,,,.WWDWWWWWDWWW.=.WWWDWWWW.WWDWWW.,,,,,,,TTT,,.T',
     'T.WWWWDWWWW.,,,,,,..............=.................,,,,,,,TTT,,.T',
@@ -6057,6 +6061,8 @@ MAPS.matsuNoRoka = {
 
 // 湯屋・賭場・居酒屋・妓楼（刀鍛冶かよろず屋のあるすべての町。戸口と台詞は src/data/townFacilities.ts）
 for (const town of Object.keys(TOWN_FACILITY_DOORS)) MAPS[town]!.npcs.push(...townFacilityNpcs(town));
+// 親分の屋敷の若い衆（同じ町に 1 軒ずつ。戸口と一家の名は src/data/oyabun.ts）
+for (const town of Object.keys(OYABUN)) MAPS[town]!.npcs.push(oyabunNpc(town)!);
 
 export type TownAction =
   | { kind: 'enter'; to: { mapId: string; x: number; y: number } }

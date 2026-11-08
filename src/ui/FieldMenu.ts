@@ -439,6 +439,8 @@ export class FieldMenu {
     objs.push(drawWindow(this.scene, MONEY_X, MONEY_Y, mw, MONEY_H));
     objs.push(addIcon(this.scene, MONEY_X + 8, MONEY_Y + 12, MONEY_ICON));
     objs.push(this.scene.add.text(MONEY_X + 8 + MENU_ICON_SPACE, MONEY_Y + 6, `所持金 ${state.money} 文`, textStyle(10, COLORS.accent)));
+    // 仁義ポイント（親分の屋敷に泊まるときに使う）は所持金の右に並べる
+    objs.push(this.scene.add.text(MONEY_X + mw - 8, MONEY_Y + 6, `仁義 ${state.jingi}`, textStyle(10, COLORS.accent)).setOrigin(1, 0));
     objs.push(
       this.scene.add.text(MONEY_X + 8, MONEY_Y + 20, `次：${nextObjective(state.flags)}`, {
         ...textStyle(9),
