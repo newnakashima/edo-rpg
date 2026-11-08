@@ -15,7 +15,8 @@ import { getState, holdEventWhileAway, setState, shouldRunEnterEvent, takePendin
 import { EVENTS } from '../data/events';
 import { CHAR_DISPLAY_ORIGIN, heroSprite, idleFrame, objectDepth, objectDisplayOrigin, objectKey, oppositeFacing, personDepth, shouldStandStill, spriteKey, walkAnimKey, walkDepthRow, type CharacterSpriteId } from '../data/sprites';
 import { EventRunner, type EventInput } from '../systems/eventScript';
-import { Controls } from '../ui/input';
+import { fieldCancelLabel } from '../ui/cancelLabel';
+import { Controls, setCancelLabel } from '../ui/input';
 import { FieldMenu } from '../ui/FieldMenu';
 import { TradeMenu, type TradeMode } from '../ui/TradeMenu';
 import { SaveSlotMenu } from '../ui/SaveSlotMenu';
@@ -138,7 +139,7 @@ export class FieldScene extends Phaser.Scene {
     this.message = new MessageWindow(this, 8, GAME_HEIGHT - 66, GAME_WIDTH - 16, 58, (page) => {
       const face = faceForPage(page);
       return { text: pageText(page), face: face && faceKey(face) };
-    });
+    }, { glossary: true });
     this.showAreaName(map.name);
 
     // 戦闘や移動から戻ってきたら、途中のイベントの続きを行う。なければ、マップに入ったときのイベントを行う
@@ -276,6 +277,15 @@ export class FieldScene extends Phaser.Scene {
     const state = getState();
     state.playTimeSec += delta / 1000;
     this.followPlayer();
+    setCancelLabel(
+      fieldCancelLabel({
+        messageOpen: this.message.isOpen,
+        pageHasTerms: this.message.hasTerms,
+        tipsOpen: this.message.tipsOpen,
+        overlay: this.overlays.length > 0,
+        eventRunning: !!this.runner,
+      }),
+    );
 
     if (this.message.isOpen) {
       if (shouldStandStill({ moving: this.moving, busy: true, held: false })) this.standStill();

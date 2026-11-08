@@ -24,6 +24,7 @@ npm run build      # dist/ にビルド
 ```
 
 操作: 十字キー（または WASD）で移動、Z / Enter / Space で決定・話す、X / Esc で取消・メニュー。
+台詞の中の色と下線の付いた言葉（読みにくい漢字・江戸の言葉）は、台詞を読んでいる間に X / Esc（スマートフォンでは「用語」と表示される取消ボタン）で読みと意味を見られる（用語は `src/data/glossary.ts`）。スマートフォンの取消ボタンは、マップを歩いている間は「状態」（メニューを開く）と表示される。
 スマートフォンでは画面の仮想パッドで操作します。
 
 main に入ると GitHub Actions で GitHub Pages に公開します（Settings → Pages の Source を「GitHub Actions」にしておく）。
