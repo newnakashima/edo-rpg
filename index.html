@@ -24,6 +24,7 @@
       /* 仮想パッドの画像（public/assets/ui/。生成の記録は public/assets/README.md）。ドット絵を 2 倍で表示する。
          url() はページからの相対パスのまま実行時に読まれる（ビルドで「didn't resolve at build time」と出るのは想定どおり。GitHub Pages の /edo-rpg/ の下でも読める） */
       .dpad { touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; display: grid; grid-template: repeat(3, 1fr) / repeat(3, 1fr); width: 128px; height: 128px; background: url(assets/ui/dpad.png) center / 128px 128px no-repeat; image-rendering: pixelated; }
+      /* 文字の選択・長押しのメニューを切る指定は、十字キーは .dpad（指を受ける要素）に、決定・取消は .btn に付ける */
       .btn { color: #f4ecd8; font: bold 16px sans-serif; text-shadow: 0 1px 0 #1a1817, 1px 0 0 #1a1817, -1px 0 0 #1a1817, 0 -1px 0 #1a1817; display: flex; align-items: center; justify-content: center; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
       /* 十字キーの各腕。押している腕を金色に光らせる。指は十字キー全体で受けて位置から向きを決める（src/ui/input.ts）ので、腕の間の隙間でも反応する */
       .dpad .btn { margin: 4px; border-radius: 4px; pointer-events: none; }

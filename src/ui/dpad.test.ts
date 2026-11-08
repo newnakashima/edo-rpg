@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Facing } from '../systems/gameState';
-import { DPAD_DEAD_ZONE, DpadTracker, directionFromOffset } from './dpad';
+import html from '../../index.html?raw';
+import { BLOCKED_DEFAULTS, bindDpad, blockDefaults, DPAD_DEAD_ZONE, DpadTracker, directionFromOffset, isPrimaryPress } from './dpad';
 
 describe('directionFromOffset', () => {
   it('腕の上は、その向きになる', () => {
@@ -89,15 +90,26 @@ describe('DpadTracker', () => {
     ]);
   });
 
-  it('別の指で押し直すと、その指に持ち替える', () => {
+  it('別の指で押し直すとその指に従い、離すと残っている指の向きに戻る', () => {
     const { tracker } = track();
     tracker.start(1, 40, 0);
     tracker.start(2, 0, 40);
     expect(tracker.direction).toBe('down');
-    tracker.end(1);
-    expect(tracker.direction).toBe('down');
     tracker.end(2);
+    expect(tracker.direction).toBe('right');
+    tracker.move(1, 0, -40);
+    expect(tracker.direction).toBe('up');
+    tracker.end(1);
     expect(tracker.direction).toBeNull();
+  });
+
+  it('後から中心に置いた指は、先の指の向きを止めない', () => {
+    const { tracker } = track();
+    tracker.start(1, 40, 0);
+    tracker.start(2, 0, 0);
+    expect(tracker.direction).toBe('right');
+    tracker.move(2, -40, 0);
+    expect(tracker.direction).toBe('left');
   });
 
   it('reset で指の有無にかかわらず離す', () => {
@@ -105,5 +117,143 @@ describe('DpadTracker', () => {
     tracker.start(1, 40, 0);
     tracker.reset();
     expect(tracker.direction).toBeNull();
+  });
+});
+
+/** 十字キーの要素の代わり。中心が (100, 100) の 128px 四方。 */
+class FakeDpad extends EventTarget {
+  readonly captured: number[] = [];
+  readonly arms = (['up', 'down', 'left', 'right'] as const).map((dir) => {
+    const classes = new Set<string>();
+    return { dataset: { dir }, classes, classList: { add: (c: string) => classes.add(c), remove: (c: string) => classes.delete(c) } };
+  });
+  getBoundingClientRect() {
+    return { left: 36, top: 36, width: 128, height: 128 };
+  }
+  querySelectorAll(selector: string) {
+    return selector === '[data-dir]' ? this.arms : [];
+  }
+  setPointerCapture(id: number) {
+    this.captured.push(id);
+  }
+  active(): string[] {
+    return this.arms.filter((a) => a.classes.has('active')).map((a) => a.dataset.dir);
+  }
+}
+
+function pointer(target: EventTarget, type: string, init: { id?: number; x?: number; y?: number; pointerType?: string; button?: number } = {}): boolean {
+  const e = Object.assign(new Event(type, { cancelable: true }), {
+    pointerId: init.id ?? 1,
+    clientX: init.x ?? 100,
+    clientY: init.y ?? 100,
+    pointerType: init.pointerType ?? 'touch',
+    button: init.button ?? 0,
+  });
+  target.dispatchEvent(e);
+  return e.defaultPrevented;
+}
+
+function bind() {
+  const dpad = new FakeDpad();
+  const held = new Set<Facing>();
+  const pressed: Facing[] = [];
+  const win = new EventTarget();
+  bindDpad(
+    dpad,
+    {
+      hold: (d) => {
+        held.add(d);
+        pressed.push(d);
+      },
+      release: (d) => held.delete(d),
+    },
+    win,
+  );
+  return { dpad, held, pressed, win };
+}
+
+describe('bindDpad', () => {
+  it('要素の中心からの位置で向きを決め、腕を光らせ、指を捕まえる', () => {
+    const { dpad, held, pressed } = bind();
+    expect(pointer(dpad, 'pointerdown', { x: 140, y: 100 })).toBe(true);
+    expect([...held]).toEqual(['right']);
+    expect(dpad.active()).toEqual(['right']);
+    expect(dpad.captured).toEqual([1]);
+    // 斜めの隙間を通って上の腕へ滑らせる
+    pointer(dpad, 'pointermove', { x: 130, y: 69 });
+    expect([...held]).toEqual(['up']);
+    expect(dpad.active()).toEqual(['up']);
+    expect(pressed).toEqual(['right', 'up']);
+    pointer(dpad, 'pointerup');
+    expect(held.size).toBe(0);
+    expect(dpad.active()).toEqual([]);
+  });
+
+  it('pointercancel・lostpointercapture・blur でも離す', () => {
+    const { dpad, held, win } = bind();
+    for (const release of ['pointercancel', 'lostpointercapture']) {
+      pointer(dpad, 'pointerdown', { x: 60 });
+      expect([...held]).toEqual(['left']);
+      pointer(dpad, release);
+      expect(held.size, release).toBe(0);
+    }
+    pointer(dpad, 'pointerdown', { y: 150 });
+    win.dispatchEvent(new Event('blur'));
+    expect(held.size).toBe(0);
+    expect(dpad.active()).toEqual([]);
+  });
+
+  it('マウスの右クリックでは動かない', () => {
+    const { dpad, held } = bind();
+    pointer(dpad, 'pointerdown', { x: 140, pointerType: 'mouse', button: 2 });
+    expect(held.size).toBe(0);
+    pointer(dpad, 'pointerdown', { x: 140, pointerType: 'mouse', button: 0 });
+    expect([...held]).toEqual(['right']);
+  });
+
+  it('タッチの既定の動作（iOS の虫眼鏡など）を止める', () => {
+    const { dpad } = bind();
+    for (const type of ['touchstart', 'touchmove', 'touchend', 'contextmenu', 'selectstart']) {
+      const e = new Event(type, { cancelable: true });
+      dpad.dispatchEvent(e);
+      expect(e.defaultPrevented, type).toBe(true);
+    }
+  });
+});
+
+describe('blockDefaults / isPrimaryPress', () => {
+  it('決定・取消のボタンでもタッチの既定の動作を止める', () => {
+    const el = new EventTarget();
+    blockDefaults(el);
+    for (const type of BLOCKED_DEFAULTS) {
+      const e = new Event(type, { cancelable: true });
+      el.dispatchEvent(e);
+      expect(e.defaultPrevented, type).toBe(true);
+    }
+  });
+
+  it('タッチ・ペン・マウスの左ボタンだけを押したとみなす', () => {
+    expect(isPrimaryPress({ pointerType: 'touch', button: 0 })).toBe(true);
+    expect(isPrimaryPress({ pointerType: 'pen', button: 0 })).toBe(true);
+    expect(isPrimaryPress({ pointerType: 'mouse', button: 0 })).toBe(true);
+    expect(isPrimaryPress({ pointerType: 'mouse', button: 2 })).toBe(false);
+  });
+});
+
+describe('index.html の十字キー', () => {
+
+  it('腕は data-dir を持ち、指を受けない（十字キー全体で受ける）', () => {
+    for (const dir of ['up', 'down', 'left', 'right']) expect(html).toContain(`data-dir="${dir}"`);
+    expect(html).not.toMatch(/data-key="(up|down|left|right)"/);
+    expect(html).toMatch(/\.dpad \.btn \{[^}]*pointer-events: none/);
+  });
+
+  it('十字キーとボタンで、スクロール・文字の選択・長押しのメニューを切る', () => {
+    for (const sel of ['\\.dpad', '\\.btn']) {
+      const rule = html.match(new RegExp(`\\n\\s*${sel} \\{([^}]*)\\}`))?.[1] ?? '';
+      expect(rule, sel).toContain('touch-action: none');
+      expect(rule, sel).toContain('-webkit-user-select: none');
+      expect(rule, sel).toContain('-webkit-touch-callout: none');
+    }
   });
 });

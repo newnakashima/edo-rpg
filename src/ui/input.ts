@@ -1,7 +1,7 @@
 // キーボードと画面上の仮想パッド（DOM のボタン）の入力をまとめる。
 import Phaser from 'phaser';
 import type { Facing } from '../systems/gameState';
-import { DpadTracker } from './dpad';
+import { bindDpad, blockDefaults, isPrimaryPress } from './dpad';
 
 export type Button = 'ok' | 'cancel';
 
@@ -33,57 +33,27 @@ export const pad = new PadState();
 
 const DIRECTIONS: Facing[] = ['up', 'down', 'left', 'right'];
 
-/** 押す・離すのイベントで、ブラウザの既定の動作（iOS の長押しの虫眼鏡・文字の選択・メニュー）を止める。 */
-function blockDefaults(el: HTMLElement): void {
-  const block = (e: Event) => e.preventDefault();
-  // iOS の虫眼鏡は pointerdown の preventDefault では止まらないので、touchstart でも止める（pointer のイベントは届き続ける）
-  for (const type of ['touchstart', 'touchmove', 'touchend', 'contextmenu', 'selectstart']) {
-    el.addEventListener(type, block, { passive: false });
-  }
-}
-
-/** 十字キーの全体で指を受け、指の位置から向きを決める。 */
-function bindDpad(dpad: HTMLElement): void {
-  const arms = new Map<Facing, HTMLElement>();
-  for (const el of Array.from(dpad.querySelectorAll<HTMLElement>('[data-dir]'))) arms.set(el.dataset.dir as Facing, el);
-  const tracker = new DpadTracker((prev, next) => {
-    if (prev) {
-      pad.held.delete(prev);
-      arms.get(prev)?.classList.remove('active');
-    }
-    if (next) {
-      pad.held.add(next);
-      pad.press(next);
-      arms.get(next)?.classList.add('active');
-    }
-  });
-  const offset = (e: PointerEvent): [number, number] => {
-    const r = dpad.getBoundingClientRect();
-    return [e.clientX - (r.left + r.width / 2), e.clientY - (r.top + r.height / 2)];
-  };
-  dpad.addEventListener('pointerdown', (e) => {
-    e.preventDefault();
-    // 指が十字キーの外へ出ても追い続ける
-    dpad.setPointerCapture?.(e.pointerId);
-    tracker.start(e.pointerId, ...offset(e));
-  });
-  dpad.addEventListener('pointermove', (e) => tracker.move(e.pointerId, ...offset(e)));
-  const up = (e: PointerEvent) => tracker.end(e.pointerId);
-  dpad.addEventListener('pointerup', up);
-  dpad.addEventListener('pointercancel', up);
-  dpad.addEventListener('lostpointercapture', up);
-  blockDefaults(dpad);
-  window.addEventListener('blur', () => tracker.reset());
-}
-
 /** index.html の #pad の十字キーとボタンに、押下・離しのイベントをつなぐ。 */
 export function bindVirtualPad(root: HTMLElement): void {
   const dpad = root.querySelector<HTMLElement>('.dpad');
-  if (dpad) bindDpad(dpad);
+  if (dpad) {
+    bindDpad(
+      dpad,
+      {
+        hold: (dir) => {
+          pad.held.add(dir);
+          pad.press(dir);
+        },
+        release: (dir) => pad.held.delete(dir),
+      },
+      window,
+    );
+  }
   for (const el of Array.from(root.querySelectorAll<HTMLElement>('[data-key]'))) {
     const key = el.dataset.key as Button;
-    const down = (e: Event) => {
+    const down = (e: PointerEvent) => {
       e.preventDefault();
+      if (!isPrimaryPress(e)) return;
       el.classList.add('active');
       pad.press(key);
     };
