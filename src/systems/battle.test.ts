@@ -226,6 +226,14 @@ describe('レア装備の特性', () => {
     expect(heals.every((n) => n > 0)).toBe(true);
     expect(healed.state.combatants[1]!.hp).toBe(1 + heals[0]! + heals[1]!);
 
+    // 1 回目で満タンになったら、もう一度は発動しない
+    const nearlyFull = createBattle(party, 'm', ['yamainu'], 1);
+    nearlyFull.combatants[1]!.hp = nearlyFull.combatants[1]!.stats.maxHp - 1;
+    nearlyFull.combatants[2]!.status = { sleep: 3 };
+    const topped = resolveTurn(nearlyFull, { p0: { kind: 'skill', skill: 'yakushi', target: 'p1' } }, seededRng(6)).events;
+    expect(topped.filter((e) => e.type === 'heal')).toHaveLength(1);
+    expect(topped.some((e) => e.type === 'again')).toBe(false);
+
     // 1 回目が効かない（倒れた味方への回復）ときは、もう一度は発動しない
     const fallen = createBattle(party, 'm', ['yamainu'], 1);
     fallen.combatants[1]!.hp = 0;

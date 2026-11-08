@@ -407,10 +407,16 @@ class TurnContext {
     const worked = this.events
       .slice(before)
       .some((e) => e.type === 'damage' || (e.type === 'heal' && e.amount > 0));
-    if (echo && canDoubleCast(skill) && worked && isAlive(actor) && judge(this.state) === 'ongoing') {
+    if (echo && canDoubleCast(skill) && worked && isAlive(actor) && judge(this.state) === 'ongoing' && this.healHasRoom(actor, skill, targetKey)) {
       this.events.push({ type: 'again', actor: actor.key, equip: echo, trait: 'doubleCast' });
       this.skillEffect(actor, skill, targetKey);
     }
+  }
+
+  /** 回復の術なら、もう一度かけて回復する相手（生きていて満タンでない）がいるか。回復以外は常に true。 */
+  private healHasRoom(actor: Combatant, skill: SkillDef, targetKey: string | undefined): boolean {
+    if (skill.effect.kind !== 'heal') return true;
+    return this.skillTargets(actor, skill, targetKey).some((t) => isAlive(t) && t.hp < t.stats.maxHp);
   }
 
   /** 技の効果（気力を払った後）。 */
