@@ -12,7 +12,6 @@ import {
   moguriInnPrice,
   playChohan,
   reviveAfterDefeat,
-  stayAtInn,
   stayAtMoguriInn,
   takeBath,
   teahouseChoices,
@@ -33,20 +32,6 @@ describe('施設', () => {
   it('値段は docs/balance.md の「経済」のとおり', () => {
     expect(innPrice(1)).toBe(14);
     expect(dangoPrice(1)).toBe(6);
-  });
-
-  it('旅籠に泊まると全回復し、宿代を払う', () => {
-    const s = { ...newGame('m', start), money: 20, party: [{ ...createMember('hero', 2), hp: 0, mp: 0 }] };
-    const r = stayAtInn(s, 1);
-    expect(r.ok).toBe(true);
-    if (!r.ok) return;
-    expect(r.state.money).toBe(6);
-    const m = r.state.party[0];
-    expect(m?.hp).toBe(m && memberStats(m).maxHp);
-  });
-
-  it('お金が足りなければ泊まれない', () => {
-    expect(stayAtInn({ ...newGame('m', start), money: 13 }, 1)).toEqual({ ok: false, reason: 'money' });
   });
 
   it('もぐりの宿は旅籠の 4 倍の宿代で、妓楼より高い。泊まると旅籠と同じく全回復する（戦闘不能も治る）', () => {
@@ -81,13 +66,7 @@ describe('施設', () => {
     expect(r.ok && r.state.party[0]?.hp).toBe(30);
   });
 
-  it('旅籠では MP も回復する', () => {
-    const s = { ...newGame('m', start), money: 14, party: [{ ...createMember('hero', 1), mp: 0 }] };
-    const r = stayAtInn(s, 1);
-    expect(r.ok && r.state.party[0]?.mp).toBe(8);
-  });
-
-  it('全滅すると所持金が半分になり、旅籠の前で全回復する', () => {
+  it('全滅すると所持金が半分になり、町の旅籠の前で全回復する', () => {
     const s = { ...newGame('m', start), money: 51, party: [{ ...createMember('hero', 1), hp: 0 }] };
     const r = reviveAfterDefeat(s, { mapId: 'shimizu', x: 23, y: 5 });
     expect(r).toMatchObject({ money: 25, mapId: 'shimizu', x: 23, y: 5 });

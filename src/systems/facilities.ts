@@ -4,6 +4,10 @@ import { memberStats, restoreAll, type PartyMember } from './party';
 import type { Stats } from './stats';
 import { randInt, type Rng } from './random';
 
+/**
+ * 町の旅籠の宿代。旅籠は渡世人の一行を泊めない（親分の屋敷か、もぐりの宿に泊まる）が、
+ * 湯屋・居酒屋・妓楼・もぐりの宿の値段の基準として使う。
+ */
 export function innPrice(areaLevel: number): number {
   return 10 + areaLevel * 4;
 }
@@ -24,12 +28,7 @@ export function teahouseChoices(hasShop: boolean): TeahouseChoice[] {
 
 export type PurchaseResult = { ok: true; state: GameState } | { ok: false; reason: 'money' };
 
-/** 旅籠に泊まる。全員の HP・MP を全回復する（戦闘不能も治る）。 */
-export function stayAtInn(state: GameState, areaLevel: number): PurchaseResult {
-  return payAndRestoreAll(state, innPrice(areaLevel));
-}
-
-/** 代金を払い、全員の HP・MP を全回復する（旅籠・もぐりの宿）。 */
+/** 代金を払い、全員の HP・MP を全回復する（もぐりの宿）。 */
 function payAndRestoreAll(state: GameState, price: number): PurchaseResult {
   if (state.money < price) return { ok: false, reason: 'money' };
   return { ok: true, state: { ...state, money: state.money - price, party: restoreAll(state.party) } };
@@ -74,7 +73,7 @@ export function gyoroPrice(areaLevel: number): number {
 
 /**
  * 代金を払い、戦闘不能でない全員を heal で回復する。
- * 旅籠（stayAtInn）と同じく、回復する余地がなくても代金を取る。直すなら旅籠と合わせて、満タンのときは { ok: false, reason: 'full' } を返す。
+ * もぐりの宿（stayAtMoguriInn）と同じく、回復する余地がなくても代金を取る。直すなら合わせて、満タンのときは { ok: false, reason: 'full' } を返す。
  */
 function payAndHeal(
   state: GameState,

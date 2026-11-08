@@ -11,11 +11,9 @@ import {
   drinkAtIzakaya,
   eatDango,
   gyoroPrice,
-  innPrice,
   izakayaPrice,
   moguriInnPrice,
   playChohan,
-  stayAtInn,
   stayAtMoguriInn,
   takeBath,
   teahouseChoices,
@@ -35,6 +33,7 @@ import { getState, holdEventWhileAway, setState, shouldRunEnterEvent, takePendin
 import { EVENTS } from '../data/events';
 import { mapSigns, signKey } from '../data/signs';
 import { moguriYadoById } from '../data/moguriYado';
+import { JINGI_REQUEST_LABELS, jingiRequestKindOf, pendingJingiRequest } from '../data/jingiRequests';
 import { OYABUN, oyabunWelcome } from '../data/oyabun';
 import { oyabunStayCost, stayAtOyabun } from '../systems/jingi';
 import { CHAR_DISPLAY_ORIGIN, heroSprite, idleFrame, objectDepth, objectDisplayOrigin, objectKey, oppositeFacing, personDepth, shouldStandStill, spriteKey, walkAnimKey, walkDepthRow, type CharacterSpriteId } from '../data/sprites';
@@ -468,9 +467,7 @@ export class FieldScene extends Phaser.Scene {
         const s = getState();
         setState({ ...s, flags: { ...s.flags, [npc.setsFlag]: true } });
       }
-      if (npc.action === 'inn') {
-        this.openInn(innPrice(this.map.areaLevel), (st) => stayAtInn(st, this.map.areaLevel), '旅籠の主人');
-      }
+      // 町の旅籠（action が inn）は渡世人を泊めない。主人は台詞で親分の屋敷へ導くだけ（泊まるのは親分の屋敷か、もぐりの宿）
       if (npc.action === 'moguriInn') {
         // もぐりの宿はワールドマップ（敵レベル 1 のマップ）にあるので、値段は宿ごとに決めた街道の敵レベルで決める
         const level = moguriYadoById(npc.id)?.areaLevel ?? this.map.areaLevel;
@@ -484,19 +481,19 @@ export class FieldScene extends Phaser.Scene {
       if (npc.action === 'yuya') {
         this.openPaidRest(`湯に浸かる（${yuyaPrice(this.map.areaLevel)} 文）`, (s) => takeBath(s, this.map.areaLevel), [
           '熱い湯に浸かって、体の疲れがほぐれた。体力が回復した。',
-        ], ['番頭「湯銭が足りねえようで……」']);
+        ], ['番頭「湯銭が足りねえようで……」'], null);
       }
       if (npc.action === 'izakaya') {
         this.openPaidRest(`一杯やる（${izakayaPrice(this.map.areaLevel)} 文）`, (s) => drinkAtIzakaya(s, this.map.areaLevel), [
           '熱燗で、気分がすっきりした。気力が回復した。',
-        ], ['亭主「お代が足りねえんじゃ、出せやせんぜ」']);
+        ], ['亭主「お代が足りねえんじゃ、出せやせんぜ」'], pendingJingiRequest(this.map.id, npc.action, getState().flags));
       }
       if (npc.action === 'gyoro') {
         this.openPaidRest(`座敷に上がる（${gyoroPrice(this.map.areaLevel)} 文）`, (s) => visitGyoro(s, this.map.areaLevel), [
           '三味線と唄でもてなされ、心も体も晴れ晴れとした。体力と気力が回復した。',
-        ], ['女将「あら、お足りないようで。またのお越しを」']);
+        ], ['女将「あら、お足りないようで。またのお越しを」'], pendingJingiRequest(this.map.id, npc.action, getState().flags));
       }
-      if (npc.action === 'tobaku') this.openTobaku();
+      if (npc.action === 'tobaku') this.openTobaku(pendingJingiRequest(this.map.id, npc.action, getState().flags));
     });
   }
 
@@ -552,7 +549,7 @@ export class FieldScene extends Phaser.Scene {
     this.pushOverlay(menu);
   }
 
-  /** 泊まったあと（旅籠・親分の屋敷）。暗転して明け、lines を出してから記録の窓を開く。 */
+  /** 泊まったあと（もぐりの宿・親分の屋敷）。暗転して明け、lines を出してから記録の窓を開く。 */
   private sleepThen(lines: string[]): void {
     // 暗転している間は動けないようにする
     this.moving = true;
@@ -566,7 +563,7 @@ export class FieldScene extends Phaser.Scene {
     });
   }
 
-  /** 旅籠・もぐりの宿。お金で泊まって全回復し、そのあと記録もできる。host は台詞の話し手。 */
+  /** もぐりの宿。お金で泊まって全回復し、そのあと記録もできる。host は台詞の話し手。 */
   private openInn(price: number, stay: (state: GameState) => PurchaseResult, host: string): void {
     const menu: Menu = new Menu(
       this,
@@ -678,16 +675,29 @@ export class FieldScene extends Phaser.Scene {
     this.pushOverlay(menu);
   }
 
-  /** 代金を払って休む施設（湯屋・居酒屋・妓楼）。決めたら run で払って回復し、done を出す。 */
-  private openPaidRest(label: string, run: (s: ReturnType<typeof getState>) => PurchaseResult, done: string[], noMoney: string[]): void {
+  /**
+   * 代金を払って休む施設（湯屋・居酒屋・妓楼）。決めたら run で払って回復し、done を出す。
+   * request（まだ果たしていない頼まれごとのイベントの ID。src/data/jingiRequests.ts）があれば、メニューに頼まれごとを出す。
+   */
+  private openPaidRest(
+    label: string,
+    run: (s: ReturnType<typeof getState>) => PurchaseResult,
+    done: string[],
+    noMoney: string[],
+    request: string | null,
+  ): void {
     const menu: Menu = new Menu(
       this,
       GAME_WIDTH - 170,
       40,
       160,
-      [{ label }, { label: 'やめる' }],
+      [{ label }, ...this.requestItems(request), { label: 'やめる' }],
       (i) => {
         this.closeOverlay(menu);
+        if (request && i === 1) {
+          this.startEvent(request);
+          return;
+        }
         if (i !== 0) return;
         const result = run(getState());
         if (!result.ok) {
@@ -702,23 +712,33 @@ export class FieldScene extends Phaser.Scene {
     this.pushOverlay(menu);
   }
 
-  /** 賭場。張る額を選び、丁か半かを張る（さいころの目の和が偶数なら丁、奇数なら半）。 */
-  private openTobaku(): void {
+  /** 頼まれごとのメニューの項目（request がなければ空）。 */
+  private requestItems(request: string | null): { label: string }[] {
+    const kind = request ? jingiRequestKindOf(request) : null;
+    return kind ? [{ label: JINGI_REQUEST_LABELS[kind] }] : [];
+  }
+
+  /**
+   * 賭場。張る額を選び、丁か半かを張る（さいころの目の和が偶数なら丁、奇数なら半）。
+   * request（まだ果たしていないイカサマ客の頼まれごと）があれば、張る額の後ろに出す（張る銭がなくても引き受けられる）。
+   */
+  private openTobaku(request: string | null): void {
     const bets = CHOHAN_BETS.filter((b) => b <= getState().money);
-    if (bets.length === 0) {
+    if (bets.length === 0 && !request) {
       this.message.show([`中盆「${CHOHAN_BETS[0]} 文も持たねえで、賭場に来なさんな」`]);
       return;
     }
     const menu: Menu = new Menu(
       this,
-      GAME_WIDTH - 140,
+      GAME_WIDTH - 170,
       40,
-      130,
-      [...bets.map((b) => ({ label: `${b} 文張る` })), { label: 'やめる' }],
+      160,
+      [...bets.map((b) => ({ label: `${b} 文張る` })), ...this.requestItems(request), { label: 'やめる' }],
       (i) => {
         this.closeOverlay(menu);
         const bet = bets[i];
         if (bet !== undefined) this.openChohanCall(bet);
+        else if (request && i === bets.length) this.startEvent(request);
       },
       () => this.closeOverlay(menu),
     );

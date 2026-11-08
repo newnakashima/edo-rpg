@@ -629,7 +629,7 @@ export class BattleScene extends Phaser.Scene {
     const respawn = respawnPoint(mapId, x, y, flags);
     this.log.setText('');
     this.controls.flush();
-    this.message.show(['一行は力尽きた……', '気がつくと、旅籠の布団の上だった。所持金が半分になっている。'], () => {
+    this.message.show(['一行は力尽きた……', '気がつくと、町の人に介抱されていた。所持金が半分になっている。'], () => {
       setState(reviveAfterDefeat({ ...getState(), items: this.battle.items }, respawn));
       this.finish();
     });

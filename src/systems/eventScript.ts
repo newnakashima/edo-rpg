@@ -3,6 +3,7 @@ import { CHARACTERS, characterName, isGuest } from '../data/characters';
 import type { EventStep } from '../data/eventTypes';
 import { addItem, isKnownItem, itemCount, MAX_ITEM_COUNT } from '../data/items';
 import type { GameState } from './gameState';
+import { addJingi } from './jingi';
 import { createMember, memberLevel, memberStats, restoreAll } from './party';
 import { totalExpForLevel } from './stats';
 
@@ -145,6 +146,9 @@ export class EventRunner {
         }
         case 'giveMoney':
           s = { ...s, money: Math.max(0, s.money + step.amount) };
+          break;
+        case 'addJingi':
+          s = addJingi(s, step.amount);
           break;
         case 'join':
           s = joinParty(s, step.member);
