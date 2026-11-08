@@ -162,6 +162,25 @@ describe('仲間を呼ぶ敵', () => {
     expect(summoned / n).toBeLessThan(0.65);
   });
 
+  it('送り狼は行動の約半分で仲間を呼び、呼んだ送り狼が 1 体生きていれば呼ばない', () => {
+    const b = createBattle([createMember('hero', 50)], 'm', ['okuriOkami'], 25);
+    const rng = seededRng(16);
+    let summoned = 0;
+    const n = 500;
+    for (let i = 0; i < n; i++) if (resolveTurn(b, guardAll(b), rng).events.some((e) => e.type === 'summon')) summoned++;
+    // 重みは 3/6
+    expect(summoned / n).toBeGreaterThan(0.42);
+    expect(summoned / n).toBeLessThan(0.58);
+    let state = b;
+    for (let i = 0; i < 100 && !state.combatants.some((c) => c.summoned); i++) state = resolveTurn(state, guardAll(state), rng).state;
+    expect(state.combatants.filter((c) => c.summoned)).toHaveLength(1);
+    for (const c of state.combatants) if (c.key !== 'e0' && c.side === 'enemy') c.status.sleep = 99;
+    for (let i = 0; i < 100; i++) {
+      const r = resolveTurn(state, guardAll(state), rng);
+      expect(r.events.some((e) => e.type === 'summon')).toBe(false);
+    }
+  });
+
   it('敵が 4 体残っていれば、呼ぶ代わりに通常攻撃をする', () => {
     const id = testEnemy('testCaller', { actions: [{ skill: 'nezumiYobi', weight: 1 }] });
     const b = createBattle([createMember('hero', 40)], 'm', [id, 'ogaeru', 'ogaeru', 'ogaeru'], 16);
