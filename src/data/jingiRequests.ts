@@ -1,8 +1,10 @@
 // 仁義ポイントを得る町の頼まれごと（docs/balance.md の「仁義ポイント」）。
 // 賭場のイカサマ客・居酒屋の酔っ払い・妓楼の用心棒を、湯屋・賭場・居酒屋・妓楼のある町ごとに 1 回ずつ引き受けられる。
 // 施設の人のメニューに頼まれごとが出て（済むと消える）、選ぶとこのイベントを行う。勝つと仁義ポイントを得る。
+// 町をぶらついている文無しの博徒を親分に紹介しても、仁義ポイントを得る（下の「博徒の紹介」）。
 import type { EventDef, EventStep } from './eventTypes';
 import { MAPS } from './maps';
+import { OYABUN, bakutoIntroduceEventId, bakutoIntroducedFlag, bakutoMeetEventId, bakutoSentFlag } from './oyabun';
 import { TOWN_FACILITY_DOORS } from './townFacilities';
 import { oyabunStayCost } from '../systems/jingi';
 
@@ -163,16 +165,121 @@ export function pendingJingiRequest(town: string, action: string | undefined, fl
   return { id, kind, label: JINGI_REQUEST_LABELS[kind] };
 }
 
+// ---- 博徒の紹介 ----
+// 親分の屋敷のある 15 町には、賭場で負けて一文なしになった博徒が通りをぶらついている（src/data/oyabun.ts の bakutoNpc）。
+// 話しかけて「親分に紹介する」を選ぶと、博徒は先に屋敷へ向かって通りから消える。屋敷の若い衆のメニューに「博徒を引き合わせる」が出て、
+// 選ぶと仁義ポイントを得る。町ごとに 1 回。
+
+/** 博徒の紹介で得る仁義ポイント。その町の親分の屋敷の 1 泊分（序盤 1・中盤 2・終盤 3。戦わずに済む分、頼まれごとの半分）。 */
+export function bakutoIntroReward(areaLevel: number): number {
+  return oyabunStayCost(areaLevel);
+}
+
+/** 博徒が身の上を話す台詞（町ごとに順に使い回す。{family} は一家の名）。 */
+const BAKUTO_ASK: string[][] = [
+  [
+    '博徒「……へへ、渡世人の方とお見受けしやす。あっしも旅の博徒でござんすが、賭場で身ぐるみはがれちまって、一文なしで……」',
+    '博徒「この町の{family}の親分に、口をきいてもらえやせんか。草鞋を脱がせてもらえりゃ、この恩は一生忘れやせん」',
+  ],
+  [
+    '博徒「腹が減って、目が回りそうで……。仁義を切ろうにも、手土産ひとつありゃしねえ」',
+    '博徒「渡世人の口ききがありゃあ、{family}の親分も会ってくださるはずなんで。どうか、お頼み申しやす」',
+  ],
+  [
+    '博徒「ちくしょう、あの壺振り、イカサマに決まってらあ……。おかげで宿代もありゃしねえ」',
+    '博徒「旦那方、{family}の親分に、あっしを引き合わせちゃもらえやせんか。一宿一飯の恩は、きっと返しやす」',
+  ],
+];
+
+/** 文無しの博徒に話しかけたときのイベント。紹介すると決めると、博徒は先に屋敷へ向かう（sent のフラグで通りから消える）。 */
+export function bakutoMeetEvent(town: string, variant: number): EventDef {
+  const family = OYABUN[town]?.family ?? '';
+  const ask = BAKUTO_ASK[variant % BAKUTO_ASK.length]!.map((l) => l.replace('{family}', family));
+  return {
+    id: bakutoMeetEventId(town),
+    steps: [
+      { type: 'say', lines: ask },
+      {
+        type: 'choice',
+        options: [
+          {
+            label: '親分に紹介する',
+            steps: [
+              {
+                type: 'say',
+                lines: [`{hero}「わかった。${family}の屋敷の前で待ってな。あとから行って、口をきいてやる」`, '博徒「ありがてえ！ 恩に着やす！」'],
+                linesF: [`{hero}「わかったよ。${family}の屋敷の前で待っておいで。あとから行って、口をきいてあげる」`, '博徒「ありがてえ！ 恩に着やす、姐さん！」'],
+              },
+              { type: 'setFlag', flag: bakutoSentFlag(town) },
+            ],
+          },
+          { label: 'やめておく', steps: [{ type: 'say', lines: ['博徒「さいですかい……。ああ、腹が減った……」'] }] },
+        ],
+      },
+    ],
+  };
+}
+
+/**
+ * 屋敷の若い衆に博徒を引き合わせるイベント。仁義ポイントを得る。
+ * 博徒は屋敷の中に入っているので、話すのは若い衆だけ（画面にいない人に喋らせない）。
+ * 清水湊では辰五郎が殺されたあとも使うので、親分が生きているとは言わない。
+ */
+export function bakutoIntroduceEvent(town: string, areaLevel: number): EventDef {
+  return {
+    id: bakutoIntroduceEventId(town),
+    steps: [
+      {
+        type: 'say',
+        lines: [
+          '若い衆「ああ、さっき門の前に来た博徒のことですかい。話は聞きやした」',
+          '若い衆「渡世人のお方の口ききとあっちゃ、無下にはできやせん。一家で面倒を見させてもらいやす」',
+          '若い衆「義理堅えお方だと、一家のみんなにも伝えておきやす」',
+        ],
+      },
+      { type: 'addJingi', amount: bakutoIntroReward(areaLevel) },
+      { type: 'say', lines: ['渡世人としての名が上がった。（仁義 {jingi}）'] },
+      { type: 'setFlag', flag: bakutoIntroducedFlag(town) },
+    ],
+  };
+}
+
+/** 親分の屋敷のある町の、博徒の紹介のイベント（話しかける・引き合わせる）。 */
+export const BAKUTO_INTRO_EVENTS: Record<string, EventDef> = Object.fromEntries(
+  Object.keys(OYABUN).flatMap((town, i) => {
+    const meet = bakutoMeetEvent(town, i);
+    const introduce = bakutoIntroduceEvent(town, MAPS[town]?.areaLevel ?? 1);
+    return [
+      [meet.id, meet],
+      [introduce.id, introduce],
+    ] as const;
+  }),
+);
+
+/** 屋敷の若い衆のメニューに出す、博徒の紹介（屋敷へ向かわせて、まだ引き合わせていなければ）。 */
+export function pendingBakutoIntro(town: string, flags: Record<string, boolean>): MenuRequest | null {
+  if (!OYABUN[town] || !flags[bakutoSentFlag(town)] || flags[bakutoIntroducedFlag(town)]) return null;
+  return { id: bakutoIntroduceEventId(town), label: '博徒を引き合わせる' };
+}
+
+/** 施設のメニューに出す、イベントで行う項目（頼まれごと・博徒の紹介）。 */
+export interface MenuRequest {
+  /** 選んだら行うイベントの ID。 */
+  id: string;
+  /** メニューの項目の名前。 */
+  label: string;
+}
+
 /** 施設のメニューで選んだもの（施設の本来の品・頼まれごと・やめる）。 */
 export type FacilityPick<T> = { kind: 'main'; value: T } | { kind: 'request'; id: string } | { kind: 'cancel' };
 
 /**
- * 施設のメニュー（main の項目、頼まれごと〈request があれば〉、やめる の順）の項目の名前と、選んだ番号から選んだものを返す関数。
- * 画面（FieldScene の賭場・居酒屋・妓楼）はこれでメニューを作り、番号の対応を自分で数えない。
+ * 施設のメニュー（main の項目、頼まれごとや博徒の紹介〈request があれば〉、やめる の順）の項目の名前と、選んだ番号から選んだものを返す関数。
+ * 画面（FieldScene の賭場・居酒屋・妓楼・親分の屋敷）はこれでメニューを作り、番号の対応を自分で数えない。
  */
 export function facilityMenu<T>(
   main: readonly { label: string; value: T }[],
-  request: PendingJingiRequest | null,
+  request: MenuRequest | null,
 ): { labels: string[]; pick: (index: number) => FacilityPick<T> } {
   const labels = [...main.map((m) => m.label), ...(request ? [request.label] : []), 'やめる'];
   return {

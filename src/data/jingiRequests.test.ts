@@ -4,6 +4,9 @@ import { newGame, type GameState } from '../systems/gameState';
 import { JINGI_MAX } from '../systems/jingi';
 import { EVENTS } from './events';
 import {
+  BAKUTO_INTRO_EVENTS,
+  bakutoIntroReward,
+  pendingBakutoIntro,
   JINGI_REQUEST_EVENTS,
   JINGI_REQUEST_KINDS,
   jingiRequestEnemies,
@@ -14,18 +17,21 @@ import {
   jingiRequestReward,
   pendingJingiRequest,
 } from './jingiRequests';
-import { MAPS } from './maps';
+import { MAPS, npcVisible, tileAt } from './maps';
+import { OYABUN, bakutoIntroduceEventId, bakutoIntroducedFlag, bakutoMeetEventId, bakutoSentFlag } from './oyabun';
 import { TOWN_FACILITY_DOORS } from './townFacilities';
 
 const start = { mapId: 'shimizu', x: 1, y: 1 };
 
-/** イベントを最後まで進める。選択肢は choice 番目、戦闘は outcome にする。戦闘の要求も返す。 */
+/** イベントを最後まで進める。選択肢は choice 番目、戦闘は outcome にする。戦闘の要求と、出た台詞も返す。 */
 function run(id: string, state: GameState, choice: number, outcome: 'victory' | 'defeat') {
   const runner = new EventRunner(EVENTS[id]!.steps);
   const battles: Extract<ReturnType<EventRunner['next']>['request'], { kind: 'battle' }>[] = [];
+  const pages: string[] = [];
   let r = runner.next(state);
   for (let i = 0; i < 50 && r.request.kind !== 'done'; i++) {
     let input: EventInput | undefined;
+    if (r.request.kind === 'say') pages.push(...r.request.pages);
     if (r.request.kind === 'choice') input = { kind: 'choice', index: choice };
     if (r.request.kind === 'battle') {
       battles.push(r.request);
@@ -33,7 +39,7 @@ function run(id: string, state: GameState, choice: number, outcome: 'victory' | 
     }
     r = runner.next(r.state, input);
   }
-  return { state: r.state, battles };
+  return { state: r.state, battles, pages };
 }
 
 describe('仁義ポイントを得る頼まれごと', () => {
@@ -131,6 +137,96 @@ describe('仁義ポイントを得る頼まれごと', () => {
     expect(pendingJingiRequest('kyo', 'yuya', {})).toBeNull();
     expect(pendingJingiRequest('kyo', undefined, {})).toBeNull();
     expect(pendingJingiRequest('koya', 'tobaku', {})).toBeNull();
+  });
+});
+
+describe('博徒の紹介', () => {
+  const bakuto = (town: string) => MAPS[town]!.npcs.find((n) => n.id === `${town}Bakuto`)!;
+
+  it('親分の屋敷のある 15 町に文無しの博徒が 1 人ずついて、話しかけるイベントと引き合わせるイベントが EVENTS から引ける', () => {
+    expect(Object.keys(BAKUTO_INTRO_EVENTS)).toHaveLength(Object.keys(OYABUN).length * 2);
+    for (const town of Object.keys(OYABUN)) {
+      const npc = bakuto(town);
+      expect(npc.event, town).toBe(bakutoMeetEventId(town));
+      expect(EVENTS[bakutoMeetEventId(town)]?.id, town).toBe(bakutoMeetEventId(town));
+      expect(EVENTS[bakutoIntroduceEventId(town)]?.id, town).toBe(bakutoIntroduceEventId(town));
+      // 台詞の一家の名は、その町の親分の一家
+      const { pages } = run(bakutoMeetEventId(town), newGame('m', start), 1, 'victory');
+      expect(pages.join(''), town).toContain(OYABUN[town]!.family);
+    }
+    // 屋敷のないマップ（ダンジョン・ワールドマップなど）にはいない
+    for (const map of Object.values(MAPS)) if (!OYABUN[map.id]) expect(map.npcs.some((n) => n.id.endsWith('Bakuto')), map.id).toBe(false);
+  });
+
+  it('博徒は通りの中ほどの通れるマスに立ち、道をふさがない（まわりの 8 マスが通れて、戸口・ほかの人・出口から離れている）', () => {
+    for (const town of Object.keys(OYABUN)) {
+      const map = MAPS[town]!;
+      const npc = bakuto(town);
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) expect(tileAt(map, npc.x + dx, npc.y + dy)?.blocked, `${town} ${dx},${dy}`).toBe(false);
+      for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) expect(map.rows[npc.y + dy]?.[npc.x + dx], town).not.toBe('D');
+      const others = map.npcs.filter((n) => n !== npc && Math.abs(n.x - npc.x) <= 2 && Math.abs(n.y - npc.y) <= 2);
+      expect(others.map((n) => n.id), town).toEqual([]);
+      const spots = [...map.exits, ...(map.triggers ?? []), ...(map.gates ?? []), ...(map.marks ?? [])];
+      expect(spots.some((p) => Math.abs(Math.floor(p.x) - npc.x) <= 2 && Math.abs(p.y - npc.y) <= 2), town).toBe(false);
+    }
+  });
+
+  it('ワールドマップから町に入った場所から、ほかの人に道をふさがれずに博徒の隣まで歩いて行ける', () => {
+    for (const town of Object.keys(OYABUN)) {
+      const map = MAPS[town]!;
+      const npc = bakuto(town);
+      const blocked = new Set(map.npcs.map((n) => `${n.x},${n.y}`));
+      const { x, y } = MAPS.world!.towns!.find((t) => t.to?.mapId === town)!.to!;
+      const from = { x, y };
+      const seen = new Set([`${from.x},${from.y}`]);
+      for (const queue = [from]; queue.length > 0; ) {
+        const p = queue.shift()!;
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+          const q = { x: p.x + dx, y: p.y + dy };
+          const key = `${q.x},${q.y}`;
+          if (seen.has(key) || blocked.has(key) || tileAt(map, q.x, q.y)?.blocked !== false) continue;
+          seen.add(key);
+          queue.push(q);
+        }
+      }
+      expect(seen.has(`${npc.x},${npc.y - 1}`), town).toBe(true);
+    }
+  });
+
+  it('紹介すると決めると博徒は通りから消え、屋敷のメニューに「博徒を引き合わせる」が出る。断れば何も変わらない', () => {
+    const s = newGame('f', start);
+    expect(pendingBakutoIntro('nagoya', s.flags)).toBeNull();
+    const declined = run(bakutoMeetEventId('nagoya'), s, 1, 'victory').state;
+    expect(declined.flags[bakutoSentFlag('nagoya')]).toBeFalsy();
+    expect(npcVisible(bakuto('nagoya'), declined.flags)).toBe(true);
+    const sent = run(bakutoMeetEventId('nagoya'), s, 0, 'victory');
+    expect(sent.state.flags[bakutoSentFlag('nagoya')]).toBe(true);
+    expect(sent.state.jingi).toBe(s.jingi);
+    expect(npcVisible(bakuto('nagoya'), sent.state.flags)).toBe(false);
+    // 女主人公の台詞を使う
+    expect(sent.pages.some((p) => p.includes('姐さん'))).toBe(true);
+    expect(pendingBakutoIntro('nagoya', sent.state.flags)).toEqual({ id: bakutoIntroduceEventId('nagoya'), label: '博徒を引き合わせる' });
+    // ほかの町の屋敷には出ない
+    expect(pendingBakutoIntro('kyo', sent.state.flags)).toBeNull();
+  });
+
+  it('引き合わせると屋敷の 1 泊分（序盤 1・中盤 2・終盤 3）の仁義ポイントを得て、メニューから消える', () => {
+    expect([1, 9, 10, 18, 19, 25].map(bakutoIntroReward)).toEqual([1, 1, 2, 2, 3, 3]);
+    for (const town of ['shimizu', 'osaka', 'edo']) {
+      const s = { ...newGame('m', start), jingi: 5, flags: { [bakutoSentFlag(town)]: true } };
+      const { state, pages } = run(bakutoIntroduceEventId(town), s, 0, 'victory');
+      expect(state.jingi, town).toBe(5 + bakutoIntroReward(MAPS[town]!.areaLevel));
+      expect(state.flags[bakutoIntroducedFlag(town)], town).toBe(true);
+      expect(pendingBakutoIntro(town, state.flags), town).toBeNull();
+      expect(pages, town).toContain(`渡世人としての名が上がった。（仁義 ${state.jingi}）`);
+      // 博徒は屋敷の中にいて画面に出ていないので、話すのは若い衆だけ
+      for (const p of pages.filter((l) => l.includes('「'))) expect(p, town).toMatch(/^若い衆「/);
+    }
+  });
+
+  it('得られるポイントの合計は docs/balance.md のとおり 33', () => {
+    const total = Object.keys(OYABUN).reduce((sum, town) => sum + bakutoIntroReward(MAPS[town]!.areaLevel), 0);
+    expect(total).toBe(33);
   });
 });
 
