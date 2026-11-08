@@ -114,7 +114,7 @@ describe('仁義ポイントを得る頼まれごと', () => {
   it('施設のメニューは、本来の項目・頼まれごと・やめる の順で、選んだ番号から選んだものが分かる', () => {
     const request = pendingJingiRequest('kyo', 'tobaku', {});
     const bets = [10, 100].map((b) => ({ label: `${b} 文張る`, value: b }));
-    const withReq = facilityMenu(bets, request);
+    const withReq = facilityMenu(bets, [request]);
     expect(withReq.labels).toEqual(['10 文張る', '100 文張る', 'イカサマ客を懲らしめる', 'やめる']);
     expect([0, 1, 2, 3].map(withReq.pick)).toEqual([
       { kind: 'main', value: 10 },
@@ -123,11 +123,11 @@ describe('仁義ポイントを得る頼まれごと', () => {
       { kind: 'cancel' },
     ]);
     // 頼まれごとが済んでいれば出さない
-    const without = facilityMenu(bets, null);
+    const without = facilityMenu(bets, [null]);
     expect(without.labels).toEqual(['10 文張る', '100 文張る', 'やめる']);
     expect(without.pick(2)).toEqual({ kind: 'cancel' });
     // 張る銭がなくても、頼まれごとは選べる
-    const noBets = facilityMenu([], request);
+    const noBets = facilityMenu([], [request]);
     expect(noBets.labels).toEqual(['イカサマ客を懲らしめる', 'やめる']);
     expect(noBets.pick(0)).toEqual({ kind: 'request', id: jingiRequestId('kyo', 'tobaku') });
     expect(noBets.pick(1)).toEqual({ kind: 'cancel' });

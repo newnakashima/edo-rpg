@@ -273,20 +273,23 @@ export function pendingBakutoIntro(town: string, flags: Record<string, boolean>)
 export type FacilityPick<T> = { kind: 'main'; value: T } | { kind: 'request'; id: string } | { kind: 'cancel' };
 
 /**
- * 施設のメニュー（main の項目、頼まれごとや博徒の紹介〈request があれば〉、やめる の順）の項目の名前と、選んだ番号から選んだものを返す関数。
+ * 施設のメニュー（main の項目、頼まれごと・博徒の紹介・親分の頼み〈requests のうち null でないもの〉、やめる の順）の項目の名前と、
+ * 選んだ番号から選んだものを返す関数。
  * 画面（FieldScene の賭場・居酒屋・妓楼・親分の屋敷）はこれでメニューを作り、番号の対応を自分で数えない。
  */
 export function facilityMenu<T>(
   main: readonly { label: string; value: T }[],
-  request: MenuRequest | null,
+  requests: readonly (MenuRequest | null)[],
 ): { labels: string[]; pick: (index: number) => FacilityPick<T> } {
-  const labels = [...main.map((m) => m.label), ...(request ? [request.label] : []), 'やめる'];
+  const shown = requests.filter((r): r is MenuRequest => r !== null);
+  const labels = [...main.map((m) => m.label), ...shown.map((r) => r.label), 'やめる'];
   return {
     labels,
     pick: (index) => {
       const m = main[index];
       if (m) return { kind: 'main', value: m.value };
-      if (request && index === main.length) return { kind: 'request', id: request.id };
+      const r = shown[index - main.length];
+      if (r) return { kind: 'request', id: r.id };
       return { kind: 'cancel' };
     },
   };
