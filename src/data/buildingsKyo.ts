@@ -38,6 +38,8 @@ export const KYO_BUILDINGS: BuildingDef[] = [
           '茶屋の娘「お団子はいかがどす？」',
         ],
         after: { flag: 'heardOniRumor', lines: ['茶屋の娘「おいでやす。お団子はいかがどす？」'] },
+        // 河原のお坊さん（玄道）が一行に加わったあとに初めて入っても、その噂はしない
+        later: { flag: 'gendoJoined', lines: ['茶屋の娘「おいでやす。河原のお坊さん、お客はんらのお連れにならはったんどすな。お団子はいかがどす？」'] },
         setsFlag: 'heardOniRumor',
         action: 'teahouse',
         shop: 'kyoChaya',
@@ -110,7 +112,7 @@ export const KYO_BUILDINGS: BuildingDef[] = [
       ]),
     ],
   },
-  // 旅籠: 奥に畳の客間が三つ並び、板の間の廊下をはさんで、中ほどに坪庭に面した小さな客間、手前に土間
+  // 旅籠: 奥に畳の客間が三つ並び、板の間の廊下をはさんで、中ほどに小さな客間、手前に土間
   {
     door: { x: 22, y: 9 },
     id: 'kyoYado',
@@ -144,7 +146,7 @@ export const KYO_BUILDINGS: BuildingDef[] = [
       {
         id: 'kyoYadoKyaku1',
         name: '西陣の買い付けの商人',
-        x: 8,
+        x: 6,
         y: 8,
         color: 0x4a6a8a,
         sprite: 'npc_merchant',
@@ -197,7 +199,7 @@ export const KYO_BUILDINGS: BuildingDef[] = [
         y: 2,
         color: 0x5a4a3a,
         sprite: 'npc_ninsoku',
-        lines: ['子分「鴨川一家は、高瀬川の舟の荷揚げを仕切ってるんどす。祇園の賭場も、うちの親分の縄張りや」'],
+        lines: ['子分「鴨川一家は、高瀬川の舟の荷揚げを仕切ってるんどす。三条の賭場も、うちの親分の縄張りや」'],
       },
       {
         id: 'kyoOyabunAnesan',
@@ -327,7 +329,7 @@ export const KYO_BUILDINGS: BuildingDef[] = [
       ]),
     ],
   },
-  // 祇園の賭場: 奥に盆茣蓙を敷いた畳の広間、左奥に板の間の胴元の帳場、手前は土間
+  // 賭場: 奥に盆茣蓙を敷いた畳の広間、左奥に板の間の胴元の帳場、手前は土間
   {
     door: { x: 23, y: 16 },
     id: 'kyoTobaku',
@@ -432,13 +434,14 @@ export const KYO_BUILDINGS: BuildingDef[] = [
         color: 0x6a5a4a,
         sprite: 'npc_so',
         lines: ['僧「錫杖の輪が欠けましてな、直しに参ったのです。山の上まで鬼の噂が届いて、修行どころではありませぬ」'],
+        after: { flag: 'shutenDefeated', lines: ['僧「錫杖の輪が欠けましてな、直しに参ったのです。鬼も去り、ようやく山で落ち着いて修行ができます」'] },
       },
       ...furniture('kyoKaji', [
         { name: '火床', x: 1, y: 1, object: 'kamado', lines: ['鞴で風を送る火床だ。炭が赤々と燃えている。'] },
         { name: '金床', x: 3, y: 1, object: 'kanatoko', lines: ['焼けた鋼を打つ金床だ。'] },
         { name: '木箱', x: 10, y: 1, object: 'kibako', lines: ['玉鋼を詰めた木箱だ。'] },
         { name: '刀掛け', x: 1, y: 7, object: 'katanakake', lines: ['研ぎ上がった打刀が掛けてある。'] },
-        { name: '刀掛け', x: 10, y: 7, object: 'katanakake', lines: ['錫杖と独鈷が並んでいる。僧兵の客もいるらしい。'] },
+        { name: '刀掛け', x: 10, y: 7, object: 'katanakake', lines: ['脇差と短刀が並んでいる。'] },
       ]),
     ],
   },
@@ -493,7 +496,7 @@ export const KYO_BUILDINGS: BuildingDef[] = [
       ...furniture('kyoIzakaya', [
         { name: '竈', x: 1, y: 1, object: 'kamado', lines: ['竈で燗の湯が沸いている。湯豆腐の鍋も掛かっている。'] },
         { name: '酒樽', x: 6, y: 1, object: 'sakadaru', lines: ['伏見の酒の菰樽だ。'] },
-        { name: '酒樽', x: 7, y: 1, object: 'sakadaru', lines: ['灘の酒の菰樽だ。「下り物」の札が付いている。'] },
+        { name: '酒樽', x: 7, y: 1, object: 'sakadaru', lines: ['灘の酒の菰樽だ。上方の酒は、江戸では「下り酒」と呼ばれてありがたがられるという。'] },
         { name: '行灯', x: 16, y: 8, object: 'andon', lines: ANDON_LINES },
       ]),
     ],
@@ -542,7 +545,7 @@ export const KYO_BUILDINGS: BuildingDef[] = [
       {
         id: 'kyoGyoroKamuro',
         name: '禿',
-        x: 7,
+        x: 6,
         y: 8,
         color: 0xd07a9a,
         sprite: 'npc_kodomo',
@@ -565,7 +568,7 @@ export const KYO_BUILDINGS: BuildingDef[] = [
       ]),
     ],
   },
-  // 五重塔の寺の本堂: 奥の須弥壇に薬師如来と脇侍、左右に畳の脇の間、手前に板の間の外陣と土間
+  // 五重塔の寺の本堂: 奥の須弥壇に薬師如来の厨子、左右に畳の脇の間、手前に板の間の外陣と土間
   {
     door: { x: 21, y: 28 },
     id: 'kyoTera',
@@ -605,7 +608,8 @@ export const KYO_BUILDINGS: BuildingDef[] = [
         color: 0x6a5a4a,
         sprite: 'npc_so',
         lines: ['僧「鬼にされた河原の衆のために、毎日一巻ずつ写経をしております。早う人に戻られますように」'],
-        after: { flag: 'rashomonCleared', lines: ['僧「河原の衆が人に戻られたと聞きました。今日からは、亡くなった方々のために写経をいたします」'] },
+        after: { flag: 'rashomonCleared', lines: ['僧「羅生門の衆は人に戻られたと聞きました。まだ囚われておる衆の無事を祈って、写経を続けます」'] },
+        later: { flag: 'shutenDefeated', lines: ['僧「囚われておった衆も、みな河原へ帰られたそうな。今日からは、御仏へのお礼の写経をいたします」'] },
       },
       {
         id: 'kyoTeraSankei',
@@ -617,9 +621,7 @@ export const KYO_BUILDINGS: BuildingDef[] = [
         lines: ['婆さま「薬師さまは、病を治してくださる仏さまどす。孫の咳が早う治るよう、毎朝お参りしとりますのや」'],
       },
       ...furniture('kyoTera', [
-        { name: '本尊', x: 10, y: 1, object: 'butsuzo', lines: ['須弥壇の薬師如来が、薬壺を手に静かに座している。'] },
-        { name: '脇侍', x: 8, y: 1, object: 'butsuzo', lines: ['日光菩薩の像だ。本尊の左に立っている。'] },
-        { name: '脇侍', x: 12, y: 1, object: 'butsuzo', lines: ['月光菩薩の像だ。本尊の右に立っている。'] },
+        { name: '本尊の厨子', x: 10, y: 1, object: 'jizo', lines: ['須弥壇の厨子に、秘仏の薬師如来が納められている。扉の前には、赤い前掛けをしたお前立ちの像が立っている。'] },
         { name: '行灯', x: 6, y: 1, object: 'andon', lines: ANDON_LINES },
         { name: '行灯', x: 14, y: 1, object: 'andon', lines: ANDON_LINES },
         { name: '文机', x: 1, y: 1, object: 'fuzukue', lines: ['書きかけの写経と、硯が載っている。'] },
@@ -665,6 +667,7 @@ export const KYO_BUILDINGS: BuildingDef[] = [
         color: 0xd05050,
         sprite: 'npc_musume',
         lines: ['巫女「祇園さんのお祭りは、もとは都の疫病を鎮めるためのものなんどす。鬼の噂の絶えへん今年こそ、盛大にせなあきまへん」'],
+        after: { flag: 'shutenDefeated', lines: ['巫女「北の山の鬼が退治されたそうどすな。今年のお祭りは、安心して山鉾を出せますえ」'] },
       },
       {
         id: 'kyoYasakaMachishu',
