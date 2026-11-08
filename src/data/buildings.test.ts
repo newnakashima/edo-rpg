@@ -26,10 +26,11 @@ const buildings = Object.values(MAPS).filter((m) => buildingTown(m.id));
 
 describe('施設・民家以外の建物の屋内（テストプレイの指摘: あらゆる建物に入れるようにすべき）', () => {
   // 屋内を足した町（町を足したらここにも足す）
-  const TOWNS = ['shimizu', 'sunpu', 'nagoya', 'kyo', 'iga', 'osaka', 'hiroshima', 'nagasaki'];
+  const TOWNS = ['shimizu', 'sunpu', 'nagoya', 'kyo', 'iga', 'osaka', 'hiroshima', 'nagasaki', 'kanazawa'];
   // 鍵をかけた戸（入れなくてよい。ユーザーの決定「鍵をかけたもの以外のすべての建物に入れる」）
   const LOCKED: Record<string, [number, number][]> = {
     hiroshima: [[15, 4]], // 城の門（門番が堀の橋をふさぐ）
+    kanazawa: [[28, 13]], // 城の門（ご家老の命で門番が固める）
   };
   // 戸のある建物がなく、通りに立つ店（町の通りに残る施設の人）
   const STREET_SHOPS = ['kakibune'];
@@ -136,7 +137,7 @@ describe('施設・民家以外の建物の屋内（テストプレイの指摘:
         }
       }
     }
-    // 清水湊・駿府・名古屋・京・伊賀上野・大坂・広島・長崎の賭場・居酒屋・妓楼・親分の屋敷（町を足すと増える）
+    // 清水湊・駿府・名古屋・京・伊賀上野・大坂・広島・長崎・金沢の賭場・居酒屋・妓楼・親分の屋敷（町を足すと増える）
     expect(checked).toBeGreaterThanOrEqual(TOWNS.length * 4);
   });
 
@@ -174,5 +175,16 @@ describe('施設・民家以外の建物の屋内（テストプレイの指摘:
     expect(MAPS.nagasakiTera!.npcs.find((n) => n.id === 'nagasakiTemple')?.action).toBe('temple');
     expect(MAPS.nagasakiYado!.npcs.find((n) => n.id === 'nagasakiInn')?.action).toBe('inn');
     expect(MAPS.nagasaki!.npcs.some((n) => ['bugyoYakunin', 'ranpoI', 'nagasakiTemple', 'nagasakiInn'].includes(n.id))).toBe(false);
+  });
+
+  it('金沢の長瀬左近と女中は武家屋敷の中、寺町の僧は寺の中、旅籠の主人と飛脚は建物の中にいる', () => {
+    const sakon = MAPS.kanazawaSakonYashiki!.npcs.find((n) => n.id === 'sakon');
+    expect(sakon?.event).toBe('sakonMeet');
+    expect(MAPS.kanazawaSakonYashiki!.npcs.some((n) => n.id === 'bukeJochu')).toBe(true);
+    expect(MAPS.kanazawaTera!.npcs.some((n) => n.id === 'teramachiSo')).toBe(true);
+    expect(MAPS.kanazawaYado!.npcs.find((n) => n.id === 'kanazawaInn')?.action).toBe('inn');
+    expect(MAPS.kanazawaHikyakuya!.npcs.find((n) => n.id === 'kanazawaHikyaku')?.action).toBe('hikyaku');
+    const moved = ['sakon', 'bukeJochu', 'teramachiSo', 'kanazawaInn', 'kanazawaHikyaku', 'kanazawaGeiko', 'chayaOkami'];
+    expect(MAPS.kanazawa!.npcs.some((n) => moved.includes(n.id))).toBe(false);
   });
 });

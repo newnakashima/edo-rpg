@@ -16,6 +16,7 @@ import { IGA_BUILDINGS } from './buildingsIga';
 import { OSAKA_BUILDINGS } from './buildingsOsaka';
 import { HIROSHIMA_BUILDINGS } from './buildingsHiroshima';
 import { NAGASAKI_BUILDINGS } from './buildingsNagasaki';
+import { KANAZAWA_BUILDINGS } from './buildingsKanazawa';
 
 /** タイルの種類。画像は public/assets/tiles/<種類>.png（PixelLab で生成。記録は public/assets/README.md）。 */
 export const TILE_KINDS = ['ground', 'grass', 'road', 'tree', 'water', 'wall', 'roof', 'door', 'floor', 'rock', 'plain', 'town', 'gate'] as const;
@@ -3014,11 +3015,11 @@ MAPS.kanazawa = {
     '~~~~TWRRRR..RRRRW~~~~~~~~~~~=~~~~~~~TT,TTT.......=.....T',
     '~~~~TWRRRR..RRRRW...................TT,TTT..RRRRR=RRRRRT',
     '~~~~TWRRRR..RRRRW...................TT,TTT..RRRRR=RRRRRT',
-    '~~~~TWWDWW..WDWWW.RRRRRRRRR.=.RRRRR.TT,TTT..RRRRR=RRRRRT',
+    '~~~~TWWWWD..WDWWW.RRRRRRRRR.=.RRRRR.TT,TTT..RRRRR=RRRRRT',
     '~~~~RRRRR.......W.RRRRRRRRR.=.RRRRR.TT,TTT..RRRRR=RRRRRT',
     '~~~~RRRRRW..WWWWW.RRRRRRRRR.=.RRRRR.TT,TTT..RRRRR=RRRRRT',
     '~~~~RRRRR.==......RRRRRRRRR.=.RRRRR.TT,TTT..RRRRR=RRRRRT',
-    '~___WWDWW.==......WWDWWWWDW.=.WWDWW.TT,TTT..WWDWW=WWDWWT',
+    '~___WWDWD.==......WWDWWWWDW.=.WWDWW.TT,TTT..WWDWW=WWDWWT',
     '~___====================================================',
     '~~~~........=...............=.................=........T',
     '~~~~.RRRRRR.=.RRRRRR.RRRRRR.=.RRRRRR.RRRRRR...=.RRRRRR.T',
@@ -3045,97 +3046,6 @@ MAPS.kanazawa = {
       color: 0x6a5a4a,
       sprite: 'npc_sendo',
       event: 'kitamaeKanazawa',
-    },
-    {
-      id: 'kanazawaInn',
-      // 看板: 旅籠の戸から右下に離れて立つ
-      sign: { x: 7, y: 21 },
-      name: '旅籠の主人',
-      x: 9,
-      y: 22,
-      color: 0x5a6b8c,
-      sprite: 'npc_innkeeper',
-      lines: ['旅籠の主人「ようおいでました。あいにく、渡世人のお方はお泊めできんがです。親分さんのお屋敷を訪ねてくだし」'],
-      action: 'inn',
-    },
-    {
-      id: 'kanazawaTeahouse',
-      name: '茶屋の娘',
-      x: 20,
-      y: 22,
-      color: 0xc76b8f,
-      sprite: 'npc_musume',
-      lines: [
-        '茶屋の娘「いらっしゃいまし。加賀棒茶をどうぞ。香ばしいがやよ」',
-        '茶屋の娘「お殿様はご病気で、もう半年もお城から出られんがやて。それでも、たまにお城の櫓から手を振られるがやけど……ちっとも動かんがよ、お顔が」',
-      ],
-      after: { flag: 'chapter7Cleared', lines: ['茶屋の娘「お殿様がお元気になられて、町じゅう大喜びやよ。お茶、どうぞ」'] },
-      action: 'teahouse',
-      shop: 'kanazawaChaya',
-    },
-    {
-      id: 'kanazawaYorozu',
-      name: 'よろず屋',
-      x: 25,
-      y: 22,
-      color: 0x6b8c5a,
-      sprite: 'npc_merchant',
-      lines: ['よろず屋「いらっしゃい。生姜の煎餅の柴舟と加賀棒茶は、茶屋で買えるがやよ。うちは薬と旅の支度」'],
-      action: 'shop',
-      shop: 'kanazawaYorozu',
-    },
-    {
-      id: 'kanazawaKaji',
-      name: '刀鍛冶',
-      x: 32,
-      y: 22,
-      color: 0x5a5a6b,
-      sprite: 'npc_smith',
-      lines: ['刀鍛冶「加賀の刀に、加賀の鉄砲。百万石の御城下の業物ばかりだ」'],
-      action: 'shop',
-      shop: 'kanazawaKaji',
-    },
-    {
-      id: 'kanazawaKinpaku',
-      name: '金箔屋',
-      x: 46,
-      y: 22,
-      color: 0xb09040,
-      sprite: 'npc_okami',
-      lines: ['金箔屋「金沢の金箔は、一匁の金を畳一枚ほどに打ち延ばすがやよ。御守りに貼ると、ご利益も百万石」'],
-      action: 'shop',
-      shop: 'kanazawaKinpaku',
-    },
-    {
-      id: 'kanazawaHikyaku',
-      // 看板: 道ばたに立つ（前に飛脚屋の戸がない）
-      sign: false,
-      name: '飛脚',
-      x: 16,
-      y: 23,
-      color: 0x8c6b5a,
-      sprite: 'npc_hikyaku',
-      lines: ['飛脚「江戸へ文を出すなら、飛脚にお任せを。記録と預かりもいたしますよ」'],
-      action: 'hikyaku',
-    },
-    {
-      id: 'sakon',
-      name: '長瀬左近',
-      x: 8,
-      y: 9,
-      color: 0x5a4a3a,
-      sprite: 'sakon',
-      event: 'sakonMeet',
-    },
-    {
-      id: 'bukeJochu',
-      name: '女中',
-      x: 13,
-      y: 9,
-      color: 0xa07a6a,
-      sprite: 'npc_okami',
-      lines: ['女中「長瀬様は、お殿様に三十年お仕えしたご老臣です。ご家老に疎まれて、今はお屋敷に引きこもっておられます」'],
-      after: { flag: 'chapter7Cleared', lines: ['女中「長瀬様が、またお城へ上がられるようになりました。ありがとうございました」'] },
     },
     {
       id: 'bukeKodomo',
@@ -3167,40 +3077,14 @@ MAPS.kanazawa = {
       after: { flag: 'chapter7Cleared', lines: ['門番「ご家老は捕らえられ、お殿様が政に戻られた。……わしらも、何も知らなんだのだ」'] },
     },
     {
-      id: 'kanazawaGeiko',
-      name: '芸妓',
-      x: 45,
-      y: 5,
-      color: 0xc05a7a,
-      sprite: 'npc_maiko',
-      lines: ['芸妓「ひがしの茶屋街へようこそ。夜はお座敷に三味線の音が響きます」', '芸妓「ご家老様は、毎晩お座敷で上機嫌。からくりの人形を、それはそれは自慢しておられました」'],
-    },
-    {
-      id: 'chayaOkami',
-      name: '茶屋の女将',
-      x: 51,
-      y: 5,
-      color: 0xa07a6a,
-      sprite: 'npc_okami',
-      lines: ['女将「江戸のお侍が、ご家老のところへしきりに出入りしとるがよ。鷲尾様のご家来やとか」'],
-    },
-    {
       id: 'omichoIchiba',
+      // 飛脚問屋の戸口 (32, 27) の前をふさがないよう、屋台の前に立つ
       name: '魚屋',
-      x: 32,
+      x: 33,
       y: 29,
       color: 0x6a7a8a,
       sprite: 'npc_ninsoku',
       lines: ['魚屋「近江町の市へようこそ！ 今朝は寒鰤があがったよ。……北前船で来たって？ そりゃ荒れた海をご苦労さんだ」'],
-    },
-    {
-      id: 'teramachiSo',
-      name: '寺町の僧',
-      x: 20,
-      y: 36,
-      color: 0x6a5a4a,
-      sprite: 'npc_so',
-      lines: ['僧「犀川の南は寺町。御城下を守るように、寺が並んでおります」', '僧「このごろ、夜ごとに城の方から、ゼンマイを巻くような音が聞こえるのです……」'],
     },
     {
       id: 'teramachiHaka',
@@ -5430,6 +5314,7 @@ addBuildings(MAPS, 'iga', IGA_BUILDINGS);
 addBuildings(MAPS, 'osaka', OSAKA_BUILDINGS);
 addBuildings(MAPS, 'hiroshima', HIROSHIMA_BUILDINGS);
 addBuildings(MAPS, 'nagasaki', NAGASAKI_BUILDINGS);
+addBuildings(MAPS, 'kanazawa', KANAZAWA_BUILDINGS);
 /** その戸口が屋内へ入る入口か（屋内のある施設の人は、屋内の建物のファイルで屋内に置くので、店先には立たせない）。 */
 const hasInterior = (town: string, door: { x: number; y: number }) => MAPS[town]!.exits.some((e) => e.x === door.x && e.y === door.y);
 // 湯屋・賭場・居酒屋・妓楼（刀鍛冶かよろず屋のあるすべての町。戸口と台詞は src/data/townFacilities.ts）
