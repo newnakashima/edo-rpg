@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { characterName } from '../data/characters';
 import { ENEMIES, enemyImageKey } from '../data/enemies';
+import { EQUIPMENT } from '../data/equipment';
 import { ITEMS, ownedItems } from '../data/items';
 import { respawnPoint } from '../data/maps';
 import { ailmentMarks, isAilment, SKILLS, STATUS_NAMES, type StatusId } from '../data/skills';
@@ -413,6 +414,12 @@ export class BattleScene extends Phaser.Scene {
         return `${this.nameOf(e.target)}が現れた！`;
       case 'charge':
         return `${this.nameOf(e.actor)}は${SKILLS[e.skill]?.name ?? ''}の構えに入った！`;
+      case 'again': {
+        const equip = EQUIPMENT[e.equip]?.name ?? '';
+        return e.trait === 'doubleAttack'
+          ? `${equip}の秘技！\n${this.nameOf(e.actor)}は影を分けて、もう一度斬りかかった！`
+          : `${equip}が響き、術がもう一度発動した！`;
+      }
     }
   }
 

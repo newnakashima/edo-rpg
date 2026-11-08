@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { aliveOf, availableItemCount, computeRewards, createBattle, partyAfterBattle, resolveTurn, type BattleState } from './battle';
+import { aliveOf, availableItemCount, computeRewards, createBattle, partyAfterBattle, resolveTurn, type BattleEvent, type BattleState } from './battle';
 import { createMember } from './party';
 import { enemyExp, enemyMoney } from './stats';
 import { seededRng, seqRng } from './testUtils';
@@ -149,6 +149,91 @@ describe('装備', () => {
       return e?.type === 'attack' ? e.damage : 0;
     };
     expect(hit(armed)).toBeGreaterThan(hit(bare));
+  });
+});
+
+describe('レア装備の特性', () => {
+  const attacks = (events: BattleEvent[], actor: string) => events.filter((e) => e.type === 'attack' && e.actor === actor);
+
+  it('影分身の秘伝書を付けた霞は、たたかうで 2 回攻撃する（付けていなければ 1 回）', () => {
+    const kasumi = (accessory?: string) => [createMember('kasumi', 20, { weapon: 'kunai', accessory })];
+    // 敵の HP を大きくして、1 回目で倒れないようにする
+    const battle = (accessory?: string) => {
+      const b = createBattle(kasumi(accessory), 'm', ['yamainu'], 1);
+      b.combatants[1]!.hp = 9999;
+      return b;
+    };
+    const twin = resolveTurn(battle('kagebunshin'), { p0: { kind: 'attack', target: 'e0' } }, seededRng(3)).events;
+    expect(attacks(twin, 'p0').map((e) => (e.type === 'attack' ? e.target : ''))).toEqual(['e0', 'e0']);
+    expect(twin).toContainEqual({ type: 'again', actor: 'p0', equip: 'kagebunshin', trait: 'doubleAttack' });
+    const single = resolveTurn(battle(), { p0: { kind: 'attack', target: 'e0' } }, seededRng(3)).events;
+    expect(attacks(single, 'p0')).toHaveLength(1);
+    expect(single.some((e) => e.type === 'again')).toBe(false);
+  });
+
+  it('2 回攻撃の 1 回目で狙いが倒れたら、2 回目は別の敵を狙い、敵が残っていなければ斬りかからない', () => {
+    const party = [createMember('kasumi', 20, { weapon: 'kunai', accessory: 'kagebunshin' })];
+    const two = createBattle(party, 'm', ['onibi', 'onibi'], 1);
+    two.combatants[1]!.hp = 1;
+    two.combatants[2]!.hp = 9999;
+    const events = resolveTurn(two, { p0: { kind: 'attack', target: 'e0' } }, seqRng(0.5)).events;
+    expect(attacks(events, 'p0').map((e) => (e.type === 'attack' ? e.target : ''))).toEqual(['e0', 'e1']);
+
+    const one = createBattle(party, 'm', ['onibi'], 1);
+    one.combatants[1]!.hp = 1;
+    const last = resolveTurn(one, { p0: { kind: 'attack', target: 'e0' } }, seqRng(0.5));
+    expect(attacks(last.events, 'p0')).toHaveLength(1);
+    expect(last.events.some((e) => e.type === 'again')).toBe(false);
+    expect(last.state.outcome).toBe('victory');
+  });
+
+  it('影分身の秘伝書は技（手裏剣）を 2 回にしない', () => {
+    const b = createBattle([createMember('kasumi', 20, { accessory: 'kagebunshin' })], 'm', ['yamainu'], 1);
+    b.combatants[1]!.hp = 9999;
+    const events = resolveTurn(b, { p0: { kind: 'skill', skill: 'shuriken', target: 'e0' } }, seededRng(4)).events;
+    expect(events.some((e) => e.type === 'again')).toBe(false);
+  });
+
+  it('木霊の数珠を付けると、術がもう一度発動し、気力は 1 回分だけ減る', () => {
+    const orin = (accessory?: string) => {
+      const b = createBattle([createMember('orin', 10, { accessory })], 'm', ['yamainu'], 1);
+      b.combatants[1]!.hp = 9999;
+      return b;
+    };
+    const cast = (b: BattleState) => resolveTurn(b, { p0: { kind: 'skill', skill: 'neraiuchi', target: 'e0' } }, seededRng(5));
+    const damages = (events: BattleEvent[]) => events.filter((e) => e.type === 'damage' && e.target === 'e0');
+    const echoed = orin('kodamaJuzu');
+    const r = cast(echoed);
+    expect(damages(r.events)).toHaveLength(2);
+    expect(r.events.filter((e) => e.type === 'skill')).toHaveLength(1);
+    expect(r.events).toContainEqual({ type: 'again', actor: 'p0', equip: 'kodamaJuzu', trait: 'doubleCast' });
+    expect(r.state.combatants[0]!.mp).toBe(echoed.combatants[0]!.mp - 3);
+    expect(damages(cast(orin()).events)).toHaveLength(1);
+  });
+
+  it('木霊の数珠で回復の術も 2 回効く。状態異常の術や、戦いが決まった後には発動しない', () => {
+    const party = [createMember('gendo', 10, { accessory: 'kodamaJuzu' }), createMember('hero', 10)];
+    const b = createBattle(party, 'm', ['yamainu'], 1);
+    b.combatants[1]!.hp = 1;
+    b.combatants[2]!.hp = 9999;
+    const heal = resolveTurn(b, { p0: { kind: 'skill', skill: 'yakushi', target: 'p1' }, p1: { kind: 'guard' } }, seededRng(6)).events;
+    expect(heal.filter((e) => e.type === 'heal' && e.target === 'p1')).toHaveLength(2);
+
+    const sleepy = createBattle([createMember('kasumi', 20, { accessory: 'kodamaJuzu' })], 'm', ['yamainu'], 1);
+    const smoke = resolveTurn(sleepy, { p0: { kind: 'skill', skill: 'kemuridama' } }, seededRng(7)).events;
+    expect(smoke.some((e) => e.type === 'again')).toBe(false);
+
+    const weak = createBattle([createMember('orin', 10, { accessory: 'kodamaJuzu' })], 'm', ['onibi'], 1);
+    weak.combatants[1]!.hp = 1;
+    const won = resolveTurn(weak, { p0: { kind: 'skill', skill: 'neraiuchi', target: 'e0' } }, seededRng(8));
+    expect(won.state.outcome).toBe('victory');
+    expect(won.events.some((e) => e.type === 'again')).toBe(false);
+  });
+
+  it('韋駄天の守りは素早さを大きく上げる', () => {
+    const bare = createBattle([createMember('orin', 10, {})], 'm', ['onibi'], 1).combatants[0]!.stats.spd;
+    const fast = createBattle([createMember('orin', 10, { accessory: 'idatenMamori' })], 'm', ['onibi'], 1).combatants[0]!.stats.spd;
+    expect(fast - bare).toBe(30);
   });
 });
 

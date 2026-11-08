@@ -13,6 +13,13 @@ export const SLOT_NAMES: Record<EquipSlot, string> = {
   accessory: '装飾',
 };
 
+/**
+ * 装備の特性（能力値に足すだけでなく、戦闘での動きを変えるもの）。
+ * - doubleAttack: 通常攻撃（たたかう）で 2 回斬りつける。1 回目で狙いが倒れたら、2 回目は別の敵を狙う
+ * - doubleCast: 術（ダメージ・回復の技）がもう一度発動する。気力は 1 回分だけ使う
+ */
+export type EquipTrait = 'doubleAttack' | 'doubleCast';
+
 export interface EquipDef {
   id: string;
   name: string;
@@ -24,6 +31,8 @@ export interface EquipDef {
   /** 付けられる人物。 */
   wearers: readonly CharacterId[];
   description: string;
+  /** 戦闘での動きを変える特性（レア装備だけが持つ）。 */
+  traits?: readonly EquipTrait[];
 }
 
 const ALL: readonly CharacterId[] = ['hero', 'kasumi', 'gendo', 'orin'];
@@ -109,6 +118,13 @@ export const EQUIPMENT: Record<string, EquipDef> = {
   waraji: { id: 'waraji', name: 'わらじ', slot: 'accessory', price: 15, bonus: { spd: 2 }, wearers: ALL, description: '履き替え用の新しい草鞋' },
   chochin: { id: 'chochin', name: '提灯', slot: 'accessory', price: 60, bonus: { def: 1, luck: 3 }, wearers: ALL, description: '夜道を照らす小田原提灯' },
   kiseru: { id: 'kiseru', name: 'キセル', slot: 'accessory', price: 120, bonus: { mag: 4 }, wearers: ALL, description: '一服すると頭が冴える煙管' },
+  // レア装備（店には置かない。脇道の行き止まりの葛籠で手に入る。docs/balance.md の「装備」）
+  // 高野山の葛籠（第 5 章から）。術の得意なお凛・玄道が付けると真価を発揮する
+  kodamaJuzu: { id: 'kodamaJuzu', name: '木霊の数珠', slot: 'accessory', price: 3000, bonus: { mag: 3 }, wearers: ALL, description: '唱えた術が山彦のようにもう一度響く。術が 2 回発動する（気力は 1 回分）', traits: ['doubleCast'] },
+  // 出雲の葛籠（第 6 章から）。足の遅いお凛が先に術を撃てるようにする
+  idatenMamori: { id: 'idatenMamori', name: '韋駄天の守り', slot: 'accessory', price: 2600, bonus: { spd: 30 }, wearers: ALL, description: '足の速い韋駄天の御守り。素早さが大きく上がる' },
+  // 阿蘇の葛籠（第 6 章から）。霞だけが使いこなせる
+  kagebunshin: { id: 'kagebunshin', name: '影分身の秘伝書', slot: 'accessory', price: 3000, bonus: { spd: 3 }, wearers: ['kasumi'], description: '読み解いた忍びは影を分けて斬りかかる。たたかうで 2 回攻撃する（霞のみ）', traits: ['doubleAttack'] },
   inro: { id: 'inro', name: '印籠', slot: 'accessory', price: 150, bonus: { maxHp: 10 }, wearers: ALL, description: '薬を入れる小箱' },
 };
 
@@ -126,6 +142,21 @@ export const STARTING_EQUIPMENT: Record<CharacterId, Equipped> = {
 
 export function canEquip(id: CharacterId, equipId: string): boolean {
   return EQUIPMENT[equipId]?.wearers.includes(id) ?? false;
+}
+
+/** 付けている装備の特性。 */
+export function equipmentTraits(equipped: Equipped): EquipTrait[] {
+  const traits = new Set<EquipTrait>();
+  for (const slot of EQUIP_SLOTS) {
+    const id = equipped[slot];
+    for (const t of (id ? EQUIPMENT[id]?.traits : undefined) ?? []) traits.add(t);
+  }
+  return [...traits];
+}
+
+/** その特性を与えている装備の ID（戦闘のメッセージに名前を出すため）。 */
+export function traitSource(equipped: Equipped, trait: EquipTrait): string | undefined {
+  return EQUIP_SLOTS.map((slot) => equipped[slot]).find((id) => id && EQUIPMENT[id]?.traits?.includes(trait));
 }
 
 /** 装備の能力値の合計。 */

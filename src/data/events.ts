@@ -2929,7 +2929,7 @@ export const EVENTS: Record<string, EventDef> = {
   worldChestFuji: chest('worldChestFuji', 'kitsukegusuri', '気付け薬'),
   worldChestHiei: chest('worldChestHiei', 'matcha', '宇治の抹茶'),
   worldChestIse: chest('worldChestIse', 'mankintan', '万金丹'),
-  worldChestKoya: chest('worldChestKoya', 'hangontan', '反魂丹'),
-  worldChestIzumo: chest('worldChestIzumo', 'hachigane', '鉢金'),
-  worldChestAso: chest('worldChestAso', 'ninjin', '朝鮮人参'),
+  worldChestKoya: chest('worldChestKoya', 'kodamaJuzu', '木霊の数珠'),
+  worldChestIzumo: chest('worldChestIzumo', 'idatenMamori', '韋駄天の守り'),
+  worldChestAso: chest('worldChestAso', 'kagebunshin', '影分身の秘伝書'),
 };
