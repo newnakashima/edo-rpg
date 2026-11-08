@@ -42,6 +42,10 @@ PixelLab MCP で生成する画像の一覧です。クレジットを使うた�
 
 - 葛籠（宝箱）: 済み（`public/assets/objects/tsuzura.png`。作り方は [public/assets/README.md](../public/assets/README.md) の「物」）。開けると開いた姿になる
 
+## 施設の看板（16 × 16）
+
+- 済み（`public/assets/signs/*.png`。作り方は [public/assets/README.md](../public/assets/README.md) の「施設の看板」）。旅籠「宿」・茶屋「茶」・よろず屋「万」・刀鍛冶「刀」・飛脚屋「飛」・寺「寺」・神社「社」と、出島の商館「商」・金箔屋「金」・辛子蓮根の店「蓮」。戸口の隣の壁に掛ける（`src/data/signs.ts`）
+
 ## 顔グラフィック
 
 主人公（男女）、霞、玄道、お凛、榊兵庫、辰五郎、夜叉丸、鷲尾、将軍、権六、典膳、金太、若林蘭斎、小吉。主要人物（旅の仲間）は表情差分（通常・怒り・悲しみ）を作る。

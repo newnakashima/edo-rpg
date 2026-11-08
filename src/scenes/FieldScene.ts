@@ -13,6 +13,7 @@ import { playBgm } from '../systems/audio';
 import { browserStorage } from '../systems/save';
 import { getState, holdEventWhileAway, setState, shouldRunEnterEvent, takePendingEvent } from '../state';
 import { EVENTS } from '../data/events';
+import { mapSigns, signKey } from '../data/signs';
 import { CHAR_DISPLAY_ORIGIN, heroSprite, idleFrame, objectDepth, objectDisplayOrigin, objectKey, oppositeFacing, personDepth, shouldStandStill, spriteKey, walkAnimKey, walkDepthRow, type CharacterSpriteId } from '../data/sprites';
 import { EventRunner, type EventInput } from '../systems/eventScript';
 import { fieldCancelLabel } from '../ui/cancelLabel';
@@ -107,6 +108,8 @@ export class FieldScene extends Phaser.Scene {
       const origin = objectDisplayOrigin(mark.object);
       this.add.image(mark.x * TILE, mark.y * TILE, objectKey(mark.object), 0).setDisplayOrigin(origin.x, origin.y).setDepth(1);
     }
+    // 施設の看板（戸口の隣の壁に掛ける。src/data/signs.ts）。人より奥に描く
+    for (const sign of mapSigns(map)) this.add.image(sign.x * TILE, sign.y * TILE, signKey(sign.kind)).setOrigin(0).setDepth(1);
     this.npcSprites = new Map();
     this.npcObjects = new Map();
     for (const npc of map.npcs) {

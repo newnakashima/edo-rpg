@@ -4,6 +4,7 @@ import { FACE_IMAGES, faceKey } from '../data/faces';
 import { PORTRAITS, portraitKey } from '../data/portraits';
 import { TILE_KINDS, TILESETS, tileTextureKey, type TilesetId } from '../data/maps';
 import { allPartsImages } from '../data/mapParts';
+import { SIGN_KINDS, signKey } from '../data/signs';
 import { TILE } from '../ui/theme';
 import { CHAR_FRAME, CHARACTER_SPRITES, FACINGS, OBJECT_DEFS, OBJECT_SPRITES, objectKey, spriteKey, walkAnimKey, walkFrame, WALK_FPS, WALK_FRAMES } from '../data/sprites';
 import { CURSOR_TEXTURE, ICON_IMAGE_SIZE, ICON_TEXTURE, TITLE_TEXTURE, WINDOW_IMAGE_SIZE, WINDOW_SLICES, WINDOW_TEXTURE, windowSliceRects } from '../ui/uiImages';
@@ -35,6 +36,7 @@ export class BootScene extends Phaser.Scene {
     for (const id of OBJECT_SPRITES) {
       this.load.spritesheet(objectKey(id), `assets/objects/${id}.png`, { frameWidth: OBJECT_DEFS[id].size, frameHeight: OBJECT_DEFS[id].size });
     }
+    for (const kind of SIGN_KINDS) this.load.image(signKey(kind), `assets/signs/${kind}.png`);
     this.load.image(WINDOW_TEXTURE, 'assets/ui/window.png');
     this.load.image(CURSOR_TEXTURE, 'assets/ui/cursor.png');
     this.load.image(TITLE_TEXTURE, 'assets/ui/title.png');
