@@ -13,6 +13,7 @@ import { SUNPU_BUILDINGS } from './buildingsSunpu';
 import { NAGOYA_BUILDINGS } from './buildingsNagoya';
 import { KYO_BUILDINGS } from './buildingsKyo';
 import { IGA_BUILDINGS } from './buildingsIga';
+import { OSAKA_BUILDINGS } from './buildingsOsaka';
 
 /** タイルの種類。画像は public/assets/tiles/<種類>.png（PixelLab で生成。記録は public/assets/README.md）。 */
 export const TILE_KINDS = ['ground', 'grass', 'road', 'tree', 'water', 'wall', 'roof', 'door', 'floor', 'rock', 'plain', 'town', 'gate'] as const;
@@ -2158,101 +2159,8 @@ MAPS.osaka = {
     'T.,,,,,,,,......,,,,,,................,,,,,,,,...,,,,T',
     'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
   ],
+  // 店・寺・旅籠・飛脚屋・湯屋などの施設の人と、米問屋の番頭・榊兵庫・芝居茶屋の女将は建物の中にいる（src/data/buildingsOsaka.ts）
   npcs: [
-    {
-      id: 'osakaTeahouse',
-      name: '茶屋の娘',
-      x: 4,
-      y: 12,
-      color: 0xc76b8f,
-      sprite: 'npc_musume',
-      lines: [
-        '茶屋の娘「おいでやす。……すんまへん、お団子、米の粉が高うて小さなってしもて」',
-        '茶屋の娘「米問屋の大黒屋はんが、蔵に米を山ほど溜めこんではるのに、ちっとも売らはらへんのです」',
-        '茶屋の娘「お団子、いかがどす？」',
-      ],
-      after: { flag: 'heardOsakaRumor', lines: ['茶屋の娘「おいでやす。小さいお団子でよかったら、どうぞ」'] },
-      later: { flag: 'chapter5Cleared', lines: ['茶屋の娘「おいでやす。米の粉が安うなって、お団子も元の大きさに戻りましたえ」'] },
-      setsFlag: 'heardOsakaRumor',
-      action: 'teahouse',
-      shop: 'osakaChaya',
-    },
-    {
-      id: 'osakaYorozu',
-      name: 'よろず屋',
-      x: 12,
-      y: 12,
-      color: 0x6b8c5a,
-      sprite: 'npc_merchant',
-      lines: ['よろず屋「まいど！ 天下の台所や、品物だけはなんでもありまっせ。米のほかはな」'],
-      after: { flag: 'chapter5Cleared', lines: ['よろず屋「まいど！ 蔵の米が出回って、町にも活気が戻りましたわ。これで天下の台所の面目が立ちます」'] },
-      action: 'shop',
-      shop: 'osakaYorozu',
-    },
-    {
-      id: 'osakaTennoji',
-      // 看板: 寺の戸から 2 マス下に立つ
-      sign: { x: 41, y: 32 },
-      name: '天王寺の僧',
-      x: 42,
-      y: 34,
-      color: 0xb08a3e,
-      sprite: 'npc_so',
-      lines: ['僧「天王寺さんのお慈悲を。倒れた者があれば、お祓いをして進ぜよう」'],
-      action: 'temple',
-    },
-    {
-      id: 'osakaInn',
-      name: '旅籠の主人',
-      x: 5,
-      y: 20,
-      color: 0x5a6b8c,
-      sprite: 'npc_innkeeper',
-      lines: ['旅籠の主人「渡世人さんは、うちには泊められまへんのや。……泊めたところで、飯は麦がちでっけどな。親分さんのお屋敷を訪ねなはれ」'],
-      after: { flag: 'chapter5Cleared', lines: ['旅籠の主人「米が戻って、ようやく白い飯をお出しできますわ。……渡世人さんは泊められまへんけど、親分さんのお屋敷でもきっと白い飯が出まっせ」'] },
-      action: 'inn',
-    },
-    {
-      id: 'hyogoJuku',
-      name: '浪人',
-      x: 12,
-      y: 24,
-      color: 0x3a4a6a,
-      sprite: 'hyogo',
-      event: 'hyogoMeet',
-      hideFlag: 'hyogoJoined',
-    },
-    {
-      id: 'osakaKaji',
-      name: '刀鍛冶',
-      x: 13,
-      y: 20,
-      color: 0x5a5a6b,
-      sprite: 'npc_smith',
-      lines: ['刀鍛冶「大坂の刀は、刃文が波みたいに揺れとるやろ。濤乱刃いうんや」'],
-      action: 'shop',
-      shop: 'osakaKaji',
-    },
-    {
-      id: 'daikokuya',
-      name: '米問屋の番頭',
-      x: 20,
-      y: 12,
-      color: 0x8a6a3a,
-      sprite: 'npc_merchant',
-      lines: ['番頭「米を売れ？ 相場が上がりきるまで待つのが商いや。文句があるなら、江戸のお偉い方に言うてみなはれ」'],
-      after: { flag: 'hyakuhyoDefeated', lines: ['番頭「く、蔵の地下のことは、わてらは何も知りまへん……！」'] },
-    },
-    {
-      id: 'osakaHikyaku',
-      name: '飛脚',
-      x: 20,
-      y: 20,
-      color: 0x3e7cb0,
-      sprite: 'npc_hikyaku',
-      lines: ['飛脚「へい、まいど！ 大坂の飛脚問屋でございやす」'],
-      action: 'hikyaku',
-    },
     {
       id: 'uekoMother',
       name: '長屋の母親',
@@ -2262,6 +2170,19 @@ MAPS.osaka = {
       sprite: 'npc_okami',
       lines: ['母親「この子に食べさせる米が、もう三日もあらへんのです……。お奉行所は、なんもしてくれへん」'],
       after: { flag: 'chapter5Cleared', lines: ['母親「蔵の米が、町に配られたんです。……あのお侍さまのおかげやて、みんな言うてます」'] },
+    },
+    {
+      // 長屋の二棟のあいだの路地の東の口の外に立ち、どの戸が私塾（12, 23）かを教える（戸に看板がなく、ほかの長屋の戸と見分けがつかないため）。
+      // 路地（y = 24）は幅 1 マスで、西寄りに長屋の母親が立つので、路地の中に立たせると戸の前をふさぐ
+      id: 'osakaJukuKodomo',
+      name: '門弟の子',
+      x: 17,
+      y: 24,
+      color: 0xb08a5a,
+      sprite: 'npc_kodomo',
+      lines: ['子ども「この路地の北側の長屋の、東から二つ目の戸が、榊先生の私塾やで。先生は、奥で書を教えてはる」'],
+      after: { flag: 'hyogoJoined', lines: ['子ども「先生は、あんたらと蔵へ行かはったんやろ。……おいら、ここで帰りを待っとるんや」'] },
+      later: { flag: 'chapter5Cleared', lines: ['子ども「先生は奉行所へ行かはった。……塾は、門弟のみんなで続けていくんや」'] },
     },
     {
       id: 'kuraGuardW',
@@ -2304,7 +2225,8 @@ MAPS.osaka = {
       {
         id: 'osakaKidoban',
         name: '芝居小屋の木戸番',
-        x: 25,
+        // 芝居小屋の戸（25, 27）の脇に立つ（戸の前は、屋内から出てくるマス）
+        x: 24,
         y: 28,
         color: 0x8a5a4a,
         sprite: 'npc_ninsoku',
@@ -2339,16 +2261,6 @@ MAPS.osaka = {
         color: 0x8a6a3a,
         object: 'tsuzura',
         event: 'osakaChest',
-      },
-      {
-        id: 'osakaShibaiChaya',
-        name: '芝居茶屋の女将',
-        x: 17,
-        y: 33,
-        color: 0xc07a8a,
-        sprite: 'npc_okami',
-        lines: ['女将「芝居茶屋いうのは、芝居見物のお客の弁当やら席やらを世話するところどす。……せやけど、今は弁当の米が手に入らしまへん」'],
-        after: { flag: 'chapter5Cleared', lines: ['女将「米が戻って、弁当もこさえられるようになりました。道頓堀に、また人が戻ってきますえ」'] },
       },
   ],
   exits: [
@@ -5687,6 +5599,7 @@ addBuildings(MAPS, 'sunpu', SUNPU_BUILDINGS);
 addBuildings(MAPS, 'nagoya', NAGOYA_BUILDINGS);
 addBuildings(MAPS, 'kyo', KYO_BUILDINGS);
 addBuildings(MAPS, 'iga', IGA_BUILDINGS);
+addBuildings(MAPS, 'osaka', OSAKA_BUILDINGS);
 /** その戸口が屋内へ入る入口か（屋内のある施設の人は、屋内の建物のファイルで屋内に置くので、店先には立たせない）。 */
 const hasInterior = (town: string, door: { x: number; y: number }) => MAPS[town]!.exits.some((e) => e.x === door.x && e.y === door.y);
 // 湯屋・賭場・居酒屋・妓楼（刀鍛冶かよろず屋のあるすべての町。戸口と台詞は src/data/townFacilities.ts）
