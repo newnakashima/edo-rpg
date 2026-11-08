@@ -4,7 +4,7 @@ import { characterName, isGuest } from '../data/characters';
 import { EQUIP_SLOTS, EQUIPMENT, SLOT_NAMES, canEquip, type EquipSlot } from '../data/equipment';
 import { ITEMS, itemCount, itemName, ownedEquipment, ownedItems } from '../data/items';
 import { SKILLS } from '../data/skills';
-import { changeEquipment, expLine, fieldSkills, itemUsableOn, statsWithEquipment, useItemInField, useSkillInField, type FieldResult } from '../systems/fieldMenu';
+import { changeEquipment, expLine, skillDescription, fieldSkills, itemUsableOn, statsWithEquipment, useItemInField, useSkillInField, type FieldResult } from '../systems/fieldMenu';
 import { memberLevel, memberStats } from '../systems/party';
 import type { Stats } from '../systems/stats';
 import { getState, setState } from '../state';
@@ -223,7 +223,7 @@ export class FieldMenu {
       },
       (i) => {
         const skill = ids[i] ? SKILLS[ids[i]] : undefined;
-        if (skill) this.setInfo(`${skill.description}（気力 ${skill.mp}）`);
+        if (skill) this.setInfo(skillDescription(skill));
       },
     );
   }

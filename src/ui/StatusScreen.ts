@@ -74,11 +74,11 @@ export class StatusScreen {
     const key = portraitKey(portraitFor(member.id, state.gender));
     if (this.scene.textures.exists(key)) add(this.scene.add.image(16 + (72 - PORTRAIT_WIDTH) / 2, TOP, key).setOrigin(0, 0));
     // 倒れている仲間は立ち絵の下に書く
-    if (member.hp <= 0) text(16 + 36, TOP + PORTRAIT_HEIGHT + 4, '戦闘不能', 10, COLORS.danger).setOrigin(0.5, 0);
+    if (sheet.down) text(16 + 36, TOP + PORTRAIT_HEIGHT + 4, '戦闘不能', 10, COLORS.danger).setOrigin(0.5, 0);
 
     // 能力値
     const statLines: [string, string, string?][] = [
-      ['体力', sheet.hp, member.hp <= 0 ? COLORS.danger : undefined],
+      ['体力', sheet.hp, sheet.down ? COLORS.danger : undefined],
       ['気力', sheet.mp],
       ...sheet.stats.map((s): [string, string] => [s.label, String(s.value)]),
       ['経験', String(sheet.exp)],
@@ -147,7 +147,7 @@ export class StatusScreen {
     else if (dir === 'right') this.switchMember(1);
     else if (dir === 'up') this.moveTo(this.row - 1);
     else if (dir === 'down') this.moveTo(this.row + 1);
-    // 決定では何もしない（取消で戻る）
+    // 決定では何もしない（取消で戻る）。押された決定を捨てておき、閉じた後のメニューで選択されないようにする
     controls.okPressed();
     if (controls.cancelPressed()) this.onClose();
   }

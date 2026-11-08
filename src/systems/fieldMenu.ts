@@ -1,8 +1,8 @@
-// メニュー画面（戦闘の外）での道具・技・装備。画面に依存しない純粋なロジック。
+// メニュー画面（戦闘の外）での道具・技・装備と、ステータス画面の内容。画面に依存しない純粋なロジック。
 import { CHARACTERS, characterName, isGuest, type Gender } from '../data/characters';
 import { canEquip, EQUIP_SLOTS, EQUIPMENT, SLOT_NAMES, type EquipSlot } from '../data/equipment';
 import { addItem, ITEMS, itemCount, itemName, MAX_ITEM_COUNT, removeItem } from '../data/items';
-import { SKILLS, skillsAtLevel } from '../data/skills';
+import { SKILLS, skillsAtLevel, type SkillDef } from '../data/skills';
 import { healAmount } from './combat';
 import type { GameState } from './gameState';
 import { memberLevel, memberStats, type PartyMember } from './party';
@@ -136,13 +136,22 @@ export function itemUsableOn(itemId: string, member: PartyMember): boolean {
 
 /** メニューの強さの窓に出す経験値の行（累計と、次のレベルまでの残り）。 */
 export function expLine(member: PartyMember, sep = '  '): string {
-  // ゲストは成長しないので、次のレベルまでの経験値は出さない
-  const rest = isGuest(member.id) ? null : expRemainingToNext(member.exp);
+  const rest = expToNext(member);
   return `経験 ${member.exp}${sep}次 ${rest === null ? '――' : rest}`;
 }
 
+/** 次のレベルまでの経験値。ゲストは成長しないので null（最大レベルも null）。 */
+export function expToNext(member: PartyMember): number | null {
+  return isGuest(member.id) ? null : expRemainingToNext(member.exp);
+}
+
+/** 技の説明の窓に出す文。withField なら、戦闘の外でも使える技にそう書き足す。 */
+export function skillDescription(skill: SkillDef, withField = false): string {
+  return `${skill.description}（気力 ${skill.mp}${withField && skill.field ? '・戦闘の外でも使える' : ''}）`;
+}
+
 /** ステータス画面の能力値の並び（表示名と Stats のキー）。 */
-export const STATUS_STATS: readonly (readonly [string, keyof Stats])[] = [
+const STATUS_STATS: readonly (readonly [string, keyof Stats])[] = [
   ['攻撃', 'atk'],
   ['防御', 'def'],
   ['術力', 'mag'],
@@ -168,6 +177,8 @@ export interface StatusSheet {
   level: number;
   hp: string;
   mp: string;
+  /** 倒れている（体力 0）。 */
+  down: boolean;
   stats: { label: string; value: number }[];
   exp: number;
   /** 次のレベルまでの経験値。ゲストは成長しないので null。 */
@@ -186,9 +197,10 @@ export function statusSheet(member: PartyMember, gender: Gender): StatusSheet {
     level,
     hp: `${member.hp}/${s.maxHp}`,
     mp: `${member.mp}/${s.maxMp}`,
+    down: member.hp <= 0,
     stats: STATUS_STATS.map(([label, key]) => ({ label, value: s[key] })),
     exp: member.exp,
-    next: isGuest(member.id) ? null : expRemainingToNext(member.exp),
+    next: expToNext(member),
     equipment: EQUIP_SLOTS.map((slot) => {
       const id = member.equip[slot];
       return {
@@ -200,7 +212,7 @@ export function statusSheet(member: PartyMember, gender: Gender): StatusSheet {
     skills: skillsAtLevel(member.id, level).flatMap((id) => {
       const skill = SKILLS[id];
       if (!skill) return [];
-      return [{ label: skill.name, note: String(skill.mp), description: `${skill.description}（気力 ${skill.mp}${skill.field ? '・戦闘の外でも使える' : ''}）` }];
+      return [{ label: skill.name, note: String(skill.mp), description: skillDescription(skill, true) }];
     }),
   };
 }

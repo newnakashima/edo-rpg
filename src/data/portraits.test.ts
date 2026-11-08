@@ -1,13 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { pngSize } from '../systems/testUtils';
 import { CHARACTERS, type CharacterId } from './characters';
 import { PORTRAIT_HEIGHT, PORTRAIT_WIDTH, portraitFor, PORTRAITS } from './portraits';
-
-/** data URL の PNG の幅と高さ（IHDR）。 */
-function pngSize(dataUrl: string): { w: number; h: number } {
-  const png = atob(dataUrl.split(',')[1]!);
-  const u32 = (at: number) => [0, 1, 2, 3].reduce((v, i) => v * 256 + png.charCodeAt(at + i), 0);
-  return { w: u32(16), h: u32(20) };
-}
 
 describe('立ち絵', () => {
   it('PORTRAITS の画像がすべてあり、64 × 96 で、ほかの画像はない', () => {

@@ -21,3 +21,10 @@ export function seededRng(seed: number): Rng {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
+
+/** PNG の幅と高さ（IHDR）。data URL の画像（import.meta.glob の ?inline）から読む。 */
+export function pngSize(dataUrl: string): { w: number; h: number } {
+  const png = atob(dataUrl.split(',')[1]!);
+  const u32 = (at: number) => [0, 1, 2, 3].reduce((v, i) => v * 256 + png.charCodeAt(at + i), 0);
+  return { w: u32(16), h: u32(20) };
+}

@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { SKILLS } from '../data/skills';
-import { changeEquipment, expLine, fieldSkills, itemUsableOn, statsWithEquipment, statusSheet, useItemInField, useSkillInField } from './fieldMenu';
+import { SKILLS, skillsAtLevel } from '../data/skills';
+import { changeEquipment, expLine, fieldSkills, itemUsableOn, skillDescription, statsWithEquipment, statusSheet, useItemInField, useSkillInField } from './fieldMenu';
 import { newGame, type GameState } from './gameState';
 import { createMember, memberStats } from './party';
-import { MAX_LEVEL } from './stats';
+import { expRemainingToNext, MAX_LEVEL } from './stats';
 
 function game(over: Partial<GameState> = {}): GameState {
   return { ...newGame('m', { mapId: 'shimizu', x: 1, y: 1 }), ...over };
@@ -191,7 +191,8 @@ describe('ステータス画面の内容', () => {
       { label: '運', value: s.luck },
     ]);
     expect(sheet.exp).toBe(m.exp);
-    expect(sheet.next).toBeGreaterThan(0);
+    expect(sheet.next).toBe(expRemainingToNext(m.exp));
+    expect(sheet.down).toBe(false);
     expect(statusSheet(m, 'm').name).toBe('弥太郎');
   });
 
@@ -218,7 +219,28 @@ describe('ステータス画面の内容', () => {
     expect(yakushi?.description).toContain('戦闘の外でも使える');
   });
 
-  it('ゲストは次のレベルまでの経験値を出さない', () => {
-    expect(statusSheet(createMember('hyogo', 18), 'm').next).toBeNull();
+  it('倒れている仲間は down になる', () => {
+    const sheet = statusSheet({ ...createMember('kasumi', 3), hp: 0 }, 'm');
+    expect(sheet.down).toBe(true);
+    expect(sheet.hp).toMatch(/^0\//);
+  });
+
+  it('ゲストは装備と技を出し、次のレベルまでの経験値は出さない', () => {
+    const m = createMember('hyogo', 18);
+    const sheet = statusSheet(m, 'm');
+    expect(sheet.next).toBeNull();
+    expect(sheet.exp).toBe(m.exp);
+    expect(sheet.equipment[0]!.label).toBe('与力の差料');
+    expect(sheet.equipment[1]!.label).toBe('与力の羽織');
+    expect(sheet.skills.map((e) => e.label)).toEqual(skillsAtLevel('hyogo', 18).map((id) => SKILLS[id]!.name));
+    expect(sheet.skills.length).toBeGreaterThan(0);
+  });
+});
+
+describe('技の説明', () => {
+  it('気力を書き、withField のときだけ戦闘の外でも使えることを書き足す', () => {
+    expect(skillDescription(SKILLS.yakushi!)).toBe(`${SKILLS.yakushi!.description}（気力 ${SKILLS.yakushi!.mp}）`);
+    expect(skillDescription(SKILLS.yakushi!, true)).toBe(`${SKILLS.yakushi!.description}（気力 ${SKILLS.yakushi!.mp}・戦闘の外でも使える）`);
+    expect(skillDescription(SKILLS.iai!, true)).toBe(`${SKILLS.iai!.description}（気力 ${SKILLS.iai!.mp}）`);
   });
 });
