@@ -6,6 +6,7 @@ import { SHOPS } from './shops';
 import { ENCOUNTERS, ENEMIES } from './enemies';
 import type { EventStep } from './eventTypes';
 import { EVENTS } from './events';
+import { TATSUGORO_JINGI } from './oyabunRequests';
 import { isKnownItem } from './items';
 import { SKILLS } from './skills';
 import { MAPS, npcVisible, tileAt } from './maps';
@@ -108,8 +109,12 @@ describe('序章の流れ', () => {
     const reported = run('tatsugoro', defeated);
     expect(reported.flags.prologueCleared).toBe(true);
     expect(reported.money).toBe(defeated.money + 300);
+    // 親分の頼みを果たしたので、仁義ポイントも得る（src/data/oyabunRequests.ts）
+    expect(reported.jingi).toBe(defeated.jingi + TATSUGORO_JINGI);
     // 礼は一度だけ
-    expect(run('tatsugoro', reported).money).toBe(reported.money);
+    const again = run('tatsugoro', reported);
+    expect(again.money).toBe(reported.money);
+    expect(again.jingi).toBe(reported.jingi);
   });
 
   it('野狐の戦闘は逃げられず、負けたら yakoDefeated は立たない', () => {

@@ -101,26 +101,45 @@ const TEXT: Record<JingiRequestKind, RequestText> = {
   },
 };
 
+/**
+ * 仁義ポイントを得る戦闘の手順（町の頼まれごと・親分の頼み〈src/data/oyabunRequests.ts〉で共通）。
+ * confront のあと逃げられない戦闘をし、勝てば thanks・仁義ポイント・知らせのあと flag を立てる。
+ * 負けたら lose を出して終わる（全滅にはせず、フラグも立てないので、また引き受けられる）。
+ */
+export function jingiBattleSteps(p: {
+  confront: string[];
+  enemies: string[];
+  level: number;
+  lose: string[];
+  thanks: string[];
+  reward: number;
+  flag: string;
+}): EventStep[] {
+  return [
+    { type: 'say', lines: p.confront },
+    { type: 'battle', enemies: p.enemies, level: p.level, ifLose: [{ type: 'say', lines: p.lose }, { type: 'end' }] },
+    { type: 'say', lines: p.thanks },
+    { type: 'addJingi', amount: p.reward },
+    // 上限で丸められたときに増えた量を偽らないよう、数値は今の仁義ポイント（{jingi}）を出す
+    { type: 'say', lines: ['渡世人としての名が上がった。（仁義 {jingi}）'] },
+    { type: 'setFlag', flag: p.flag },
+  ];
+}
+
 /** 町の頼まれごとのイベント。勝てば仁義ポイントを得てフラグを立てる。負けても全滅にはせず、また引き受けられる。 */
 export function jingiRequestEvent(town: string, kind: JingiRequestKind, areaLevel: number): EventDef {
   const id = jingiRequestId(town, kind);
   const text = TEXT[kind];
-  const reward = jingiRequestReward(areaLevel);
-  const accept: EventStep[] = [
-    { type: 'say', lines: text.confront },
-    {
-      type: 'battle',
-      enemies: jingiRequestEnemies(kind, areaLevel),
-      level: jingiRequestLevel(areaLevel),
-      ifLose: [{ type: 'say', lines: text.lose }, { type: 'end' }],
-    },
-    { type: 'say', lines: text.thanks },
-    { type: 'addJingi', amount: reward },
-    // 上限で丸められたときに増えた量を偽らないよう、数値は今の仁義ポイント（{jingi}）を出す
-    { type: 'say', lines: ['渡世人としての名が上がった。（仁義 {jingi}）'] },
+  const accept = jingiBattleSteps({
+    confront: text.confront,
+    enemies: jingiRequestEnemies(kind, areaLevel),
+    level: jingiRequestLevel(areaLevel),
+    lose: text.lose,
+    thanks: text.thanks,
+    reward: jingiRequestReward(areaLevel),
     // 果たしたら、イベントの ID と同じ名前のフラグを立てる（pendingJingiRequest が見る）
-    { type: 'setFlag', flag: id },
-  ];
+    flag: id,
+  });
   return {
     id,
     steps: [
@@ -273,20 +292,23 @@ export function pendingBakutoIntro(town: string, flags: Record<string, boolean>)
 export type FacilityPick<T> = { kind: 'main'; value: T } | { kind: 'request'; id: string } | { kind: 'cancel' };
 
 /**
- * 施設のメニュー（main の項目、頼まれごとや博徒の紹介〈request があれば〉、やめる の順）の項目の名前と、選んだ番号から選んだものを返す関数。
+ * 施設のメニュー（main の項目、頼まれごと・博徒の紹介・親分の頼み〈requests のうち null でないもの〉、やめる の順）の項目の名前と、
+ * 選んだ番号から選んだものを返す関数。
  * 画面（FieldScene の賭場・居酒屋・妓楼・親分の屋敷）はこれでメニューを作り、番号の対応を自分で数えない。
  */
 export function facilityMenu<T>(
   main: readonly { label: string; value: T }[],
-  request: MenuRequest | null,
+  requests: readonly (MenuRequest | null)[],
 ): { labels: string[]; pick: (index: number) => FacilityPick<T> } {
-  const labels = [...main.map((m) => m.label), ...(request ? [request.label] : []), 'やめる'];
+  const shown = requests.filter((r): r is MenuRequest => r !== null);
+  const labels = [...main.map((m) => m.label), ...shown.map((r) => r.label), 'やめる'];
   return {
     labels,
     pick: (index) => {
       const m = main[index];
       if (m) return { kind: 'main', value: m.value };
-      if (request && index === main.length) return { kind: 'request', id: request.id };
+      const r = shown[index - main.length];
+      if (r) return { kind: 'request', id: r.id };
       return { kind: 'cancel' };
     },
   };

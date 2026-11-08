@@ -1,6 +1,7 @@
 // イベントのデータ。シナリオ（フェーズ 4）はここに足していく。形は eventTypes.ts を参照。
 import type { EventDef, EventStep } from './eventTypes';
 import { BAKUTO_INTRO_EVENTS, JINGI_REQUEST_EVENTS } from './jingiRequests';
+import { OYABUN_REQUEST_EVENTS, TATSUGORO_JINGI } from './oyabunRequests';
 
 /** 辰五郎の頼み（野狐を倒す前）。 */
 const TATSUGORO_REQUEST: EventStep[] = [
@@ -59,6 +60,9 @@ const TATSUGORO_REPORT: EventStep[] = [
     ],
   },
   { type: 'giveMoney', amount: 300 },
+  // 親分の頼みを果たしたので仁義ポイントを得る（src/data/oyabunRequests.ts）
+  { type: 'addJingi', amount: TATSUGORO_JINGI },
+  { type: 'say', lines: ['辰五郎「一家の頼みを、よう果たしてくれた。この恩は、街道筋の親分衆にも伝えておくぜ」', '渡世人としての名が上がった。（仁義 {jingi}）'] },
   { type: 'setFlag', flag: 'talkedToTatsugoro' },
   { type: 'setFlag', flag: 'prologueCleared' },
 ];
@@ -2937,4 +2941,5 @@ export const EVENTS: Record<string, EventDef> = {
   // 賭場・居酒屋・妓楼の頼まれごとと、博徒の紹介（仁義ポイントを得る。src/data/jingiRequests.ts）
   ...JINGI_REQUEST_EVENTS,
   ...BAKUTO_INTRO_EVENTS,
+  ...OYABUN_REQUEST_EVENTS,
 };

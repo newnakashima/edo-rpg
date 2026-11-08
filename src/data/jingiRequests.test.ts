@@ -114,7 +114,7 @@ describe('仁義ポイントを得る頼まれごと', () => {
   it('施設のメニューは、本来の項目・頼まれごと・やめる の順で、選んだ番号から選んだものが分かる', () => {
     const request = pendingJingiRequest('kyo', 'tobaku', {});
     const bets = [10, 100].map((b) => ({ label: `${b} 文張る`, value: b }));
-    const withReq = facilityMenu(bets, request);
+    const withReq = facilityMenu(bets, [request]);
     expect(withReq.labels).toEqual(['10 文張る', '100 文張る', 'イカサマ客を懲らしめる', 'やめる']);
     expect([0, 1, 2, 3].map(withReq.pick)).toEqual([
       { kind: 'main', value: 10 },
@@ -123,14 +123,31 @@ describe('仁義ポイントを得る頼まれごと', () => {
       { kind: 'cancel' },
     ]);
     // 頼まれごとが済んでいれば出さない
-    const without = facilityMenu(bets, null);
+    const without = facilityMenu(bets, [null]);
     expect(without.labels).toEqual(['10 文張る', '100 文張る', 'やめる']);
     expect(without.pick(2)).toEqual({ kind: 'cancel' });
     // 張る銭がなくても、頼まれごとは選べる
-    const noBets = facilityMenu([], request);
+    const noBets = facilityMenu([], [request]);
     expect(noBets.labels).toEqual(['イカサマ客を懲らしめる', 'やめる']);
     expect(noBets.pick(0)).toEqual({ kind: 'request', id: jingiRequestId('kyo', 'tobaku') });
     expect(noBets.pick(1)).toEqual({ kind: 'cancel' });
+  });
+
+  it('頼みが複数あれば、null を飛ばして渡した順に並べ、番号を数え違えない（親分の屋敷の、親分の頼みと博徒の紹介）', () => {
+    const main = [
+      { label: '泊めてもらう', value: 'stay' },
+      { label: '記録する', value: 'save' },
+    ];
+    const a = { id: 'a', label: '親分の頼みを聞く' };
+    const b = { id: 'b', label: '博徒を引き合わせる' };
+    const both = facilityMenu(main, [a, b]);
+    expect(both.labels).toEqual(['泊めてもらう', '記録する', '親分の頼みを聞く', '博徒を引き合わせる', 'やめる']);
+    expect([2, 3, 4].map(both.pick)).toEqual([{ kind: 'request', id: 'a' }, { kind: 'request', id: 'b' }, { kind: 'cancel' }]);
+    const onlyB = facilityMenu(main, [null, b]);
+    expect(onlyB.labels).toEqual(['泊めてもらう', '記録する', '博徒を引き合わせる', 'やめる']);
+    expect([2, 3].map(onlyB.pick)).toEqual([{ kind: 'request', id: 'b' }, { kind: 'cancel' }]);
+    const onlyA = facilityMenu(main, [a, null]);
+    expect([2, 3].map(onlyA.pick)).toEqual([{ kind: 'request', id: 'a' }, { kind: 'cancel' }]);
   });
 
   it('湯屋や、施設のない町には頼まれごとがない', () => {
