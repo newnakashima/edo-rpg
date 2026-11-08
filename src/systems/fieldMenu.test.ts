@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { SKILLS, skillsAtLevel } from '../data/skills';
-import { changeEquipment, expToNext, fieldSkills, itemUsableOn, skillDescription, statsWithEquipment, statusSheet, useItemInField, useSkillInField } from './fieldMenu';
+import { changeEquipment, expToNext, fieldSkills, itemUsableOn, skillDescription, statsWithEquipment, statusSheet, swapMembers, useItemInField, useSkillInField } from './fieldMenu';
 import { newGame, type GameState } from './gameState';
 import { createMember, memberStats } from './party';
 import { expRemainingToNext, MAX_LEVEL } from './stats';
@@ -240,5 +240,26 @@ describe('技の説明', () => {
     expect(skillDescription(SKILLS.yakushi!)).toBe(`${SKILLS.yakushi!.description}（気力 ${SKILLS.yakushi!.mp}）`);
     expect(skillDescription(SKILLS.yakushi!, true)).toBe(`${SKILLS.yakushi!.description}（気力 ${SKILLS.yakushi!.mp}・戦闘の外でも使える）`);
     expect(skillDescription(SKILLS.iai!, true)).toBe(`${SKILLS.iai!.description}（気力 ${SKILLS.iai!.mp}）`);
+  });
+});
+
+describe('仲間の並び替え', () => {
+  const three = () => game({ party: [createMember('hero', 1), { ...createMember('kasumi', 1), hp: 3 }, createMember('gendo', 1)] });
+
+  it('2 人の位置を入れ替え、ほかの仲間と中身はそのまま', () => {
+    const s = three();
+    const r = swapMembers(s, 0, 2);
+    expect(r.party.map((m) => m.id)).toEqual(['gendo', 'kasumi', 'hero']);
+    expect(r.party[1]).toBe(s.party[1]);
+    expect(r.party[2]).toBe(s.party[0]);
+    // 元の state は変えない
+    expect(s.party.map((m) => m.id)).toEqual(['hero', 'kasumi', 'gendo']);
+  });
+
+  it('同じ位置や範囲外なら何もしない', () => {
+    const s = three();
+    expect(swapMembers(s, 1, 1)).toBe(s);
+    expect(swapMembers(s, 0, 3)).toBe(s);
+    expect(swapMembers(s, -1, 0)).toBe(s);
   });
 });

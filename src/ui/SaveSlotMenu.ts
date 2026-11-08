@@ -17,7 +17,8 @@ function describe(info: SlotInfo): string {
   if (info.status === 'empty') return '―― 空き ――';
   if (info.status === 'broken') return '（読めないデータ）';
   const s = info.data.state;
-  const hero = s.party[0];
+  // 並び替えで先頭が主人公とは限らないので、主人公を探す
+  const hero = s.party.find((m) => m.id === 'hero') ?? s.party[0];
   const name = hero ? `${characterName(hero.id, s.gender)} Lv${memberLevel(hero)}` : '';
   return `${name}  ${MAPS[s.mapId]?.name ?? s.mapId}  ${formatPlayTime(s.playTimeSec)}`;
 }

@@ -115,6 +115,14 @@ export function statsWithEquipment(member: PartyMember, slot: EquipSlot, equipId
   return memberStats(withEquipment(member, slot, equipId));
 }
 
+/** 仲間の並びで a 番目と b 番目を入れ替える（メニューの並び替え）。範囲外か同じ位置なら state をそのまま返す。 */
+export function swapMembers(state: GameState, a: number, b: number): GameState {
+  const ma = state.party[a];
+  const mb = state.party[b];
+  if (!ma || !mb || a === b) return state;
+  return { ...state, party: state.party.map((m, i) => (i === a ? mb : i === b ? ma : m)) };
+}
+
 /** 道具がその仲間に効くか（メニューで対象を選ぶときに、効かない仲間を選べなくする）。 */
 export function itemUsableOn(itemId: string, member: PartyMember): boolean {
   const effect = ITEMS[itemId]?.effect;
