@@ -9,9 +9,11 @@ import {
   gyoroPrice,
   innPrice,
   izakayaPrice,
+  moguriInnPrice,
   playChohan,
   reviveAfterDefeat,
   stayAtInn,
+  stayAtMoguriInn,
   takeBath,
   teahouseChoices,
   visitGyoro,
@@ -45,6 +47,21 @@ describe('施設', () => {
 
   it('お金が足りなければ泊まれない', () => {
     expect(stayAtInn({ ...newGame('m', start), money: 13 }, 1)).toEqual({ ok: false, reason: 'money' });
+  });
+
+  it('もぐりの宿は旅籠の 4 倍の宿代で、妓楼より高い。泊まると旅籠と同じく全回復する（戦闘不能も治る）', () => {
+    expect(moguriInnPrice(1)).toBe(56);
+    expect(moguriInnPrice(25)).toBe(440);
+    for (const lv of [1, 10, 25]) expect(moguriInnPrice(lv)).toBeGreaterThan(gyoroPrice(lv));
+    const s = { ...newGame('m', start), money: 60, party: [{ ...createMember('hero', 2), hp: 0, mp: 0 }] };
+    const r = stayAtMoguriInn(s, 1);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.state.money).toBe(4);
+    const m = r.state.party[0]!;
+    expect(m.hp).toBe(memberStats(m).maxHp);
+    expect(m.mp).toBe(memberStats(m).maxMp);
+    expect(stayAtMoguriInn({ ...newGame('m', start), money: 55 }, 1)).toEqual({ ok: false, reason: 'money' });
   });
 
   it('団子は最大 HP の 3 割を回復し、戦闘不能は治さない', () => {
