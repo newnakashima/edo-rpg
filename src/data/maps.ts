@@ -10,6 +10,7 @@ import type { SignKind } from './signs';
 import { addBuildings } from './buildings';
 import { SHIMIZU_BUILDINGS } from './buildingsShimizu';
 import { SUNPU_BUILDINGS } from './buildingsSunpu';
+import { NAGOYA_BUILDINGS } from './buildingsNagoya';
 
 /** タイルの種類。画像は public/assets/tiles/<種類>.png（PixelLab で生成。記録は public/assets/README.md）。 */
 export const TILE_KINDS = ['ground', 'grass', 'road', 'tree', 'water', 'wall', 'roof', 'door', 'floor', 'rock', 'plain', 'town', 'gate'] as const;
@@ -1113,7 +1114,7 @@ MAPS.nagoya = {
     'T.,,,,...,~~,............==.................TTTTTTTT',
     'T.,,,,...,~~,RRRR.RRRRRRR==RRRRRRRR.RRRRRRR.TRRRRRTT',
     'T.RRRRRRR,~~,RRRR.RRRRRRR==RRRRRRRR.RRRRRRR.TRRRRRTT',
-    'T.RRRRRRR,~~,WDDW.WDWWWDW==WDWWWWDW.WDWWWDW.TWWDWWTT',
+    'T.RRRRRRR,~~,WDWW.WDWWWDW==WDWWWWWW.WDWWWDW.TWWDWWTT',
     'T.WWWWWWW,==,............==.................T.....TT',
     'T.........~~.,,,,.,,,,...==..,,,,,.....,,,,.T.....TT',
     'T.,,,,,,,.~~,............==.......................TT',
@@ -1123,55 +1124,8 @@ MAPS.nagoya = {
     'T....,,,,,~~,,,,.....,,,,==.,,,.......,,,,,.TTTTTTTT',
     'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
   ],
+  // 店・神社・旅籠・飛脚屋・湯屋などの施設の人は建物の中にいる（src/data/buildingsNagoya.ts）
   npcs: [
-    {
-      id: 'nagoyaTeahouse',
-      name: '茶屋の娘',
-      x: 14,
-      y: 15,
-      color: 0xc76b8f,
-      sprite: 'npc_musume',
-      lines: [
-        '茶屋の娘「いらっしゃいまし。お城の金の鯱の鱗が、ひと晩でごっそり剥がされたんですって」',
-        '茶屋の娘「あんな高いところ、凧にでも乗らなきゃ届かないって……それで、軽業師の金太さんが疑われてるの。金太さん、そんな人じゃないのに」',
-        '茶屋の娘「お団子はいかが？」',
-      ],
-      after: { flag: 'heardKinshachiRumor', lines: ['茶屋の娘「いらっしゃいまし。お団子はいかが？」'] },
-      setsFlag: 'heardKinshachiRumor',
-      action: 'teahouse',
-      shop: 'nagoyaChaya',
-    },
-    {
-      id: 'nagoyaYorozu',
-      name: 'よろず屋',
-      x: 19,
-      y: 15,
-      color: 0x6b8c5a,
-      sprite: 'npc_merchant',
-      lines: ['よろず屋「尾張の城下は東海道いちの品ぞろえだよ。金創膏も置いてるよ」'],
-      action: 'shop',
-      shop: 'nagoyaYorozu',
-    },
-    {
-      id: 'nagoyaInn',
-      name: '旅籠の主人',
-      x: 28,
-      y: 15,
-      color: 0x5a6b8c,
-      sprite: 'npc_innkeeper',
-      lines: ['旅籠の主人「名古屋へようこそ。あいにく、渡世人のお方はお断りしておりやす。親分さんの屋敷なら、一宿一飯の世話をしてくれやすよ」'],
-      action: 'inn',
-    },
-    {
-      id: 'atsutaKannushi',
-      name: '熱田の神主',
-      x: 47,
-      y: 28,
-      color: 0xb0b0a0,
-      sprite: 'npc_kannushi',
-      lines: ['神主「熱田の宮のご加護を。倒れた者があれば、お祓いをして進ぜよう」'],
-      action: 'temple',
-    },
     {
       id: 'nagoyaCastleGuard',
       name: '城の門番',
@@ -1196,27 +1150,6 @@ MAPS.nagoya = {
       after: { flag: 'kinshachiDefeated', lines: ['同心「金太の疑いは晴れた。……疑ってすまなんだと、伝えておいてくれ」'] },
     },
     {
-      id: 'nagoyaKaji',
-      name: '刀鍛冶',
-      x: 37,
-      y: 15,
-      color: 0x5a5a6b,
-      sprite: 'npc_smith',
-      lines: ['刀鍛冶「関の刀に鎖鎌、尾張にゃ腕のいい職人がそろってるぜ」'],
-      action: 'shop',
-      shop: 'nagoyaKaji',
-    },
-    {
-      id: 'nagoyaHikyaku',
-      name: '飛脚',
-      x: 45,
-      y: 15,
-      color: 0x3e7cb0,
-      sprite: 'npc_hikyaku',
-      lines: ['飛脚「へい、まいど！ 名古屋の飛脚問屋でございやす」'],
-      action: 'hikyaku',
-    },
-    {
       id: 'horikawaCart',
       name: '荷車',
       x: 5,
@@ -1229,7 +1162,8 @@ MAPS.nagoya = {
     {
       id: 'nagoyaMachiya',
       name: '長屋のおかみ',
-      x: 20,
+      // 民家の戸口（20, 21）の前をあけるため、1 マス右に立つ
+      x: 21,
       y: 22,
       color: 0x9c8a5a,
       sprite: 'npc_okami',
@@ -5902,6 +5836,7 @@ MAPS.matsuNoRoka = {
 // 施設・民家以外の建物の屋内（建物ごとに固有の間取り。町ごとのファイルに書く。src/data/buildings.ts）
 addBuildings(MAPS, 'shimizu', SHIMIZU_BUILDINGS);
 addBuildings(MAPS, 'sunpu', SUNPU_BUILDINGS);
+addBuildings(MAPS, 'nagoya', NAGOYA_BUILDINGS);
 /** その戸口が屋内へ入る入口か（屋内のある施設の人は、屋内の建物のファイルで屋内に置くので、店先には立たせない）。 */
 const hasInterior = (town: string, door: { x: number; y: number }) => MAPS[town]!.exits.some((e) => e.x === door.x && e.y === door.y);
 // 湯屋・賭場・居酒屋・妓楼（刀鍛冶かよろず屋のあるすべての町。戸口と台詞は src/data/townFacilities.ts）
