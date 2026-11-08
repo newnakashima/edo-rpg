@@ -32,6 +32,10 @@ standard の size 24 では笠と合羽が描き分けられないため、主�
 
 - hero_m: 1 回目（standard、size 24、text_guidance_scale 12）は笠が紺色の帽子になり、合羽も着物にしか見えなかった。2 回目は mode `v3` にして、笠を「light tan」、合羽を「grey-blue」と色で描き分け、「wider than his shoulders」「like a bell」で形を言い、採用（計 2 回）。
 - hero_f: 1 回目（standard）は笠は出たが、合羽が着物になり、横向きで笠が消えた。2 回目（v3）は渡世人の形になったが、笠で髪が隠れて男女の区別がつかなかった。3 回目は「pretty young woman」「red lips」を足したところ、胸から上しか描かれず脚が切れた。4 回目は 2 回目の正面に黒髪と赤い襟を描き足して参照画像にし、4 方向を回して採用（計 4 回）。
+- hero_f の下向きの歩行（2026-11-08）: テストプレイで「下向きに歩くとき足が動いておらず、歩いているように見えない」と指摘された。合羽が揺れるだけで、4 コマとも足が同じ形だった。
+  - 1 回目: `animate_character`（v3、south、4 コマ、action_description: walking toward the viewer, legs clearly alternating: left foot steps forward and lifts while right foot stays back, then right foot steps forward and lifts, feet visible below the cape, …。グループ 71f631d2…）。両足がそろって上下するだけで、交互に動かなかった。
+  - 2 回目: template `walking-4-frames`（south。グループ 3dffafa7…）。足は交互に動いたが、合羽が細くなり刀の位置も変わって、ほかの向きと別人に見えた。
+  - 3 回目: 採用済みのコマの足だけを `scripts/fix_hero_f_walk_down.py` で描き直して採用（列 1 で左足を上げ右足を 1px 前へ、列 3 でその逆）。`pack_character.py` でシートを作り直したときは、このスクリプトをもう一度実行する。
 
 ### 敵方の人物（`chars/yashamaru.png`・`chars/oboro.png`・`chars/borei.png`）
 
