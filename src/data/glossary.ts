@@ -5,11 +5,13 @@
 // - 江戸の暮らし・身分・役職・道具など、今はあまり使わない言葉
 // - 読みが難しい漢字（葛籠・柄杓・水主など）
 // - 人の名前・地名・技や道具の名前（そのまま読めば分かる固有の名前）は載せない
-// - 一文字の言葉（文・両など）は、ほかの言葉の一部と見分けられないので載せない
+// - 一文字の言葉は、ほかの言葉の一部になる字（文・両など）は載せない。凧・祠のように、どの言葉の中でも同じ意味の字だけ載せる
+// - 送り仮名のある言葉は送り仮名まで含める（「赤備え」「外法使い」。下線と読みの範囲をそろえる）
+// - 敵の名前の一部になる言葉は、敵の名前のほかでも使われるときだけ載せる（「金鯱からくり」の金鯱は載せない）
 // 長い言葉を先に当てる（「奉行所」は「奉行」より先に当たる）ので、短い言葉と重なってもよい。
 
 export interface GlossaryEntry {
-  /** 台詞の中で探す言葉（2 文字以上）。 */
+  /** 台詞の中で探す言葉。 */
   term: string;
   /** 読み（ひらがな）。 */
   reading: string;
@@ -23,18 +25,24 @@ export const GLOSSARY: readonly GlossaryEntry[] = [
   { term: '茶屋', reading: 'ちゃや', description: '道ばたや町で、旅人に茶や団子を出して休ませる店。' },
   { term: '長屋', reading: 'ながや', description: '一つの細長い建物をいくつもの部屋に仕切った、町人の住まい。' },
   { term: '葛籠', reading: 'つづら', description: 'つる草や竹で編んだ、ふたつきの箱。着物や道具をしまう。' },
+  { term: '凧', reading: 'たこ', description: '竹の骨に紙を張り、糸をつけて風で空に揚げるもの。' },
+  { term: '祠', reading: 'ほこら', description: '神をまつった小さなやしろ。' },
+  { term: '川獺', reading: 'かわうそ', description: '川辺にすむ、イタチの仲間のけもの。人を化かすといわれた。' },
   { term: '柄杓', reading: 'ひしゃく', description: '長い柄のついた、水をくむ道具。' },
   { term: '千両箱', reading: 'せんりょうばこ', description: '小判を千両（千枚）入れておく、丈夫な木の箱。' },
   { term: '城下', reading: 'じょうか', description: '城のまわりに広がる町。武家屋敷や町人の家が並ぶ。' },
   { term: '町木戸', reading: 'まちきど', description: '町の境に設けた門。夜になると閉じて、人の出入りを見張った。' },
   { term: '木戸番', reading: 'きどばん', description: '町木戸の番をする人。' },
+  { term: '高札', reading: 'こうさつ', description: 'お上の決まりや知らせを書いて、人目につく所に立てた板。' },
+  { term: '半鐘', reading: 'はんしょう', description: '火の見櫓などにつるした小さな釣鐘。火事を知らせるために打ち鳴らした。' },
   { term: '番屋', reading: 'ばんや', description: '町の見張りをする人が詰めている小屋。' },
   { term: '火の見櫓', reading: 'ひのみやぐら', description: '火事をいち早く見つけるための、高い見張り台。半鐘を鳴らして知らせた。' },
-  { term: '火消', reading: 'ひけし', description: '火事を消す人たち。江戸では町ごとに「組」を作っていた。' },
+  { term: '火消し', reading: 'ひけし', description: '火事を消す人たち。江戸では町ごとに「組」を作っていた。' },
   { term: '飛脚', reading: 'ひきゃく', description: '手紙やお金、荷物を走って届ける仕事の人。' },
   { term: '人足', reading: 'にんそく', description: '荷物運びや普請（工事）などの力仕事をする人。' },
   { term: '雲助', reading: 'くもすけ', description: '街道で駕籠かきや荷運びをした人足。旅人にたかる、たちの悪い者もいた。' },
-  { term: '川止', reading: 'かわどめ', description: '大雨で川の水が増え、渡し（川を渡ること）を止めること。' },
+  { term: '川止め', reading: 'かわどめ', description: '大雨で川の水が増え、渡し（川を渡ること）を止めること。' },
+  { term: '渡し場', reading: 'わたしば', description: '舟で川を渡す所。橋のない大きな川では、舟や川越し人足に頼って渡った。' },
   { term: '関所', reading: 'せきしょ', description: '街道の要所で、旅人や荷物を調べた所。通るには手形が要る。' },
   { term: '手形', reading: 'てがた', description: '関所などを通るための通行証。' },
   { term: '廻船問屋', reading: 'かいせんどんや', description: '船で運ぶ荷を取り次ぐ商人。船主として船を持つ店も多かった。' },
@@ -56,11 +64,12 @@ export const GLOSSARY: readonly GlossaryEntry[] = [
   { term: '用心棒', reading: 'ようじんぼう', description: '身や店を守るために雇われた、腕の立つ者。' },
   { term: '浪人', reading: 'ろうにん', description: '仕える主君をなくした武士。' },
   { term: '盗人', reading: 'ぬすっと', description: '泥棒。' },
-  { term: '人相書', reading: 'にんそうがき', description: '罪人などの顔つきや特徴を書いて、探すために配った書きつけ。' },
+  { term: '人相書き', reading: 'にんそうがき', description: '罪人などの顔つきや特徴を書いて、探すために配った書きつけ。' },
   { term: '上座', reading: 'かみざ', description: '部屋の中で、身分や立場の高い人がすわる所。' },
   { term: '座敷牢', reading: 'ざしきろう', description: '屋敷の中に設けた、人を閉じこめておく部屋。' },
   { term: '籠城', reading: 'ろうじょう', description: '城にたてこもって敵を防ぐこと。' },
-  { term: '仇討', reading: 'あだうち', description: '主君や身内を殺された者が、その相手を討ち果たすこと。届け出て許しを受ければ認められた。' },
+  { term: '仇討免状', reading: 'あだうちめんじょう', description: '仇討ちを許すと公儀が認めた書きつけ。' },
+  { term: '仇討ち', reading: 'あだうち', description: '主君や身内を殺された者が、その相手を討ち果たすこと。届け出て許しを受ければ認められた。' },
   { term: '祝詞', reading: 'のりと', description: '神主が神に申し上げる言葉。' },
   { term: '泰平', reading: 'たいへい', description: '世の中がよく治まって、おだやかなこと。' },
   { term: '大筒', reading: 'おおづつ', description: '大砲のこと。' },
@@ -70,6 +79,8 @@ export const GLOSSARY: readonly GlossaryEntry[] = [
   { term: '公儀', reading: 'こうぎ', description: '幕府のこと。おおやけ（政府）。' },
   { term: '老中', reading: 'ろうじゅう', description: '将軍のもとで、幕府の政治を取りしきった最も高い役職。' },
   { term: '旗本', reading: 'はたもと', description: '将軍にじかに仕える武士。' },
+  { term: '御側役', reading: 'おそばやく', description: '殿様のそば近くに仕えて、身の回りや取り次ぎを務める役。' },
+  { term: '足軽', reading: 'あしがる', description: 'いちばん身分の低い武士。戦では槍や鉄砲を持って戦った。' },
   { term: '家老', reading: 'かろう', description: '大名の家臣のうち、いちばん上の重臣。' },
   { term: '御家中', reading: 'ごかちゅう', description: '大名に仕える家臣たち。' },
   { term: '藩士', reading: 'はんし', description: '大名の家（藩）に仕える武士。' },
@@ -80,13 +91,12 @@ export const GLOSSARY: readonly GlossaryEntry[] = [
   { term: '通詞', reading: 'つうじ', description: '通訳。長崎ではオランダや清との通訳を務める役人がいた。' },
   { term: '影武者', reading: 'かげむしゃ', description: '敵の目をあざむくため、身分の高い人に似せて仕立てた身代わり。' },
   { term: '伊賀者', reading: 'いがもの', description: '伊賀（今の三重県の西部）の出の忍び。幕府に仕えて城の守りなどを務めた。' },
-  { term: '外法使', reading: 'げほうつかい', description: '仏の教えに外れた、怪しい術を使う者。' },
-  { term: '赤備', reading: 'あかぞなえ', description: '鎧や旗を赤一色にそろえた軍勢。井伊家の赤備えが名高い。' },
+  { term: '外法使い', reading: 'げほうつかい', description: '仏の教えに外れた、怪しい術を使う者。' },
+  { term: '赤備え', reading: 'あかぞなえ', description: '鎧や旗を赤一色にそろえた軍勢。井伊家の赤備えが名高い。' },
   // 城・幕府
   { term: '天守', reading: 'てんしゅ', description: '城の中心にある、いちばん高い櫓（やぐら）。' },
   { term: '大手門', reading: 'おおてもん', description: '城の正面の門。' },
   { term: '本丸御殿', reading: 'ほんまるごてん', description: '城の本丸（中心の区画）にある、殿様が政治を行い暮らす建物。' },
-  { term: '金鯱', reading: 'きんしゃち', description: '名古屋城の天守の屋根に飾られた、金色のしゃちほこ。' },
   { term: '大奥', reading: 'おおおく', description: '江戸城の中で、将軍の妻や子、奥女中が暮らした所。男は入れない。' },
   { term: '奥女中', reading: 'おくじょちゅう', description: '大奥で働く女の人。' },
   { term: '御錠口', reading: 'おじょうぐち', description: '大奥と表（政治の場）の境にある、錠のかかった出入り口。' },
@@ -117,12 +127,11 @@ const BY_LENGTH = [...GLOSSARY].sort((a, b) => b.term.length - a.term.length);
  * text の中の用語を、前から順に重ならないように探す。同じ位置で当たる言葉が複数あれば長い方を取る。
  * 同じ言葉が何度出てきても、すべて返す（どれにも装飾を付ける）。
  */
-export function findTerms(text: string, glossary: readonly GlossaryEntry[] = BY_LENGTH): TermMatch[] {
-  const sorted = glossary === BY_LENGTH ? BY_LENGTH : [...glossary].sort((a, b) => b.term.length - a.term.length);
+export function findTerms(text: string): TermMatch[] {
   const matches: TermMatch[] = [];
   let i = 0;
   while (i < text.length) {
-    const entry = sorted.find((e) => text.startsWith(e.term, i));
+    const entry = BY_LENGTH.find((e) => text.startsWith(e.term, i));
     if (entry) {
       matches.push({ start: i, end: i + entry.term.length, entry });
       i += entry.term.length;

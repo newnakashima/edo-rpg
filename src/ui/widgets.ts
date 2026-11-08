@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { findTerms, termsIn, type GlossaryEntry } from '../data/glossary';
 import { FACE_MARGIN, messageTextLayout, TEXT_PADDING } from './messageLayout';
 import { scrollOffset, wrapIndex } from './menuScroll';
-import { termSegments } from './termLayout';
+import { nextTipIndex, termSegments } from './termLayout';
 import { COLORS, textStyle } from './theme';
 import { CURSOR_SCALE, CURSOR_TEXTURE, ICON_SCALE, ICON_TEXTURE, iconFrame, WINDOW_SLICES, WINDOW_TEXTURE, windowSliceRects, type IconName } from './uiImages';
 import type { Controls } from './input';
@@ -90,7 +90,13 @@ export class MessageWindow {
     this.face = view ? scene.add.image(x + FACE_MARGIN, y + Math.floor(h / 2), '__DEFAULT').setOrigin(0, 0.5).setVisible(false) : null;
     this.marks = scene.add.container(0, 0);
     const coarse = typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches;
-    this.hint = this.glossary && !coarse ? scene.add.text(x + w - 16, y + h - 14, 'X:用語', textStyle(8, COLORS.accent)).setOrigin(1, 0).setVisible(false) : null;
+    // 台詞の 3 行目と重ならないよう、窓の上の縁の外に、窓と同じ地の色の札として出す
+    this.hint = this.glossary && !coarse
+      ? scene.add
+          .text(x + w - 8, y, 'X:用語', { ...textStyle(8, COLORS.accent), backgroundColor: '#1b1b2f', padding: { x: 3, y: 1 } })
+          .setOrigin(1, 1)
+          .setVisible(false)
+      : null;
     const parts: Phaser.GameObjects.GameObject[] = [bg, this.text, this.marks, this.arrow];
     if (this.hint) parts.push(this.hint);
     if (this.face) parts.push(this.face);
@@ -115,7 +121,7 @@ export class MessageWindow {
 
   /** 今のページに用語がある（取消で解説を見られる）。 */
   get hasTerms(): boolean {
-    return this.isOpen && this.terms.length > 0;
+    return this.terms.length > 0;
   }
 
   /** 用語の解説の窓を開いている。 */
@@ -124,6 +130,7 @@ export class MessageWindow {
   }
 
   show(pages: string[], onDone?: () => void): void {
+    this.closeTips();
     this.pages = pages.length > 0 ? pages : [''];
     this.index = 0;
     this.onDone = onDone ?? null;
@@ -202,13 +209,9 @@ export class MessageWindow {
 
   /** 決定で次の用語へ。最後の用語なら閉じる。 */
   private nextTip(): void {
-    if (this.tipsIndex === null) return;
-    if (this.tipsIndex + 1 >= this.terms.length) {
-      this.closeTips();
-      return;
-    }
-    this.tipsIndex++;
-    this.showTip();
+    this.tipsIndex = nextTipIndex(this.tipsIndex, this.terms.length);
+    if (this.tipsIndex === null) this.closeTips();
+    else this.showTip();
   }
 
   private closeTips(): void {
@@ -223,12 +226,11 @@ export class MessageWindow {
       else if (controls.cancelPressed()) this.closeTips();
       return;
     }
-    if (controls.okPressed()) {
-      this.advance();
-      return;
-    }
-    // 用語を使うウィンドウでは、取消を読んでいる間に溜めない（閉じた後にメニューが開かないように）
-    if (this.glossary && controls.cancelPressed()) this.openTips();
+    const ok = controls.okPressed();
+    // 用語を使うウィンドウでは、取消を読んでいる間に溜めない（決定と同時に押しても、閉じた後にメニューが開かないように）
+    const cancel = this.glossary && controls.cancelPressed();
+    if (ok) this.advance();
+    else if (cancel) this.openTips();
   }
 
   destroy(): void {

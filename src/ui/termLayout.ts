@@ -38,3 +38,12 @@ export function termSegments(text: string, lines: readonly string[], spans: read
   });
   return segments;
 }
+
+/**
+ * 解説の窓で決定を押したときの次の用語の番号。最後の用語なら null（窓を閉じる）。
+ * index が null（閉じている）なら null のまま。
+ */
+export function nextTipIndex(index: number | null, count: number): number | null {
+  if (index === null || index + 1 >= count) return null;
+  return index + 1;
+}

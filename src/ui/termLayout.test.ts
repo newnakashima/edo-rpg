@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { termSegments } from './termLayout';
+import { nextTipIndex, termSegments } from './termLayout';
 
 describe('用語の装飾の置き方', () => {
   it('折り返した行の中の位置に移す', () => {
@@ -31,5 +31,18 @@ describe('用語の装飾の置き方', () => {
       { line: 0, start: 0, end: 2 },
       { line: 0, start: 2, end: 4 },
     ]);
+  });
+});
+
+describe('解説の窓の送り', () => {
+  it('決定で次の用語へ進み、最後の用語で閉じる', () => {
+    expect(nextTipIndex(0, 3)).toBe(1);
+    expect(nextTipIndex(1, 3)).toBe(2);
+    expect(nextTipIndex(2, 3)).toBeNull();
+    expect(nextTipIndex(0, 1)).toBeNull();
+  });
+
+  it('閉じていれば閉じたまま', () => {
+    expect(nextTipIndex(null, 3)).toBeNull();
   });
 });

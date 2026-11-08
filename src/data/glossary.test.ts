@@ -30,11 +30,16 @@ describe('TIPS（用語の解説）', () => {
     expect(termsIn('')).toEqual([]);
   });
 
-  it('言葉は 2 文字以上で重複がなく、読みはひらがな、説明がある', () => {
+  it('送り仮名まで含めて当てる（下線と読みの範囲をそろえる）', () => {
+    expect(findTerms('赤備えの武者').map((m) => m.entry.term)).toEqual(['赤備え']);
+    expect(findTerms('仇討ちと仇討免状').map((m) => m.entry.term)).toEqual(['仇討ち', '仇討免状']);
+  });
+
+  it('言葉は重複がなく、読みはひらがな、説明がある。一文字の言葉は決めた字だけ', () => {
     const terms = GLOSSARY.map((e) => e.term);
     expect(new Set(terms).size).toBe(terms.length);
+    expect(terms.filter((t) => t.length === 1).sort()).toEqual(['凧', '祠'].sort());
     for (const e of GLOSSARY) {
-      expect(e.term.length, e.term).toBeGreaterThanOrEqual(2);
       expect(e.reading, e.term).toMatch(/^[ぁ-ゖー]+$/);
       expect(e.description.length, e.term).toBeGreaterThan(0);
       // 解説の窓の 2 行に収まる長さ（1 行 30 字ほど）
@@ -43,7 +48,11 @@ describe('TIPS（用語の解説）', () => {
   });
 
   it('どの言葉も台詞（イベント・マップの人の台詞）に出てくる', () => {
-    const text = events + maps;
+    // コメントの行は除く（台詞から消えた言葉がコメントだけに残っていても通らないように）
+    const text = (events + maps)
+      .split('\n')
+      .filter((line) => !/^\s*(\/\/|\/\*|\*)/.test(line))
+      .join('\n');
     for (const e of GLOSSARY) expect(text.includes(e.term), e.term).toBe(true);
   });
 });
