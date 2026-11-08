@@ -1,12 +1,12 @@
 // メニュー画面（戦闘の外）での道具・技・装備。画面に依存しない純粋なロジック。
-import { isGuest } from '../data/characters';
-import { canEquip, EQUIPMENT, type EquipSlot } from '../data/equipment';
-import { addItem, ITEMS, itemCount, MAX_ITEM_COUNT, removeItem } from '../data/items';
+import { CHARACTERS, characterName, isGuest, type Gender } from '../data/characters';
+import { canEquip, EQUIP_SLOTS, EQUIPMENT, SLOT_NAMES, type EquipSlot } from '../data/equipment';
+import { addItem, ITEMS, itemCount, itemName, MAX_ITEM_COUNT, removeItem } from '../data/items';
 import { SKILLS, skillsAtLevel } from '../data/skills';
 import { healAmount } from './combat';
 import type { GameState } from './gameState';
 import { memberLevel, memberStats, type PartyMember } from './party';
-import { expRemainingToNext, growthFactor } from './stats';
+import { expRemainingToNext, growthFactor, type Stats } from './stats';
 
 export type FieldResult =
   | { ok: true; state: GameState; changes: { index: number; hp: number; mp: number }[] }
@@ -139,4 +139,68 @@ export function expLine(member: PartyMember, sep = '  '): string {
   // ゲストは成長しないので、次のレベルまでの経験値は出さない
   const rest = isGuest(member.id) ? null : expRemainingToNext(member.exp);
   return `経験 ${member.exp}${sep}次 ${rest === null ? '――' : rest}`;
+}
+
+/** ステータス画面の能力値の並び（表示名と Stats のキー）。 */
+export const STATUS_STATS: readonly (readonly [string, keyof Stats])[] = [
+  ['攻撃', 'atk'],
+  ['防御', 'def'],
+  ['術力', 'mag'],
+  ['素早さ', 'spd'],
+  ['運', 'luck'],
+];
+
+/** ステータス画面の装備・技の 1 行。 */
+export interface StatusEntry {
+  label: string;
+  /** 右寄せの補足（技の消費する気力）。 */
+  note?: string;
+  /** カーソルを合わせたときに説明の窓に出す文。 */
+  description: string;
+  /** 装備の行なら、その枠（アイコンに使う）。 */
+  slot?: EquipSlot;
+}
+
+/** メニューのステータス画面に出す内容（画面に依存しない）。 */
+export interface StatusSheet {
+  name: string;
+  job: string;
+  level: number;
+  hp: string;
+  mp: string;
+  stats: { label: string; value: number }[];
+  exp: number;
+  /** 次のレベルまでの経験値。ゲストは成長しないので null。 */
+  next: number | null;
+  equipment: StatusEntry[];
+  /** 覚えている技（習得順）。 */
+  skills: StatusEntry[];
+}
+
+export function statusSheet(member: PartyMember, gender: Gender): StatusSheet {
+  const s = memberStats(member);
+  const level = memberLevel(member);
+  return {
+    name: characterName(member.id, gender),
+    job: CHARACTERS[member.id].job,
+    level,
+    hp: `${member.hp}/${s.maxHp}`,
+    mp: `${member.mp}/${s.maxMp}`,
+    stats: STATUS_STATS.map(([label, key]) => ({ label, value: s[key] })),
+    exp: member.exp,
+    next: isGuest(member.id) ? null : expRemainingToNext(member.exp),
+    equipment: EQUIP_SLOTS.map((slot) => {
+      const id = member.equip[slot];
+      return {
+        label: id ? itemName(id) : '――',
+        slot,
+        description: id ? `${SLOT_NAMES[slot]}: ${EQUIPMENT[id]?.description ?? ''}` : `${SLOT_NAMES[slot]}: 何も付けていない`,
+      };
+    }),
+    skills: skillsAtLevel(member.id, level).flatMap((id) => {
+      const skill = SKILLS[id];
+      if (!skill) return [];
+      return [{ label: skill.name, note: String(skill.mp), description: `${skill.description}（気力 ${skill.mp}${skill.field ? '・戦闘の外でも使える' : ''}）` }];
+    }),
+  };
 }

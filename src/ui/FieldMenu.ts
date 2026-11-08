@@ -1,4 +1,4 @@
-// フィールドのメニュー画面（取消ボタンで開く）。道具・技・装備と、仲間の強さの表示。
+// フィールドのメニュー画面（取消ボタンで開く）。道具・技・装備・ステータスと、仲間の強さの表示。
 import Phaser from 'phaser';
 import { characterName, isGuest } from '../data/characters';
 import { EQUIP_SLOTS, EQUIPMENT, SLOT_NAMES, canEquip, type EquipSlot } from '../data/equipment';
@@ -11,6 +11,7 @@ import { getState, setState } from '../state';
 import type { Controls } from './input';
 import { COLORS, GAME_HEIGHT, GAME_WIDTH, textStyle } from './theme';
 import { itemIcon, MONEY_ICON, SKILL_ICON, slotIcon } from './icons';
+import { StatusScreen } from './StatusScreen';
 import { addIcon, drawWindow, maxMenuRows, Menu, MENU_ICON_SPACE, menuHeight, type MenuItem } from './widgets';
 
 const MAIN_X = 8;
@@ -36,6 +37,8 @@ const FAIL_MESSAGES: Record<Exclude<FieldResult, { ok: true }>['reason'], string
 export class FieldMenu {
   private readonly menus: Menu[] = [];
   private status: Phaser.GameObjects.Container | null = null;
+  /** 開いているステータス画面（開いている間はメニューの操作をこちらに渡す）。 */
+  private statusScreen: StatusScreen | null = null;
   private readonly infoText: Phaser.GameObjects.Text;
   private readonly info: Phaser.GameObjects.Container;
 
@@ -96,7 +99,7 @@ export class FieldMenu {
 
   private openMain(): void {
     this.push(
-      [{ label: '道具' }, { label: '技' }, { label: '装備' }, { label: 'とじる' }, { label: 'タイトルへ' }],
+      [{ label: '道具' }, { label: '技' }, { label: '装備' }, { label: 'ステータス' }, { label: 'とじる' }, { label: 'タイトルへ' }],
       MAIN_X,
       8,
       MAIN_W,
@@ -104,7 +107,8 @@ export class FieldMenu {
         if (i === 0) this.openItems();
         else if (i === 1) this.chooseMember('誰の技を使う？', (m) => this.openSkills(m));
         else if (i === 2) this.chooseMember('誰の装備を変える？', (m) => this.openEquipSlots(m));
-        else if (i === 3) this.close();
+        else if (i === 3) this.openStatusScreen();
+        else if (i === 4) this.close();
         else {
           this.destroy();
           this.onTitle();
@@ -113,6 +117,20 @@ export class FieldMenu {
       undefined,
       () => this.close(),
     );
+  }
+
+  /** ステータス画面を開く（先頭の仲間から。左右で替える）。 */
+  private openStatusScreen(): void {
+    this.controls.flush();
+    this.menus[this.menus.length - 1]?.setActive(false);
+    // 下の窓との隙間から、裏の仲間の強さの窓が透けて見えないように隠す
+    this.status?.setVisible(false);
+    this.statusScreen = new StatusScreen(this.scene, INFO_Y - 12, 0, (text) => this.setInfo(text), () => {
+      this.statusScreen?.destroy();
+      this.statusScreen = null;
+      this.status?.setVisible(true);
+      this.popTo(this.menus.length);
+    });
   }
 
   /** 仲間を選ぶ。 */
@@ -345,10 +363,16 @@ export class FieldMenu {
   }
 
   update(controls: Controls): void {
+    if (this.statusScreen) {
+      this.statusScreen.update(controls);
+      return;
+    }
     this.menus[this.menus.length - 1]?.update(controls);
   }
 
   destroy(): void {
+    this.statusScreen?.destroy();
+    this.statusScreen = null;
     for (const m of this.menus) m.destroy();
     this.menus.length = 0;
     this.status?.destroy();

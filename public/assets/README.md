@@ -191,6 +191,27 @@ standard の size 24 では笠と合羽が描き分けられないため、主�
 - 笠を深くかぶった主人公（男）は、笠の影で目の上が黒いので、AI の編集では眉が描かれない。目の段を下げて肌の上に眉を描くと読める。
 - 覆面の霞は口で表情を出せないので、眉の傾きと目の細さだけで描き分ける。ほかの人より控えめな違いになる。
 
+## 立ち絵（`portraits/`）
+
+メニューのステータス画面に出す仲間の全身の立ち絵（64 × 96。`src/data/portraits.ts`。主人公は男女で分ける）。
+テストプレイの「メニューにステータス画面を足し、立ち絵を出す」に応えて作った。
+
+設定: `create_image_pro`（64 × 96、背景透過、9 候補）。`reference_images` に顔（usage: face, colors and identity）とシートの下向きの立ち姿（40 × 40 の 1 コマ目。usage: full body outfit and proportions）を渡し、`style_image_url` に顔を渡して画風を顔にそろえた。
+
+要件（生成の前に決めた）: 1. [必須] 頭から足元まで全身が切れずに入る、正面向きの立ち姿　2. [必須] 顔グラフィックと同じ人物と分かる（髪・笠・服・配色）　3. [必須] 背景透過　4. [必須] 目が見える（霞は覆面で口を隠したまま）　5. [必須] その人の持ち物（下の表）　6. 暗い色の輪郭・浮いた点がない　7. 画風が顔グラフィックとそろう。
+
+| ID | ジョブ ID（採用した候補） | プロンプトの要点（持ち物） | 回数 |
+| --- | --- | --- | --- |
+| hero_m | ef841d29-eca9-4c6e-9892-207b83b0344b（8） | very wide light tan straw sandogasa hat, two sharp dark eyes visible under the brim, long plain grey-blue travel cape, katana hilt and black scabbard at his left hip, white leg wraps, straw sandals | 1 |
+| hero_f | c39fad42-8012-4e09-94b5-dc30045e123f（3） | young woman, sandogasa hat, dark eyes with eyelashes under the brim, long straight black hair over her shoulders, red kimono collar, dark plum purple travel cape, katana at her left hip | 1 |
+| kasumi | 6bf974b3-d19b-4d4f-b55d-520664f3c924（0） | dark navy ninja outfit, navy cloth mask covering her mouth and nose, light grey forehead guard, long straight black hair, small blade hilt over her back | 1 |
+| gendo | bfa230fa-c815-4fbe-a27c-15a6818dd0ef（4） | shaved bald head, ragged black monk robe with orange inner collar, tall wooden staff upright in one hand, gourd of sake at his waist | 1 |
+| orin | b1e55003-7bd0-41b4-878b-6e475d3872d8（3） | black hair in two buns with a white flower ornament, cream kimono with red collar and red lower part, red tasuki cord, brass clockwork rifle slung on her back with the barrel over her shoulder | 1 |
+| hyogo | a5d3ac68-f9eb-416f-930c-4c73e221b265（0） | neat topknot, stern calm face, dark navy haori with small white family crests on the chest, grey striped hakama, katana and wakizashi at his left hip | 1 |
+
+- どれも 1 回目の候補の中に全項目 ○ のものがあり、そのまま採用した（候補の番号は 0 から数える）。hero_m は笠の影で目が見えない候補が多く、目が見える 8 番を選んだ。
+- ゲーム画面（ステータス画面）に置いて、窓の中で顔グラフィック・能力値の文字と釣り合うことを確かめた。
+
 ## タイル（`tiles/`）
 
 `create_tiles_pro`（tile_type `square_topdown`、tile_view `top-down`、tile_size 16、outline_mode `segmentation`）で、1 回に番号付きで複数のタイルを作り、種類ごとに 1 枚を選んで `tiles/<種類>.png` に置く（種類は `src/data/maps.ts` の `TILE_KINDS`）。
