@@ -33,7 +33,7 @@ import { getState, holdEventWhileAway, setState, shouldRunEnterEvent, takePendin
 import { EVENTS } from '../data/events';
 import { mapSigns, signKey } from '../data/signs';
 import { moguriYadoById } from '../data/moguriYado';
-import { facilityMenu, pendingJingiRequest, type PendingJingiRequest } from '../data/jingiRequests';
+import { facilityMenu, pendingBakutoIntro, pendingJingiRequest, type MenuRequest } from '../data/jingiRequests';
 import { OYABUN, oyabunWelcome } from '../data/oyabun';
 import { oyabunStayCost, stayAtOyabun } from '../systems/jingi';
 import { CHAR_DISPLAY_ORIGIN, heroSprite, idleFrame, objectDepth, objectDisplayOrigin, objectKey, oppositeFacing, personDepth, shouldStandStill, spriteKey, walkAnimKey, walkDepthRow, type CharacterSpriteId } from '../data/sprites';
@@ -508,20 +508,36 @@ export class FieldScene extends Phaser.Scene {
     this.overlays = this.overlays.filter((x) => x !== o);
   }
 
-  /** 親分の屋敷。仁義ポイントを使って泊めてもらう（体力と気力を全回復）か、記録する。 */
+  /**
+   * 親分の屋敷。仁義ポイントを使って泊めてもらう（体力と気力を全回復）か、記録する。
+   * 町の博徒を屋敷へ向かわせていれば、引き合わせる項目も出す（src/data/jingiRequests.ts の pendingBakutoIntro）。
+   */
   private openOyabun(): void {
     const def = OYABUN[this.map.id];
     if (!def) return;
     const cost = oyabunStayCost(this.map.areaLevel);
+    const items = facilityMenu(
+      [
+        { label: `泊めてもらう（仁義 ${cost}）`, value: 'stay' as const },
+        { label: '記録する', value: 'save' as const },
+      ],
+      pendingBakutoIntro(this.map.id, getState().flags),
+    );
     const menu: Menu = new Menu(
       this,
       GAME_WIDTH - 170,
       40,
       160,
-      [{ label: `泊めてもらう（仁義 ${cost}）` }, { label: '記録する' }, { label: 'やめる' }],
+      items.labels.map((l) => ({ label: l })),
       (i) => {
         this.closeOverlay(menu);
-        if (i === 0) {
+        const pick = items.pick(i);
+        if (pick.kind === 'request') {
+          this.startEvent(pick.id);
+          return;
+        }
+        if (pick.kind !== 'main') return;
+        if (pick.value === 'stay') {
           const result = stayAtOyabun(getState(), this.map.areaLevel);
           if (!result.ok) {
             this.message.show(
@@ -541,7 +557,7 @@ export class FieldScene extends Phaser.Scene {
             `一宿一飯の世話になった。体力と気力が回復した。（仁義 −${result.cost}、残り ${result.state.jingi}）`,
             '若い衆「記録もつけていきなさるかい？」',
           ]);
-        } else if (i === 1) {
+        } else {
           this.openSave();
         }
       },
@@ -687,7 +703,7 @@ export class FieldScene extends Phaser.Scene {
     run: (s: ReturnType<typeof getState>) => PurchaseResult,
     done: string[],
     noMoney: string[],
-    request: PendingJingiRequest | null,
+    request: MenuRequest | null,
   ): void {
     const items = facilityMenu([{ label, value: 'rest' }], request);
     const menu: Menu = new Menu(
@@ -721,7 +737,7 @@ export class FieldScene extends Phaser.Scene {
    * 賭場。張る額を選び、丁か半かを張る（さいころの目の和が偶数なら丁、奇数なら半）。
    * request（まだ果たしていないイカサマ客の頼まれごと）があれば、張る額の後ろに出す（張る銭がなくても引き受けられる）。
    */
-  private openTobaku(request: PendingJingiRequest | null): void {
+  private openTobaku(request: MenuRequest | null): void {
     const bets = CHOHAN_BETS.filter((b) => b <= getState().money);
     if (bets.length === 0 && !request) {
       this.message.show([`中盆「${CHOHAN_BETS[0]} 文も持たねえで、賭場に来なさんな」`]);

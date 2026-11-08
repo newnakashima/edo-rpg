@@ -3,7 +3,7 @@
 import type { Facing } from '../systems/gameState';
 import { OBJECT_DEFS, type CharacterSpriteId, type ObjectSpriteId } from './sprites';
 import { MOGURI_YADO, moguriYadoNpc } from './moguriYado';
-import { OYABUN, oyabunNpc } from './oyabun';
+import { OYABUN, bakutoNpc, oyabunNpc } from './oyabun';
 import { TOWN_FACILITY_DOORS, townFacilityNpcs } from './townFacilities';
 
 /** タイルの種類。画像は public/assets/tiles/<種類>.png（PixelLab で生成。記録は public/assets/README.md）。 */
@@ -6065,6 +6065,8 @@ MAPS.matsuNoRoka = {
 for (const town of Object.keys(TOWN_FACILITY_DOORS)) MAPS[town]!.npcs.push(...townFacilityNpcs(town));
 // 親分の屋敷の若い衆（同じ町に 1 軒ずつ。戸口と一家の名は src/data/oyabun.ts）
 for (const town of Object.keys(OYABUN)) MAPS[town]!.npcs.push(oyabunNpc(town)!);
+// 町をぶらついている文無しの博徒（親分に紹介すると仁義ポイント。立つ場所は src/data/oyabun.ts、イベントは src/data/jingiRequests.ts）
+for (const town of Object.keys(OYABUN)) MAPS[town]!.npcs.push(bakutoNpc(town)!);
 // 非合法な旅籠（もぐりの宿）。ワールドマップの街道沿いに点在する小屋（場所と値段のレベルは src/data/moguriYado.ts）
 MAPS.world!.npcs.push(...MOGURI_YADO.map(moguriYadoNpc));
 
