@@ -833,6 +833,15 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 - 判定の観点: 何であるか（井戸・下りの石段・くぐれる門）がひと目で分かる、背景が透過、32 × 32 に収まり下端が地面、濃い輪郭と落ち着いた色、ほかの物（ishidan だった穴）と見分けがつく。長崎・原城跡・熊本のマップ全体を撮って確かめた
 - ishidan は使う所がなくなったので消した（原城跡の石段の口は chikaKaidan、熊本の古井戸は ido に替えた）
 
+### 民家の家具（`objects/irori.png`・`kamado.png`・`tansu.png`）
+
+民家の屋内（`src/data/minka.ts`）に置く家具。囲炉裏と竈は火の元（煙草の葉を吸える）。`create_1_direction_object`（size 32、view `top-down`、1 回で 64 候補）。共通の description: Edo period Japan RPG house interior furniture prop, pixel art, dark outline, muted traditional colors, small isolated object with empty transparent space around it。`item_descriptions` に 3 種類を 4 通りずつ書いて 1 回で作った（31075c88-3aa8-41f8-97e0-08dff206e6ea）。候補は `get_object` のプレビュー（32 × 32 の実寸）から取った。
+
+- irori（農家の板の間の囲炉裏）: 候補 1（Japanese irori hearth: square wooden border, light grey ash inside, small orange fire in the middle, iron pot hanging from a hook）。1 回目で採用。候補 2 は鉄瓶もよかったが幅 30px で要件（28px 以下）を超えた
+- kamado（3 つの間取りの土間の竈）: 候補 4（Japanese kamado clay cooking stove: beige plaster and brown clay block, dark fire opening on the front with orange fire inside, black iron rice pot on top）。1 回目で採用
+- tansu（畳の間の箪笥）: 候補 10（tall wooden tansu chest, warm brown, drawers of different sizes, black iron hardware）。1 回目で採用
+- 判定の観点: 囲炉裏は四角い木の炉縁・灰・中央の火と自在鉤の鉄瓶、竈は焚き口の火と釜、箪笥は段の引き出しと黒い金具。どれも背景が透過、32 × 32 に収まり幅 28px 以下で下端が床、濃い輪郭と落ち着いた色、焚き火・文机・葛籠と見分けがつく。長屋・町家・農家の屋内を撮り、住人と並べて大きさが釣り合うことを確かめた
+
 ## 施設の看板（`signs/`）
 
 テストプレイで「看板がないと各施設を見分けることが非常に困難」と指摘されたため足した。16 × 16 の 1 枚で、`src/data/signs.ts` が施設の人（マップの NPC の `action`）の戸口の隣の壁に掛ける（人より奥、depth 1）。

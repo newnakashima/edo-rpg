@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
 import { ENCOUNTERS } from '../data/enemies';
-import { closedGateAt, encounterAt, MAPS, npcLines, npcObjectFrame, npcVisible, respawnPoint, START_POSITION, tileAt, townAction, type EventTrigger, type MapDef, type NpcDef } from '../data/maps';
+import { canStep, closedGateAt, encounterAt, MAPS, npcLines, npcObjectFrame, npcVisible, respawnPoint, START_POSITION, tileAt, townAction, type EventTrigger, type MapDef, type NpcDef } from '../data/maps';
 import { mapTileImages } from '../data/mapParts';
+import { cameraScroll } from '../ui/cameraScroll';
 import { pickGroup, stepOnRoad } from '../systems/encounter';
 import {
   CHOHAN_BETS,
@@ -269,9 +270,8 @@ export class FieldScene extends Phaser.Scene {
   private followPlayer(): void {
     const mapW = (this.map.rows[0]?.length ?? 0) * TILE;
     const mapH = this.map.rows.length * TILE;
-    const clamp = (v: number, max: number) => Math.max(0, Math.min(v, Math.max(0, max)));
-    const x = clamp(this.player.x + TILE / 2 - GAME_WIDTH / 2, mapW - GAME_WIDTH);
-    const y = clamp(this.player.y + TILE / 2 - GAME_HEIGHT / 2, mapH - GAME_HEIGHT);
+    const x = cameraScroll(this.player.x + TILE / 2, mapW, GAME_WIDTH);
+    const y = cameraScroll(this.player.y + TILE / 2, mapH, GAME_HEIGHT);
     this.cameras.main.setScroll(Math.round(x), Math.round(y));
   }
 
@@ -369,8 +369,7 @@ export class FieldScene extends Phaser.Scene {
     const nx = state.x + dx;
     const ny = state.y + dy;
     setState({ ...state, facing: dir });
-    const tile = tileAt(this.map, nx, ny);
-    if (!tile || tile.blocked || this.npcAt(nx, ny)) {
+    if (!canStep(this.map, nx, ny) || this.npcAt(nx, ny)) {
       this.standStill();
       return;
     }

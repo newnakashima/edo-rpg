@@ -14,6 +14,7 @@
 - `kanazawa.png`・`kenrokuen.png`・`aizu.png`: 雪の町（snow）。会津若松は家の前と間の草を雪の地面にした
 - `edo.png`: 江戸の長屋（nagaya）。地面ばかりだった裏庭と空き地に草のかたまりを作った
 - `kobo.png`・`takoya.png`: 屋内（interior）。入口のまわりを土間、座元の間・凧屋の居間と奥の作業場を畳にした
+- 民家の屋内（`minka_<町>_<x>_<y>`。`src/data/minka.ts`）: 屋内（interior）。町家（通り土間・店の間・奥の座敷）・長屋（九尺二間の一間）・農家（広い土間・囲炉裏の板の間・座敷）の 3 つの間取りを、民家の戸口ごとに写して使う。使い回してよいのは民家だけ（ユーザーの決定）。画面より小さいので、画面の真ん中に置いて描く
 - `horikawaKura.png`: 蔵（kura）。荷さばき場・堀川の河岸・東の材木置き場を土間にし、西の米蔵・帳場・奥の間を板敷きのままにした
 - `karakuriYashiki.png`・`komeKura.png`・`kenkyujo.png`・`karakuriGura.png`: からくりの工場（karakuri）。2 マス幅の廊下と米蔵の地下の中央の蔵を石畳、部屋を板の床にした
 - `world.png`: ワールドマップ（field）。大きいので、変える前（上）と後（下）に並べた
