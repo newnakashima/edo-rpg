@@ -134,7 +134,7 @@ describe('能力値', () => {
     expect(at('hyogo', 25).maxHp).toBe(170);
   });
 
-  it('兵庫（Lv25）は第 5 章の主人公たち（Lv18）より、体力・攻撃・防御がかなり高い', () => {
+  it('兵庫（Lv25）は第 5 章の仲間たち（Lv18）の誰よりも体力・攻撃・防御が高く、攻撃は主人公の 1.8 倍以上', () => {
     for (const id of MEMBERS) {
       for (const key of ['maxHp', 'atk', 'def'] as const) expect(at('hyogo', 25)[key], `${id} ${key}`).toBeGreaterThan(at(id, 18)[key]);
     }
