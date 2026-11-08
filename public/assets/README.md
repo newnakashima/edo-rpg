@@ -796,6 +796,16 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 
 - toro（第 7 章の兼六園の徽軫灯籠）: `create_image_pixflux`（32 × 32、`no_background: true`、黒の 1px 輪郭、low top-down、medium detail）。1 回目（d043095d-010f-4c31-af44-35b4876048e4。Japanese kotoji-toro stone lantern of Kenroku-en garden, grey granite lantern with a wide flat umbrella-shaped roof (kasa) and a square fire box with a window, standing on TWO separate stone legs of different lengths …、text_guidance_scale 11）は脚が 1 本の台座で、火袋の赤い光が目に見えた。2 回目（fb8c0764-5ae6-415b-8ffc-cc3031042408。脚を「TWO thin straight stone legs standing apart」と言い直し、text_guidance_scale 13）も台座で、窓が目に見えた。3 回目は 1 回目の笠と火袋を使い、Pillow で窓を 1 つの黄色い灯りに、脚を長い左脚と石に乗った短い右脚に描き直して採用（計 3 回）
 
+### 入口の目印と井戸（テストプレイの指摘: 南蛮寺跡・島原の地下研究所の入口が入口に見えない、熊本の井戸が井戸に見えない）
+
+`create_1_direction_object`（size 32、view `top-down`、1 回で 64 候補）。共通の description: Edo period Japan RPG map prop, pixel art, dark outline, muted traditional colors, small isolated object with empty transparent space around it。`item_descriptions` に 3 種類を 4 通りずつ書いて 1 回で作った（9da18abd-900d-4e02-8626-29009b18c67b）。候補は `get_object` のプレビュー（32 × 32 の実寸）から取った（backblaze.pixellab.ai はこの環境のプロキシで拒否される）。
+
+- ido（熊本の清正の古井戸。npcs の object）: 候補 2（old Japanese stone well, round grey stone ring with dark water inside, wooden bucket sitting on the rim, small wooden pulley frame above）。1 回目で採用。前は ishidan（石段の穴）を使い回していて井戸に見えなかった
+- chikaKaidan（原城跡の本丸の奥、地下の研究所への石段。marks）: 候補 6（stone stairway leading down into a dark underground cellar, square stone rim with wooden beam lintel, steps visible getting darker toward the bottom）。1 回目で採用。左端の 1 ドットの白いゴミだけ消した。候補 5・7 は四角い穴で段が見えにくく、ishidan と同じく穴に見えたため使っていない
+- nanbanjiMon（長崎の東の山の南蛮寺跡の門。marks）: 候補 11（ruined stone archway gate with a Christian cross on top, mossy grey bricks, dark passage through the arch, some fallen stones at the base）。アーチの内側が透明で通路に見えなかったため、2 回目として Pillow で内側を暗い色（上が濃く、下が少し明るい）で塗って採用（計 2 回）。候補 9 は礼拝堂の正面がほぼ無傷で、崩れた跡に見えなかった
+- 判定の観点: 何であるか（井戸・下りの石段・くぐれる門）がひと目で分かる、背景が透過、32 × 32 に収まり下端が地面、濃い輪郭と落ち着いた色、ほかの物（ishidan だった穴）と見分けがつく。長崎・原城跡・熊本のマップ全体を撮って確かめた
+- ishidan は使う所がなくなったので消した（原城跡の石段の口は chikaKaidan、熊本の古井戸は ido に替えた）
+
 ## UI（`ui/`）
 
 `create_image_pixflux` で作り、Pillow で仕上げた。表示は `src/ui/uiImages.ts`（大きさ・分割）と `src/ui/widgets.ts`（`drawWindow`・`Menu` のカーソル）、タイトルの背景は `src/scenes/TitleScene.ts`、仮想パッドは `index.html` の CSS（DOM の要素の背景。大きさと倍率は CSS に直接書き、`uiImages.ts` の `PAD_*` の仕様値と合うことをテストで確かめる）。
