@@ -4,6 +4,9 @@ import type { CharacterId } from './characters';
 /** 魔除け（結界の真言・魔除けの香）が効く歩数。道具と技で同じにする。 */
 export const WARD_STEPS = 150;
 
+/** 魔除けが効く歩数の上限（化け提灯のレアドロップの百目蝋燭は WARD_STEPS の 2 倍。セーブを読むときもこれに収める）。 */
+export const MAX_WARD_STEPS = WARD_STEPS * 2;
+
 /** 属性。祓は妖怪、機はからくりに効く。 */
 export type Element = 'fire' | 'thunder' | 'holy' | 'mech';
 

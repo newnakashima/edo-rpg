@@ -127,15 +127,25 @@ describe('ドロップの判定', () => {
   });
 
   it('ドロップの文は 2 つずつのページにし、レアには「めずらしい」と添える', () => {
-    expect(dropPages([])).toEqual([]);
+    expect(dropPages([], {})).toEqual([]);
     const drops = [
       { enemy: '鬼火', item: 'amazake', rare: false },
       { enemy: '山犬', item: 'yamainuKiba', rare: true },
       { enemy: '大蛙', item: 'dokukeshi', rare: false },
     ];
-    expect(dropPages(drops)).toEqual([
+    expect(dropPages(drops, {})).toEqual([
       '鬼火は「甘酒」を落としていった！\n山犬はめずらしい「山犬の牙」を落としていった！',
       '大蛙は「毒消し」を落としていった！',
+    ]);
+  });
+
+  it('1 種類 99 個の上限で増えなかった品は「持ちきれなかった」と出す', () => {
+    const drops = [
+      { enemy: '鬼火', item: 'amazake', rare: false },
+      { enemy: '鬼火', item: 'amazake', rare: false },
+    ];
+    expect(dropPages(drops, { amazake: MAX_ITEM_COUNT - 1 })).toEqual([
+      '鬼火は「甘酒」を落としていった！\n鬼火は「甘酒」を落としていったが、持ちきれなかった。',
     ]);
   });
 });

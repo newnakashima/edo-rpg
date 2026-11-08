@@ -597,7 +597,7 @@ export class BattleScene extends Phaser.Scene {
     const exp = Math.max(0, ...amounts);
     this.controls.flush();
     const pages = [victoryText(this.battle, exp, rewards.money)];
-    pages.push(...dropPages(drops));
+    pages.push(...dropPages(drops, this.battle.items));
     for (const up of levelUps) {
       const name = characterName(up.id, state.gender);
       const learned = up.learned.map((id) => `「${SKILLS[id]?.name ?? id}」を覚えた！`).join('\n');

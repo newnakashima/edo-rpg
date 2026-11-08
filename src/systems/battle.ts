@@ -942,9 +942,18 @@ export function addDrops(items: Inventory, drops: Drop[]): Inventory {
 /** 1 ページに出すドロップの数（敵の名前と品の名前が長いと 1 つが 2 行に折り返すため、戦闘のメッセージ窓に収まる 2 つまで）。 */
 const DROPS_PER_PAGE = 2;
 
-/** ドロップの文のページ。レアは「めずらしい」と添える。 */
-export function dropPages(drops: Drop[]): string[] {
-  const lines = drops.map((d) => `${d.enemy}は${d.rare ? 'めずらしい' : ''}「${itemName(d.item)}」を落としていった！`);
+/**
+ * ドロップの文のページ。レアは「めずらしい」と添える。items は加える前の所持品で、
+ * 1 種類 99 個の上限で増えなかった品には「持ちきれなかった」と出す（addDrops と同じ順に数える）。
+ */
+export function dropPages(drops: Drop[], items: Inventory): string[] {
+  let inv = items;
+  const lines = drops.map((d) => {
+    const before = itemCount(inv, d.item);
+    inv = addItem(inv, d.item);
+    const full = itemCount(inv, d.item) === before;
+    return `${d.enemy}は${d.rare ? 'めずらしい' : ''}「${itemName(d.item)}」を落としていった${full ? 'が、持ちきれなかった。' : '！'}`;
+  });
   const pages: string[] = [];
   for (let i = 0; i < lines.length; i += DROPS_PER_PAGE) pages.push(lines.slice(i, i + DROPS_PER_PAGE).join('\n'));
   return pages;

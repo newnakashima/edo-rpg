@@ -1,6 +1,6 @@
 // 道具（消耗品）と所持品。装備品の定義は equipment.ts にあり、所持品には両方が入る。
 import { EQUIPMENT } from './equipment';
-import { WARD_STEPS } from './skills';
+import { MAX_WARD_STEPS, WARD_STEPS } from './skills';
 
 export type ItemEffect =
   /** HP を amount 回復する。 */
@@ -91,7 +91,7 @@ export const ITEMS: Record<string, ItemDef> = {
   michishirube: { id: 'michishirube', name: '道しるべの札', price: 24, kind: 'charm', effect: { kind: 'escape' }, target: 'party', field: true, battle: false, description: '洞窟や城の中から、入口の外へひと息に戻る' },
   mayokeKo: { id: 'mayokeKo', name: '魔除けの香', price: 40, kind: 'charm', effect: { kind: 'ward', steps: WARD_STEPS }, target: 'party', field: true, battle: false, description: `焚くと、${WARD_STEPS} 歩のあいだ敵が寄ってこない` },
   // 旅の札の敵のレアドロップ
-  hyakumeRosoku: { id: 'hyakumeRosoku', name: '百目蝋燭', price: 80, kind: 'charm', effect: { kind: 'ward', steps: WARD_STEPS * 2 }, target: 'party', field: true, battle: false, description: `化け提灯の灯を移した大蝋燭。灯すと、${WARD_STEPS * 2} 歩のあいだ敵が寄ってこない` },
+  hyakumeRosoku: { id: 'hyakumeRosoku', name: '百目蝋燭', price: 80, kind: 'charm', effect: { kind: 'ward', steps: MAX_WARD_STEPS }, target: 'party', field: true, battle: false, description: `化け提灯の灯を移した大蝋燭。灯すと、${MAX_WARD_STEPS} 歩のあいだ敵が寄ってこない` },
 };
 
 /** 所持品（道具・装備品の ID ごとの個数）。 */
