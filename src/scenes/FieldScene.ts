@@ -32,6 +32,8 @@ import { browserStorage } from '../systems/save';
 import { getState, holdEventWhileAway, setState, shouldRunEnterEvent, takePendingEvent } from '../state';
 import { EVENTS } from '../data/events';
 import { mapSigns, signKey } from '../data/signs';
+import { OYABUN, oyabunWelcome } from '../data/oyabun';
+import { oyabunStayCost, stayAtOyabun } from '../systems/jingi';
 import { CHAR_DISPLAY_ORIGIN, heroSprite, idleFrame, objectDepth, objectDisplayOrigin, objectKey, oppositeFacing, personDepth, shouldStandStill, spriteKey, walkAnimKey, walkDepthRow, type CharacterSpriteId } from '../data/sprites';
 import { EventRunner, type EventInput } from '../systems/eventScript';
 import { fieldCancelLabel } from '../ui/cancelLabel';
@@ -464,6 +466,7 @@ export class FieldScene extends Phaser.Scene {
         setState({ ...s, flags: { ...s.flags, [npc.setsFlag]: true } });
       }
       if (npc.action === 'inn') this.openInn();
+      if (npc.action === 'oyabun') this.openOyabun();
       if (npc.action === 'teahouse') this.openTeahouse(npc.shop);
       if (npc.action === 'shop') this.openShop(npc.shop);
       if (npc.action === 'temple') this.openTemple();
@@ -495,6 +498,53 @@ export class FieldScene extends Phaser.Scene {
   private closeOverlay(o: Overlay): void {
     o.destroy();
     this.overlays = this.overlays.filter((x) => x !== o);
+  }
+
+  /** 親分の屋敷。仁義ポイントを使って泊めてもらう（体力と気力を全回復）か、記録する。 */
+  private openOyabun(): void {
+    const def = OYABUN[this.map.id];
+    if (!def) return;
+    const cost = oyabunStayCost(this.map.areaLevel);
+    const menu: Menu = new Menu(
+      this,
+      GAME_WIDTH - 170,
+      40,
+      160,
+      [{ label: `泊めてもらう（仁義 ${cost}）` }, { label: '記録する' }, { label: 'やめる' }],
+      (i) => {
+        this.closeOverlay(menu);
+        if (i === 0) {
+          const result = stayAtOyabun(getState(), this.map.areaLevel);
+          if (!result.ok) {
+            this.message.show([
+              `若い衆「すまねえが、仁義の足りねえお方をお泊めしちゃ、親分に叱られやす……」（仁義 ${getState().jingi}／${cost} 要る）`,
+            ]);
+            return;
+          }
+          setState(result.state);
+          // 暗転している間は動けないようにする（旅籠と同じ）
+          this.moving = true;
+          this.cameras.main.fadeOut(400, 0, 0, 0);
+          this.cameras.main.once('camerafadeoutcomplete', () => {
+            this.moving = false;
+            this.controls.flush();
+            this.cameras.main.fadeIn(400, 0, 0, 0);
+            this.message.show(
+              [
+                oyabunWelcome(def, getState().flags),
+                `一宿一飯の世話になった。体力と気力が回復した。（仁義 −${result.cost}、残り ${result.state.jingi}）`,
+                '若い衆「記録もつけていきなさるかい？」',
+              ],
+              () => this.openSave(),
+            );
+          });
+        } else if (i === 1) {
+          this.openSave();
+        }
+      },
+      () => this.closeOverlay(menu),
+    );
+    this.pushOverlay(menu);
   }
 
   private openInn(): void {
