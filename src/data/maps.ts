@@ -18,6 +18,7 @@ import { HIROSHIMA_BUILDINGS } from './buildingsHiroshima';
 import { NAGASAKI_BUILDINGS } from './buildingsNagasaki';
 import { KANAZAWA_BUILDINGS } from './buildingsKanazawa';
 import { SENDAI_BUILDINGS } from './buildingsSendai';
+import { HAMAMATSU_BUILDINGS } from './buildingsHamamatsu';
 
 /** タイルの種類。画像は public/assets/tiles/<種類>.png（PixelLab で生成。記録は public/assets/README.md）。 */
 export const TILE_KINDS = ['ground', 'grass', 'road', 'tree', 'water', 'wall', 'roof', 'door', 'floor', 'rock', 'plain', 'town', 'gate'] as const;
@@ -3530,30 +3531,7 @@ MAPS.hamamatsu = {
       sprite: 'npc_monban',
       lines: ['門番「この城の御城主は、代々ご出世なさって江戸の御老中にまでなられる。それで出世城と呼ばれておるのだ」'],
     },
-    {
-      id: 'hamamatsuTemple',
-      name: '寺の僧',
-      x: 29,
-      y: 6,
-      color: 0xd0c8b0,
-      sprite: 'npc_so',
-      lines: ['僧「遠路ようこそ。仏の加護がありますように」'],
-      action: 'temple',
-    },
-    // 凧師の弥平の家の前
-    {
-      id: 'yahei',
-      name: '凧師の弥平',
-      x: 40,
-      y: 6,
-      color: 0x8a7a6a,
-      sprite: 'npc_rojin',
-      lines: [
-        '弥平「わしは凧師の弥平。浜松の凧揚げは、昔の御城主が若君の誕生を祝って揚げたのが始まりと言われておってな」',
-        '弥平「糸切り合戦はな、相手の糸が上からかぶさってきたら、負けじと引いて擦り合わせるのよ。逃げれば糸は切れぬが、勝ちもせん」',
-      ],
-      after: { flag: 'hamamatsuTakoDone', lines: ['弥平「名古屋にも、凧に乗って空を飛ぶ軽業師がおるそうな。……わしの凧も、いつか人を乗せてみたいもんじゃ」'] },
-    },
+    // 凧師の弥平の家の前（弥平は家の中。src/data/buildingsHamamatsu.ts）
     {
       id: 'yaheiDako',
       name: '大凧',
@@ -3573,98 +3551,11 @@ MAPS.hamamatsu = {
       sprite: 'npc_roba',
       lines: ['老婆「東へ行けば大井川、西へ行けば浜名湖の今切の渡しじゃ。どちらも水の難所じゃて、気をつけなされ」'],
     },
-    // 東海道の南の店並び
-    {
-      id: 'hamamatsuInn',
-      name: '旅籠の主人',
-      x: 4,
-      y: 19,
-      color: 0x5a6b8c,
-      sprite: 'npc_innkeeper',
-      lines: ['旅籠の主人「ようこそ浜松の宿へ。……おっと、渡世人のお方はお断りで。合戦が近いんで、親分さんの屋敷のほうが心強うござんすよ」'],
-      action: 'inn',
-    },
-    {
-      id: 'hamamatsuTeahouse',
-      name: '茶屋の娘',
-      x: 12,
-      y: 19,
-      color: 0xc76b8f,
-      sprite: 'npc_musume',
-      lines: [
-        '茶屋の娘「いらっしゃいませ。合戦の日は、砂丘まで団子を売りに行くんですよ」',
-        '茶屋の娘「棟梁さんちの初凧、糸が切れて飛んでっちゃったんですって。若い衆が青い顔をしてたわ」',
-      ],
-      after: { flag: 'hamamatsuTakoFound', lines: ['茶屋の娘「いらっしゃいませ。初凧、見つかったんですってね！ 今年の合戦は盛り上がりそう」'] },
-      action: 'teahouse',
-      shop: 'hamamatsuChaya',
-    },
-    {
-      id: 'hamamatsuHikyaku',
-      name: '飛脚',
-      x: 19,
-      y: 19,
-      color: 0x6a8a4a,
-      sprite: 'npc_hikyaku',
-      lines: ['飛脚「名古屋へは、東海道を西へまっすぐだ。浜名湖の渡しは、おれたちでも船に揺られるのが怖いのよ」'],
-      action: 'hikyaku',
-    },
-    {
-      id: 'hamamatsuYorozu',
-      name: 'よろず屋',
-      x: 31,
-      y: 19,
-      color: 0x8a6a4a,
-      sprite: 'npc_merchant',
-      lines: ['よろず屋「いらっしゃい。浜名湖のうなぎの蒲焼は茶屋で売ってるよ。精がつくから食べていきな」'],
-      action: 'shop',
-      shop: 'hamamatsuYorozu',
-    },
-    {
-      id: 'hamamatsuKaji',
-      name: '刀鍛冶',
-      x: 38,
-      y: 19,
-      color: 0x4a4a5a,
-      sprite: 'npc_smith',
-      lines: ['刀鍛冶「東海道を行き来する侍が、よう刀を研ぎに寄っていくわ」'],
-      action: 'shop',
-      shop: 'hamamatsuKaji',
-    },
-    {
-      id: 'unagiya',
-      name: 'うなぎ屋の主人',
-      x: 46,
-      y: 19,
-      color: 0x8a6a4a,
-      sprite: 'npc_merchant',
-      lines: ['うなぎ屋「浜名湖のうなぎは、汽水で育つから身が締まってるんだ。焼くのは、茶屋に卸してる分だけでね」'],
-    },
-    // 裏通りの南の長屋
-    {
-      id: 'toryo',
-      name: '大工の棟梁',
-      x: 4,
-      y: 25,
-      color: 0x7a6a5a,
-      sprite: 'npc_ninsoku',
-      lines: ['棟梁「せがれの喜之助の初凧が、どっかへ飛んでっちまった。……縁起でもねえ。おれが探しに行きてえが、合戦の櫓を組まなきゃならねえんだ」'],
-      after: { flag: 'hamamatsuTakoFound', lines: ['棟梁「初凧を取り返してくれたそうで。……旅のお方、かたじけねえ。喜之助が大きくなったら、きっと話して聞かせまさあ」'] },
-    },
-    {
-      id: 'toryoOkami',
-      name: '棟梁のおかみ',
-      x: 6,
-      y: 25,
-      color: 0xa07a6a,
-      sprite: 'npc_okami',
-      lines: ['おかみ「この子が喜之助。生まれてまだ三月なんですよ。初凧が揚がるのを、見せてやりたくってねえ」'],
-      after: { flag: 'hamamatsuTakoDone', lines: ['おかみ「初凧が、砂丘の空でいちばん高く揚がったんですってね。この子も、きっと丈夫に育ちます」'] },
-    },
+    // 裏通りの南の長屋（棟梁とおかみは家の中。町の子とご隠居は、居酒屋・妓楼の戸の前から 1 マス左へずらした）
     {
       id: 'hamamatsuKodomo',
       name: '町の子',
-      x: 32,
+      x: 31,
       y: 25,
       color: 0x8a9a6a,
       sprite: 'npc_kodomo',
@@ -3673,7 +3564,7 @@ MAPS.hamamatsu = {
     {
       id: 'hamamatsuRojin',
       name: 'ご隠居',
-      x: 44,
+      x: 43,
       y: 25,
       color: 0x8a7a6a,
       sprite: 'npc_rojin',
@@ -5233,6 +5124,7 @@ addBuildings(MAPS, 'hiroshima', HIROSHIMA_BUILDINGS);
 addBuildings(MAPS, 'nagasaki', NAGASAKI_BUILDINGS);
 addBuildings(MAPS, 'kanazawa', KANAZAWA_BUILDINGS);
 addBuildings(MAPS, 'sendai', SENDAI_BUILDINGS);
+addBuildings(MAPS, 'hamamatsu', HAMAMATSU_BUILDINGS);
 /** その戸口が屋内へ入る入口か（屋内のある施設の人は、屋内の建物のファイルで屋内に置くので、店先には立たせない）。 */
 const hasInterior = (town: string, door: { x: number; y: number }) => MAPS[town]!.exits.some((e) => e.x === door.x && e.y === door.y);
 // 湯屋・賭場・居酒屋・妓楼（刀鍛冶かよろず屋のあるすべての町。戸口と台詞は src/data/townFacilities.ts）

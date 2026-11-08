@@ -1595,6 +1595,8 @@ describe('寄り道の会津若松', () => {
 describe('寄り道の浜松', () => {
   const world = MAPS.world!;
   const hamamatsu = MAPS.hamamatsu!;
+  // 町と、町の建物の中の人
+  const everyone = [hamamatsu, ...Object.values(MAPS).filter((m) => buildingTown(m.id) === 'hamamatsu')].flatMap((m) => m.npcs);
   const town = world.towns!.find((t) => t.name === '浜松')!;
   const shimizu = world.towns!.find((t) => t.name === '清水湊')!;
   const nagoya = world.towns!.find((t) => t.name === '名古屋')!;
@@ -1626,7 +1628,8 @@ describe('寄り道の浜松', () => {
 
   it('町に入ると hamamatsuEnter を行い、着いたあとは行わない。旅籠・茶屋・店・寺・飛脚・湯屋・賭場・居酒屋・妓楼・親分の屋敷がそろう', () => {
     expect(hamamatsu.onEnter).toEqual({ event: 'hamamatsuEnter', unless: 'hamamatsuIntro' });
-    const actions = new Set(hamamatsu.npcs.map((n) => n.action).filter(Boolean));
+    // 施設の人は建物の中にいる（src/data/buildingsHamamatsu.ts）
+    const actions = new Set(everyone.map((n) => n.action).filter(Boolean));
     expect(actions).toEqual(new Set(['inn', 'teahouse', 'shop', 'temple', 'hikyaku', 'yuya', 'tobaku', 'izakaya', 'gyoro', 'oyabun']));
     expect(hamamatsu.areaLevel).toBe(7);
     expect(tileAt(hamamatsu, hamamatsu.respawn!.x, hamamatsu.respawn!.y)?.blocked).toBe(false);
@@ -1634,7 +1637,8 @@ describe('寄り道の浜松', () => {
 
   it('入口から松林の奥の浪人・初凧・葛籠まで歩いて行け、砂丘の源太や町の人に話しかけられる', () => {
     const area = reachable(hamamatsu, town.to!, {}, true);
-    for (const id of ['takoRonin', 'hatsudako', 'hamamatsuChest1', 'genta', 'tonariWakashu', 'hamamatsuChest2', 'yahei', 'toryo', 'toryoOkami', 'hamamatsuInn', 'hamamatsuTemple']) {
+    // 弥平・棟梁とおかみ・旅籠の主人・寺の僧は建物の中（入れることは buildings.test.ts で確かめる）
+    for (const id of ['takoRonin', 'hatsudako', 'hamamatsuChest1', 'genta', 'tonariWakashu', 'hamamatsuChest2', 'hamamatsuKodomo', 'hamamatsuRojin']) {
       const npc = hamamatsu.npcs.find((n) => n.id === id)!;
       expect(near(area, npc.x, npc.y), id).toBe(true);
     }
@@ -1654,7 +1658,7 @@ describe('寄り道の浜松', () => {
       tonariWakashu: 'hamamatsuTakoDone',
       yahei: 'hamamatsuTakoDone',
     };
-    for (const [id, flag] of Object.entries(want)) expect(hamamatsu.npcs.find((n) => n.id === id)?.after?.flag, id).toBe(flag);
+    for (const [id, flag] of Object.entries(want)) expect(everyone.find((n) => n.id === id)?.after?.flag, id).toBe(flag);
   });
 });
 
