@@ -432,7 +432,7 @@ describe('第 5 章の流れ', () => {
 
   const arrived = run('osakaEnter', ch4);
 
-  it('私塾で榊兵庫が Lv18 のゲストとして加わる（hyogoJoined）。もう一度起きても増えない', () => {
+  it('私塾で榊兵庫が Lv25 のゲストとして加わる（hyogoJoined）。もう一度起きても増えない', () => {
     const joined = run('hyogoMeet', arrived);
     expect(joined.flags.hyogoJoined).toBe(true);
     expect(joined.party.map((m) => m.id)).toEqual(['hero', 'gendo', 'orin', 'hyogo']);

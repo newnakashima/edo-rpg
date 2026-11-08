@@ -162,10 +162,10 @@ const three = (l: number): [CharacterId, number][] => [...two(l), ['gendo', l]];
 /** 第 4 章は、Lv1 で加わったお凛がまだ 2 レベル低い。 */
 const iga = (l: number): [CharacterId, number][] => [...three(l), ['orin', l - 2]];
 const four = (l: number): [CharacterId, number][] => [...three(l), ['orin', l]];
-/** 第 5 章は霞の代わりに兵庫（Lv18 固定）。 */
+/** 第 5 章は霞の代わりに兵庫（Lv25 固定）。 */
 const osaka = (l: number): [CharacterId, number][] => [
   ['hero', l],
-  ['hyogo', 18],
+  ['hyogo', 25],
   ['gendo', l],
   ['orin', l],
 ];
@@ -177,7 +177,7 @@ const BOSS_CASES: BossCase[] = [
   { id: 'shuten', name: '酒呑の大鬼', level: 13, party: three, shops: ['kyoKaji'], encounters: ['kyoto'] },
   { id: 'oboro', name: '上忍 朧（中ボス）', level: 15, party: iga, shops: ['igaKaji'], encounters: ['iga'] },
   { id: 'gonroku', name: '蛇骨の権六', level: 16, party: iga, shops: ['igaKaji'], encounters: ['iga'] },
-  { id: 'hyakuhyo', name: '百俵からくり', level: 19, party: osaka, shops: ['osakaKaji'], encounters: ['osaka'] },
+  { id: 'hyakuhyo', name: '百俵からくり', level: 19, party: osaka, shops: ['osakaKaji'], encounters: ['osaka', 'komeKura'] },
   { id: 'nanbanOzutsu', name: '南蛮大筒からくり', level: 22, party: four, shops: ['nagasakiKaji', 'dejimaShop'], encounters: ['nagasaki', 'harajo'] },
   { id: 'kagemusha', name: 'からくり影武者（中ボス）', level: 24, party: four, shops: ['kanazawaKaji', 'kanazawaKinpaku'], encounters: ['kenrokuen', 'karakuriGura'] },
   { id: 'yashamaru', name: '夜叉丸', level: 25, party: four, shops: ['kanazawaKaji', 'kanazawaKinpaku'], encounters: ['kenrokuen', 'karakuriGura'] },

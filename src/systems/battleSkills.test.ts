@@ -626,9 +626,19 @@ describe('第 4 章（伊賀）の敵の技', () => {
 });
 
 describe('榊兵庫（侍、ゲスト）の技', () => {
-  it('Lv18 で加わったときから 3 つの技を覚えている', () => {
-    const b = createBattle([createMember('hyogo', 18)], 'm', ['ogaeru'], 1);
-    expect(get(b, 'p0').skills).toEqual(['hyogoKesagiri', 'tsubamegaeshi', 'munenmuso']);
+  it('Lv25 で加わったときから 4 つの技を覚えている', () => {
+    const b = createBattle([createMember('hyogo', 25)], 'm', ['ogaeru'], 1);
+    expect(get(b, 'p0').skills).toEqual(['hyogoKesagiri', 'tsubamegaeshi', 'kurumagiri', 'munenmuso']);
+  });
+
+  it('車斬りは気力 8 で、敵全体を斬る', () => {
+    const b = sleepEnemies(createBattle([createMember('hyogo', 25)], 'm', ['karakuriTawara', 'karakuriTawara', 'karakuriTawara'], 16));
+    const r = resolveTurn(b, { p0: { kind: 'skill', skill: 'kurumagiri', target: 'e0' } }, seqRng(0.5));
+    const hits = r.events.filter((e) => e.type === 'damage' || e.type === 'miss').map((e) => e.target);
+    expect(hits.sort()).toEqual(['e0', 'e1', 'e2']);
+    for (const key of ['e0', 'e1', 'e2']) expect(get(r.state, key).hp).toBeLessThan(get(b, key).hp);
+    expect(get(r.state, 'p0').mp).toBe(get(b, 'p0').mp - 8);
+    expect(SKILLS.kurumagiri!.effect).toEqual({ kind: 'physical', multiplier: 1.1 });
   });
 
   it('袈裟斬りは気力 3 で、通常攻撃の 1.5 倍', () => {

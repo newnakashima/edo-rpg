@@ -128,10 +128,17 @@ describe('能力値', () => {
     expect(ratio('hero', 'mag')).toBeGreaterThan(ratio('orin', 'mag'));
   });
 
-  it('ゲストの兵庫は毎レベル同じ割合（1.075 倍）で伸びる式のまま（Lv18 で HP 102）', () => {
+  it('ゲストの兵庫は毎レベル同じ割合（1.075 倍）で伸びる式のまま（Lv25 で HP 170）', () => {
     const base = at('hyogo', 1);
-    for (const key of STAT_KEYS) expect(at('hyogo', 18)[key]).toBe(Math.floor(base[key] * growthFactor(18)));
-    expect(at('hyogo', 18).maxHp).toBe(102);
+    for (const key of STAT_KEYS) expect(at('hyogo', 25)[key]).toBe(Math.floor(base[key] * growthFactor(25)));
+    expect(at('hyogo', 25).maxHp).toBe(170);
+  });
+
+  it('兵庫（Lv25）は第 5 章の仲間たち（Lv18）の誰よりも体力・攻撃・防御が高く、攻撃は主人公の 1.8 倍以上', () => {
+    for (const id of MEMBERS) {
+      for (const key of ['maxHp', 'atk', 'def'] as const) expect(at('hyogo', 25)[key], `${id} ${key}`).toBeGreaterThan(at(id, 18)[key]);
+    }
+    expect(at('hyogo', 25).atk).toBeGreaterThanOrEqual(at('hero', 18).atk * 1.8);
   });
 
   it('敵の倍率は 3 レベルで約 1.24 倍、Lv32 で約 9.4 倍になる', () => {

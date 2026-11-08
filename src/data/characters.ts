@@ -107,7 +107,7 @@ export const CHARACTERS: Record<CharacterId, CharacterDef> = {
     name: '榊兵庫',
     job: '侍',
     growth: steady({ maxHp: 30, maxMp: 8, atk: 12, def: 10, mag: 4, spd: 8, luck: 6 }),
-    guestLevel: 18,
+    guestLevel: 25,
   },
 };
 

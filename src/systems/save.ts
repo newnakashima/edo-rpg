@@ -6,6 +6,7 @@ import { MAPS, respawnPoint } from '../data/maps';
 import { MAX_WARD_STEPS } from '../data/skills';
 import { STARTING_ITEMS, type GameState } from './gameState';
 import { memberStats } from './party';
+import { totalExpForLevel } from './stats';
 
 /**
  * セーブデータの形式の版。
@@ -174,8 +175,11 @@ export function deserialize(text: string): SaveData | null {
   if (!isObject(data) || typeof data.savedAt !== 'string') return null;
   const migrated = migrate(data.version, data.state);
   if (!isGameState(migrated)) return null;
-  // HP・MP が最大値を超えていたら最大値に収める（一時離脱の仲間も）
-  const clamp = (m: GameState['party'][number]) => {
+  // HP・MP が最大値を超えていたら最大値に収める（一時離脱の仲間も）。
+  // ゲスト（兵庫）は成長しないので、経験値を今の guestLevel に合わせる（Lv18 だったころのセーブでも Lv25 で戦えるように）
+  const clamp = (saved: GameState['party'][number]) => {
+    const guestLevel = CHARACTERS[saved.id].guestLevel;
+    const m = guestLevel === undefined ? saved : { ...saved, exp: totalExpForLevel(guestLevel) };
     const s = memberStats(m);
     return { ...m, hp: Math.min(m.hp, s.maxHp), mp: Math.min(m.mp, s.maxMp) };
   };

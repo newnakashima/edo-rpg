@@ -55,10 +55,10 @@ const three = (l: number): [CharacterId, number][] => [
   ['gendo', l],
 ];
 const four = (l: number): [CharacterId, number][] => [...three(l), ['orin', l]];
-/** 第 5 章は霞の代わりに兵庫（Lv18 固定）。 */
+/** 第 5 章は霞の代わりに兵庫（Lv25 固定）。 */
 const osaka = (l: number): [CharacterId, number][] => [
   ['hero', l],
-  ['hyogo', 18],
+  ['hyogo', 25],
   ['gendo', l],
   ['orin', l],
 ];
@@ -79,6 +79,13 @@ const CASES: Case[] = [
   { name: 'からくり鷹 ×2', enemies: ['karakuriTaka', 'karakuriTaka'], party: four, level: 13 },
   { name: '化け鼠 ×3', enemies: ['bakeNezumi', 'bakeNezumi', 'bakeNezumi'], party: osaka, level: 16 },
   { name: 'からくり俵＋化け鼠 ×2', enemies: ['karakuriTawara', 'bakeNezumi', 'bakeNezumi'], party: osaka, level: 16 },
+  { name: '用心棒 ×2＋鉄砲足軽（米蔵の地下）', enemies: ['yojinbo', 'yojinbo', 'teppoAshigaru'], party: osaka, level: 17 },
+  { name: 'からくり俵 ×2＋化け鼠（米蔵の地下）', enemies: ['karakuriTawara', 'karakuriTawara', 'bakeNezumi'], party: osaka, level: 17 },
+  { name: '鉄砲足軽 ×2＋用心棒＋からくり俵（米蔵の地下）', enemies: ['teppoAshigaru', 'yojinbo', 'teppoAshigaru', 'karakuriTawara'], party: osaka, level: 17 },
+  { name: '化け鼠 ×2＋用心棒＋鉄砲足軽（米蔵の地下）', enemies: ['bakeNezumi', 'yojinbo', 'bakeNezumi', 'teppoAshigaru'], party: osaka, level: 17 },
+  { name: '用心棒＋からくり俵＋鉄砲足軽（米蔵の地下）', enemies: ['yojinbo', 'karakuriTawara', 'teppoAshigaru'], party: osaka, level: 17 },
+  { name: '猫又＋用心棒＋化け鼠（米蔵の地下）', enemies: ['nekomata', 'yojinbo', 'bakeNezumi'], party: osaka, level: 17 },
+  { name: '化け鼠 ×2＋猫又＋からくり俵（米蔵の地下）', enemies: ['bakeNezumi', 'bakeNezumi', 'nekomata', 'karakuriTawara'], party: osaka, level: 17 },
   { name: '平家蟹 ×2', enemies: ['heikegani', 'heikegani'], party: four, level: 19 },
   { name: 'がしゃどくろ＋亡霊武者', enemies: ['gashadokuro', 'boreiMusha'], party: four, level: 19 },
   { name: '怨霊 ×2＋亡霊武者＋外法使い', enemies: ['onryo', 'onryo', 'boreiMusha', 'gehoTsukai'], party: four, level: 19 },
