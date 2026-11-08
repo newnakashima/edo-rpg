@@ -1,0 +1,41 @@
+import { describe, expect, it } from 'vitest';
+import { MAPS, TILES } from '../data/maps';
+import { FIRE_RANGE, fireAmong, isFireSource, nearFire } from './fire';
+
+const teahouse = MAPS.shimizu!.npcs.find((n) => n.action === 'teahouse')!;
+const at = (mapId: string, x: number, y: number, flags: Record<string, boolean> = {}) => ({ mapId, x, y, flags });
+
+describe('火のある場所', () => {
+  it('茶屋・旅籠の人と焚き火から FIRE_RANGE のマス以内（斜めも）が火のそば', () => {
+    expect(nearFire(at('shimizu', teahouse.x + FIRE_RANGE, teahouse.y + FIRE_RANGE))).toBe(true);
+    expect(nearFire(at('shimizu', teahouse.x, teahouse.y + FIRE_RANGE + 1))).toBe(false);
+    const inn = MAPS.shimizu!.npcs.find((n) => n.action === 'inn')!;
+    expect(nearFire(at('shimizu', inn.x - FIRE_RANGE, inn.y))).toBe(true);
+  });
+
+  it('よろず屋・刀鍛冶の人は火の元でない。知らないマップは火がない', () => {
+    const shop = MAPS.shimizu!.npcs.find((n) => n.action === 'shop')!;
+    expect(isFireSource(shop)).toBe(false);
+    expect(nearFire(at('nowhere', 0, 0))).toBe(false);
+  });
+
+  it('焚き火は鬼の巣・南蛮寺跡・原城跡・清正の古井戸の底にあり、通れるマスに置いてあって、そばで火に当たれる', () => {
+    const maps = Object.values(MAPS).filter((m) => m.npcs.some((n) => n.object === 'takibi'));
+    expect(maps.map((m) => m.id).sort()).toEqual(['harajo', 'kiyomasaIdo', 'nanbanji', 'oninosu']);
+    for (const map of maps) {
+      for (const fire of map.npcs.filter((n) => n.object === 'takibi')) {
+        expect(TILES[map.rows[fire.y]![fire.x]!]?.blocked, map.id).toBe(false);
+        expect(map.exits.some((e) => e.x === fire.x && e.y === fire.y), map.id).toBe(false);
+        expect(isFireSource(fire)).toBe(true);
+        expect(nearFire(at(map.id, fire.x, fire.y + 1))).toBe(true);
+      }
+    }
+  });
+
+  it('いない人（showFlag がまだ・hideFlag が立った）の火には当たれない', () => {
+    const fire = { id: 'f', name: '焚き火', x: 5, y: 5, color: 0, object: 'takibi' as const, hideFlag: 'gone', showFlag: 'lit' };
+    expect(fireAmong([fire], 5, 6, { lit: true })).toBe(true);
+    expect(fireAmong([fire], 5, 6, {})).toBe(false);
+    expect(fireAmong([fire], 5, 6, { lit: true, gone: true })).toBe(false);
+  });
+});

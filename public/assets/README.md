@@ -817,6 +817,12 @@ ZIP の番号はファイル名の末尾の通し番号（0 から 15 の 16 枚
 
 - toro（第 7 章の兼六園の徽軫灯籠）: `create_image_pixflux`（32 × 32、`no_background: true`、黒の 1px 輪郭、low top-down、medium detail）。1 回目（d043095d-010f-4c31-af44-35b4876048e4。Japanese kotoji-toro stone lantern of Kenroku-en garden, grey granite lantern with a wide flat umbrella-shaped roof (kasa) and a square fire box with a window, standing on TWO separate stone legs of different lengths …、text_guidance_scale 11）は脚が 1 本の台座で、火袋の赤い光が目に見えた。2 回目（fb8c0764-5ae6-415b-8ffc-cc3031042408。脚を「TWO thin straight stone legs standing apart」と言い直し、text_guidance_scale 13）も台座で、窓が目に見えた。3 回目は 1 回目の笠と火袋を使い、Pillow で窓を 1 つの黄色い灯りに、脚を長い左脚と石に乗った短い右脚に描き直して採用（計 3 回）
 
+- takibi（焚き火。鬼の巣・南蛮寺跡・原城跡・清正の古井戸の底。火のそばで煙草の葉を吸える。npcs の object）: `create_1_direction_object`（size 32、view `top-down`、1 回で 64 候補）。候補は `get_object` のプレビューから取った
+  - 1 回目（776561b9-f26d-457a-a780-a1abb9b53b54。description の終わり small isolated object with empty transparent space around it、small campfire: a few crossed brown firewood logs inside a ring of grey stones … など 4 通り）: 石の囲みのある候補は幅が 26〜30px で、要件（幅 24px 以下）を超えた。石のない候補は焚き火と灯籠の見分けの要件に足りない
+  - 2 回目（e09b4259-5f10-4824-9d7b-a5f1645f07e2。description の終わりを small isolated object with wide empty transparent margin on the left and right にし、tiny campfire only 18 pixels wide: small ring of grey stones, crossed brown logs inside, orange and yellow flame … など 4 通り）: 候補 2（narrow small campfire, compact ring of round grey stones, few dark brown logs, tall orange flame with yellow core …）が幅 22px に収まったが、下端が 3px 浮いていた
+  - 3 回目: 2 回目の候補 2 を Pillow で 3px 下へずらして採用（計 3 回）
+  - 判定の観点: 組んだ薪の上に橙・黄の炎、石の囲み、背景が透過、幅 24px 以下で下端が地面、見下ろし気味、濃い輪郭、炎以外は落ち着いた色。4 つのマップを撮って確かめ、原城跡は岩の列に接して見分けにくかったので 1 マス下に置いた
+
 ### 入口の目印と井戸（テストプレイの指摘: 南蛮寺跡・島原の地下研究所の入口が入口に見えない、熊本の井戸が井戸に見えない）
 
 `create_1_direction_object`（size 32、view `top-down`、1 回で 64 候補）。共通の description: Edo period Japan RPG map prop, pixel art, dark outline, muted traditional colors, small isolated object with empty transparent space around it。`item_descriptions` に 3 種類を 4 通りずつ書いて 1 回で作った（9da18abd-900d-4e02-8626-29009b18c67b）。候補は `get_object` のプレビュー（32 × 32 の実寸）から取った（backblaze.pixellab.ai はこの環境のプロキシで拒否される）。

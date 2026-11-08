@@ -73,6 +73,17 @@ describe('道具の品ぞろえ', () => {
     for (const shop of Object.values(SHOPS).filter((x) => x.name === '茶屋')) expect(shop.goods, shop.id).toContain('sake');
   });
 
+  it('煙草の葉は戦闘の外だけで使え、京から先のよろず屋（寄り道の彦根を除く）でキセルと一緒に売り、気力を戻す品でいちばん安い', () => {
+    expect(ITEMS.tabako?.effect).toEqual({ kind: 'fullMp', smoke: true });
+    expect(ITEMS.tabako?.field).toBe(true);
+    expect(ITEMS.tabako?.battle).toBe(false);
+    const sellers = Object.values(SHOPS).filter((x) => x.goods.includes('tabako')).map((x) => x.id).sort();
+    expect(sellers).toEqual(['aizuYorozu', 'edoYorozu', 'hiroshimaYorozu', 'igaYorozu', 'kanazawaYorozu', 'kumamotoYorozu', 'kyoYorozu', 'nagasakiYorozu', 'osakaYorozu', 'sendaiYorozu']);
+    for (const id of sellers) expect(SHOPS[id]?.goods, id).toContain('kiseru');
+    const restoresMp = Object.values(ITEMS).filter((x) => x.id !== 'tabako' && ['healMp', 'fullMp', 'healBoth'].includes(x.effect.kind));
+    for (const item of restoresMp) expect(ITEMS.tabako!.price, item.id).toBeLessThan(item.price);
+  });
+
   it('同じ効き目の道具は、高いほど回復量が多い', () => {
     const byKind = (kind: 'healHp' | 'healMp') =>
       Object.values(ITEMS)

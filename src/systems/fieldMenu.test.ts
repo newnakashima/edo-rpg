@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { ITEMS } from '../data/items';
 import { SKILLS, skillsAtLevel, WARD_STEPS } from '../data/skills';
-import { changeEquipment, escapeInField, expToNext, fieldSkills, itemUsableOn, skillDescription, statsWithEquipment, statusSheet, swapMembers, useItemInField, useSkillInField, wardInField } from './fieldMenu';
+import { MAPS } from '../data/maps';
+import { changeEquipment, escapeInField, expToNext, fieldSkills, hasKiseru, itemUsableOn, skillDescription, statsWithEquipment, statusSheet, swapMembers, useItemInField, useSkillInField, wardInField } from './fieldMenu';
 import { newGame, type GameState } from './gameState';
 import { createMember, memberStats } from './party';
 import { expRemainingToNext, MAX_LEVEL } from './stats';
@@ -25,6 +26,27 @@ describe('道具をメニューで使う', () => {
     expect(r.ok && r.state.party[0]?.mp).toBe(memberStats(hero).maxMp);
     expect(r.ok && r.state.items).toEqual({ sake: 1 });
     expect(useItemInField(s, 'sake', 1)).toEqual({ ok: false, reason: 'noEffect' });
+  });
+
+  it('煙草の葉は、火のそばでキセルを付けた人だけが吸え、気力をすべて戻す', () => {
+    const teahouse = MAPS.shimizu!.npcs.find((n) => n.action === 'teahouse')!;
+    const smoker = { ...createMember('hero', 10), mp: 0, equip: { accessory: 'kiseru' } };
+    const plain = { ...createMember('kasumi', 10), mp: 0 };
+    const nearby = game({ party: [smoker, plain], items: { tabako: 2 }, x: teahouse.x, y: teahouse.y + 1 });
+    const r = useItemInField(nearby, 'tabako', 0);
+    expect(r.ok && r.state.party[0]?.mp).toBe(memberStats(smoker).maxMp);
+    expect(r.ok && r.state.items).toEqual({ tabako: 1 });
+    expect(useItemInField(nearby, 'tabako', 1)).toEqual({ ok: false, reason: 'noKiseru' });
+    // 火のないところでは、キセルを付けていても吸えない（火がないことを先に断る）
+    const far = { ...nearby, y: teahouse.y + 10 };
+    expect(useItemInField(far, 'tabako', 0)).toEqual({ ok: false, reason: 'noFire' });
+    expect(useItemInField(far, 'tabako', 1)).toEqual({ ok: false, reason: 'noFire' });
+    // 気力が満タンなら吸わない
+    expect(useItemInField({ ...nearby, party: [{ ...smoker, mp: memberStats(smoker).maxMp }] }, 'tabako', 0)).toEqual({ ok: false, reason: 'noEffect' });
+    expect(itemUsableOn('tabako', smoker)).toBe(true);
+    expect(itemUsableOn('tabako', plain)).toBe(false);
+    expect(hasKiseru(smoker)).toBe(true);
+    expect(hasKiseru(plain)).toBe(false);
   });
 
   it('効かないときは使わない', () => {
