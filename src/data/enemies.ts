@@ -759,7 +759,7 @@ export const ENEMIES: Record<string, EnemyDef> = {
     name: '蛇骨の権六',
     color: 0x4a5a3a,
     image: true,
-    factors: { hp: 28, atk: 2.0, def: 1.0, spd: 1.4 },
+    factors: { hp: 25, atk: 2.0, def: 1.0, spd: 1.4 },
     weak: ['fire'],
     actions: [
       { skill: 'attack', weight: 3 },

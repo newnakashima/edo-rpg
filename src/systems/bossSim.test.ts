@@ -46,7 +46,7 @@ function healSkills(c: Combatant): string[] {
 /** 味方の戦い方。attack は通常攻撃だけ、skills は気力の続くかぎり最もダメージの大きい攻撃の技を使う。どちらも回復の技は使う。 */
 type Policy = 'attack' | 'skills';
 
-/** 技のダメージの見積もり（docs/balance.md の「戦闘計算」。乱数・会心・命中は見ない）。通常攻撃は 'attack'。 */
+/** 技のダメージの見積もり（docs/balance.md の「戦闘計算」。乱数・会心・命中・回避・ボスの防御↑は見ない）。通常攻撃は 'attack'。 */
 function estimate(c: Combatant, skill: string, foe: Combatant): number {
   const physical = (mult: number, ignoreDefense = false) => Math.max(1, c.stats.atk - (ignoreDefense ? 0 : foe.stats.def / 2)) * mult;
   if (skill === 'attack') return physical(1);
@@ -56,6 +56,7 @@ function estimate(c: Combatant, skill: string, foe: Combatant): number {
   const elementRate = element.some((e) => foe.weak.includes(e)) ? 1.5 : element.some((e) => foe.resist.includes(e)) ? 0.5 : 1;
   const e = def.effect;
   if (e.kind === 'physical') {
+    // 半々で空振りする丁半博打は使わない
     if (e.gamble) return 0;
     const hits = ((e.hits ?? 1) + (e.maxHits ?? e.hits ?? 1)) / 2;
     // ランダムに当てる技は、ボスに当たるとは限らないが、手下がいなければすべてボスに当たる
