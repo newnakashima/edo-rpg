@@ -25,21 +25,29 @@ function reachable(map: MapDef, from: { x: number; y: number }): Set<string> {
 const buildings = Object.values(MAPS).filter((m) => buildingTown(m.id));
 
 describe('施設・民家以外の建物の屋内（テストプレイの指摘: あらゆる建物に入れるようにすべき）', () => {
-  it('清水湊の戸（D）はすべて入れる（民家か、建物ごとの屋内）', () => {
-    const town = MAPS.shimizu!;
+  // 屋内を足した町（町を足したらここにも足す）
+  const TOWNS = ['shimizu', 'sunpu'];
+
+  it.each(TOWNS)('%s の戸（D）はすべて入れる（民家か、建物ごとの屋内）', (townId) => {
+    const town = MAPS[townId]!;
     town.rows.forEach((row, y) =>
       [...row].forEach((ch, x) => {
         if (ch !== 'D') return;
         const entrance = town.exits.find((e) => e.x === x && e.y === y);
         expect(entrance, `${x},${y}`).toBeDefined();
         expect(canStep(town, x, y), `${x},${y}`).toBe(true);
-        expect(isMinka(entrance!.to) || buildingTown(entrance!.to) === 'shimizu', `${x},${y}`).toBe(true);
+        expect(isMinka(entrance!.to) || buildingTown(entrance!.to) === townId, `${x},${y}`).toBe(true);
       }),
     );
-    // 民家でない戸口の数だけ、清水湊の建物の屋内がある（戸口と屋内が 1 対 1）
+    // 民家でない戸口の数だけ、その町の建物の屋内がある（戸口と屋内が 1 対 1）
     const doors = town.exits.filter((e) => town.rows[e.y]?.[e.x] === 'D' && !isMinka(e.to));
-    const inside = buildings.filter((m) => buildingTown(m.id) === 'shimizu').map((m) => m.id);
+    const inside = buildings.filter((m) => buildingTown(m.id) === townId).map((m) => m.id);
     expect(doors.map((e) => e.to).sort()).toEqual(inside.sort());
+  });
+
+  it.each(TOWNS)('%s の施設の人は、町の通りではなく建物の中に立つ', (townId) => {
+    const outside = MAPS[townId]!.npcs.filter((n) => n.action).map((n) => n.id);
+    expect(outside).toEqual([]);
   });
 
   it('戸口から入ると出口の 1 マス奥に立ち、出口からはその戸口の前（通れて人のいないマス）へ戻る', () => {
@@ -104,8 +112,8 @@ describe('施設・民家以外の建物の屋内（テストプレイの指摘:
         }
       }
     }
-    // 清水湊の賭場・居酒屋・妓楼・親分の屋敷（町を足すと増える）
-    expect(checked).toBeGreaterThanOrEqual(4);
+    // 清水湊・駿府の賭場・居酒屋・妓楼・親分の屋敷（町を足すと増える）
+    expect(checked).toBeGreaterThanOrEqual(8);
   });
 
   it('辰五郎とお凛は一家の屋敷の中にいる。辰五郎の話（序章の頼み）は屋敷に入って聞く', () => {

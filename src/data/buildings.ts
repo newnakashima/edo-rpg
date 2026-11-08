@@ -25,6 +25,13 @@ export interface BuildingDef {
   tileset?: TilesetId;
 }
 
+export const ANDON_LINES = ['行灯の紙ごしに、菜種油の火がやわらかく灯っている。'];
+
+/** 家具（話しかけると台詞を出す物）。ID は建物の ID と通し番号から作る。 */
+export function furniture(building: string, list: Omit<NpcDef, 'id' | 'color'>[]): NpcDef[] {
+  return list.map((f, i) => ({ id: `${building}Kagu${i}`, color: 0x7a5a3a, ...f }));
+}
+
 /** 屋内マップの ID → その建物のある町の ID。 */
 const BUILDING_TOWN: Record<string, string> = {};
 

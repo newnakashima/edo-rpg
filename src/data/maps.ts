@@ -9,6 +9,7 @@ import { MINKA_DOORS, minkaEntrance, minkaMap } from './minka';
 import type { SignKind } from './signs';
 import { addBuildings } from './buildings';
 import { SHIMIZU_BUILDINGS } from './buildingsShimizu';
+import { SUNPU_BUILDINGS } from './buildingsSunpu';
 
 /** タイルの種類。画像は public/assets/tiles/<種類>.png（PixelLab で生成。記録は public/assets/README.md）。 */
 export const TILE_KINDS = ['ground', 'grass', 'road', 'tree', 'water', 'wall', 'roof', 'door', 'floor', 'rock', 'plain', 'town', 'gate'] as const;
@@ -708,35 +709,8 @@ MAPS.sunpu = {
     'T,,,,,,,,,,,,,,,,TT==TTTTTTTTTTT,,,,,,,,,,,,,,,,,T',
     'TTTTTTTTTTTTTTTTTTT==TTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
   ],
+  // 店・神社・旅籠・飛脚屋・湯屋などの施設の人は建物の中にいる（src/data/buildingsSunpu.ts）
   npcs: [
-    {
-      id: 'sunpuTeahouse',
-      name: '茶屋の娘',
-      x: 3,
-      y: 13,
-      color: 0xc76b8f,
-      sprite: 'npc_musume',
-      lines: [
-        '茶屋の娘「いらっしゃいまし。からくり一座の興行、ごらんになりました？ 人形がまるで生きてるみたいに動くんですよ」',
-        '茶屋の娘「でも……一座が来てから、城下でも人がいなくなるようになったって噂で」',
-        '茶屋の娘「お団子はいかが？」',
-      ],
-      after: { flag: 'heardSunpuRumor', lines: ['茶屋の娘「いらっしゃいまし。お団子はいかが？」'] },
-      setsFlag: 'heardSunpuRumor',
-      action: 'teahouse',
-      shop: 'sunpuChaya',
-    },
-    {
-      id: 'sunpuYorozu',
-      name: 'よろず屋',
-      x: 11,
-      y: 13,
-      color: 0x6b8c5a,
-      sprite: 'npc_merchant',
-      lines: ['よろず屋「駿府はお城下だ、品ぞろえは清水にゃ負けませんよ」'],
-      action: 'shop',
-      shop: 'sunpuYorozu',
-    },
     {
       id: 'yorikiGuard',
       name: '門番',
@@ -746,28 +720,6 @@ MAPS.sunpu = {
       sprite: 'npc_monban',
       lines: ['門番「ここは町奉行所の与力、黒田様のお屋敷だ。町人風情が近寄るでない」'],
       hideFlag: 'kasumiJoined',
-    },
-    {
-      id: 'sunpuInn',
-      name: '旅籠の主人',
-      x: 33,
-      y: 20,
-      color: 0x5a6b8c,
-      sprite: 'npc_innkeeper',
-      lines: ['旅籠の主人「駿府へようこそ。……と言いてえが、御城下の宿は渡世人を泊めちゃならねえとお達しがありやして。この町の親分さんを頼りなせえ」'],
-      action: 'inn',
-    },
-    {
-      id: 'sengenKannushi',
-      // 看板: 外の社の前に立つ（戸のある建物がない）
-      sign: false,
-      name: '浅間神社の神主',
-      x: 7,
-      y: 10,
-      color: 0xb0b0a0,
-      sprite: 'npc_kannushi',
-      lines: ['神主「浅間の神のご加護を。倒れた者があれば、お祓いをして進ぜよう」'],
-      action: 'temple',
     },
     {
       id: 'castleGuard',
@@ -790,27 +742,6 @@ MAPS.sunpu = {
         '呼び込み「茶運び人形に文字書き人形、果ては生きた人と見まごう舞い人形まで！ ……工房？ この小屋の裏口の奥だが、見物衆は入れねえよ」',
       ],
       after: { flag: 'tetsubinDefeated', lines: ['呼び込み「座元が姿をくらましちまって、興行はおしまいだ。おれたちゃ何も知らなかったんだよ……」'] },
-    },
-    {
-      id: 'sunpuKaji',
-      name: '刀鍛冶',
-      x: 41,
-      y: 20,
-      color: 0x5a5a6b,
-      sprite: 'npc_smith',
-      lines: ['刀鍛冶「駿府の刀は家康公以来の名工ぞろいだ。見ていきなせえ」'],
-      action: 'shop',
-      shop: 'sunpuKaji',
-    },
-    {
-      id: 'sunpuHikyaku',
-      name: '飛脚',
-      x: 46,
-      y: 20,
-      color: 0x3e7cb0,
-      sprite: 'npc_hikyaku',
-      lines: ['飛脚「へい、まいど！ 駿府の飛脚問屋でございやす」'],
-      action: 'hikyaku',
     },
     {
       id: 'sunpuMachiya',
@@ -5970,6 +5901,7 @@ MAPS.matsuNoRoka = {
 
 // 施設・民家以外の建物の屋内（建物ごとに固有の間取り。町ごとのファイルに書く。src/data/buildings.ts）
 addBuildings(MAPS, 'shimizu', SHIMIZU_BUILDINGS);
+addBuildings(MAPS, 'sunpu', SUNPU_BUILDINGS);
 /** その戸口が屋内へ入る入口か（屋内のある施設の人は、屋内の建物のファイルで屋内に置くので、店先には立たせない）。 */
 const hasInterior = (town: string, door: { x: number; y: number }) => MAPS[town]!.exits.some((e) => e.x === door.x && e.y === door.y);
 // 湯屋・賭場・居酒屋・妓楼（刀鍛冶かよろず屋のあるすべての町。戸口と台詞は src/data/townFacilities.ts）
