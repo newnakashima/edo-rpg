@@ -26,11 +26,12 @@ const buildings = Object.values(MAPS).filter((m) => buildingTown(m.id));
 
 describe('施設・民家以外の建物の屋内（テストプレイの指摘: あらゆる建物に入れるようにすべき）', () => {
   // 屋内を足した町（町を足したらここにも足す）
-  const TOWNS = ['shimizu', 'sunpu', 'nagoya', 'kyo', 'iga', 'osaka', 'hiroshima', 'nagasaki', 'kanazawa'];
+  const TOWNS = ['shimizu', 'sunpu', 'nagoya', 'kyo', 'iga', 'osaka', 'hiroshima', 'nagasaki', 'kanazawa', 'sendai'];
   // 鍵をかけた戸（入れなくてよい。ユーザーの決定「鍵をかけたもの以外のすべての建物に入れる」）
   const LOCKED: Record<string, [number, number][]> = {
     hiroshima: [[15, 4]], // 城の門（門番が堀の橋をふさぐ）
     kanazawa: [[28, 13]], // 城の門（ご家老の命で門番が固める）
+    sendai: [[6, 13]], // 青葉城の門（門番が固める）
   };
   // 戸のある建物がなく、通りに立つ店（町の通りに残る施設の人）
   const STREET_SHOPS = ['kakibune'];
@@ -137,7 +138,7 @@ describe('施設・民家以外の建物の屋内（テストプレイの指摘:
         }
       }
     }
-    // 清水湊・駿府・名古屋・京・伊賀上野・大坂・広島・長崎・金沢の賭場・居酒屋・妓楼・親分の屋敷（町を足すと増える）
+    // 清水湊・駿府・名古屋・京・伊賀上野・大坂・広島・長崎・金沢・仙台の賭場・居酒屋・妓楼・親分の屋敷（町を足すと増える）
     expect(checked).toBeGreaterThanOrEqual(TOWNS.length * 4);
   });
 
@@ -186,5 +187,14 @@ describe('施設・民家以外の建物の屋内（テストプレイの指摘:
     expect(MAPS.kanazawaHikyakuya!.npcs.find((n) => n.id === 'kanazawaHikyaku')?.action).toBe('hikyaku');
     const moved = ['sakon', 'bukeJochu', 'teramachiSo', 'kanazawaInn', 'kanazawaHikyaku', 'kanazawaGeiko', 'chayaOkami'];
     expect(MAPS.kanazawa!.npcs.some((n) => moved.includes(n.id))).toBe(false);
+  });
+
+  it('仙台の片平帯刀は屋敷の中、神主は大崎八幡宮の中、旅籠の主人・店の人・大町の老人は建物の中にいる', () => {
+    expect(MAPS.sendaiTatewakiYashiki!.npcs.find((n) => n.id === 'tatewaki')?.event).toBe('tatewaki');
+    expect(MAPS.sendaiHachiman!.npcs.find((n) => n.id === 'sendaiKannushi')?.action).toBe('temple');
+    expect(MAPS.sendaiYado!.npcs.find((n) => n.id === 'sendaiInn')?.action).toBe('inn');
+    expect(MAPS.sendaiGusokushiIe!.npcs.some((n) => n.id === 'sendaiRojin')).toBe(true);
+    const moved = ['tatewaki', 'sendaiKannushi', 'sendaiInn', 'sendaiRojin', 'sendaiTeahouse', 'sendaiHikyaku', 'sendaiYorozu', 'sendaiKaji'];
+    expect(MAPS.sendai!.npcs.some((n) => moved.includes(n.id))).toBe(false);
   });
 });

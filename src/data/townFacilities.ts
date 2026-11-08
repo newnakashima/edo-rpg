@@ -67,7 +67,8 @@ export const TOWN_FACILITY_DOORS: Record<string, TownDoors> = {
   hiroshima: { yuya: d(11, 16), tobaku: d(19, 16), izakaya: d(25, 16), gyoro: d(31, 16) },
   nagasaki: { yuya: d(15, 11), tobaku: d(27, 24), izakaya: d(21, 11), gyoro: d(29, 24) },
   kanazawa: { yuya: d(7, 27), tobaku: d(16, 27), izakaya: d(23, 27), gyoro: d(39, 27) },
-  sendai: { yuya: d(38, 25), tobaku: d(46, 25), izakaya: d(21, 33), gyoro: d(28, 33) },
+  // 仙台は、民家と同じ棟の二つの戸のうち西の戸（看板が戸の左の壁に掛かり、二つの戸の間に掛からないように。東の戸は民家）
+  sendai: { yuya: d(36, 25), tobaku: d(44, 25), izakaya: d(19, 33), gyoro: d(26, 33) },
   hamamatsu: { yuya: d(15, 24), tobaku: d(48, 18), izakaya: d(34, 24), gyoro: d(46, 24) },
   hikone: { yuya: d(10, 24), tobaku: d(21, 24), izakaya: d(35, 24), gyoro: d(47, 24) },
   kumamoto: { yuya: d(10, 22), tobaku: d(17, 22), izakaya: d(7, 30), gyoro: d(11, 30) },

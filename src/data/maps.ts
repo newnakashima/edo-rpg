@@ -17,6 +17,7 @@ import { OSAKA_BUILDINGS } from './buildingsOsaka';
 import { HIROSHIMA_BUILDINGS } from './buildingsHiroshima';
 import { NAGASAKI_BUILDINGS } from './buildingsNagasaki';
 import { KANAZAWA_BUILDINGS } from './buildingsKanazawa';
+import { SENDAI_BUILDINGS } from './buildingsSendai';
 
 /** タイルの種類。画像は public/assets/tiles/<種類>.png（PixelLab で生成。記録は public/assets/README.md）。 */
 export const TILE_KINDS = ['ground', 'grass', 'road', 'tree', 'water', 'wall', 'roof', 'door', 'floor', 'rock', 'plain', 'town', 'gate'] as const;
@@ -3396,71 +3397,6 @@ MAPS.sendai = {
   ],
   npcs: [
     {
-      id: 'tatewaki',
-      name: '片平帯刀',
-      x: 22,
-      y: 8,
-      color: 0x5a5a7a,
-      sprite: 'tatewaki',
-      event: 'tatewaki',
-    },
-    {
-      id: 'sendaiKannushi',
-      name: '神主',
-      x: 39,
-      y: 8,
-      color: 0x8a8a9a,
-      sprite: 'npc_kannushi',
-      lines: ['神主「ようこそお参りくださいました。旅の無事を祈りましょう」'],
-      action: 'temple',
-    },
-    {
-      id: 'sendaiTeahouse',
-      name: '茶屋の娘',
-      x: 18,
-      y: 16,
-      color: 0xc76b8f,
-      sprite: 'npc_musume',
-      lines: [
-        '茶屋の娘「いらっしゃいませ。ずんだ餅もありますよ」',
-        '茶屋の娘「このごろ、江戸のお役人が片平丁のお屋敷のまわりをうろうろしてるの。何を探ってるのかしら」',
-      ],
-      action: 'teahouse',
-      shop: 'sendaiChaya',
-    },
-    {
-      id: 'sendaiHikyaku',
-      name: '飛脚',
-      x: 25,
-      y: 16,
-      color: 0x6a8a4a,
-      sprite: 'npc_hikyaku',
-      lines: ['飛脚「奥州街道を南へ下れば、江戸まではもうひと息だ。……江戸からの便りは、このごろ妙に少ないがな」'],
-      action: 'hikyaku',
-    },
-    {
-      id: 'sendaiYorozu',
-      name: 'よろず屋',
-      x: 36,
-      y: 16,
-      color: 0x8a6a4a,
-      sprite: 'npc_merchant',
-      lines: ['よろず屋「いらっしゃい。仙台名物のずんだ餅なら茶屋だよ。枝豆の餡が甘くてうまいんだ」'],
-      action: 'shop',
-      shop: 'sendaiYorozu',
-    },
-    {
-      id: 'sendaiKaji',
-      name: '刀鍛冶',
-      x: 43,
-      y: 16,
-      color: 0x4a4a5a,
-      sprite: 'npc_smith',
-      lines: ['刀鍛冶「仙台の刀は柾目の肌が自慢でな。具足師の雪下胴もいい出来だ」'],
-      action: 'shop',
-      shop: 'sendaiKaji',
-    },
-    {
       id: 'sendaiMonban',
       name: '門番',
       x: 6,
@@ -3470,28 +3406,9 @@ MAPS.sendai = {
       lines: ['門番「ここから先は青葉城。用のない者は通せぬ」'],
     },
     {
-      id: 'sendaiInn',
-      name: '旅籠の主人',
-      x: 20,
-      y: 26,
-      color: 0x5a6b8c,
-      sprite: 'npc_innkeeper',
-      lines: ['旅籠の主人「遠いところをよくおいでくださいました。なれど、渡世人のお方はお泊めできませぬ。親分さんのお屋敷をお訪ねくだされ」'],
-      action: 'inn',
-    },
-    {
-      id: 'sendaiRojin',
-      name: '老人',
-      x: 28,
-      y: 26,
-      color: 0x8a7a6a,
-      sprite: 'npc_rojin',
-      lines: ['老人「わしの若いころ、伊達の御家中で大きな騒ぎがあってな。幼い殿を廃そうとする者がおったのじゃ」', '老人「お家の騒ぎの陰には、たいてい江戸の偉い方の思惑がある。……今度もそうでなければよいが」'],
-    },
-    {
       id: 'sendaiOkami',
       name: 'おかみ',
-      x: 36,
+      x: 35,
       y: 26,
       color: 0xa07a6a,
       sprite: 'npc_okami',
@@ -3500,7 +3417,7 @@ MAPS.sendai = {
     {
       id: 'sendaiKodomo',
       name: '町の子',
-      x: 44,
+      x: 43,
       y: 26,
       color: 0x8a9a6a,
       sprite: 'npc_kodomo',
@@ -3518,7 +3435,7 @@ MAPS.sendai = {
     {
       id: 'sendaiNinsoku',
       name: '人足',
-      x: 19,
+      x: 18,
       y: 34,
       color: 0x8a6a4a,
       sprite: 'npc_ninsoku',
@@ -3527,7 +3444,7 @@ MAPS.sendai = {
     {
       id: 'sendaiShonin',
       name: '商人',
-      x: 26,
+      x: 25,
       y: 34,
       color: 0x8a6a4a,
       sprite: 'npc_merchant',
@@ -5315,6 +5232,7 @@ addBuildings(MAPS, 'osaka', OSAKA_BUILDINGS);
 addBuildings(MAPS, 'hiroshima', HIROSHIMA_BUILDINGS);
 addBuildings(MAPS, 'nagasaki', NAGASAKI_BUILDINGS);
 addBuildings(MAPS, 'kanazawa', KANAZAWA_BUILDINGS);
+addBuildings(MAPS, 'sendai', SENDAI_BUILDINGS);
 /** その戸口が屋内へ入る入口か（屋内のある施設の人は、屋内の建物のファイルで屋内に置くので、店先には立たせない）。 */
 const hasInterior = (town: string, door: { x: number; y: number }) => MAPS[town]!.exits.some((e) => e.x === door.x && e.y === door.y);
 // 湯屋・賭場・居酒屋・妓楼（刀鍛冶かよろず屋のあるすべての町。戸口と台詞は src/data/townFacilities.ts）

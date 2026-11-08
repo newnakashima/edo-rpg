@@ -165,6 +165,9 @@ export const MINKA_DOORS: Record<string, MinkaDoor[]> = {
   // 犀川の南の寺町（y = 35 の並び）の寺、武家屋敷、店などは、建物ごとの屋内（src/data/buildingsKanazawa.ts）に入る
   kanazawa: [m(8, 21), m(52, 21), m(45, 10), m(51, 10)],
   kumamoto: [m(9, 30)],
+  // 大町の通りの町家と、国分町の裏通りの長屋（どれも湯屋・賭場・居酒屋・妓楼と同じ棟の東の戸。あとから足した町なので末尾に置き、
+  // ほかの町の民家の住人は変えない）。片平丁の屋敷・神社・店などは、建物ごとの屋内（src/data/buildingsSendai.ts）に入る
+  sendai: [m(38, 25), m(46, 25), n(21, 33), n(28, 33)],
 };
 
 /** 民家の屋内マップの ID。 */
