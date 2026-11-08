@@ -1534,10 +1534,10 @@ describe('寄り道の会津若松', () => {
     expect(respawnPoint('world', 136, 20, { sendaiIntro: true, aizuIntro: true, edoIntro: true })).toEqual({ mapId: 'edo', ...MAPS.edo!.respawn });
   });
 
-  it('町に入ると aizuEnter を行い、着いたあとは行わない。旅籠・茶屋・店・寺・飛脚がそろう', () => {
+  it('町に入ると aizuEnter を行い、着いたあとは行わない。旅籠・茶屋・店・寺・飛脚・湯屋・賭場・居酒屋・妓楼がそろう', () => {
     expect(aizu.onEnter).toEqual({ event: 'aizuEnter', unless: 'aizuIntro' });
     const actions = new Set(aizu.npcs.map((n) => n.action).filter(Boolean));
-    expect(actions).toEqual(new Set(['inn', 'teahouse', 'shop', 'temple', 'hikyaku']));
+    expect(actions).toEqual(new Set(['inn', 'teahouse', 'shop', 'temple', 'hikyaku', 'yuya', 'tobaku', 'izakaya', 'gyoro']));
     expect(aizu.areaLevel).toBe(25);
   });
 
@@ -1589,10 +1589,10 @@ describe('寄り道の浜松', () => {
     expect(respawnPoint('world', 104, 30, { oigawaOpen: true, hamamatsuIntro: true })).not.toEqual(toHamamatsu);
   });
 
-  it('町に入ると hamamatsuEnter を行い、着いたあとは行わない。旅籠・茶屋・店・寺・飛脚がそろう', () => {
+  it('町に入ると hamamatsuEnter を行い、着いたあとは行わない。旅籠・茶屋・店・寺・飛脚・湯屋・賭場・居酒屋・妓楼がそろう', () => {
     expect(hamamatsu.onEnter).toEqual({ event: 'hamamatsuEnter', unless: 'hamamatsuIntro' });
     const actions = new Set(hamamatsu.npcs.map((n) => n.action).filter(Boolean));
-    expect(actions).toEqual(new Set(['inn', 'teahouse', 'shop', 'temple', 'hikyaku']));
+    expect(actions).toEqual(new Set(['inn', 'teahouse', 'shop', 'temple', 'hikyaku', 'yuya', 'tobaku', 'izakaya', 'gyoro']));
     expect(hamamatsu.areaLevel).toBe(7);
     expect(tileAt(hamamatsu, hamamatsu.respawn!.x, hamamatsu.respawn!.y)?.blocked).toBe(false);
   });
@@ -1654,10 +1654,10 @@ describe('寄り道の彦根', () => {
     expect(respawnPoint('world', 80, 28, { chapter2Cleared: true, hikoneIntro: true })).not.toEqual(toHikone);
   });
 
-  it('町に入ると hikoneEnter を行い、着いたあとは行わない。旅籠・茶屋・店・寺・飛脚がそろう', () => {
+  it('町に入ると hikoneEnter を行い、着いたあとは行わない。旅籠・茶屋・店・寺・飛脚・湯屋・賭場・居酒屋・妓楼がそろう', () => {
     expect(hikone.onEnter).toEqual({ event: 'hikoneEnter', unless: 'hikoneIntro' });
     const actions = new Set(hikone.npcs.map((n) => n.action).filter(Boolean));
-    expect(actions).toEqual(new Set(['inn', 'teahouse', 'shop', 'temple', 'hikyaku']));
+    expect(actions).toEqual(new Set(['inn', 'teahouse', 'shop', 'temple', 'hikyaku', 'yuya', 'tobaku', 'izakaya', 'gyoro']));
     expect(hikone.areaLevel).toBe(10);
     expect(tileAt(hikone, hikone.respawn!.x, hikone.respawn!.y)?.blocked).toBe(false);
   });
@@ -1709,10 +1709,10 @@ describe('寄り道の熊本', () => {
     expect(respawnPoint('world', 17, 53, { nagasakiArrived: true })).toEqual({ mapId: 'nagasaki', ...MAPS.nagasaki!.respawn });
   });
 
-  it('町に入ると kumamotoEnter を行い、着いたあとは行わない。旅籠・茶屋・店・寺・飛脚がそろう', () => {
+  it('町に入ると kumamotoEnter を行い、着いたあとは行わない。旅籠・茶屋・店・寺・飛脚・湯屋・賭場・居酒屋・妓楼がそろう', () => {
     expect(kumamoto.onEnter).toEqual({ event: 'kumamotoEnter', unless: 'kumamotoIntro' });
     const actions = new Set(kumamoto.npcs.map((n) => n.action).filter(Boolean));
-    expect(actions).toEqual(new Set(['inn', 'teahouse', 'shop', 'temple', 'hikyaku']));
+    expect(actions).toEqual(new Set(['inn', 'teahouse', 'shop', 'temple', 'hikyaku', 'yuya', 'tobaku', 'izakaya', 'gyoro']));
     expect(kumamoto.areaLevel).toBe(19);
     expect(kumamoto.exits).toEqual([]);
     expect(tileAt(kumamoto, kumamoto.respawn!.x, kumamoto.respawn!.y)?.blocked).toBe(false);
