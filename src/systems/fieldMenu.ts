@@ -5,13 +5,14 @@ import { addItem, ITEMS, itemCount, itemName, MAX_ITEM_COUNT, removeItem } from 
 import { escapePoint } from '../data/maps';
 import { SKILLS, skillsAtLevel, type SkillDef } from '../data/skills';
 import { healAmount } from './combat';
+import { nearFire } from './fire';
 import type { GameState } from './gameState';
 import { memberLevel, memberStats, type PartyMember } from './party';
 import { expRemainingToNext, growthFactor, type Stats } from './stats';
 
 export type FieldResult =
   | { ok: true; state: GameState; changes: { index: number; hp: number; mp: number }[] }
-  | { ok: false; reason: 'noItem' | 'notField' | 'noEffect' | 'noMp' | 'casterDown' | 'cannotEquip' | 'full' | 'guest' };
+  | { ok: false; reason: 'noItem' | 'notField' | 'noEffect' | 'noMp' | 'casterDown' | 'cannotEquip' | 'full' | 'guest' | 'noFire' | 'noKiseru' };
 
 function setMember(state: GameState, index: number, member: PartyMember): GameState {
   return { ...state, party: state.party.map((m, i) => (i === index ? member : m)) };
@@ -25,14 +26,18 @@ export function useItemInField(state: GameState, itemId: string, target: number)
   const rest = removeItem(state.items, itemId);
   if (!rest) return { ok: false, reason: 'noItem' };
   const m = state.party[target];
+  const e = item.effect;
+  if (isSmoke(itemId)) {
+    const blocked = smokeBlocked(state, m ? [m] : []);
+    if (blocked) return { ok: false, reason: blocked };
+  }
   if (!m || !itemUsableOn(itemId, m)) return { ok: false, reason: 'noEffect' };
   const s = memberStats(m);
-  const e = item.effect;
   let next: PartyMember;
   if (e.kind === 'revive') next = { ...m, hp: Math.max(1, Math.floor(s.maxHp * e.rate)) };
   else if (e.kind === 'healHp') next = { ...m, hp: Math.min(s.maxHp, m.hp + e.amount) };
   else if (e.kind === 'healMp') next = { ...m, mp: Math.min(s.maxMp, m.mp + e.amount) };
-  // 酒も戦闘の外では酔わない（酩酊は戦闘中だけの状態）
+  // 酒も戦闘の外では酔わない（酩酊は戦闘中だけの状態）。煙草の葉も同じく気力をすべて戻す
   else if (e.kind === 'fullMp') next = { ...m, mp: s.maxMp };
   else if (e.kind === 'healBoth') next = { ...m, hp: Math.min(s.maxHp, m.hp + e.hp), mp: Math.min(s.maxMp, m.mp + e.mp) };
   else return { ok: false, reason: 'noEffect' };
@@ -183,7 +188,27 @@ export function swapMembers(state: GameState, a: number, b: number): GameState {
   return { ...state, party: state.party.map((m, i) => (i === a ? mb : i === b ? ma : m)) };
 }
 
-/** 道具がその仲間に効くか（メニューで対象を選ぶときに、効かない仲間を選べなくする）。 */
+/** 吸う道具（煙草の葉）か。 */
+export function isSmoke(itemId: string): boolean {
+  const effect = ITEMS[itemId]?.effect;
+  return effect?.kind === 'fullMp' && !!effect.smoke;
+}
+
+/**
+ * 煙草の葉を吸えない理由。火のそばでなければ noFire（先に断る）、smokers の誰もキセルを付けていなければ noKiseru、吸えれば null。
+ * メニューでは誰に使うかを聞く前にパーティ全員で、使うときは吸う人 1 人で確かめる。
+ */
+export function smokeBlocked(state: GameState, smokers: readonly PartyMember[]): 'noFire' | 'noKiseru' | null {
+  if (!nearFire(state)) return 'noFire';
+  return smokers.some(hasKiseru) ? null : 'noKiseru';
+}
+
+/** 煙草の葉を吸うのに使うキセル（装飾品）を付けているか。 */
+export function hasKiseru(member: PartyMember): boolean {
+  return member.equip.accessory === 'kiseru';
+}
+
+/** 道具がその仲間に効くか（メニューで対象を選ぶときに、効かない仲間を選べなくする）。煙草の葉はキセルを付けた人だけ（火のそばかは見ない）。 */
 export function itemUsableOn(itemId: string, member: PartyMember): boolean {
   const effect = ITEMS[itemId]?.effect;
   if (!effect) return false;
@@ -194,8 +219,9 @@ export function itemUsableOn(itemId: string, member: PartyMember): boolean {
     case 'healHp':
       return member.hp > 0 && member.hp < s.maxHp;
     case 'healMp':
-    case 'fullMp':
       return member.hp > 0 && member.mp < s.maxMp;
+    case 'fullMp':
+      return member.hp > 0 && member.mp < s.maxMp && (!effect.smoke || hasKiseru(member));
     case 'healBoth':
       return member.hp > 0 && (member.hp < s.maxHp || member.mp < s.maxMp);
     case 'cure':

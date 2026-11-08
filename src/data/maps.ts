@@ -2036,6 +2036,7 @@ MAPS.oninosu = {
     'TTTTTTTTTTTTTTTTTTT,,TTTTTTTTTTTTTTTTTTT',
   ],
   npcs: [
+    { id: 'oninosuTakibi', name: '焚き火', x: 24, y: 12, color: 0xd06a2a, object: 'takibi', lines: ['鬼たちの焚き火が、まだくすぶっている。キセルがあれば、ここで一服できそうだ。'] },
     {
       id: 'oninosuChest1',
       name: '葛籠',
@@ -3352,6 +3353,7 @@ MAPS.nanbanji = {
     '^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
   ],
   npcs: [
+    { id: 'nanbanjiTakibi', name: '焚き火', x: 11, y: 19, color: 0xd06a2a, object: 'takibi', lines: ['誰かが焚いた火が、崩れた石垣の陰で燃えている。キセルがあれば、ここで一服できそうだ。'] },
     { id: 'nanbanjiChest1', name: '葛籠', x: 14, y: 2, color: 0x8a6a3a, object: 'tsuzura', event: 'nanbanjiChest1' },
     { id: 'nanbanjiChest2', name: '葛籠', x: 29, y: 20, color: 0x8a6a3a, object: 'tsuzura', event: 'nanbanjiChest2' },
     { id: 'nanbanjiChest3', name: '葛籠', x: 6, y: 5, color: 0x8a6a3a, object: 'tsuzura', event: 'nanbanjiChest3' },
@@ -3437,6 +3439,7 @@ MAPS.harajo = {
     'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
   ],
   npcs: [
+    { id: 'harajoTakibi', name: '焚き火', x: 12, y: 8, color: 0xd06a2a, object: 'takibi', lines: ['見回りの者が残した焚き火だ。キセルがあれば、ここで一服できそうだ。'] },
     { id: 'harajoChest1', name: '葛籠', x: 5, y: 24, color: 0x8a6a3a, object: 'tsuzura', event: 'harajoChest1' },
     { id: 'harajoChest2', name: '葛籠', x: 25, y: 24, color: 0x8a6a3a, object: 'tsuzura', event: 'harajoChest2' },
     { id: 'harajoChest3', name: '葛籠', x: 35, y: 24, color: 0x8a6a3a, object: 'tsuzura', event: 'harajoChest3' },
@@ -5124,6 +5127,7 @@ MAPS.kiyomasaIdo = {
 
   ],
   npcs: [
+    { id: 'kiyomasaIdoTakibi', name: '焚き火', x: 5, y: 4, color: 0xd06a2a, object: 'takibi', lines: ['井戸の底で、誰かが焚いた火が燃えている。キセルがあれば、ここで一服できそうだ。'] },
     { id: 'mizuKarakuri', name: 'からくり', x: 29, y: 20, color: 0x6a6a7a, object: 'zenmaiSochi', event: 'kumamotoKarakuri', hideFlag: 'kumamotoIdoFound' },
     { id: 'kumamotoChest1', name: '葛籠', x: 30, y: 4, color: 0x8a6a3a, object: 'tsuzura', event: 'kumamotoChest1' },
     { id: 'kumamotoChest3', name: '葛籠', x: 3, y: 20, color: 0x8a6a3a, object: 'tsuzura', event: 'kumamotoChest3' },

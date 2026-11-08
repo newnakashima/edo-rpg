@@ -8,7 +8,7 @@ import { portraitFor } from '../data/portraits';
 import { EQUIP_SLOTS, EQUIPMENT, SLOT_NAMES, canEquip, type EquipSlot } from '../data/equipment';
 import { ITEMS, itemCount, itemName, ownedEquipment, ownedItems } from '../data/items';
 import { SKILLS } from '../data/skills';
-import { changeEquipment, escapeInField, skillDescription, fieldSkills, itemUsableOn, statsWithEquipment, swapMembers, useItemInField, useSkillInField, wardInField, type EscapeResult, type FieldResult, type WardResult } from '../systems/fieldMenu';
+import { changeEquipment, escapeInField, skillDescription, fieldSkills, isSmoke, itemUsableOn, smokeBlocked, statsWithEquipment, swapMembers, useItemInField, useSkillInField, wardInField, type EscapeResult, type FieldResult, type WardResult } from '../systems/fieldMenu';
 import { memberStats } from '../systems/party';
 import type { Stats } from '../systems/stats';
 import { getState, setState } from '../state';
@@ -44,6 +44,8 @@ const FAIL_MESSAGES: Record<Exclude<FieldResult, { ok: true }>['reason'], string
   cannotEquip: '付けられない。',
   full: '外した装備を持ちきれない。',
   guest: 'この人の装備は変えられない。',
+  noFire: '火の気がない。茶屋や旅籠、焚き火のそばで一服しよう。',
+  noKiseru: 'キセルを付けていないと吸えない。',
 };
 
 /** 道しるべの札・抜け道を使えなかったときの説明。 */
@@ -231,12 +233,16 @@ export class FieldMenu {
           this.setInfo(message);
           return;
         }
+        const smoke = isSmoke(id);
+        // 煙草の葉: 火のそばでないか、キセルを付けた人がいなければ、誰に使うかを聞く前に断る
+        const blocked = smoke ? smokeBlocked(getState(), getState().party) : null;
+        if (blocked) return this.setInfo(FAIL_MESSAGES[blocked]);
         this.chooseMember(
           `${ITEMS[id]?.name ?? ''}を誰に使う？`,
           (target) => {
             const result = useItemInField(getState(), id, target);
             // 個数が変わるので、道具の一覧から開き直す（結果の表示は、開き直したときの説明より後に出す）
-            const message = this.apply(result, `${ITEMS[id]?.name ?? ''}を使った。`);
+            const message = this.apply(result, smoke ? 'キセルで一服した。' : `${ITEMS[id]?.name ?? ''}を使った。`);
             this.popToMain();
             this.openItems();
             this.setInfo(message);
