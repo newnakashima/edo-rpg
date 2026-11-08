@@ -75,10 +75,13 @@ export function signPosition(map: MapDef, npc: NpcDef): { x: number; y: number }
 
 /**
  * 屋内へ入る戸口（出口のある D のマス）の看板の位置。戸の左隣の壁、左が壁でなければ右隣の壁（施設の人は屋内にいて、戸の前に立たない）。
+ * 左隣の壁の向こうがまた戸で、右隣の壁の向こうが戸でなければ右隣にする（看板が二つの戸の間に掛かり、隣の戸と見まちがえないように）。
  * 戸の隣に壁がなければ null。
  */
 export function doorSignPosition(map: MapDef, door: { x: number; y: number }): { x: number; y: number } | null {
-  const x = [door.x - 1, door.x + 1].find((x) => cell(map, x, door.y) === 'W');
+  const walls = [door.x - 1, door.x + 1].filter((x) => cell(map, x, door.y) === 'W');
+  const between = (x: number) => cell(map, x + (x - door.x), door.y) === 'D';
+  const x = walls.find((x) => !between(x)) ?? walls[0];
   return x === undefined ? null : { x, y: door.y };
 }
 

@@ -1736,6 +1736,8 @@ describe('寄り道の彦根', () => {
 describe('寄り道の熊本', () => {
   const world = MAPS.world!;
   const kumamoto = MAPS.kumamoto!;
+  // 町と、町の建物の中の人
+  const everyone = [kumamoto, ...Object.values(MAPS).filter((m) => buildingTown(m.id) === 'kumamoto')].flatMap((m) => m.npcs);
   const ido = MAPS.kiyomasaIdo!;
   const town = world.towns!.find((t) => t.name === '熊本')!;
   const shimabara = world.towns!.find((t) => t.name === '島原')!;
@@ -1754,16 +1756,17 @@ describe('寄り道の熊本', () => {
 
   it('町に入ると kumamotoEnter を行い、着いたあとは行わない。旅籠・茶屋・店・寺・飛脚・湯屋・賭場・居酒屋・妓楼・親分の屋敷がそろう', () => {
     expect(kumamoto.onEnter).toEqual({ event: 'kumamotoEnter', unless: 'kumamotoIntro' });
-    const actions = new Set(kumamoto.npcs.map((n) => n.action).filter(Boolean));
+    // 施設の人は建物の中にいる（src/data/buildingsKumamoto.ts）
+    const actions = new Set(everyone.map((n) => n.action).filter(Boolean));
     expect(actions).toEqual(new Set(['inn', 'teahouse', 'shop', 'temple', 'hikyaku', 'yuya', 'tobaku', 'izakaya', 'gyoro', 'oyabun']));
     expect(kumamoto.areaLevel).toBe(19);
-    expect(kumamoto.exits.filter((e) => !isMinka(e.to))).toEqual([]);
     expect(tileAt(kumamoto, kumamoto.respawn!.x, kumamoto.respawn!.y)?.blocked).toBe(false);
   });
 
   it('湊から、茂作・古井戸・船頭・池の庭師・葛籠まで歩いて行ける。熊本城の中へは門番がふさいで入れない', () => {
     const area = reachable(kumamoto, town.to!, {}, true);
-    for (const id of ['mosaku', 'furuido', 'watashiSendo', 'suizenjiNiwashi', 'kumamotoChest2', 'ichoSekihi', 'kumamotoInn', 'kumamotoTemple', 'kumamotoRenkon']) {
+    // 旅籠の主人・寺の僧・辛子蓮根の店の人は建物の中（入れることは buildings.test.ts で確かめる）
+    for (const id of ['mosaku', 'furuido', 'watashiSendo', 'suizenjiNiwashi', 'kumamotoChest2', 'ichoSekihi', 'kumamotoOkami', 'kumamotoKodomo', 'idobataRoba']) {
       const npc = kumamoto.npcs.find((n) => n.id === id)!;
       expect(near(area, npc.x, npc.y), id).toBe(true);
     }
@@ -1788,7 +1791,7 @@ describe('寄り道の熊本', () => {
   it('からくりは水を戻す（kumamotoIdoFound）と消える。町の人の台詞は水が戻ると変わる', () => {
     expect(ido.npcs.find((n) => n.id === 'mizuKarakuri')?.hideFlag).toBe('kumamotoIdoFound');
     for (const id of ['kumamotoMonban2', 'ichoRojin', 'kumamotoKusuriuri', 'kumamotoInn', 'kumamotoTeahouse', 'kumamotoOkami', 'kumamotoKodomo', 'idobataMusume', 'idobataRoba', 'suizenjiNiwashi']) {
-      expect(kumamoto.npcs.find((n) => n.id === id)?.after?.flag, id).toBe('kumamotoIdoFound');
+      expect(everyone.find((n) => n.id === id)?.after?.flag, id).toBe('kumamotoIdoFound');
     }
   });
 });
