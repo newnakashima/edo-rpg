@@ -166,7 +166,8 @@ export class FieldMenu {
         this.refreshStatus();
         this.popToMain();
         this.openReorder(b);
-        this.setInfo(message);
+        // 結果に続けて、最初の一覧の案内も出す
+        this.setInfo(`${message}誰を動かす？`);
       }, (b) => b !== a);
       // 選んだ仲間（選べない）の次の行から始める
       second.select((a + 1) % getState().party.length);

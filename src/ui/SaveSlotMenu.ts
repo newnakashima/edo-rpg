@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { characterName } from '../data/characters';
 import { MAPS } from '../data/maps';
 import type { GameState } from '../systems/gameState';
-import { memberLevel } from '../systems/party';
+import { heroOf, memberLevel } from '../systems/party';
 import { listSlots, load, save, type KeyValueStorage, type SaveData, type SlotInfo } from '../systems/save';
 import type { Controls } from './input';
 import { Menu } from './widgets';
@@ -17,8 +17,7 @@ function describe(info: SlotInfo): string {
   if (info.status === 'empty') return '―― 空き ――';
   if (info.status === 'broken') return '（読めないデータ）';
   const s = info.data.state;
-  // 並び替えで先頭が主人公とは限らないので、主人公を探す
-  const hero = s.party.find((m) => m.id === 'hero') ?? s.party[0];
+  const hero = heroOf(s.party);
   const name = hero ? `${characterName(hero.id, s.gender)} Lv${memberLevel(hero)}` : '';
   return `${name}  ${MAPS[s.mapId]?.name ?? s.mapId}  ${formatPlayTime(s.playTimeSec)}`;
 }
