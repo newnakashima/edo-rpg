@@ -26,7 +26,7 @@ const buildings = Object.values(MAPS).filter((m) => buildingTown(m.id));
 
 describe('施設・民家以外の建物の屋内（テストプレイの指摘: あらゆる建物に入れるようにすべき）', () => {
   // 屋内を足した町（町を足したらここにも足す）
-  const TOWNS = ['shimizu', 'sunpu', 'nagoya', 'kyo', 'iga'];
+  const TOWNS = ['shimizu', 'sunpu', 'nagoya', 'kyo', 'iga', 'osaka'];
 
   it.each(TOWNS)('%s の戸（D）はすべて入れる（民家か、建物ごとの屋内）', (townId) => {
     const town = MAPS[townId]!;
@@ -112,8 +112,8 @@ describe('施設・民家以外の建物の屋内（テストプレイの指摘:
         }
       }
     }
-    // 清水湊・駿府・名古屋・京・伊賀上野の賭場・居酒屋・妓楼・親分の屋敷（町を足すと増える）
-    expect(checked).toBeGreaterThanOrEqual(20);
+    // 清水湊・駿府・名古屋・京・伊賀上野・大坂の賭場・居酒屋・妓楼・親分の屋敷（町を足すと増える）
+    expect(checked).toBeGreaterThanOrEqual(24);
   });
 
   it('伊賀上野の鍵屋の隠居は、通りではなく自分の家の中にいる（仇討ちのあとの台詞も家の中で聞ける）', () => {
@@ -126,5 +126,15 @@ describe('施設・民家以外の建物の屋内（テストプレイの指摘:
     const ids = MAPS.shimizuOyabun!.npcs.map((n) => n.id);
     expect(ids).toEqual(expect.arrayContaining(['tatsugoro', 'orin', 'shimizuOyabun']));
     expect(MAPS.shimizu!.npcs.some((n) => ['tatsugoro', 'orin', 'shimizuOyabun'].includes(n.id))).toBe(false);
+  });
+
+  it('大坂の榊兵庫は長屋の私塾の中で門弟と会い、加わると私塾から消える。米問屋の番頭は大黒屋の店の中にいる', () => {
+    const juku = MAPS.osakaJuku!;
+    const hyogo = juku.npcs.find((n) => n.id === 'hyogoJuku');
+    expect(hyogo?.event).toBe('hyogoMeet');
+    expect(hyogo?.hideFlag).toBe('hyogoJoined');
+    expect(juku.npcs.filter((n) => n.name.includes('門弟')).length).toBeGreaterThanOrEqual(2);
+    expect(MAPS.osakaDaikokuya!.npcs.some((n) => n.id === 'daikokuya')).toBe(true);
+    expect(MAPS.osaka!.npcs.some((n) => ['hyogoJuku', 'daikokuya', 'osakaShibaiChaya'].includes(n.id))).toBe(false);
   });
 });

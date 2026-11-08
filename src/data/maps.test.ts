@@ -966,7 +966,7 @@ describe('第 5 章の大坂', () => {
     expect(exitTo('komeKura').some((k) => before.has(k))).toBe(false);
     const after = reachable(osaka, start, { hyogoJoined: true }, true);
     expect(exitTo('komeKura').every((k) => after.has(k))).toBe(true);
-    const juku = osaka.npcs.find((n) => n.id === 'hyogoJuku')!;
+    const juku = MAPS.osakaJuku!.npcs.find((n) => n.id === 'hyogoJuku')!;
     expect(npcVisible(juku, { hyogoJoined: true })).toBe(false);
   });
 
@@ -996,8 +996,10 @@ describe('第 5 章の大坂', () => {
       osakaInn: '旅籠の主人「米が戻って、ようやく白い飯をお出しできますわ。……渡世人さんは泊められまへんけど、親分さんのお屋敷でもきっと白い飯が出まっせ」',
       osakaTeahouse: '茶屋の娘「おいでやす。米の粉が安うなって、お団子も元の大きさに戻りましたえ」',
     };
+    // 店の人は建物の中にいる（src/data/buildingsOsaka.ts）
+    const inside = Object.values(MAPS).filter((m) => buildingTown(m.id) === 'osaka').flatMap((m) => m.npcs);
     for (const [id, line] of Object.entries(want)) {
-      const npc = osaka.npcs.find((n) => n.id === id)!;
+      const npc = inside.find((n) => n.id === id)!;
       expect(npcLines(npc, { heardOsakaRumor: true }), id).not.toEqual([line]);
       expect(npcLines(npc, { heardOsakaRumor: true, chapter5Cleared: true }), id).toEqual([line]);
     }
