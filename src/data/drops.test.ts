@@ -7,9 +7,9 @@ import { COMMON_DROP_RATE, ENEMY_DROPS, RARE_DROP_RATE } from './drops';
 import { ENCOUNTERS, ENEMIES } from './enemies';
 import { EQUIPMENT, STARTING_EQUIPMENT } from './equipment';
 import { EVENTS } from './events';
-import { ITEMS, MAX_ITEM_COUNT, isKnownItem } from './items';
+import { ITEMS, MAX_ITEM_COUNT, isKnownItem, type ItemEffect } from './items';
 import { SHOPS } from './shops';
-import { SKILLS } from './skills';
+import { MAX_WARD_STEPS, SKILLS } from './skills';
 
 const sold = new Set(Object.values(SHOPS).flatMap((shop) => shop.goods));
 const rares = Object.values(ENEMY_DROPS).map((d) => d.rare);
@@ -67,10 +67,36 @@ describe('ドロップのデータ', () => {
     }
   });
 
-  it('レアの道具は同じ効き目の店の品より大きく効く（蝦蟇の油は清水湊の傷薬より、河童の秘薬は朝鮮人参より）', () => {
-    expect(ITEMS.gamaNoAbura?.effect).toEqual({ kind: 'healHp', amount: 100 });
-    expect(ITEMS.kappaHiyaku?.effect).toEqual({ kind: 'revive', rate: 1 });
+  it('レアの気付け・魔除けは店のどの品より大きく効き、回復の道具は店の最も効く品を超えない', () => {
+    const shopItems = [...sold].flatMap((id) => (ITEMS[id] ? [ITEMS[id]] : []));
+    const best = (pick: (e: ItemEffect) => number | undefined, list: typeof shopItems) => Math.max(...list.map((i) => pick(i.effect) ?? 0));
+    const revive = (e: ItemEffect) => (e.kind === 'revive' ? e.rate : undefined);
+    const ward = (e: ItemEffect) => (e.kind === 'ward' ? e.steps : undefined);
+    expect(revive(ITEMS.kappaHiyaku!.effect)).toBeGreaterThan(best(revive, shopItems));
+    expect(ward(ITEMS.hyakumeRosoku!.effect)).toBeGreaterThan(best(ward, shopItems));
+    expect(ward(ITEMS.hyakumeRosoku!.effect)).toBe(MAX_WARD_STEPS);
     expect(ITEMS.hyakumeRosoku?.battle).toBe(false);
+    const hp = (e: ItemEffect) => (e.kind === 'healHp' ? e.amount : e.kind === 'healBoth' ? e.hp : undefined);
+    const mp = (e: ItemEffect) => (e.kind === 'healMp' ? e.amount : e.kind === 'healBoth' ? e.mp : undefined);
+    for (const id of rares.filter((x) => ITEMS[x])) {
+      const e = ITEMS[id]!.effect;
+      if (hp(e)) expect(hp(e), id).toBeLessThanOrEqual(best(hp, shopItems));
+      if (mp(e)) expect(mp(e), id).toBeLessThanOrEqual(best(mp, shopItems));
+    }
+    // 序章の大蛙の蝦蟇の油は、清水湊の店の品（団子 35）より多く、駿府の安倍川餅（50）と同じ
+    expect(hp(ITEMS.gamaNoAbura!.effect)).toBe(50);
+  });
+
+  it('江戸城の敵のレアの武器は、江戸城の葛籠の最後の武器より能力値の合計が低い（からくり薙刀は攻撃だけなら如来錫杖を上回る）', () => {
+    const last: Record<string, string> = { hero: 'aoiNagawaki', kasumi: 'oniwabanKodachi', gendo: 'nyoraiShakujo', orin: 'aoiZutsu' };
+    const edojo = new Set(ENCOUNTERS.edojo!.groups.flatMap((g) => g.members));
+    for (const id of edojo) {
+      const w = EQUIPMENT[ENEMY_DROPS[id]!.rare];
+      if (w?.slot !== 'weapon') continue;
+      const final = EQUIPMENT[last[w.wearers[0]!]!]!;
+      const total = (b: Partial<Record<string, number>>) => Object.values(b).reduce((a: number, v) => a + (v ?? 0), 0);
+      expect(total(w.bonus), w.id).toBeLessThan(total(final.bonus));
+    }
   });
 
   it('確率は通常 1/8・レア 1/64。逃げる高報酬の敵だけ高い', () => {
