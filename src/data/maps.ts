@@ -15,6 +15,7 @@ import { KYO_BUILDINGS } from './buildingsKyo';
 import { IGA_BUILDINGS } from './buildingsIga';
 import { OSAKA_BUILDINGS } from './buildingsOsaka';
 import { HIROSHIMA_BUILDINGS } from './buildingsHiroshima';
+import { NAGASAKI_BUILDINGS } from './buildingsNagasaki';
 
 /** タイルの種類。画像は public/assets/tiles/<種類>.png（PixelLab で生成。記録は public/assets/README.md）。 */
 export const TILE_KINDS = ['ground', 'grass', 'road', 'tree', 'water', 'wall', 'roof', 'door', 'floor', 'rock', 'plain', 'town', 'gate'] as const;
@@ -2522,100 +2523,6 @@ MAPS.nagasaki = {
     'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
   ],
   npcs: [
-    {
-      id: 'bugyoYakunin',
-      name: '奉行所の役人',
-      x: 16,
-      y: 4,
-      color: 0x4a4a5a,
-      sprite: 'npc_yakunin',
-      lines: [
-        '役人「ここは長崎奉行所である。……出島から南蛮の書が消えた件か。通詞の者が詳しい。出島へ行け」',
-      ],
-      after: { flag: 'shimabaraOpen', lines: ['役人「島原の古城だと？ あそこは乱のあと、人の住まぬ場所だ。……気をつけて行かれよ」'] },
-    },
-    {
-      id: 'nagasakiTemple',
-      name: '寺の僧',
-      x: 15,
-      y: 9,
-      color: 0xb08a3e,
-      sprite: 'npc_so',
-      lines: ['僧「唐寺へようこそ。倒れた者があれば、お祓いをして進ぜよう」'],
-      action: 'temple',
-    },
-    {
-      id: 'nagasakiHikyaku',
-      name: '飛脚',
-      x: 20,
-      y: 9,
-      color: 0x3e7cb0,
-      sprite: 'npc_hikyaku',
-      lines: ['飛脚「へい、まいど！ 長崎の飛脚問屋でございやす」'],
-      action: 'hikyaku',
-    },
-    {
-      id: 'nagasakiInn',
-      name: '旅籠の主人',
-      x: 27,
-      y: 9,
-      color: 0x5a6b8c,
-      sprite: 'npc_innkeeper',
-      lines: ['旅籠の主人「よう来なさった。ばってん、渡世人さんはお泊めできんとです。親分さんの屋敷を訪ねなっせ」'],
-      action: 'inn',
-    },
-    {
-      id: 'ranpoI',
-      name: '蘭方医',
-      x: 27,
-      y: 4,
-      color: 0x8a8a7a,
-      sprite: 'npc_merchant',
-      lines: [
-        '蘭方医「若林蘭斎どのを探しておるのか。わしと同じく出島で学んだ男だ。南蛮の機械学に、取り憑かれたように打ち込んでおった」',
-        '蘭方医「一年ほど前、江戸のお偉い方から金が出るようになったと喜んでおったが……それきり姿を見ぬ」',
-      ],
-      after: { flag: 'nanbanOzutsuDefeated', lines: ['蘭方医「蘭斎どのが……そうか。学問に罪はない。使う者の心の問題だ」'] },
-    },
-    {
-      id: 'nagasakiTeahouse',
-      name: '茶屋の娘',
-      x: 15,
-      y: 18,
-      color: 0xc76b8f,
-      sprite: 'npc_musume',
-      lines: [
-        '茶屋の娘「いらっしゃいまっせ。長崎の名物はカステラですばい。うちでも売っとります」',
-        '茶屋の娘「東の山の南蛮寺跡には、夜な夜な鉄の鎧の兵が歩きよるって噂です。奉行所が石段をふさいでしまって」',
-        '茶屋の娘「お茶、どうぞ」',
-      ],
-      after: { flag: 'heardNanbanji', lines: ['茶屋の娘「いらっしゃいまっせ。お茶、どうぞ」'] },
-      setsFlag: 'heardNanbanji',
-      action: 'teahouse',
-      shop: 'nagasakiChaya',
-    },
-    {
-      id: 'nagasakiYorozu',
-      name: 'よろず屋',
-      x: 20,
-      y: 18,
-      color: 0x6b8c5a,
-      sprite: 'npc_merchant',
-      lines: ['よろず屋「いらっしゃい。南蛮渡りの甘いものなら、茶屋で売っとりますばい。うちは薬と旅の支度ですたい」'],
-      action: 'shop',
-      shop: 'nagasakiYorozu',
-    },
-    {
-      id: 'nagasakiKaji',
-      name: '刀鍛冶',
-      x: 27,
-      y: 18,
-      color: 0x5a5a6b,
-      sprite: 'npc_smith',
-      lines: ['刀鍛冶「肥前の刀に、オランダ渡りの銃に胴。長崎でしか手に入らんものばかりたい」'],
-      action: 'shop',
-      shop: 'nagasakiKaji',
-    },
     {
       id: 'dejimaMonban',
       name: '出島の門番',
@@ -5522,6 +5429,7 @@ addBuildings(MAPS, 'kyo', KYO_BUILDINGS);
 addBuildings(MAPS, 'iga', IGA_BUILDINGS);
 addBuildings(MAPS, 'osaka', OSAKA_BUILDINGS);
 addBuildings(MAPS, 'hiroshima', HIROSHIMA_BUILDINGS);
+addBuildings(MAPS, 'nagasaki', NAGASAKI_BUILDINGS);
 /** その戸口が屋内へ入る入口か（屋内のある施設の人は、屋内の建物のファイルで屋内に置くので、店先には立たせない）。 */
 const hasInterior = (town: string, door: { x: number; y: number }) => MAPS[town]!.exits.some((e) => e.x === door.x && e.y === door.y);
 // 湯屋・賭場・居酒屋・妓楼（刀鍛冶かよろず屋のあるすべての町。戸口と台詞は src/data/townFacilities.ts）
