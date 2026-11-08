@@ -1,6 +1,6 @@
 // docs/balance.md の「雑魚敵の個性」の勝率の表を測る。
 // 味方は全員、生きている先頭の敵を通常攻撃するだけ（術・回復・道具を使わないので、実際より厳しい）。
-// 表を出すには `SIM_REPORT=1 npx vitest run src/systems/enemySim.test.ts`（1,000 回ずつ）。ふだんは 200 回ずつで、+ 2 の勝率が 85% 以上かだけを確かめる。
+// 表を出すには `SIM_REPORT=1 npx vitest run src/systems/enemySim.test.ts --silent=false`（1,000 回ずつ）。ふだんは 200 回ずつで、+ 2 の勝率が 85% 以上かだけを確かめる。
 import { describe, expect, it } from 'vitest';
 import { createBattle, isAlive, resolveTurn, type Command } from './battle';
 import type { CharacterId } from '../data/characters';
