@@ -20,6 +20,7 @@ import {
 import { MAPS, npcVisible, tileAt } from './maps';
 import { OYABUN, bakutoIntroduceEventId, bakutoIntroducedFlag, bakutoMeetEventId, bakutoSentFlag } from './oyabun';
 import { TOWN_FACILITY_DOORS } from './townFacilities';
+import { townOf } from './buildings';
 
 const start = { mapId: 'shimizu', x: 1, y: 1 };
 
@@ -51,8 +52,9 @@ describe('仁義ポイントを得る頼まれごと', () => {
         const id = jingiRequestId(town, kind);
         expect(EVENTS[id]?.id, id).toBe(id);
         expect(pendingJingiRequest(town, kind, {})).toEqual({ id, kind, label: JINGI_REQUEST_LABELS[kind] });
-        // 施設の人がその町にいる
-        expect(MAPS[town]!.npcs.some((n) => n.action === kind), id).toBe(true);
+        // 施設の人がその町（か、その町の建物の中）にいる
+        const npcs = Object.values(MAPS).filter((m) => townOf(m.id) === town).flatMap((m) => m.npcs);
+        expect(npcs.some((n) => n.action === kind), id).toBe(true);
       }
     }
   });
@@ -255,7 +257,7 @@ describe('町の旅籠', () => {
     const inns = Object.values(MAPS).flatMap((m) => m.npcs.filter((n) => n.action === 'inn').map((n) => ({ map: m.id, n })));
     expect(inns.length).toBeGreaterThan(0);
     for (const { map, n } of inns) {
-      expect(TOWN_FACILITY_DOORS[map], map).toBeDefined();
+      expect(TOWN_FACILITY_DOORS[townOf(map)], map).toBeDefined();
       for (const line of [...(n.lines ?? []), ...(n.after?.lines ?? []), ...(n.later?.lines ?? [])]) {
         expect(line, map).toMatch(/親分/);
         // 泊められない・お断り、とはっきり言う

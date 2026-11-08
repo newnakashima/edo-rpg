@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { pngSize } from '../systems/testUtils';
 import { MAPS } from './maps';
-import { mapSigns, SIGN_KINDS, signKind, signPosition, type SignKind } from './signs';
+import { doorSignPosition, mapSigns, SIGN_KINDS, signKind, signPosition, type SignKind } from './signs';
+import { buildingTown } from './buildings';
 
 // 看板の字は描いたスクリプト（scripts/draw_signs.py の SIGNS）が正
 const script = Object.values(import.meta.glob<string>('../../scripts/draw_signs.py', { eager: true, query: '?raw', import: 'default' }))[0]!;
@@ -9,12 +10,17 @@ const GLYPHS: Record<string, string> = Object.fromEntries([...script.matchAll(/^
 
 const allSigns = () => Object.values(MAPS).flatMap((map) => mapSigns(map).map((sign) => ({ map, sign })));
 
-// 施設の人（action のある人）
-const facilities = Object.values(MAPS).flatMap((map) => map.npcs.filter((n) => n.action).map((npc) => ({ map, npc })));
+// 施設の人（action のある人）。建物の中（src/data/buildings.ts）の施設の人は、看板を町の戸口に掛けるので別に確かめる
+const facilities = Object.values(MAPS)
+  .filter((map) => !buildingTown(map.id))
+  .flatMap((map) => map.npcs.filter((n) => n.action).map((npc) => ({ map, npc })));
+const indoorFacilities = Object.values(MAPS)
+  .filter((map) => buildingTown(map.id))
+  .flatMap((map) => map.npcs.filter((n) => signKind(n)).map((npc) => ({ map, npc })));
 
 describe('施設の看板', () => {
   it('看板を掛ける施設の人はどれも看板の種類が決まっている', () => {
-    expect(facilities.length).toBeGreaterThan(90);
+    expect(facilities.length + indoorFacilities.length).toBeGreaterThan(90);
     for (const { map, npc } of facilities.filter((f) => f.npc.sign !== false)) expect(signKind(npc), `${map.id} ${npc.id}`).not.toBeNull();
   });
 
@@ -26,6 +32,22 @@ describe('施設の看板', () => {
     // 掛けない施設は、戸のない施設と城の中の人、ワールドマップのもぐりの宿（届けの出ていない宿。src/data/moguriYado.ts）だけ
     const none = facilities.filter((f) => f.npc.sign === false && f.npc.action !== 'moguriInn').map((f) => f.npc.id);
     expect(none.sort()).toEqual(['kakibune', 'kanazawaHikyaku', 'kintaRoka', 'kokichiJo', 'sengenKannushi']);
+  });
+
+  it('建物の中の施設は、その建物の町の戸口（入口）の隣の壁に、施設の種類の看板を掛ける', () => {
+    expect(indoorFacilities.length).toBeGreaterThan(0);
+    for (const { map, npc } of indoorFacilities) {
+      const town = MAPS[buildingTown(map.id)!]!;
+      const entrance = town.exits.find((e) => e.to === map.id)!;
+      const label = `${map.id} ${npc.id}`;
+      expect(entrance.sign, label).toBe(signKind(npc));
+      const pos = doorSignPosition(town, entrance)!;
+      expect(town.rows[pos.y]?.[pos.x], label).toBe('W');
+      expect(Math.abs(pos.x - entrance.x), label).toBe(1);
+      expect(mapSigns(town), label).toContainEqual({ ...pos, kind: signKind(npc) });
+      // 建物の中には看板を掛けない（壁の戸口がない）
+      expect(signPosition(map, npc), label).toBeNull();
+    }
   });
 
   it('看板は壁のマスに掛け、その施設の人の近く（上 1〜3 マス、左右 3 マス以内）にある', () => {
@@ -79,8 +101,8 @@ describe('施設の看板', () => {
   });
 
   it('よろず屋は「万」、刀鍛冶は「刀」、旅籠は「宿」、茶屋は「茶」の看板', () => {
-    const shimizu = MAPS.shimizu!;
-    const kindOf = (id: string) => signKind(shimizu.npcs.find((n) => n.id === id)!) as SignKind;
+    const npcs = Object.values(MAPS).flatMap((m) => m.npcs);
+    const kindOf = (id: string) => signKind(npcs.find((n) => n.id === id)!) as SignKind;
     expect(GLYPHS[kindOf('yorozuya')]).toBe('万');
     expect(GLYPHS[kindOf('kaji')]).toBe('刀');
     expect(GLYPHS[kindOf('innkeeper')]).toBe('宿');

@@ -1,22 +1,30 @@
 import { describe, expect, it } from 'vitest';
 import { MAPS, TILES } from '../data/maps';
+import { townOf } from '../data/buildings';
 import { FIRE_RANGE, fireAmong, isFireSource, nearFire } from './fire';
 
-const teahouse = MAPS.shimizu!.npcs.find((n) => n.action === 'teahouse')!;
+/** 清水湊（と、その建物の中）で、その施設の人と、その人のいるマップ。 */
+function shimizuNpc(action: string) {
+  const map = Object.values(MAPS).find((m) => townOf(m.id) === 'shimizu' && m.npcs.some((n) => n.action === action))!;
+  return { mapId: map.id, npc: map.npcs.find((n) => n.action === action)! };
+}
+const teahouse = shimizuNpc('teahouse');
 const at = (mapId: string, x: number, y: number, flags: Record<string, boolean> = {}) => ({ mapId, x, y, flags });
 
 describe('火のある場所', () => {
   it('茶屋・旅籠（と居酒屋）の人と焚き火から FIRE_RANGE のマス以内（斜めも）が火のそば', () => {
-    expect(nearFire(at('shimizu', teahouse.x + FIRE_RANGE, teahouse.y + FIRE_RANGE))).toBe(true);
-    expect(nearFire(at('shimizu', teahouse.x, teahouse.y + FIRE_RANGE + 1))).toBe(false);
-    const inn = MAPS.shimizu!.npcs.find((n) => n.action === 'inn')!;
-    expect(nearFire(at('shimizu', inn.x - FIRE_RANGE, inn.y))).toBe(true);
+    const { mapId, npc } = teahouse;
+    expect(nearFire(at(mapId, npc.x + FIRE_RANGE, npc.y + FIRE_RANGE))).toBe(true);
+    // 茶屋の娘から離れた所（竈からも離れた、縁台の向こう）は火のそばでない
+    expect(fireAmong([npc], npc.x, npc.y + FIRE_RANGE + 1, {})).toBe(false);
+    const inn = shimizuNpc('inn');
+    expect(nearFire(at(inn.mapId, inn.npc.x - FIRE_RANGE, inn.npc.y))).toBe(true);
   });
 
   it('居酒屋の人（燗をつける火）も火の元', () => {
-    const izakaya = MAPS.shimizu!.npcs.find((n) => n.action === 'izakaya')!;
-    expect(isFireSource(izakaya)).toBe(true);
-    expect(nearFire(at('shimizu', izakaya.x + FIRE_RANGE, izakaya.y))).toBe(true);
+    const { mapId, npc } = shimizuNpc('izakaya');
+    expect(isFireSource(npc)).toBe(true);
+    expect(nearFire(at(mapId, npc.x + FIRE_RANGE, npc.y))).toBe(true);
   });
 
   it('ワールドマップのもぐりの宿の小屋（囲炉裏）も火の元', () => {
@@ -27,8 +35,7 @@ describe('火のある場所', () => {
 
   it('よろず屋・刀鍛冶・湯屋・賭場・妓楼の人は火の元でない。知らないマップは火がない', () => {
     for (const action of ['shop', 'yuya', 'tobaku', 'gyoro']) {
-      const npc = MAPS.shimizu!.npcs.find((n) => n.action === action)!;
-      expect(isFireSource(npc), action).toBe(false);
+      expect(isFireSource(shimizuNpc(action).npc), action).toBe(false);
     }
     expect(nearFire(at('nowhere', 0, 0))).toBe(false);
   });

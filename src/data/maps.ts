@@ -6,6 +6,9 @@ import { MOGURI_YADO, moguriYadoNpc } from './moguriYado';
 import { OYABUN, bakutoNpc, oyabunNpc } from './oyabun';
 import { TOWN_FACILITY_DOORS, townFacilityNpcs } from './townFacilities';
 import { MINKA_DOORS, minkaEntrance, minkaMap } from './minka';
+import type { SignKind } from './signs';
+import { addBuildings } from './buildings';
+import { SHIMIZU_BUILDINGS } from './buildingsShimizu';
 
 /** タイルの種類。画像は public/assets/tiles/<種類>.png（PixelLab で生成。記録は public/assets/README.md）。 */
 export const TILE_KINDS = ['ground', 'grass', 'road', 'tree', 'water', 'wall', 'roof', 'door', 'floor', 'rock', 'plain', 'town', 'gate'] as const;
@@ -188,6 +191,8 @@ export interface ExitDef {
   to: string;
   toX: number;
   toY: number;
+  /** 屋内に施設のある建物の戸口なら、その施設の看板（戸の隣の壁に掛ける。src/data/buildings.ts）。 */
+  sign?: SignKind;
 }
 
 /**
@@ -274,116 +279,17 @@ export const MAPS: Record<string, MapDef> = {
       'T~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~==~~~~~~~~T',
       'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
     ],
+    // 店・寺・旅籠・飛脚屋・湯屋などの施設の人と、辰五郎・お凛は建物の中にいる（src/data/buildingsShimizu.ts）
     npcs: [
-      {
-        id: 'tatsugoro',
-        name: '辰五郎',
-        x: 38,
-        y: 7,
-        color: 0x8a3b2e,
-        sprite: 'tatsugoro',
-        event: 'tatsugoro',
-        // 第 3 章の終わりに、鷲尾の配下の刺客に殺される（弔いの場面は第 4 章の始まり。shimizuEnter）
-        hideFlag: 'chapter3Cleared',
-      },
-      {
-        id: 'innkeeper',
-        name: '旅籠の主人',
-        x: 35,
-        y: 15,
-        color: 0x5a6b8c,
-        sprite: 'npc_innkeeper',
-        lines: ['旅籠の主人「おや、渡世人のお方ですかい。うちは堅気のお客しかお泊めできねえ決まりで……。草鞋を脱ぐなら、親分さんの屋敷を訪ねなせえ」'],
-        action: 'inn',
-      },
-      {
-        id: 'teahouse',
-        name: '茶屋の娘',
-        x: 4,
-        y: 15,
-        color: 0xc76b8f,
-        sprite: 'npc_musume',
-        lines: [
-          '茶屋の娘「いらっしゃいまし。……お客さん、裏山の話を聞きに来たの？」',
-          '茶屋の娘「このごろ夜になると、裏山のずっと上のほうで青白い狐火が揺れるんです。いなくなった人は、みんなそれを見たって」',
-          '茶屋の娘「お団子はいかが？」',
-        ],
-        after: { flag: 'heardKitsunebi', lines: ['茶屋の娘「いらっしゃいまし。お団子はいかが？」'] },
-        setsFlag: 'heardKitsunebi',
-        action: 'teahouse',
-        shop: 'shimizuChaya',
-      },
-      {
-        id: 'yorozuya',
-        name: 'よろず屋',
-        x: 11,
-        y: 15,
-        color: 0x6b8c5a,
-        sprite: 'npc_merchant',
-        lines: ['よろず屋「傷薬に毒消し、なんでもそろってますよ」'],
-        action: 'shop',
-        shop: 'shimizuYorozu',
-      },
-      {
-        id: 'kaji',
-        name: '刀鍛冶',
-        x: 18,
-        y: 15,
-        color: 0x5a5a6b,
-        sprite: 'npc_smith',
-        lines: ['刀鍛冶「旅の御仁、得物の手入れは怠りなさんな」'],
-        action: 'shop',
-        shop: 'shimizuKaji',
-      },
-      {
-        id: 'temple',
-        // 看板: 寺の戸から 3 マス下に立つ
-        sign: { x: 8, y: 4 },
-        name: '寺の住職',
-        x: 9,
-        y: 7,
-        color: 0xb08a3e,
-        sprite: 'npc_so',
-        lines: [
-          '住職「消えた者たちのことか。……江戸では、天狗にさらわれて山で暮らし、何年も経って帰ってきた少年の聞き書きが評判になっておる」',
-          '住職「神隠しに遭うた者も、どこかで生きておるやもしれぬ。望みを捨てなさるな」',
-          '住職「迷える者よ、倒れた者があればお祓いをして進ぜよう」',
-        ],
-        after: { flag: 'heardTengu', lines: ['住職「迷える者よ、倒れた者があればお祓いをして進ぜよう」'] },
-        setsFlag: 'heardTengu',
-        action: 'temple',
-      },
-      {
-        id: 'hikyaku',
-        name: '飛脚',
-        x: 43,
-        y: 15,
-        color: 0x3e7cb0,
-        sprite: 'npc_hikyaku',
-        lines: ['飛脚「へい、まいど！ 記録の言付けも、荷物の預かりも承りやす」'],
-        action: 'hikyaku',
-      },
       {
         id: 'nagaya',
         name: '長屋のおかみ',
-        x: 6,
+        x: 5,
         y: 21,
         color: 0x9c8a5a,
         sprite: 'npc_okami',
         lines: ['長屋のおかみ「隣の与吉さんも、狐火を見たって言った晩にいなくなったんだよ。おお、こわい」'],
         after: { flag: 'yakoDefeated', lines: ['長屋のおかみ「裏山の狐を退治してくれたんだって？ 与吉さんも、どこかで生きてりゃいいんだけどねえ」'] },
-      },
-      {
-        id: 'orin',
-        name: 'お凛',
-        x: 41,
-        y: 7,
-        color: 0xd04a4a,
-        sprite: 'orin',
-        lines: ['お凛「おとっつぁんもおとっつぁんだよ。よそ者なんかに頼るなんて」'],
-        after: { flag: 'yakoDefeated', lines: ['お凛「……狐を退治したんだってね。礼は言っとくよ。けど、まだ認めたわけじゃないからね」'] },
-        // 第 4 章の始まり（辰五郎の弔い）で仲間になる
-        hideFlag: 'orinJoined',
       },
       {
         id: 'shimizuTeraotoko',
@@ -6062,10 +5968,16 @@ MAPS.matsuNoRoka = {
   ],
 };
 
+// 施設・民家以外の建物の屋内（建物ごとに固有の間取り。町ごとのファイルに書く。src/data/buildings.ts）
+addBuildings(MAPS, 'shimizu', SHIMIZU_BUILDINGS);
+/** その戸口が屋内へ入る入口か（屋内のある施設の人は、屋内の建物のファイルで屋内に置くので、店先には立たせない）。 */
+const hasInterior = (town: string, door: { x: number; y: number }) => MAPS[town]!.exits.some((e) => e.x === door.x && e.y === door.y);
 // 湯屋・賭場・居酒屋・妓楼（刀鍛冶かよろず屋のあるすべての町。戸口と台詞は src/data/townFacilities.ts）
-for (const town of Object.keys(TOWN_FACILITY_DOORS)) MAPS[town]!.npcs.push(...townFacilityNpcs(town));
+for (const town of Object.keys(TOWN_FACILITY_DOORS)) {
+  MAPS[town]!.npcs.push(...townFacilityNpcs(town).filter((n) => !hasInterior(town, { x: n.x, y: n.y - 1 })));
+}
 // 親分の屋敷の若い衆（同じ町に 1 軒ずつ。戸口と一家の名は src/data/oyabun.ts）
-for (const town of Object.keys(OYABUN)) MAPS[town]!.npcs.push(oyabunNpc(town)!);
+for (const town of Object.keys(OYABUN)) if (!hasInterior(town, OYABUN[town]!.door)) MAPS[town]!.npcs.push(oyabunNpc(town)!);
 // 町をぶらついている文無しの博徒（親分に紹介すると仁義ポイント。立つ場所は src/data/oyabun.ts、イベントは src/data/jingiRequests.ts）
 for (const town of Object.keys(OYABUN)) MAPS[town]!.npcs.push(bakutoNpc(town)!);
 // 非合法な旅籠（もぐりの宿）。ワールドマップの街道沿いに点在する小屋（場所と値段のレベルは src/data/moguriYado.ts）

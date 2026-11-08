@@ -85,15 +85,15 @@ export function oyabunWelcome(def: OyabunDef, flags: Record<string, boolean>): s
   return def.welcomeAfter && flags[def.welcomeAfter.flag] ? def.welcomeAfter.line : def.welcome;
 }
 
-/** その町の親分の屋敷の若い衆（屋敷のない町では null）。 */
-export function oyabunNpc(town: string): NpcDef | null {
+/** その町の親分の屋敷の若い衆（屋敷のない町では null）。at を省くと戸口の真下に立つ。屋敷の屋内（src/data/buildings.ts）では、屋内の立つ場所を at に渡す。 */
+export function oyabunNpc(town: string, at?: { x: number; y: number }): NpcDef | null {
   const def = OYABUN[town];
   if (!def) return null;
   return {
     id: `${town}Oyabun`,
     name: `${def.family}の若い衆`,
-    x: def.door.x,
-    y: def.door.y + 1,
+    x: at?.x ?? def.door.x,
+    y: at?.y ?? def.door.y + 1,
     color: 0x4a3a5a,
     sprite: 'npc_ninsoku',
     lines: [`若い衆「ここは${def.family}の屋敷でござんす。旅の渡世人さんなら、親分が一宿一飯の世話をいたしやす」`],

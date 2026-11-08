@@ -33,6 +33,7 @@ import { browserStorage } from '../systems/save';
 import { getState, holdEventWhileAway, setState, shouldRunEnterEvent, takePendingEvent } from '../state';
 import { EVENTS } from '../data/events';
 import { mapSigns, signKey } from '../data/signs';
+import { townOf } from '../data/buildings';
 import { moguriYadoById } from '../data/moguriYado';
 import { facilityMenu, pendingBakutoIntro, pendingJingiRequest, type MenuRequest } from '../data/jingiRequests';
 import { OYABUN, oyabunWelcome } from '../data/oyabun';
@@ -488,15 +489,20 @@ export class FieldScene extends Phaser.Scene {
       if (npc.action === 'izakaya') {
         this.openPaidRest(`一杯やる（${izakayaPrice(this.map.areaLevel)} 文）`, (s) => drinkAtIzakaya(s, this.map.areaLevel), [
           '熱燗で、気分がすっきりした。気力が回復した。',
-        ], ['亭主「お代が足りねえんじゃ、出せやせんぜ」'], pendingJingiRequest(this.map.id, npc.action, getState().flags));
+        ], ['亭主「お代が足りねえんじゃ、出せやせんぜ」'], pendingJingiRequest(this.townId, npc.action, getState().flags));
       }
       if (npc.action === 'gyoro') {
         this.openPaidRest(`座敷に上がる（${gyoroPrice(this.map.areaLevel)} 文）`, (s) => visitGyoro(s, this.map.areaLevel), [
           '三味線と唄でもてなされ、心も体も晴れ晴れとした。体力と気力が回復した。',
-        ], ['女将「あら、お足りないようで。またのお越しを」'], pendingJingiRequest(this.map.id, npc.action, getState().flags));
+        ], ['女将「あら、お足りないようで。またのお越しを」'], pendingJingiRequest(this.townId, npc.action, getState().flags));
       }
-      if (npc.action === 'tobaku') this.openTobaku(pendingJingiRequest(this.map.id, npc.action, getState().flags));
+      if (npc.action === 'tobaku') this.openTobaku(pendingJingiRequest(this.townId, npc.action, getState().flags));
     });
+  }
+
+  /** 今いる町の ID（建物の屋内なら、その建物のある町。施設の頼みや親分の屋敷を町ごとに引くのに使う）。 */
+  private get townId(): string {
+    return townOf(this.map.id);
   }
 
   private pushOverlay(o: Overlay): void {
@@ -516,7 +522,7 @@ export class FieldScene extends Phaser.Scene {
    * 名が通っていれば親分の贈り物（src/data/oyabunGifts.ts の pendingOyabunGift）も出す。
    */
   private openOyabun(): void {
-    const def = OYABUN[this.map.id];
+    const def = OYABUN[this.townId];
     if (!def) return;
     const cost = oyabunStayCost(this.map.areaLevel);
     const items = facilityMenu(
@@ -524,7 +530,7 @@ export class FieldScene extends Phaser.Scene {
         { label: `泊めてもらう（仁義 ${cost}）`, value: 'stay' as const },
         { label: '記録する', value: 'save' as const },
       ],
-      [pendingOyabunRequest(this.map.id, getState().flags), pendingBakutoIntro(this.map.id, getState().flags), pendingOyabunGift(this.map.id, getState())],
+      [pendingOyabunRequest(this.townId, getState().flags), pendingBakutoIntro(this.townId, getState().flags), pendingOyabunGift(this.townId, getState())],
     );
     const menu: Menu = new Menu(
       this,
