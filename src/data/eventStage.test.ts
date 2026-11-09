@@ -3,7 +3,7 @@
 // 主人公の位置は、決まったマスに乗るトリガーと warp の後でだけ分かる。マップに入ったとき・話しかけたときのイベントでは、
 // 主人公の歩く道と、主人公の隣に出た人（actor の x・y を省いた人）の道は見ない（画面は通れないマスの手前で止める）。
 // 主人公の位置が分かるときは、ほかの人を主人公のマスに出したり、主人公のマスを通らせたりしないことも見る（人どうしはぶつからない）。
-// 話しかけたときのイベントでは、主人公は話す相手の隣（通れて、いつもいる人のいないマス）のどれかに立っているので、
+// 話しかけたときのイベントでは、主人公は話す相手の隣（通れて、いつもいる人のいない、出口でないマス）のどれかに立っているので、
 // ほかの人をそのどのマスにも出したり通らせたりしないことを見る（主人公が歩いたら、その先は見ない。行き先が決まっていればそこを主人公の位置にする）。
 import { describe, expect, it } from 'vitest';
 import type { EventStep } from './eventTypes';
@@ -32,11 +32,19 @@ interface Start {
   heroSpots?: { x: number; y: number }[];
 }
 
-/** 話す相手の隣で、主人公が立てるマス（通れて、いつもいる人〈showFlag も hideFlag もない人〉のいないマス）。 */
+/**
+ * 話す相手の隣で、主人公が立てるマス（通れて、いつもいる人〈showFlag も hideFlag もない人〉のいないマス）。
+ * 出口のマスは除く（乗るとすぐ別のマップへ移るので、そこに立って話しかけることはない。江戸の大手門の門番の北の橋）。
+ */
 function spotsAround(map: MapDef, x: number, y: number): { x: number; y: number }[] {
   return Object.values(DELTA)
     .map(([dx, dy]) => ({ x: x + dx, y: y + dy }))
-    .filter((p) => canStep(map, p.x, p.y) && !map.npcs.some((n) => n.x === p.x && n.y === p.y && !n.showFlag && !n.hideFlag));
+    .filter(
+      (p) =>
+        canStep(map, p.x, p.y) &&
+        !map.npcs.some((n) => n.x === p.x && n.y === p.y && !n.showFlag && !n.hideFlag) &&
+        !map.exits.some((e) => e.x === p.x && e.y === p.y),
+    );
 }
 
 function startsOf(eventId: string): Start[] {
