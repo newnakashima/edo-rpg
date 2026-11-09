@@ -594,6 +594,8 @@ const IGA_ARRIVE: EventStep[] = [
  * 東の入口（51, 15。全滅時の戻り先は 49, 13）のそばで、空の米びつを抱えた町人が嘆いて西へ帰り、霞は東の街道へ戻っていく。
  */
 const OSAKA_ARRIVE: EventStep[] = [
+  // 町のほう（西）を向く。仲間は主人公の上か下に出るので、霞が東へ戻る道（横、縦の順）が主人公のマスを通らない
+  face('hero', 'left'),
   actor('osakaKomeOkami', 'npc_okami', 47, 16, 'right'),
   actor('osakaKomeNinsoku', 'npc_ninsoku', 46, 16, 'right'),
   {
@@ -612,7 +614,7 @@ const OSAKA_ARRIVE: EventStep[] = [
   {
     type: 'say',
     lines: [
-      '霞「天下の台所が、米びつの底をさらってるなんてね……。権六は大坂へ向かう手はずだった。米の買い占めにも、鷲尾の手が回ってるんだろう」',
+      '霞「天下の台所が、米びつの底をさらってるなんてね……。権六は大坂へ向かう手はずだった。米の買い占めにも、鷲尾の手が回ってるんだろうね」',
       '霞「あたしは一度、江戸の上役に知らせに行く。鷲尾が老中の座で何をしてるか、上の方にも分かってもらわなきゃならない」',
     ],
   },
@@ -640,6 +642,8 @@ const OSAKA_ARRIVE: EventStep[] = [
  * 米蔵から出た北岸（26, 4）で始まる（百俵からくりの場面がここへ移す）。門弟たちが堂島川の橋の南から押し寄せ、兵庫が橋の上で止める。
  */
 const OSAKA_CHAPTER_END: EventStep[] = [
+  // 橋（南）を向く。仲間は主人公の左右に出るので、蔵の戸（26, 3）や、飛脚の駆けてくる橋の道（x = 26）に重ならない
+  face('hero', 'down'),
   // 夜明けとともに、町のあちこちで鬨の声が上がる
   { type: 'say', lines: ['ワアアアッ……！'] },
   actor('hyogo', 'hyogo', 27, 4, 'down'),
@@ -693,9 +697,10 @@ const OSAKA_CHAPTER_END: EventStep[] = [
   { type: 'say', lines: ['玄道〈悲〉「……世の中の理不尽を、一人で背負って行きおった。わしら坊主より、よほど仏に近い」'] },
   // 入れ違いに、飛脚が橋を渡って駆けてくる
   actor('osakaHikyaku', 'npc_hikyaku', 26, 13, 'up'),
-  walk('osakaHikyaku', 'uuuuuuuu'),
+  // 主人公の 2 マス手前（26, 6）で止まる
+  walk('osakaHikyaku', 'uuuuuuu'),
   { type: 'say', lines: ['飛脚「旅の衆！ 霞というお人から、文をお預かりしてまいりやした！」'] },
-  walk('osakaHikyaku', 'dddddddd'),
+  walk('osakaHikyaku', 'ddddddd'),
   vanish('osakaHikyaku'),
   {
     type: 'say',

@@ -547,6 +547,8 @@ describe('第 4 章の流れ', () => {
 });
 
 describe('第 5 章の流れ', () => {
+  // 見送り: 「台詞を言う人（霞・玄道・お凛・兵庫など）が、その前に画面に出ていて消えていない」を、分岐ごとに機械的に確かめるテストはまだない。
+  // 話者名と画面の人の ID の対応表が要るので、全章の書き換えが終わったあとに eventStage.test.ts へ足す（speakerOf で話者を取り、actor・vanish をたどる）
   const base = newGame('m', MAPS.world!.towns!.find((t) => t.name === '大坂')!.to!);
   const party = [base.party[0]!, createMember('kasumi', 17), createMember('gendo', 17), createMember('orin', 17)];
   const ch4 = { ...base, party, flags: { intro: true, chapter3Cleared: true, orinJoined: true, chapter4Cleared: true } };
@@ -647,6 +649,18 @@ describe('第 5 章の流れ', () => {
     const pages = list.flatMap((q) => (q.kind === 'say' ? q.pages : [])).join('');
     expect(pages).toContain('門弟「');
     expect(pages).toContain('飛脚「');
+    // 主人公は橋のほう（南）を向くので、仲間は左右に出て、橋を駆けてくる飛脚（x = 26、主人公の 2 マス手前で止まる）と重ならない
+    expect(stage[0]).toEqual({ type: 'face', who: 'hero', dir: 'down' });
+    const hikyaku = stage.filter((s) => s.type === 'walk' && s.who === 'osakaHikyaku');
+    expect(hikyaku[0]).toMatchObject({ path: 'uuuuuuu' });
+    expect(hikyaku[1]).toMatchObject({ path: 'ddddddd' });
+  });
+
+  it('大坂に着いたとき、主人公は町のほうを向き、霞は上か下に出て東の街道へ戻る（主人公のマスを通らない）', () => {
+    const stage = requests('osakaEnter', ch4).flatMap((q) => (q.kind === 'stage' ? [q.step] : []));
+    expect(stage[0]).toEqual({ type: 'face', who: 'hero', dir: 'left' });
+    const gone = stage.findIndex((s) => s.type === 'vanish' && s.who === 'kasumi');
+    expect(stage.slice(0, gone).some((s) => s.type === 'walk' && s.who === 'kasumi')).toBe(true);
   });
 
   it('百俵からくりを倒して大坂に入ると第 5 章が終わり（chapter5Cleared）、兵庫が抜ける。霞は預けたまま', () => {
