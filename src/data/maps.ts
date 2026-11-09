@@ -7,7 +7,7 @@ import { OYABUN, bakutoNpc, oyabunNpc } from './oyabun';
 import { TOWN_FACILITY_DOORS, townFacilityNpcs } from './townFacilities';
 import { MINKA_DOORS, minkaEntrance, minkaMap } from './minka';
 import type { SignKind } from './signs';
-import { addBuildings } from './buildings';
+import { addBuildings, buildingTown } from './buildings';
 import { SHIMIZU_BUILDINGS } from './buildingsShimizu';
 import { SUNPU_BUILDINGS } from './buildingsSunpu';
 import { NAGOYA_BUILDINGS } from './buildingsNagoya';
@@ -23,6 +23,7 @@ import { HIKONE_BUILDINGS } from './buildingsHikone';
 import { KUMAMOTO_BUILDINGS } from './buildingsKumamoto';
 import { AIZU_BUILDINGS } from './buildingsAizu';
 import { EDO_BUILDINGS } from './buildingsEdo';
+import { DEJIMA_BUILDINGS, KITAMAEBUNE_BUILDINGS, YORIKI_BUILDINGS } from './buildingsOuter';
 
 /** タイルの種類。画像は public/assets/tiles/<種類>.png（PixelLab で生成。記録は public/assets/README.md）。 */
 export const TILE_KINDS = ['ground', 'grass', 'road', 'tree', 'water', 'wall', 'roof', 'door', 'floor', 'rock', 'plain', 'town', 'gate'] as const;
@@ -959,15 +960,6 @@ MAPS.yoriki = {
       lines: ['用人「だ、旦那様はお留守じゃ。……奥の蔵？ 近づいてはならぬ、あそこには何もない！」'],
       after: { flag: 'meiboFound', lines: ['用人「旦那様は、お城からお呼び出しがあったきり戻られぬ……」'] },
     },
-      {
-        id: 'yorikiJochu',
-        name: '女中',
-        x: 5,
-        y: 20,
-        color: 0xa07a8a,
-        sprite: 'npc_okami',
-        lines: ['女中「奥の蔵には、夜になると重たい葛籠がいくつも運び込まれるんです。中から、こつこつと音が……」'],
-      },
   ],
   exits: [
     { x: 17, y: 23, to: 'sunpu', toX: 41, toY: 9 },
@@ -2630,43 +2622,19 @@ MAPS.dejima = {
     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',
   ],
   npcs: [
+    // カピタン・通詞・商館の手代・商館の医者・蔵番は、それぞれの建物の中にいる（src/data/buildingsOuter.ts）
     {
-      id: 'tsuji',
-      name: '通詞',
-      x: 16,
-      y: 5,
-      color: 0x5a6a8a,
-      sprite: 'npc_merchant',
-      event: 'tsujiMeet',
-    },
-    {
-      id: 'kapitan',
-      name: 'カピタン',
-      x: 8,
-      y: 5,
-      color: 0xb0a080,
-      sprite: 'npc_oranda',
-      lines: ['カピタン「ヨウコソ、デジマヘ。……ワタシタチノ機械ノ本ヲ、悪イコトニ使ウ人ガイル。トテモ悲シイ」'],
-    },
-    {
-      id: 'dejimaShop',
-      name: '商館の手代',
-      x: 24,
-      y: 5,
-      color: 0x8a7a5a,
-      sprite: 'npc_merchant',
-      lines: ['手代「オランダ渡りの品をお分けしましょう。御公儀の御用の方には、特別ですよ」'],
-      action: 'shop',
-      shop: 'dejimaShop',
-    },
-    {
-      id: 'dejimaDoctor',
-      name: '商館の医者',
-      x: 13,
-      y: 13,
-      color: 0xa0a090,
-      sprite: 'npc_oranda',
-      lines: ['医者「ワタシハ医者。日本ノ若イ人タチニ、蘭方ヲ教エテイマス。ランサイモ、ソノ一人デシタ」'],
+      id: 'dejimaBannin',
+      name: '出島の番人',
+      x: 30,
+      y: 10,
+      color: 0x4a4a5a,
+      sprite: 'npc_monban',
+      lines: [
+        '番人「上の段は、左からカピタン部屋、通詞部屋、商館。下の段は、荷蔵、書物蔵、商館の医者の部屋ですばい」',
+        '番人「書物蔵の一件なら、通詞部屋の通詞が詳しかです」',
+      ],
+      after: { flag: 'dejimaHeard', lines: ['番人「東の山の南蛮寺跡へ行きなさるとか。あそこは、焼けた礼拝堂の跡に鉄の兵が出るちゅう噂ですけん、気をつけてくんしゃい」'] },
     },
     {
       id: 'dejimaCow',
@@ -2676,15 +2644,6 @@ MAPS.dejima = {
       color: 0x8a6a4a,
       object: 'ushi',
       lines: ['牛が草を食んでいる。オランダの人たちは、牛の乳を飲むらしい。'],
-    },
-    {
-      id: 'dejimaKura',
-      name: '蔵番',
-      x: 6,
-      y: 13,
-      color: 0x6a6a5a,
-      sprite: 'npc_ninsoku',
-      lines: ['蔵番「この蔵には砂糖と更紗が山ほど入っとる。……例の書は、隣の書物蔵から消えたんじゃ」'],
     },
   ],
   exits: [{ x: 33, y: 9, to: 'nagasaki', toX: 8, toY: 14 }],
@@ -4771,6 +4730,9 @@ addBuildings(MAPS, 'hikone', HIKONE_BUILDINGS);
 addBuildings(MAPS, 'kumamoto', KUMAMOTO_BUILDINGS);
 addBuildings(MAPS, 'aizu', AIZU_BUILDINGS);
 addBuildings(MAPS, 'edo', EDO_BUILDINGS);
+addBuildings(MAPS, 'yoriki', YORIKI_BUILDINGS);
+addBuildings(MAPS, 'dejima', DEJIMA_BUILDINGS);
+addBuildings(MAPS, 'kitamaebune', KITAMAEBUNE_BUILDINGS);
 /** その戸口が屋内へ入る入口か（屋内のある施設の人は、屋内の建物のファイルで屋内に置くので、店先には立たせない）。 */
 const hasInterior = (town: string, door: { x: number; y: number }) => MAPS[town]!.exits.some((e) => e.x === door.x && e.y === door.y);
 // 湯屋・賭場・居酒屋・妓楼（刀鍛冶かよろず屋のあるすべての町。戸口と台詞は src/data/townFacilities.ts）
@@ -4871,7 +4833,8 @@ export function escapePoint(mapId: string): { mapId: string; x: number; y: numbe
   for (let map = queue.shift(); map; map = queue.shift()) {
     for (const exit of map.exits) {
       const next = MAPS[exit.to];
-      if (!next) continue;
+      // そのダンジョンの中の建物（北前船の屋形）へ入る戸は、外へ出る道ではない
+      if (!next || buildingTown(next.id) === map.id) continue;
       if (!isDungeon(next)) return { mapId: next.id, x: exit.toX, y: exit.toY };
       if (!seen.has(next.id)) {
         seen.add(next.id);

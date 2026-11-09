@@ -2,7 +2,8 @@
 // 民家（src/data/minka.ts）と違い、建物ごとに固有の間取りを描き、決して使い回さない（ユーザーの決定、2026-11-07）。
 // 町ごとのファイル（buildingsShimizu.ts など）に建物を書き、ここで町のマップへ入口と出口をつなぐ。
 // - 町の戸口（D のマス）に屋内への出口を置く（出口のある戸口には歩いて入れる。maps.ts の canStep）
-// - 屋内の出口（下の壁の切れ目）からは、その戸口の 1 マス下へ戻る
+// - 屋内の出口（下の壁の切れ目）からは、その戸口の 1 マス下（front があればそのマス）へ戻る
+// - 町でないマップ（与力・黒田の屋敷、出島、北前船）の建物も、同じ仕組みでつなぐ（src/data/buildingsOuter.ts）
 // - 施設の人（店の主人・住職など）は屋内に立つ。看板は、屋内の施設の人の種類で、町の戸口の隣の壁に掛ける（src/data/signs.ts）
 import type { ExitDef, MapDef, NpcDef, TilesetId } from './maps';
 import { signKind } from './signs';
@@ -11,6 +12,8 @@ import { townRespawnMap } from './minka';
 export interface BuildingDef {
   /** 町のマップの戸口（rows の D のマス）。 */
   door: { x: number; y: number };
+  /** 屋内から出たときに立つ、戸口の外のマス。省くと戸口の 1 マス下（戸が横を向く北前船の屋形などで指定する）。 */
+  front?: { x: number; y: number };
   /** 屋内マップの ID（町の ID を頭に付ける。shimizuYorozuya など）。 */
   id: string;
   /** 屋内マップの名前（町の名前のあとに続ける。「よろず屋」なら「駿河・清水湊のよろず屋」）。 */
@@ -45,6 +48,11 @@ export function townOf(mapId: string): string {
   return BUILDING_TOWN[mapId] ?? mapId;
 }
 
+/** 屋内から出たときに立つ、戸口の外のマス（指定がなければ戸口の 1 マス下）。 */
+export function buildingFront(b: Pick<BuildingDef, 'door' | 'front'>): { x: number; y: number } {
+  return b.front ?? { x: b.door.x, y: b.door.y + 1 };
+}
+
 /** 建物の屋内マップを作る。 */
 function buildingMap(town: MapDef, b: BuildingDef): MapDef {
   return {
@@ -54,7 +62,7 @@ function buildingMap(town: MapDef, b: BuildingDef): MapDef {
     areaLevel: town.areaLevel,
     rows: [...b.rows],
     npcs: b.npcs,
-    exits: [{ x: b.exit.x, y: b.exit.y, to: town.id, toX: b.door.x, toY: b.door.y + 1 }],
+    exits: [{ x: b.exit.x, y: b.exit.y, to: town.id, toX: buildingFront(b).x, toY: buildingFront(b).y }],
     // 全滅したら町（の旅籠の前）へ戻る
     respawnMap: townRespawnMap(town),
   };
