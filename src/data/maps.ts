@@ -1438,6 +1438,19 @@ MAPS.tenshu = {
       after: { flag: 'kinshachiDefeated', lines: ['金の鱗を取り戻した。鯱は、明日にも職人の手で元の姿に戻されるという。'] },
     },
     {
+      // 大凧で降りた欄干（1, 23）の北で、凧をつないで待つ。金鯱からくりの場面では後ろから駆け上がってくる
+      id: 'tenshuKinta',
+      name: '金太',
+      x: 1,
+      y: 22,
+      color: 0xd08a3a,
+      sprite: 'kinta',
+      facing: 'down',
+      lines: ['金太「凧はここにつないどく。鯱は、この上の大棟だ。……おれも、すぐ後から行く」'],
+      showFlag: 'kintaFlew',
+      hideFlag: 'kinshachiDefeated',
+    },
+    {
       id: 'tenshuChest',
       name: '葛籠',
       x: 4,

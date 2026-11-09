@@ -285,11 +285,37 @@ describe('第 2 章の流れ', () => {
     expect(run('kinshachi', start).flags.kinshachiDefeated).toBe(true);
     const lost = run('kinshachi', start, 'defeat');
     expect(lost.flags.kinshachiDefeated).toBeFalsy();
-    const retry = new EventRunner(EVENTS.kinshachi!.steps).next(lost);
-    expect(retry.request.kind).toBe('say');
-    const pages = retry.request.kind === 'say' ? retry.request.pages.join('') : '';
-    expect(pages).not.toContain('銀次「');
+    const list = requests('kinshachi', lost);
+    const battle = list.findIndex((r) => r.kind === 'battle');
+    expect(list[battle]).toMatchObject({ kind: 'battle', enemies: ['kinshachi'] });
+    const before = list.slice(0, battle).flatMap((r) => (r.kind === 'say' ? r.pages : [])).join('');
+    expect(before).toContain('今度こそ');
+    expect(before).not.toContain('銀次「');
     expect(run('kinshachi', lost).flags.kinshachiDefeated).toBe(true);
+  });
+
+  it('金鯱からくりを倒すと城の前へ移り、名古屋に入ったときのイベントで第 2 章が終わる', () => {
+    const list = requests('kinshachi', start);
+    expect(list.filter((r) => r.kind === 'warp').at(-1)).toMatchObject({ kind: 'warp', mapId: 'nagoya' });
+    expect(MAPS.nagoya!.onEnter?.event).toBe('nagoyaEnter');
+  });
+
+  it('大井川を渡ると、渡し場の西の街道へ移る', () => {
+    const list = requests('oigawa', start);
+    const warp = list.find((r) => r.kind === 'warp') as { mapId: string; x: number; y: number } | undefined;
+    expect(warp).toMatchObject({ mapId: 'world' });
+    const gate = MAPS.world!.gates!.find((g) => g.event === 'oigawa')!;
+    expect(warp!.x).toBeLessThan(gate.x);
+    expect(tileAt(MAPS.world!, warp!.x, warp!.y)?.blocked).toBe(false);
+    // 負けたら渡らない
+    expect(requests('oigawa', start, 'defeat').some((r) => r.kind === 'warp')).toBe(false);
+  });
+
+  it('天守に着くと、欄干で金太が待つ（大凧で飛んだあと、金鯱からくりを倒すまで）', () => {
+    const kinta = MAPS.tenshu!.npcs.find((n) => n.id === 'tenshuKinta')!;
+    expect(npcVisible(kinta, {})).toBe(false);
+    expect(npcVisible(kinta, { kintaFlew: true })).toBe(true);
+    expect(npcVisible(kinta, { kintaFlew: true, kinshachiDefeated: true })).toBe(false);
   });
 
   it('金鯱からくりを倒して名古屋に入ると第 2 章が終わり、褒美は一度だけ', () => {
