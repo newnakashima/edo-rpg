@@ -1101,6 +1101,8 @@ const HAMAMATSU_TAKO_GASSEN: EventStep[] = [
   // 凧師の弥平が砂丘の東から歩いてくる（源太は 28, 29。主人公は源太の隣に立っている）
   actor('yahei', 'npc_rojin', 32, 29, 'left'),
   walk('yahei', 'll'),
+  // 隣町の若衆（34, 30）は、砂丘の東で自分の町の凧の糸を握っている
+  faceTo('tonariWakashu', 'genta'),
   {
     type: 'say',
     lines: [
@@ -1265,7 +1267,7 @@ const KUMAMOTO_ARRIVE: EventStep[] = [
   // 渡し船で川尻の湊 (5, 32) に着いたところで始まる（町に入る道は湊だけ。全滅後の戻り先は kumamotoIntro のあと）。
   // 渡し船の船頭（3, 32）が見送り、空の桶を抱えたおかみが通りを歩いてきて、ため息をついて帰っていく
   face('hero', 'left'),
-  { type: 'say', lines: ['船頭「着いたばい。ここが肥後熊本の川尻の湊たい。北の丘に見えとるのが、熊本のお城じゃ」'] },
+  { type: 'say', lines: ['船頭「着いたで。ここが肥後熊本の川尻の湊じゃ。北の丘に見えとるのが、熊本のお城じゃけん」'] },
   face('hero', 'up'),
   partyOut('gendo'),
   { type: 'say', lines: ['玄道「あれが熊本の城か。石垣が上へいくほど反り返って、まるで崖のようじゃ。清正公が築いた、天下の名城よ」'] },

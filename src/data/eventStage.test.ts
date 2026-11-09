@@ -141,8 +141,9 @@ describe('イベントの演出', () => {
             }
             if (step.type !== 'walk') continue;
             expect((step.path === undefined) !== (step.to === undefined), label(`walk の ${step.who} は path か to のどちらか一つ`)).toBe(true);
-            if (step.who === 'hero' && spots.length > 0) {
-              // 話しかけたときのイベントで主人公が歩いたら、行き先が決まっていればそこを主人公の位置にする
+            if (step.who === 'hero' && hero === undefined) {
+              // 主人公の位置が分からないまま歩いたら、主人公が立っているかもしれないマスはもう分からない（path なら以後は見ない）。
+              // to に行き先のマスがあれば、そこを主人公の位置にして見続ける
               spots = [];
               if (typeof step.to === 'object') {
                 expect(passable(map, step.to.x, step.to.y), label(`主人公の行き先 (${step.to.x},${step.to.y}) が通れない`)).toBe(true);

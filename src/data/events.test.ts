@@ -10,7 +10,7 @@ import { TATSUGORO_JINGI } from './oyabunRequests';
 import { isKnownItem } from './items';
 import { SKILLS } from './skills';
 import { canStep, MAPS, npcLines, npcVisible, respawnPoint, tileAt } from './maps';
-import { EventRunner } from '../systems/eventScript';
+import { EventRunner, pathFacings, pathTo } from '../systems/eventScript';
 import { newGame, type GameState } from '../systems/gameState';
 import { createMember, memberLevel } from '../systems/party';
 
@@ -94,6 +94,19 @@ function requests(id: string, state: GameState, outcome: 'victory' | 'defeat' = 
   }
   return list;
 }
+
+describe('女主人公の台詞（linesF）', () => {
+  it('linesF は lines と同じページ数で、主人公の台詞のページが同じ位置にある', () => {
+    const isHero = (p: string) => /^\{hero\}(〈.〉)?「/u.test(p);
+    for (const [id, def] of Object.entries(EVENTS)) {
+      for (const step of walk(def.steps)) {
+        if (step.type !== 'say' || !step.linesF) continue;
+        expect(step.linesF.length, `${id}: ${step.lines[0]}`).toBe(step.lines.length);
+        expect(step.linesF.map(isHero), `${id}: ${step.lines[0]}`).toEqual(step.lines.map(isHero));
+      }
+    }
+  });
+});
 
 describe('序章の流れ', () => {
   const start = newGame('m', { mapId: 'shimizu', x: 14, y: 7 });
@@ -1181,13 +1194,15 @@ describe('第 7 章の流れ', () => {
   });
 });
 
+/** 第 7 章を終えて仙台に着いたところ（第 8 章のテストの始まり）。 */
+const CH7_CLEARED: GameState = {
+  ...newGame('m', { mapId: 'sendai', x: 50, y: 18 }),
+  party: [createMember('hero', 25), createMember('gendo', 25), createMember('orin', 25), createMember('kasumi', 25)],
+  flags: { intro: true, chapter6Cleared: true, kanazawaArrived: true, tonoRescued: true, kagaTegata: true, chapter7Cleared: true },
+};
+
 describe('第 8 章の流れ', () => {
-  const base = newGame('m', { mapId: 'sendai', x: 50, y: 18 });
-  const ch7 = {
-    ...base,
-    party: [createMember('hero', 25), createMember('gendo', 25), createMember('orin', 25), createMember('kasumi', 25)],
-    flags: { intro: true, chapter6Cleared: true, kanazawaArrived: true, tonoRescued: true, kagaTegata: true, chapter7Cleared: true },
-  };
+  const ch7 = CH7_CLEARED;
   const warpOf = (id: string, state: GameState): { mapId: string; x: number; y: number } | undefined => {
     const runner = new EventRunner(EVENTS[id]!.steps);
     let r = runner.next(state);
@@ -1883,8 +1898,7 @@ describe('寄り道の熊本（籠城の備えの井戸の謎）', () => {
 });
 
 describe('第 8 章・寄り道の町の演出（地の文を人の動きと台詞に）', () => {
-  const ch7Party = [createMember('hero', 25), createMember('gendo', 25), createMember('orin', 25), createMember('kasumi', 25)];
-  const ch7 = { ...newGame('m', { mapId: 'sendai', x: 50, y: 18 }), party: ch7Party, flags: { intro: true, chapter6Cleared: true, kanazawaArrived: true, tonoRescued: true, kagaTegata: true, chapter7Cleared: true } };
+  const ch7 = CH7_CLEARED;
   type Req = ReturnType<typeof requests>[number];
   const actors = (list: Req[]) => list.flatMap((q) => (q.kind === 'stage' && q.step.type === 'actor' ? [q.step.id] : []));
   const vanished = (list: Req[]) => list.flatMap((q) => (q.kind === 'stage' && q.step.type === 'vanish' ? [q.step.who] : []));
@@ -1901,12 +1915,31 @@ describe('第 8 章・寄り道の町の演出（地の文を人の動きと台�
     }
     return max;
   };
-  /** 地の文として残してよいもの: 音、受け取った知らせ、調べた物の説明（熊本の井戸と水脈のからくり）。 */
-  const allowedNarration = (p: string) =>
-    /^[ぁ-んァ-ヶー、。…！ ]+$/u.test(p) || p.endsWith('を受け取った。') || /^(井戸の底に|地の下を流れる水脈に)/.test(p);
-  const ids = ['sendaiEnter', 'tatewaki', 'edoEnter', 'kokichi', 'hikeshiGashira', 'oharu', 'taikaEnter', 'kashaKarakuri', 'hamamatsuEnter', 'hamamatsuTako', 'hikoneEnter', 'hikoneGusoku', 'kumamotoEnter', 'kumamotoKarakuri', 'aizuEnter', 'heita'];
+  /** 調べた物の説明として残す地の文（熊本の井戸・古井戸・水脈のからくり）。 */
+  const DESCRIPTIONS = new Set([
+    '井戸の底に、わずかな水が濁って溜まっている。',
+    '古井戸の底から、水の流れる音が聞こえてくる。',
+    '石を組んだ古い井戸だ。内側の壁に石段が切ってあり、暗い底へ続いている。……ごうん、ごうんと、鉄の鳴る音がする。',
+    '石を組んだ古い井戸だ。内側の壁に石段が切ってあり、暗い底へ続いている。……底の方から、かすかに鉄の鳴る音がする。',
+    '地の下を流れる水脈に、鉄の筒が何本も突き立てられている。歯車が回るたびに、水が吸い上げられ、岩の割れ目へ捨てられていく。',
+  ]);
+  /** 地の文として残してよいもの: 画面で見せられない音（かなと記号だけ）、受け取った知らせ、調べた物の説明。 */
+  const allowedNarration = (p: string) => /^[ぁ-んァ-ヶー、。…！]+$/u.test(p) || /^\S+から \d+ 文を受け取った。$|^\d+ 文を受け取った。$|^[^、。]+を受け取った。$/u.test(p) || DESCRIPTIONS.has(p);
+  /** 第 8 章と寄り道の町のマップ（町なか・建物の中・ダンジョン）。終章（江戸城の大手門の門番）と、どの町にもある博徒・親分の頼みは除く。 */
+  const mapIds = Object.keys(MAPS).filter((m) => /^(sendai|hamamatsu|hikone|kumamoto|kiyomasaIdo|aizu|edo(?!jo))/.test(m));
+  const ids = [
+    ...new Set(
+      mapIds.flatMap((m) => {
+        const map = MAPS[m]!;
+        return [map.onEnter?.event, ...(map.triggers ?? []).map((t) => t.event), ...map.npcs.map((n) => n.event)].filter(
+          (e): e is string => e !== undefined && e !== 'otemon' && !/^(bakuto_|oyabun|jingi)|Chest\d*$/.test(e),
+        );
+      }),
+    ),
+  ];
 
   it('第 8 章と寄り道の町のイベントには、人の動きや居場所を語る地の文が残っていない', () => {
+    expect(ids).toEqual(expect.arrayContaining(['sendaiEnter', 'tatewaki', 'edoEnter', 'kokichi', 'oharu', 'taikaEnter', 'kashaKarakuri', 'hamamatsuTako', 'hikoneGusoku', 'kumamotoKarakuri', 'heita']));
     const lines = (steps: readonly EventStep[]): string[] =>
       steps.flatMap((st) => {
         if (st.type === 'say') return [...st.lines, ...(st.linesF ?? [])];
@@ -1916,7 +1949,7 @@ describe('第 8 章・寄り道の町の演出（地の文を人の動きと台�
         if (st.type === 'battle') return lines(st.ifLose ?? []);
         return [];
       });
-    for (const id of [...ids, 'hamamatsuGenta', 'hikoneJinbei', 'kumamotoMosaku', 'kumamotoWatashi', 'aizuJuu', 'nagayaOoya']) {
+    for (const id of ids) {
       for (const line of lines(EVENTS[id]!.steps)) if (!line.includes('「')) expect(allowedNarration(line), `${id}: ${line}`).toBe(true);
     }
   });
@@ -1983,20 +2016,30 @@ describe('第 8 章・寄り道の町の演出（地の文を人の動きと台�
     expect(pagesIn(requests('oharu', met)).every((p) => p.startsWith('八百屋の娘「'))).toBe(true);
   });
 
+  it('持ち物がいっぱいで手拭いを受け取れなくても、火消しの頭は西の通りへ帰って消える', () => {
+    const full = { ...report, items: { ...report.items, hikeshiTenugui: 99 } };
+    const list = requests('oharu', full);
+    expect(pagesIn(list).some((p) => p.includes('手拭いも持てねえ'))).toBe(true);
+    expect(vanished(list.slice(battleAt(list)))).toContain('oharuGashira');
+  });
+
   const fire = run('oharu', report);
   const entered = run('taikaEnter', fire);
 
   it('大火の町に入ると、主人公が 1 歩進み、隣の火消しが声をかけ、霞が南に出る', () => {
     const taika = MAPS.edoTaika!;
-    const entry = MAPS.edo!.exits.find((e) => e.to === 'edoTaika')!;
-    expect([entry.toX, entry.toY]).toEqual([1, 32]);
+    // 大火の町に入る道は、江戸の町木戸からの 1 つだけ
+    const entries = Object.values(MAPS).flatMap((m) => m.exits.filter((e) => e.to === 'edoTaika'));
+    expect(entries).toHaveLength(1);
     const list = requests('taikaEnter', fire);
     expect(list[0]).toMatchObject({ kind: 'stage', step: { type: 'walk', who: 'hero', path: 'r' } });
-    expect(canStep(taika, 2, 32)).toBe(true);
-    // (2, 32) の北は壁、南 (2, 33) は空いていて、霞はそこに出る。火消しは南東 (3, 33)
-    expect(canStep(taika, 2, 31)).toBe(false);
-    expect(canStep(taika, 2, 33)).toBe(true);
-    expect(taika.npcs.find((n) => n.id === 'taikaHikeshi1')).toMatchObject({ x: 3, y: 33 });
+    const hero = { x: entries[0]!.toX + 1, y: entries[0]!.toY };
+    expect(canStep(taika, hero.x, hero.y)).toBe(true);
+    // 1 歩進んだ先の北は壁、南は空いていて、霞はそこに出る。火消しはその隣
+    expect(canStep(taika, hero.x, hero.y - 1)).toBe(false);
+    expect(canStep(taika, hero.x, hero.y + 1)).toBe(true);
+    const hikeshi = taika.npcs.find((n) => n.id === 'taikaHikeshi1')!;
+    expect(Math.abs(hikeshi.x - hero.x) + Math.abs(hikeshi.y - (hero.y + 1))).toBe(1);
     expect(actors(list)).toEqual(['kasumi']);
   });
 
@@ -2010,14 +2053,17 @@ describe('第 8 章・寄り道の町の演出（地の文を人の動きと台�
     // 主人公の隣で空くのは西と東だけなので、仲間は一人ずつ出る
     expect(maxPartyOut(list)).toBe(1);
     const t = MAPS.edoTaika!.triggers!.find((x) => x.event === 'kashaKarakuri')!;
-    expect([t.x, t.y]).toEqual([44, 25]);
-    expect([canStep(MAPS.edoTaika!, 44, 24), canStep(MAPS.edoTaika!, 44, 26)]).toEqual([false, false]);
+    expect([canStep(MAPS.edoTaika!, t.x, t.y - 1), canStep(MAPS.edoTaika!, t.x, t.y + 1)]).toEqual([false, false]);
   });
 
   it('第 8 章の終わりは長屋の路地で、大家が西の家の前から主人公の西まで歩いてくる（主人公のマスを通らない）。仲間は一人ずつ出る', () => {
     const won = run('kashaKarakuri', entered);
     const list = requests('edoEnter', won);
     const edo = MAPS.edo!;
+    // 第 8 章の終わりは、火車からくりを倒して長屋の路地へ warp したところで始まる
+    const warp = requests('kashaKarakuri', entered).find((q) => q.kind === 'warp');
+    expect(warp).toMatchObject({ kind: 'warp', mapId: 'edo' });
+    const hero = warp?.kind === 'warp' ? { x: warp.x, y: warp.y } : { x: NaN, y: NaN };
     const ooya = edo.npcs.find((n) => n.id === 'nagayaOoya')!;
     const step = list.find((q) => q.kind === 'stage' && q.step.type === 'walk' && q.step.who === 'nagayaOoya');
     expect(step?.kind).toBe('stage');
@@ -2028,9 +2074,10 @@ describe('第 8 章・寄り道の町の演出（地の文を人の動きと台�
       pos.x += d[c as keyof typeof d][0];
       pos.y += d[c as keyof typeof d][1];
       expect(canStep(edo, pos.x, pos.y), `(${pos.x},${pos.y})`).toBe(true);
-      expect(pos.x === 22 && pos.y === 16, '主人公のマスを通る').toBe(false);
+      expect(pos.x === hero.x && pos.y === hero.y, '主人公のマスを通る').toBe(false);
     }
-    expect(pos).toEqual({ x: 21, y: 16 });
+    // 大家は主人公の西隣で止まる
+    expect(pos).toEqual({ x: hero.x - 1, y: hero.y });
     expect(pagesIn(list).join('')).not.toContain('長屋に戻ると');
     expect(maxPartyOut(list)).toBe(1);
   });
@@ -2051,7 +2098,7 @@ describe('第 8 章・寄り道の町の演出（地の文を人の動きと台�
   });
 
   it('熊本に着くと、渡し船の船頭が見送り、空の桶のおかみが通りかかり、仲間が出て話す', () => {
-    const kumamoto = { ...newGame('m', { mapId: 'kumamoto', x: 5, y: 32 }), party: ch7Party, flags: { intro: true, chapter5Cleared: true, kasumiRejoined: true, shimabaraOpen: true } };
+    const kumamoto = { ...newGame('m', { mapId: 'kumamoto', x: 5, y: 32 }), party: CH7_CLEARED.party, flags: { intro: true, chapter5Cleared: true, kasumiRejoined: true, shimabaraOpen: true } };
     const list = requests('kumamotoEnter', kumamoto);
     expect(pagesIn(list)[0]).toMatch(/^船頭「/);
     expect(actors(list)).toEqual(['gendo', 'kawashiriOkami', 'orin', 'kasumi']);
@@ -2068,16 +2115,52 @@ describe('第 8 章・寄り道の町の演出（地の文を人の動きと台�
   it('佐和山では、勝つと主人公が南東へ下がり、盗人は南の細い道を下りていく（主人公の立つマスを通らない）', () => {
     const hikone = { ...newGame('m', { mapId: 'hikone', x: 50, y: 12 }), party: [createMember('hero', 10)], flags: { intro: true, chapter2Cleared: true, hikoneIntro: true, hikoneGusokuAsked: true } };
     const list = requests('hikoneGusoku', hikone);
-    const heroWalk = list.find((q) => q.kind === 'stage' && q.step.type === 'walk' && q.step.who === 'hero');
-    expect(heroWalk).toMatchObject({ step: { to: { x: 46, y: 29 } } });
+    const isWalk = (q: Req, who: string) => q.kind === 'stage' && q.step.type === 'walk' && q.step.who === who;
+    const heroAt = list.findIndex((q) => isWalk(q, 'hero'));
+    const nusubitoAt = list.findIndex((q) => isWalk(q, 'gusokuNusubito'));
+    // 主人公が下がってから、盗人が歩き出す
+    expect(heroAt).toBeGreaterThan(battleAt(list));
+    expect(nusubitoAt).toBeGreaterThan(heroAt);
+    const heroStep = list[heroAt]!;
+    const to = heroStep.kind === 'stage' && heroStep.step.type === 'walk' && typeof heroStep.step.to === 'object' ? heroStep.step.to : undefined;
+    expect(to).toBeDefined();
     const map = MAPS.hikone!;
     const nusubito = map.npcs.find((n) => n.id === 'gusokuNusubito')!;
-    // 盗人の隣で主人公が立てるのは南と東だけで、どちらからでも南東 (46, 29) へまっすぐ下がれる
-    const spots = [[nusubito.x, nusubito.y + 1], [nusubito.x + 1, nusubito.y], [nusubito.x - 1, nusubito.y], [nusubito.x, nusubito.y - 1]].filter(
-      ([x, y]) => canStep(map, x!, y!) && !map.npcs.some((n) => n.x === x && n.y === y),
-    );
-    expect(spots).toEqual([[45, 29], [46, 28]]);
-    for (let y = nusubito.y + 1; y <= nusubito.y + 6; y++) expect(canStep(map, nusubito.x, y), `(${nusubito.x},${y})`).toBe(true);
+    // 盗人の隣で主人公が立てる（通れて、話しかけたときに人や物がいない）マスのどこからでも、横、縦の順にまっすぐ下がれる
+    const d = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] } as const;
+    const spots = Object.values(d)
+      .map(([dx, dy]) => ({ x: nusubito.x + dx, y: nusubito.y + dy }))
+      .filter((p) => canStep(map, p.x, p.y) && !map.npcs.some((n) => n.x === p.x && n.y === p.y && npcVisible(n, hikone.flags)));
+    expect(spots.length).toBeGreaterThan(0);
+    for (const spot of spots) {
+      const p = { ...spot };
+      for (const dir of pathTo(p, to!)) {
+        p.x += d[dir][0];
+        p.y += d[dir][1];
+        expect(canStep(map, p.x, p.y) && !(p.x === nusubito.x && p.y === nusubito.y), `(${spot.x},${spot.y}) から下がる道 (${p.x},${p.y})`).toBe(true);
+      }
+    }
+    // 盗人の逃げる道は、下がった主人公のマスを通らない
+    const walkStep = list[nusubitoAt]!;
+    const path = walkStep.kind === 'stage' && walkStep.step.type === 'walk' ? (walkStep.step.path ?? '') : '';
+    const np = { x: nusubito.x, y: nusubito.y };
+    for (const c of pathFacings(path)) {
+      np.x += d[c][0];
+      np.y += d[c][1];
+      expect(canStep(map, np.x, np.y), `(${np.x},${np.y})`).toBe(true);
+      expect(np.x === to!.x && np.y === to!.y, '盗人が主人公のマスを通る').toBe(false);
+    }
+  });
+
+  it('彦根の工房で具足を届けると、大庭が戸口から入ってきて、持ち物がいっぱいでも話し終えて帰っていく', () => {
+    const hikone = { ...newGame('m', { mapId: 'hikone', x: 50, y: 12 }), party: [createMember('hero', 10)], flags: { intro: true, chapter2Cleared: true, hikoneIntro: true, hikoneGusokuAsked: true, hikoneGusokuFound: true } };
+    for (const state of [hikone, { ...hikone, items: { ...hikone.items, akazonaeKote: 99 } }]) {
+      const list = requests('hikoneJinbei', state);
+      expect(actors(list)).toEqual(['oba']);
+      expect(vanished(list)).toEqual(['oba']);
+      const said = list.findIndex((q) => q.kind === 'say' && q.pages.some((p) => p.startsWith('大庭「')));
+      expect(said).toBeGreaterThan(list.findIndex((q) => q.kind === 'stage' && q.step.type === 'actor'));
+    }
   });
 
   it('飯盛山では、送り狼と雪女が山道の南から出てきて、勝つと消える。平太は主人公のところへ歩いて一行と山を下りる', () => {
