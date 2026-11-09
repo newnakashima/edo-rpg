@@ -395,17 +395,51 @@ describe('第 3 章の流れ', () => {
     expect(run('shuten', start).flags.shutenDefeated).toBe(true);
     const lost = run('shuten', start, 'defeat');
     expect(lost.flags.shutenDefeated).toBeFalsy();
-    const retry = new EventRunner(EVENTS.shuten!.steps).next(lost);
-    expect(retry.request.kind).toBe('say');
-    const pages = retry.request.kind === 'say' ? retry.request.pages.join('') : '';
+    const list = requests('shuten', lost);
+    const battle = list.findIndex((r) => r.kind === 'battle');
+    expect(list[battle]).toMatchObject({ kind: 'battle', enemies: ['shuten'] });
+    const pages = list.slice(0, battle).flatMap((r) => (r.kind === 'say' ? r.pages : [])).join('');
     expect(pages).not.toContain('夜叉丸「');
     expect(pages).toContain('酒呑の大鬼');
     expect(run('shuten', lost).flags.shutenDefeated).toBe(true);
   });
 
-  it('酒呑の大鬼を倒して京に入ると第 3 章が終わる（chapter3Cleared）', () => {
+  it('酒呑の大鬼を倒すと京の北の峠道の口へ移り、京に入ったときのイベントで第 3 章が終わる（chapter3Cleared）', () => {
+    const list = requests('shuten', start);
+    const warp = list.filter((r) => r.kind === 'warp').at(-1) as { mapId: string; x: number; y: number } | undefined;
+    expect(warp).toMatchObject({ mapId: 'kyo' });
+    // 鬼の巣から歩いて戻ったときと同じ所（峠道の口）
+    expect(MAPS.oninosu!.exits.some((e) => e.to === 'kyo' && e.toX === warp!.x && e.toY === warp!.y)).toBe(true);
+    expect(requests('shuten', start, 'defeat').some((r) => r.kind === 'warp')).toBe(false);
+    expect(MAPS.kyo!.onEnter?.event).toBe('kyoEnter');
     const cleared = run('kyoEnter', run('shuten', run('kyoEnter', start)));
     expect(cleared.flags.chapter3Cleared).toBe(true);
+  });
+
+  it('京に着く前に街道で全滅しても、着いたときの町の人は戻った主人公の見える所に出る', () => {
+    const back = respawnPoint('world', 70, 28, start.flags);
+    expect(back.mapId).toBe('kyo');
+    const town = MAPS.world!.towns!.find((t) => t.name === '京')!.to!;
+    let crowd = 0;
+    for (const step of EVENTS.kyoEnter!.steps.flatMap((s) => (s.type === 'if' ? [...s.then, ...(s.else ?? [])] : [s])).flatMap((s) => (s.type === 'if' ? [...s.then, ...(s.else ?? [])] : [s]))) {
+      if (step.type !== 'actor' || step.x === undefined || step.y === undefined || !step.id.startsWith('kyoMachibito')) continue;
+      crowd++;
+      // 画面は横 24 マス・縦 13 マス余り。入口から入ったときも、全滅で戻ったときも見える
+      for (const p of [back, town]) {
+        expect(Math.abs(step.x - p.x), step.id).toBeLessThanOrEqual(10);
+        expect(Math.abs(step.y - p.y), step.id).toBeLessThanOrEqual(5);
+      }
+    }
+    expect(crowd).toBe(2);
+  });
+
+  it('第 3 章の地の文は、人の動きと台詞に置き換わっている（残すのは音と加入の知らせだけ）', () => {
+    const narration = ['京。千年の都', '河原の葦の陰で', 'は、駿府と名古屋で見てきた', '門の跡の暗がりから', '玄道が数珠を鳴らし', '崩れかけた本堂に', '夜叉丸が印を結ぶと', '地響きを立てて倒れた', '本堂の奥の牢には', '都へ戻ろう。', 'そこへ、汗まみれの飛脚', '文には、震える字で', '清水湊へ急ごう。'];
+    const lines = ['kyoEnter', 'gendoMeet', 'rashomonOni', 'shuten']
+      .flatMap((id) => [...walk(EVENTS[id]!.steps)])
+      .flatMap((s) => (s.type === 'say' ? [...s.lines, ...(s.linesF ?? [])] : []));
+    // 台詞（「」の中）でない所に、前の地の文が残っていない
+    for (const text of narration) for (const line of lines) expect(line.split('「')[0], line).not.toContain(text);
   });
 });
 

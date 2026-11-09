@@ -1640,7 +1640,8 @@ MAPS.kyo = {
     { x: 46, y: 37, to: 'rashomon', toX: 17, toY: 23 },
     { x: 47, y: 37, to: 'rashomon', toX: 18, toY: 23 },
   ],
-  respawn: { x: 22, y: 11 },
+  // 全滅で戻る場所は東の入口のそば（京に着く前に街道で全滅したときも、着いたときの町の人の場面が画面の中で起きる）
+  respawn: { x: 49, y: 13 },
   onEnter: { event: 'kyoEnter', unless: 'chapter3Cleared' },
 };
 

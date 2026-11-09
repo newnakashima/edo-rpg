@@ -371,37 +371,74 @@ const KINTA_FLIGHT: EventStep[] = [
   },
 ];
 
-/** 京に初めて入ったとき。 */
+/** 京に初めて入ったとき。東の入口（51, 13）のそばで、暮れ六つの鐘を聞いた町の人が、鬼の噂をしながら家へ急ぐ。 */
 const KYO_ARRIVE: EventStep[] = [
+  actor('kyoMachibitoA', 'npc_merchant', 47, 12, 'right'),
+  actor('kyoMachibitoB', 'npc_musume', 46, 13, 'right'),
+  { type: 'say', lines: ['ゴーン……ゴーン……'] },
+  partyOut('kasumi'),
+  { type: 'say', lines: ['霞「ここが京か。大火の焼け跡から、よくここまで立ち直ったもんだね」'] },
   {
     type: 'say',
     lines: [
-      '京。千年の都は、大火の焼け跡からよみがえった町並みに、夕暮れの鐘が響いていた。',
-      'だが、日が落ちると、通りから人の姿が消える。',
+      '町人「暮れ六つの鐘や。早う店じまいして、戸を閉めな」',
+      '町娘「旅のお人？ 日が落ちたら、表を出歩いたらあかんえ」',
       '町人「夜な夜な、羅生門の跡に鬼が出るんや。鴨川の河原の者が、もう何人もさらわれとる」',
-      '霞「『京の鬼、首尾よく』……やっぱり、鬼の噂の裏にも連中がいるね」',
     ],
   },
+  // 二人は西の通りへ、家路を急ぐ
+  { type: 'walk', who: 'kyoMachibitoB', path: 'llllll', wait: false },
+  walk('kyoMachibitoA', 'lllllll'),
+  vanish('kyoMachibitoA'),
+  vanish('kyoMachibitoB'),
+  {
+    type: 'say',
+    lines: ['霞「通りから、すっかり人がいなくなっちまった」', '霞「『京の鬼、首尾よく』……やっぱり、鬼の噂の裏にも連中がいるね」'],
+  },
+  ...partyIn('kasumi'),
   { type: 'setFlag', flag: 'kyoArrived' },
 ];
 
-/** 酒呑の大鬼を倒して京に戻ったとき（第 3 章の終わり）。清水湊から、辰五郎が殺されたという急報が届く。 */
+/**
+ * 酒呑の大鬼を倒して京に戻ったとき（第 3 章の終わり）。清水湊から、辰五郎が殺されたという急報が届く。
+ * 鬼の巣から北の峠道の口（19, 5）へ移ったところで、人に戻った河原の人々が鴨川の河原へ帰り、飛脚が南から駆けてくる。
+ */
 const KYO_CHAPTER_END: EventStep[] = [
+  actor('kyoKaeriA', 'npc_ninsoku', 18, 3, 'down'),
+  actor('kyoKaeriB', 'npc_musume', 18, 2, 'down'),
+  actor('kyoKaeriC', 'npc_rojin', 18, 1, 'down'),
+  // 峠道を下りて、三条の手前の通りを東の河原へ帰っていく（主人公の左を通る）
+  { type: 'walk', who: 'kyoKaeriC', path: 'dddddrrrrrrrrrrrrrrrr', wait: false },
+  { type: 'walk', who: 'kyoKaeriB', path: 'ddddrrrrrrrrrrrrrrrrr', wait: false },
+  walk('kyoKaeriA', 'dddrrrrrrrrrrrrrrrrrr'),
+  vanish('kyoKaeriA'),
+  vanish('kyoKaeriB'),
+  vanish('kyoKaeriC'),
+  face('hero', 'down'),
+  partyOut('gendo'),
+  { type: 'say', lines: ['玄道「斬らずに済んだ。……仏の慈悲ってやつも、たまには役に立つもんだ」'] },
+  // 汗まみれの飛脚が、南の通りから駆けてくる
+  actor('kyoHikyaku', 'npc_hikyaku', 19, 13, 'up'),
+  walk('kyoHikyaku', 'uuuuuuu'),
+  { type: 'say', lines: ['飛脚「{hero}様でございやすか！ 清水湊の一家から、急ぎの文でございやす！」'] },
+  {
+    type: 'say',
+    lines: ['{hero}「……『辰五郎親分、殺される。下手人は、からくりの腕を持つ男』」', '{hero}〈悲〉「……親分が」'],
+  },
+  partyOut('kasumi'),
   {
     type: 'say',
     lines: [
-      '鬼の巣から、鬼の姿を解かれた河原の人々が、都へ戻ってきた。',
-      '玄道「斬らずに済んだ。……仏の慈悲ってやつも、たまには役に立つもんだ」',
-      'そこへ、汗まみれの飛脚が駆け込んできた。',
-      '飛脚「{hero}様でございやすか！ 清水湊の一家から、急ぎの文でございやす！」',
-      '文には、震える字でこう書かれていた。',
-      '「辰五郎親分、殺される。下手人は、からくりの腕を持つ男」',
-      '{hero}〈悲〉「……親分が」',
       '霞「夜叉丸の言ってた『江戸の御老中』の手の者か……。お凛さんが心配だよ」',
       '玄道「清水湊か。わしも行こう。仏の弔いなら、本職だ」',
-      '清水湊へ急ごう。',
     ],
   },
+  { type: 'say', lines: ['{hero}「清水湊へ急ぐぜ」'], linesF: ['{hero}「清水湊へ急ごう」'] },
+  // 飛脚は、来た道を南へ戻っていく
+  walk('kyoHikyaku', 'ddddddd'),
+  vanish('kyoHikyaku'),
+  ...partyIn('kasumi'),
+  ...partyIn('gendo'),
   { type: 'setFlag', flag: 'chapter3Cleared' },
 ];
 
@@ -1661,13 +1698,31 @@ export const EVENTS: Record<string, EventDef> = {
   gendoMeet: {
     id: 'gendoMeet',
     steps: [
+      // 河原の葦の陰で、大柄な坊主が酒徳利を抱えて寝ている
+      { type: 'say', lines: ['ぐおぉ……ぐおぉ……'] },
+      partyOut('kasumi'),
+      faceTo('kasumi', 'gendoKawara'),
+      { type: 'say', lines: ['霞「坊さんが、酒徳利を抱えて高いびきだよ。……ちょいと、起きな」'] },
+      faceTo('gendoKawara', 'hero'),
       {
         type: 'say',
         lines: [
-          '河原の葦の陰で、大柄な坊主が酒徳利を抱えて高いびきをかいている。',
           '坊主「……ん？ なんだ、おぬしら。酒なら分けてやらんぞ」',
           '坊主「わしは玄道。寺を追い出された生臭坊主よ。今は、河原の衆に頼まれて鬼退治を請け負っておる」',
-          '{hero}は、駿府と名古屋で見てきた、人をからくりや化け物に変える一味のことを話した。',
+        ],
+      },
+      {
+        type: 'say',
+        lines: [
+          '{hero}「駿府でも名古屋でも、人をからくりや化け物に変える一味を見てきた。都の鬼も、そいつらの仕業かもしれねえ」',
+        ],
+        linesF: [
+          '{hero}「駿府でも名古屋でも、人をからくりや化け物に変える一味を見てきたよ。都の鬼も、そいつらの仕業かもしれない」',
+        ],
+      },
+      {
+        type: 'say',
+        lines: [
           '玄道〈悲〉「……やはりな。あの鬼ども、斬りかかってきても、目が泣いておった。あれは人だ。妖術で鬼の姿に変えられた、河原の衆よ」',
           '玄道「わしは、あやつらを斬らずに祓う。手伝ってくれるなら、ありがたい」',
           '玄道が仲間に加わった！',
@@ -1675,6 +1730,9 @@ export const EVENTS: Record<string, EventDef> = {
         ],
       },
       { type: 'join', member: 'gendo' },
+      ...partyIn('kasumi'),
+      { type: 'walk', who: 'gendoKawara', to: 'hero' },
+      vanish('gendoKawara'),
       { type: 'setFlag', flag: 'gendoJoined' },
     ],
   },
@@ -1686,67 +1744,149 @@ export const EVENTS: Record<string, EventDef> = {
         type: 'if',
         flag: 'gendoJoined',
         then: [
-          {
-            type: 'say',
-            lines: ['門の跡の暗がりから、赤い鬼が二匹、のそりと現れた。', '玄道「来おったな。斬るなよ、{hero}。弱らせれば、わしが祓う」'],
-          },
+          // 門の跡の基壇の両脇の暗がりから、赤い鬼が二匹、のそりと現れる
+          { type: 'say', lines: ['ズシン……ズシン……'] },
+          enemyActor('rashomonOniA', 'akaoni', 11, 9),
+          enemyActor('rashomonOniB', 'akaoni', 24, 9),
+          { type: 'walk', who: 'rashomonOniA', path: 'rrrrrr', wait: false },
+          walk('rashomonOniB', 'llllll'),
+          partyOut('gendo'),
+          { type: 'say', lines: ['玄道「来おったな。斬るなよ、{hero}。弱らせれば、わしが祓う」'] },
           { type: 'battle', enemies: ['akaoni', 'akaoni'], level: 10 },
+          // 玄道が数珠を鳴らして経を唱えると、鬼の角が落ち、痩せた河原の男たちの姿に戻る
+          faceTo('gendo', 'rashomonOniA'),
+          { type: 'say', lines: ['玄道「オン・アビラウンケン……。迷うな。人に戻れ」', 'シャラン……'] },
+          vanish('rashomonOniA'),
+          vanish('rashomonOniB'),
+          actor('rashomonOtokoA', 'npc_ninsoku', 17, 9, 'down'),
+          actor('rashomonOtokoB', 'npc_ninsoku', 18, 9, 'down'),
           {
             type: 'say',
             lines: [
-              '玄道が数珠を鳴らし、経を唱えた。',
-              '鬼の角がぼろりと落ち、赤い肌が人の色に戻っていく。地面に倒れていたのは、痩せた河原の男たちだった。',
               '男「……お坊さま……わしら、北の山の古寺で、白い面の男に……」',
-              '霞「白い面……夜叉丸だ」',
-              '玄道「北の山の古寺か。鬼の巣とはよく言ったものよ。都の役人も、もう道をふさいではおるまい」',
             ],
           },
+          partyOut('kasumi'),
+          {
+            type: 'say',
+            lines: [
+              '霞「白い面……夜叉丸だ」',
+              '玄道「北の山の古寺か。鬼の巣とはよく言ったものよ。都の役人も、もう道をふさいではおるまい」',
+              '玄道「おぬしらは、河原へ帰って休め。家の者が待っておろう」',
+              '男「へ、へえ……！ ありがとうございます……！」',
+            ],
+          },
+          ...partyIn('kasumi'),
+          ...partyIn('gendo'),
           { type: 'setFlag', flag: 'rashomonCleared' },
         ],
-        // 玄道に会う前は、鬼の気配だけ（祓える者がいないので戦わない）
-        else: [{ type: 'say', lines: ['門の跡の暗がりに、何か大きなものがうずくまっている気配がする。', '霞「……鬼だ。斬っちまっていいのかい、これ。鴨川の坊さんに話を聞いてからにしよう」'] }],
+        // 玄道に会う前は、鬼の影だけ（祓える者がいないので戦わない）
+        else: [
+          enemyActor('rashomonKage', 'akaoni', 18, 7),
+          partyOut('kasumi'),
+          faceTo('kasumi', 'rashomonKage'),
+          {
+            type: 'say',
+            lines: [
+              '霞「門の跡の暗がりに、何か大きなものがうずくまってる……鬼だ」',
+              '霞「……斬っちまっていいのかい、これ。鴨川の坊さんに話を聞いてからにしよう」',
+            ],
+          },
+          // 鬼の影は、門の跡の奥の暗がりへ引っ込む
+          walk('rashomonKage', 'u'),
+          vanish('rashomonKage'),
+          ...partyIn('kasumi'),
+        ],
       },
     ],
   },
-  /** 鬼の巣の本堂。夜叉丸が黒幕をほのめかして酒呑の大鬼を呼び、姿を消す（第 3 章のボス）。負けて出直したときは大鬼だけが待つ。 */
+  /**
+   * 鬼の巣の本堂。夜叉丸が黒幕をほのめかして酒呑の大鬼を呼び、姿を消す（第 3 章のボス）。負けて出直したときは大鬼だけが待つ。
+   * 勝つと北の峠道の口（京の 19, 5）へ移る（kyoEnter が第 3 章の終わりを行う）。
+   */
   shuten: {
     id: 'shuten',
     steps: [
+      face('hero', 'up'),
       {
         type: 'if',
         flag: 'yashamaruKyoFled',
-        then: [{ type: 'say', lines: ['本堂では、酒呑の大鬼が大盃をあおって待ち構えていた。', '玄道「酔っておっても、わしは負けんぞ」'] }],
+        then: [
+          // 本堂では、酒呑の大鬼が大盃をあおって待ち構えている
+          enemyActor('shuten', 'shuten', 20, 5),
+          partyOut('gendo'),
+          { type: 'say', lines: ['玄道「酒呑の大鬼め、大盃をあおって待っておったか。……酔っておっても、わしは負けんぞ」'] },
+          ...partyIn('gendo'),
+        ],
         else: [
+          // 崩れかけた本堂の奥に、白い面の男（kyoYashamaru）が座している
+          faceTo('kyoYashamaru', 'hero'),
+          {
+            type: 'say',
+            lines: ['夜叉丸「また会ったな、清水の渡世人。駿府の次は名古屋、名古屋の次は都か。よくもまあ、嗅ぎ回る」'],
+          },
+          partyOut('kasumi'),
           {
             type: 'say',
             lines: [
-              '崩れかけた本堂に、白い面の男が座していた。',
-              '夜叉丸「また会ったな、清水の渡世人。駿府の次は名古屋、名古屋の次は都か。よくもまあ、嗅ぎ回る」',
               '霞「夜叉丸……あんたの後ろにいるのは誰だい」',
               '夜叉丸「ふふ。……江戸の御城の、ずっと上の方の御方さ。老中さまがお望みなのは、ゼンマイで動く天下よ」',
               '夜叉丸「おれは命じられたとおりにやるだけだ。……おれにも、守らにゃならんものがあるんでな」',
-              '夜叉丸が印を結ぶと、本堂の床が裂け、巨大な鬼が這い出してきた。',
-              '夜叉丸「酒呑の大鬼。都の鬼どもの親玉だ。遊んでやれ」',
-              '夜叉丸の姿は、護摩の煙とともにかき消えた。',
             ],
           },
+          // 夜叉丸が印を結ぶと、本堂の床が裂け、巨大な鬼が這い出してくる
+          { type: 'say', lines: ['ゴゴゴゴ……！'] },
+          enemyActor('shuten', 'shuten', 20, 5),
+          { type: 'say', lines: ['夜叉丸「酒呑の大鬼。都の鬼どもの親玉だ。遊んでやれ」'] },
+          // 護摩の煙とともに、夜叉丸の姿がかき消える
+          { type: 'say', lines: ['ボウッ……'] },
+          vanish('kyoYashamaru'),
+          { type: 'say', lines: ['霞〈怒〉「待ちな！ ……ちっ、また煙に巻かれた」'] },
+          ...partyIn('kasumi'),
           { type: 'setFlag', flag: 'yashamaruKyoFled' },
         ],
       },
+      walk('shuten', 'd'),
+      { type: 'say', lines: ['ウオォォォ……！'] },
       { type: 'battle', enemies: ['shuten'], level: 13 },
+      { type: 'say', lines: ['ズシン……！'] },
+      partyOut('gendo'),
+      faceTo('gendo', 'shuten'),
+      { type: 'say', lines: ['玄道〈悲〉「……おぬしも、元は人であったか」', '玄道「オン・アビラウンケン……。迷わず、ゆけ」'] },
+      // 大鬼の体は、ほどけるように崩れて消える
+      vanish('shuten'),
+      partyOut('kasumi'),
+      {
+        type: 'say',
+        lines: ['霞「鬼の体が、ほどけるように消えちまった……」', '霞「……待って、本堂の奥の牢に、人が囚われてる！」'],
+      },
+      // 鬼に変えられかけていた河原の人々。玄道が一人ずつ祓い、縄を解く
+      actor('oninosuToraware1', 'npc_ninsoku', 15, 4, 'down'),
+      actor('oninosuToraware2', 'npc_musume', 23, 4, 'down'),
+      actor('oninosuToraware3', 'npc_rojin', 25, 5, 'down'),
       {
         type: 'say',
         lines: [
-          '酒呑の大鬼は、地響きを立てて倒れた。',
-          '玄道〈悲〉「……おぬしも、元は人であったか」',
-          '玄道が経を唱えると、大鬼の体はほどけるように崩れ、あとには古い大盃だけが残った。',
-          '本堂の奥の牢には、鬼に変えられかけていた河原の人々が囚われていた。玄道が一人ずつ祓い、縄を解いた。',
-          '玄道「江戸の老中、か。……寺を追われたわしが、また天下の大事に首を突っ込むとはな」',
-          '玄道「まあよい。乗りかかった舟だ。おぬしらに付き合おう」',
-          '都へ戻ろう。',
+          '玄道「じっとしておれ。今、祓ってやる。……オン・アビラウンケン」',
+          'シャラン……',
+          '娘「角が……消えた。人の手に戻っとる……！」',
+          '老人「お坊さま、皆さま……ありがとうございます……」',
         ],
       },
+      faceTo('gendo', 'hero'),
+      {
+        type: 'say',
+        lines: [
+          '玄道「江戸の老中、か。……寺を追われたわしが、また天下の大事に首を突っ込むとはな」',
+          '玄道「まあよい。乗りかかった舟だ。おぬしらに付き合おう」',
+          '霞「さあ、皆を連れて都へ帰ろう」',
+        ],
+      },
+      ...partyIn('kasumi'),
+      ...partyIn('gendo'),
       { type: 'setFlag', flag: 'shutenDefeated' },
+      // 囚われていた人々を連れて山を下り、京の北の峠道の口へ（京に入ったときのイベントで第 3 章が終わる）
+      { type: 'warp', mapId: 'kyo', x: 19, y: 5 },
     ],
   },
   /** 清水湊に入ったとき。初めてなら序章の始まり、第 3 章を終えていれば辰五郎の弔い（第 4 章の始まり）。 */
