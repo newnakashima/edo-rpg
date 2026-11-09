@@ -9,7 +9,7 @@ import { EVENTS } from './events';
 import { TATSUGORO_JINGI } from './oyabunRequests';
 import { isKnownItem } from './items';
 import { SKILLS } from './skills';
-import { MAPS, npcLines, npcVisible, tileAt } from './maps';
+import { MAPS, npcLines, npcVisible, respawnPoint, tileAt } from './maps';
 import { EventRunner } from '../systems/eventScript';
 import { newGame, type GameState } from '../systems/gameState';
 import { createMember, memberLevel } from '../systems/party';
@@ -309,6 +309,35 @@ describe('第 2 章の流れ', () => {
     expect(tileAt(MAPS.world!, warp!.x, warp!.y)?.blocked).toBe(false);
     // 負けたら渡らない
     expect(requests('oigawa', start, 'defeat').some((r) => r.kind === 'warp')).toBe(false);
+  });
+
+  it('名古屋に着く前に東海道で全滅しても、着いたときの町の人は戻った主人公の見える所に出る', () => {
+    const back = respawnPoint('world', 95, 30, start.flags);
+    expect(back.mapId).toBe('nagoya');
+    const town = MAPS.world!.towns!.find((t) => t.name === '名古屋')!.to!;
+    let crowd = 0;
+    for (const step of EVENTS.nagoyaEnter!.steps.flatMap((s) => (s.type === 'if' ? [...s.then, ...(s.else ?? [])] : [s])).flatMap((s) => (s.type === 'if' ? [...s.then, ...(s.else ?? [])] : [s]))) {
+      if (step.type !== 'actor' || step.x === undefined || step.y === undefined || !step.id.startsWith('nagoyaYajiuma')) continue;
+      crowd++;
+      // 画面は横 24 マス・縦 13 マス余り。入口から入ったときも、全滅で戻ったときも見える
+      for (const p of [back, town]) {
+        expect(Math.abs(step.x - p.x), step.id).toBeLessThanOrEqual(10);
+        expect(Math.abs(step.y - p.y), step.id).toBeLessThanOrEqual(5);
+      }
+    }
+    expect(crowd).toBe(3);
+  });
+
+  it('大凧で飛ぶと、天守の欄干の金太の隣に着き、金太が話す', () => {
+    const clue = { ...start, flags: { ...start.flags, kintaMet: true, urokoClue: true } };
+    const list = requests('kinta', clue);
+    const w = list.findIndex((r) => r.kind === 'warp');
+    const warp = list[w] as { mapId: string; x: number; y: number };
+    expect(warp.mapId).toBe('tenshu');
+    const kinta = MAPS.tenshu!.npcs.find((n) => n.id === 'tenshuKinta')!;
+    expect(Math.abs(kinta.x - warp.x) + Math.abs(kinta.y - warp.y)).toBe(1);
+    const after = list.slice(w + 1).flatMap((r) => (r.kind === 'say' ? r.pages : [])).join('');
+    expect(after).toContain('金太「着いた');
   });
 
   it('天守に着くと、欄干で金太が待つ（大凧で飛んだあと、金鯱からくりを倒すまで）', () => {
