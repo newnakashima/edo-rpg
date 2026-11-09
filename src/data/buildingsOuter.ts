@@ -54,8 +54,8 @@ export const YORIKI_BUILDINGS: BuildingDef[] = [
         y: 12,
         color: 0x4a4a5a,
         sprite: 'npc_yakunin',
-        lines: ['若党「旦那様の言いつけで、夜ごと蔵の前で荷車の番をしております。中身を伺っても、『知らずともよい』の一点張りで……」'],
-        after: { flag: 'meiboFound', lines: ['若党「蔵から、さらわれた人の名簿が出たとか。わたしは荷の番をしていただけです。何も知らなかった……本当です」'] },
+        lines: ['若党「旦那様の言いつけで、夜は門から蔵までの見張りをしております。荷を届けに来るのは、決まって駿府の一座の者で……。何の荷かと伺っても、『知らずともよい』の一点張りです」'],
+        after: { flag: 'meiboFound', lines: ['若党「蔵から、さらわれた人の名簿が出たとか。わたしは見張りをしていただけです。何も知らなかった……本当です」'] },
         later: { flag: 'chapter1Cleared', lines: ['若党「旦那様がお役御免となり、わたしもお暇を出されました。次の奉公先を探さねばなりませぬ」'] },
       },
       ...furniture('yorikiOmoya', [
@@ -91,7 +91,7 @@ export const YORIKI_BUILDINGS: BuildingDef[] = [
         color: 0xa07a8a,
         sprite: 'npc_okami',
         lines: ['女中「奥の蔵には、夜になると重たい葛籠がいくつも運び込まれるんです。中から、こつこつと音が……」'],
-        after: { flag: 'meiboFound', lines: ['女中「あの葛籠の中身が、からくりの部品と、さらわれた人たちの名簿だったなんて……。こつこつという音は、なんだったんでしょう」'] },
+        after: { flag: 'meiboFound', lines: ['女中「あの荷の中身が、からくりの部品だったなんて……。蔵の奥からは、さらわれた人たちの名簿まで出たそうです。こつこつという音は、なんだったんでしょう」'] },
       },
       {
         id: 'yorikiChugen',
@@ -304,7 +304,7 @@ export const DEJIMA_BUILDINGS: BuildingDef[] = [
         y: 3,
         color: 0x6a6a5a,
         sprite: 'npc_ninsoku',
-        lines: ['蔵番「この蔵には砂糖と更紗が山ほど入っとる。……例の書は、隣の書物蔵から消えたんじゃ」'],
+        lines: ['蔵番「この蔵には砂糖と更紗が山ほど入っとるばい。……例の書は、隣の書物蔵から消えたとです」'],
       },
       {
         id: 'dejimaNiguraNinsoku',
@@ -398,7 +398,7 @@ export const DEJIMA_BUILDINGS: BuildingDef[] = [
 ];
 
 export const KITAMAEBUNE_BUILDINGS: BuildingDef[] = [
-  // 屋形: 奥の左に板の間の船頭の間（船霊さまの祠と船箪笥）、右に畳の客の間、手前に竈のある板の間
+  // 屋形: 奥に板の間の船頭の間（船霊さまの祠と船箪笥）、中ほどに畳の客の間、手前に竈のある板の間（縦に三つの間が並ぶ）
   {
     door: { x: 9, y: 10 },
     front: { x: 10, y: 10 },
@@ -441,16 +441,16 @@ export const KITAMAEBUNE_BUILDINGS: BuildingDef[] = [
       },
       {
         id: 'kitamaeKashiki',
-        name: '炊',
+        name: '炊（かしき）',
         x: 6,
         y: 10,
         color: 0x7a6a5a,
         sprite: 'npc_kodomo',
-        lines: ['炊「おいらは炊（かしき）。船の飯炊きじゃ。ええ船頭になるには、まず飯炊きから修業するんよ」'],
+        lines: ['炊「おいらは船の飯炊きじゃ。ええ船頭になるには、まず飯炊きから修業するんよ」'],
       },
       ...furniture('kitamaeYakata', [
         { name: '船箪笥', x: 1, y: 1, object: 'tansu', lines: ['証文や金をしまう、頑丈な船箪笥だ。船が沈んでも、水に浮くように作ってあるという。'] },
-        { name: '祠', x: 6, y: 1, object: 'hokora', lines: ['船霊さまを祀った小さな祠だ。船乗りの守り神で、帆柱の根もとに納めるものを、ここにもお祀りしているらしい。'] },
+        { name: '祠', x: 6, y: 1, object: 'hokora', lines: ['船霊さまを祀った小さな祠だ。船乗りの守り神で、帆柱の根もとにも納めてあるという。'] },
         { name: '木箱', x: 6, y: 5, object: 'kibako', lines: ['薬売りの荷箱だ。小さな引き出しに、丸薬や膏薬がぎっしり詰まっている。'] },
         { name: '竈', x: 6, y: 9, object: 'kamado', lines: ['船の竈だ。煮炊きの火には、船乗りがいちばん気を配るという。'] },
       ]),

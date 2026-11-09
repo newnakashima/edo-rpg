@@ -354,6 +354,19 @@ describe('町でないマップの建物の屋内（与力・黒田の屋敷、�
     expect(MAPS.dejimaNigura!.npcs.some((n) => n.id === 'dejimaKura')).toBe(true);
     const moved = ['kapitan', 'tsuji', 'dejimaShop', 'dejimaDoctor', 'dejimaKura'];
     expect(MAPS.dejima!.npcs.some((n) => moved.includes(n.id))).toBe(false);
+    // 屋内の人は、名簿が見つかる・第 1 章を終える・通詞の話を聞く・南蛮寺跡の機械を止める・船幽霊に会うと台詞が変わる
+    for (const [map, id, after, later] of [
+      ['yorikiOmoya', 'yorikiOkugata', 'meiboFound', 'chapter1Cleared'],
+      ['yorikiOmoya', 'yorikiWakato', 'meiboFound', 'chapter1Cleared'],
+      ['yorikiHokoninNagaya', 'yorikiChugen', 'meiboFound', 'chapter1Cleared'],
+      ['yorikiHokoninNagaya', 'yorikiJochu', 'meiboFound', undefined],
+      ['dejimaShomotsugura', 'dejimaShomotsuBan', 'dejimaHeard', undefined],
+      ['dejimaKapitanBeya', 'dejimaShoki', 'nanbanOzutsuDefeated', undefined],
+      ['kitamaeYakata', 'kitamaeYakataSendo', 'funayureiMet', undefined],
+    ] as const) {
+      const npc = MAPS[map]!.npcs.find((n) => n.id === id);
+      expect({ after: npc?.after?.flag, later: npc?.later?.flag }, id).toEqual({ after, later });
+    }
     // 商館の看板は、今までどおり商館の戸の左の壁に掛かる
     expect(MAPS.dejima!.exits.find((e) => e.to === 'dejimaShokan')?.sign).toBe('shokan');
   });
@@ -373,7 +386,7 @@ describe('町でないマップの建物の屋内（与力・黒田の屋敷、�
     const entrance = ship.exits.find((e) => e.to === 'kitamaeYakata')!;
     expect({ x: entrance.x, y: entrance.y }).toEqual({ x: 9, y: 10 });
     expect(MAPS.kitamaeYakata!.exits[0]).toMatchObject({ to: 'kitamaebune', toX: 10, toY: 10 });
-    expect(tileAt(ship, 9, 11)?.blocked).toBe(true);
+    expect(ship.rows[11]![9]).toBe('W');
     expect(MAPS.kitamaeYakata!.encounter).toBeUndefined();
     expect(MAPS.kitamaeYakata!.respawnMap).toBe('nagasaki');
   });
