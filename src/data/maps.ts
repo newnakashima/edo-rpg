@@ -2292,7 +2292,9 @@ MAPS.osaka = {
     { x: 53, y: 14, to: 'world', toX: 63, toY: 34 },
     { x: 53, y: 15, to: 'world', toX: 63, toY: 34 },
   ],
-  respawn: { x: 6, y: 20 },
+  // 全滅で戻る場所は東の入口のそば（大坂に着く前に街道で全滅したときも、着いたときの町人と霞の場面が画面の中で起きる）
+  // 見送り: 変更前のセーブで百俵からくりを倒したあと米蔵の地下で全滅すると、第 5 章の終わりがここで起き、橋の人が画面の外になる
+  respawn: { x: 49, y: 13 },
   onEnter: { event: 'osakaEnter', unless: 'chapter5Cleared' },
 };
 

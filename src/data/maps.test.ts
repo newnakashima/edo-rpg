@@ -1045,7 +1045,7 @@ describe('第 5 章の大坂', () => {
     }
   });
 
-  it('米蔵の地下で全滅したら大坂の旅籠の前に戻る', () => {
+  it('米蔵の地下で全滅したら大坂の東の入口のそばに戻る', () => {
     expect(respawnPoint('komeKura')).toEqual({ mapId: 'osaka', ...osaka.respawn });
   });
 });

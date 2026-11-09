@@ -32,12 +32,14 @@ function vanish(who: string): EventStep {
 function wait(ms: number): EventStep {
   return { type: 'wait', ms };
 }
+/** フィールドで姿を見せる一行の仲間（兵庫は第 5 章のゲスト）。 */
+type PartySprite = 'kasumi' | 'gendo' | 'orin' | 'hyogo';
 /** 一行の仲間が主人公から出て隣に立つ（台詞を言う間、姿を見せる）。 */
-function partyOut(member: 'kasumi' | 'gendo' | 'orin'): EventStep {
+function partyOut(member: PartySprite): EventStep {
   return actor(member, member);
 }
 /** 出ていた仲間が主人公のところへ戻って見えなくなる。 */
-function partyIn(member: 'kasumi' | 'gendo' | 'orin'): EventStep[] {
+function partyIn(member: PartySprite): EventStep[] {
   return [{ type: 'walk', who: member, to: 'hero' }, vanish(member)];
 }
 
@@ -587,49 +589,132 @@ const IGA_ARRIVE: EventStep[] = [
   { type: 'setFlag', flag: 'igaArrived' },
 ];
 
-/** 大坂に初めて入ったとき（第 5 章の始まり）。米の値が吊り上がっている。霞が江戸の上役へ報告に向かい、一時抜ける。 */
+/**
+ * 大坂に初めて入ったとき（第 5 章の始まり）。米の値が吊り上がっている。霞が江戸の上役へ報告に向かい、一時抜ける。
+ * 東の入口（51, 15。全滅時の戻り先は 49, 13）のそばで、空の米びつを抱えた町人が嘆いて西へ帰り、霞は東の街道へ戻っていく。
+ */
 const OSAKA_ARRIVE: EventStep[] = [
+  // 町のほう（西）を向く。仲間は主人公の上か下に出るので、霞が東へ戻る道（横、縦の順）が主人公のマスを通らない
+  face('hero', 'left'),
+  actor('osakaKomeOkami', 'npc_okami', 47, 16, 'right'),
+  actor('osakaKomeNinsoku', 'npc_ninsoku', 46, 16, 'right'),
   {
     type: 'say',
     lines: [
-      '天下の台所、大坂。だが、米問屋の並ぶ通りには、空の米びつを抱えた町人たちが行列をつくっていた。',
-      '町人「米が一升、去年の三倍や……。蔵には米が山ほどある言うのに、問屋はちっとも売らへん」',
-      '霞「権六は大坂へ向かう手はずだった。……米の買い占めにも、鷲尾の手が回ってるんだろうね」',
-      '霞「あたしは一度、江戸の上役に知らせに行く。鷲尾が老中の座で何をしてるか、上の方にも分かってもらわなきゃならない」',
-      'お凛「一人で大丈夫なのかい」',
-      '霞「抜け忍の足を、なめてもらっちゃ困るよ。……西へ行くなら、広島で落ち合おう。それまで、くたばるんじゃないよ」',
-      '霞が一時、一行を離れた。',
-      '玄道「さて、わしらはわしらで、この町の飢えをなんとかせねばな」',
+      'おかみ「米が一升、去年の三倍や……。蔵には米が山ほどある言うのに、問屋はちっとも売らへん」',
+      '町人「大黒屋の前に朝から並んでも、売り切れや言われて、空の米びつ抱えて帰るだけや」',
     ],
   },
+  // 二人は、空の米びつを抱えて船場の長屋のほうへ帰っていく
+  { type: 'walk', who: 'osakaKomeOkami', path: 'llllll', wait: false },
+  walk('osakaKomeNinsoku', 'llllll'),
+  vanish('osakaKomeOkami'),
+  vanish('osakaKomeNinsoku'),
+  partyOut('kasumi'),
+  {
+    type: 'say',
+    lines: [
+      '霞「天下の台所が、米びつの底をさらってるなんてね……。権六は大坂へ向かう手はずだった。米の買い占めにも、鷲尾の手が回ってるんだろうね」',
+      '霞「あたしは一度、江戸の上役に知らせに行く。鷲尾が老中の座で何をしてるか、上の方にも分かってもらわなきゃならない」',
+    ],
+  },
+  partyOut('orin'),
+  faceTo('orin', 'kasumi'),
+  faceTo('kasumi', 'orin'),
+  { type: 'say', lines: ['お凛「一人で大丈夫なのかい」'] },
+  { type: 'say', lines: ['霞「抜け忍の足を、なめてもらっちゃ困るよ。……西へ行くなら、広島で落ち合おう。それまで、くたばるんじゃないよ」'] },
+  // 霞は、来た道を東の街道へ駆け戻っていく
+  { type: 'walk', who: 'kasumi', to: { x: 52, y: 15 } },
+  walk('kasumi', 'r'),
+  vanish('kasumi'),
   { type: 'leave', member: 'kasumi' },
+  { type: 'say', lines: ['霞が一時、一行を離れた。'] },
+  partyOut('gendo'),
+  { type: 'say', lines: ['玄道「さて、わしらはわしらで、この町の飢えをなんとかせねばな」'] },
+  ...partyIn('gendo'),
+  ...partyIn('orin'),
   { type: 'setFlag', flag: 'kasumiAway' },
   { type: 'setFlag', flag: 'osakaArrived' },
 ];
 
-/** 百俵からくりを倒して大坂に戻ったとき（第 5 章の終わり）。蜂起は止められず、兵庫は町を焼かぬよう自ら奉行所へ名乗り出る。 */
+/**
+ * 百俵からくりを倒して大坂に戻ったとき（第 5 章の終わり）。蜂起は止められず、兵庫は町を焼かぬよう自ら奉行所へ名乗り出る。
+ * 米蔵から出た北岸（26, 4）で始まる（百俵からくりの場面がここへ移す）。門弟たちが堂島川の橋の南から押し寄せ、兵庫が橋の上で止める。
+ */
 const OSAKA_CHAPTER_END: EventStep[] = [
+  // 橋（南）を向く。仲間は主人公の左右に出るので、蔵の戸（26, 3）や、飛脚の駆けてくる橋の道（x = 26）に重ならない
+  face('hero', 'down'),
+  // 夜明けとともに、町のあちこちで鬨の声が上がる
+  { type: 'say', lines: ['ワアアアッ……！'] },
+  actor('hyogo', 'hyogo', 27, 4, 'down'),
+  { type: 'say', lines: ['兵庫「……あの声は、わしの門弟たちか。止められなかったか」'] },
+  // 門弟たちが、船場の通りから橋のたもとへ駆けてくる
+  actor('osakaMonteiA', 'npc_ronin', 24, 12, 'up'),
+  actor('osakaMonteiB', 'npc_ronin', 27, 12, 'up'),
+  actor('osakaMonteiC', 'npc_merchant', 25, 13, 'up'),
+  { type: 'walk', who: 'osakaMonteiA', path: 'uuuu', wait: false },
+  { type: 'walk', who: 'osakaMonteiB', path: 'uuuu', wait: false },
+  walk('osakaMonteiC', 'uuuu'),
   {
     type: 'say',
     lines: [
-      '米蔵の地下の工場がつぶれた翌朝。夜明けとともに、町のあちこちで鬨の声が上がった。',
-      '兵庫の門弟たちが、大黒屋の蔵を打ちこわしに押し寄せたのだ。',
-      '兵庫「……止められなかったか。わしの教えた者たちだ」',
-      '門弟「先生！ 蔵に火を放ちましょう！ 鷲尾の手先どもを焼き払うんです！」',
-      '兵庫「ならん！ 火を放てば、町じゅうが焼ける。飢えた者が、今度は家まで失うのだ」',
-      '兵庫は門弟たちの前に立ちふさがり、刀を鞘ごと地に置いた。',
-      '兵庫「蔵の米は、町の者に配れ。……騒ぎの咎は、すべてこの榊兵庫が負う」',
-      '兵庫「{hero}殿。短い間だったが、ともに戦えてうれしかった。……鷲尾を、頼む」',
-      '兵庫は、ひとり奉行所の門をくぐっていった。',
-      '榊兵庫が一行を離れた。',
-      'お凛〈悲〉「……あんな立派なお侍が、どうして咎めを受けなきゃならないんだい」',
-      '玄道〈悲〉「……世の中の理不尽を、一人で背負って行きおった。わしら坊主より、よほど仏に近い」',
-      'そこへ飛脚が、霞からの文を届けにきた。',
-      '「江戸への知らせは済んだ。広島で待つ。南蛮のからくりの出どころを、長崎まで追う」',
-      '西国街道を西へ。広島で霞と落ち合おう。',
+      '門弟「先生！ 蔵の地下のからくりは潰れたと聞きました！ 今こそ大黒屋の蔵を打ちこわすときです！」',
+      '門弟「蔵に火を放ちましょう！ 鷲尾の手先どもを焼き払うんです！」',
     ],
   },
+  // 兵庫は橋の上へ下りて、門弟たちの前に立ちふさがる
+  walk('hyogo', 'dld'),
+  {
+    type: 'say',
+    lines: [
+      '兵庫「ならん！ 火を放てば、町じゅうが焼ける。飢えた者が、今度は家まで失うのだ」',
+      'カチャリ……',
+      '兵庫「この刀は、ここに置く。……蔵の米は、町の者に配れ。騒ぎの咎は、すべてこの榊兵庫が負う」',
+    ],
+  },
+  { type: 'say', lines: ['門弟「先生……！」'] },
+  faceTo('hyogo', 'hero'),
+  {
+    type: 'say',
+    lines: ['兵庫「{hero}殿。短い間だったが、ともに戦えてうれしかった。……鷲尾を、頼む」', '兵庫「わしは奉行所へ参る。……達者でな」'],
+  },
+  // 兵庫は橋を渡り、ひとりで奉行所へ向かっていく
+  walk('hyogo', 'dddddddd'),
+  vanish('hyogo'),
   { type: 'leave', member: 'hyogo' },
+  { type: 'say', lines: ['榊兵庫が一行を離れた。'] },
+  { type: 'say', lines: ['門弟「……蔵を開けて、米を配るんや。先生の言いつけや」'] },
+  { type: 'walk', who: 'osakaMonteiA', path: 'dddd', wait: false },
+  { type: 'walk', who: 'osakaMonteiB', path: 'dddd', wait: false },
+  walk('osakaMonteiC', 'ddd'),
+  wait(300),
+  vanish('osakaMonteiA'),
+  vanish('osakaMonteiB'),
+  vanish('osakaMonteiC'),
+  partyOut('orin'),
+  { type: 'say', lines: ['お凛〈悲〉「……あんな立派なお侍が、どうして咎めを受けなきゃならないんだい」'] },
+  partyOut('gendo'),
+  { type: 'say', lines: ['玄道〈悲〉「……世の中の理不尽を、一人で背負って行きおった。わしら坊主より、よほど仏に近い」'] },
+  // 入れ違いに、飛脚が橋を渡って駆けてくる
+  actor('osakaHikyaku', 'npc_hikyaku', 26, 13, 'up'),
+  // 主人公の 2 マス手前（26, 6）で止まる
+  walk('osakaHikyaku', 'uuuuuuu'),
+  { type: 'say', lines: ['飛脚「旅の衆！ 霞というお人から、文をお預かりしてまいりやした！」'] },
+  walk('osakaHikyaku', 'ddddddd'),
+  vanish('osakaHikyaku'),
+  {
+    type: 'say',
+    lines: [
+      '{hero}「霞からだ。……『江戸への知らせは済んだ。広島で待つ。南蛮のからくりの出どころを、長崎まで追う』」',
+      '{hero}「西国街道を西へ、広島で霞と落ち合おう」',
+    ],
+    linesF: [
+      '{hero}「霞からだよ。……『江戸への知らせは済んだ。広島で待つ。南蛮のからくりの出どころを、長崎まで追う』」',
+      '{hero}「西国街道を西へ、広島で霞と落ち合おう」',
+    ],
+  },
+  ...partyIn('gendo'),
+  ...partyIn('orin'),
   { type: 'setFlag', flag: 'chapter5Cleared' },
 ];
 
@@ -2105,60 +2190,97 @@ export const EVENTS: Record<string, EventDef> = {
       },
     ],
   },
-  /** 長屋の私塾で、元与力の侍・榊兵庫と会う。兵庫が一時加入（ゲスト）し、米蔵の用心棒がどく。 */
+  /**
+   * 長屋の私塾で、元与力の侍・榊兵庫（hyogoJuku、私塾の 4, 2）と会う。兵庫が一時加入（ゲスト）し、米蔵の用心棒がどく。
+   * 兵庫に話しかけて始まる。門弟に講じ終えてから振り向き、加わると主人公のところへ歩いて消える。
+   */
   hyogoMeet: {
     id: 'hyogoMeet',
     steps: [
+      { type: 'say', lines: ['兵庫「……民の飢えを見て見ぬふりをするは、学ぶ者の恥と知れ。今日はここまでとする」'] },
+      faceTo('hyogoJuku', 'hero'),
+      { type: 'say', lines: ['兵庫「……旅の方か。わしは榊兵庫。元は町奉行所の与力だったが、今はこうして子らに読み書きを教えておる」'] },
       {
         type: 'say',
         lines: [
-          '長屋の奥の小さな私塾で、背筋の伸びた侍が、門弟たちに書を講じていた。',
-          '侍「……旅の方か。わしは榊兵庫。元は町奉行所の与力だったが、今はこうして子らに読み書きを教えておる」',
-          '{hero}は、鷲尾の手先が米を買い占めていること、各地でからくりを悪用していることを話した。',
+          '{hero}「あっしらは、鷲尾って老中の手先を追ってる。駿府でも名古屋でも京でも、からくりで人を食い物にしてやがった」',
+          '{hero}「この町の米の買い占めも、奴らの仕業じゃねえかと思いやしてね」',
+        ],
+        linesF: [
+          '{hero}「あたしらは、鷲尾って老中の手先を追ってるんだ。駿府でも名古屋でも京でも、からくりで人を食い物にしてた」',
+          '{hero}「この町の米の買い占めも、あいつらの仕業じゃないかと思ってね」',
+        ],
+      },
+      {
+        type: 'say',
+        lines: [
           '兵庫「やはりか。大黒屋の蔵の地下では、夜な夜な歯車の音がする。米を砕いて、からくりの油にしておるらしい」',
           '兵庫「奉行所に訴えても、上から握りつぶされた。……門弟たちは、蔵を打ちこわせと息巻いておる。わしも、もはやそれしかないかと考えておった」',
-          '玄道「打ちこわしは、火が出る。町ごと焼けるぞ」',
+        ],
+      },
+      faceTo('osakaJukuMontei1', 'hyogoJuku'),
+      { type: 'say', lines: ['門弟「先生！ やるなら今です。わしらは、いつでも蔵へ押しかけまっせ！」'] },
+      partyOut('gendo'),
+      faceTo('gendo', 'hyogoJuku'),
+      { type: 'say', lines: ['玄道「打ちこわしは、火が出る。町ごと焼けるぞ」'] },
+      {
+        type: 'say',
+        lines: [
           '兵庫「分かっておる。だから迷っておるのだ。……地下のからくり工場さえつぶせば、米は町に戻せる。手を貸してはもらえぬか」',
           '榊兵庫が一時、一行に加わった！（兵庫の装備は変えられない）',
           '兵庫「大黒屋の蔵は、町の北だ。用心棒どもは、わしの顔を見ればどく。元与力の顔も、まだ少しは役に立つ」',
         ],
       },
       { type: 'join', member: 'hyogo' },
+      faceTo('hyogoJuku', 'osakaJukuMontei1'),
+      { type: 'say', lines: ['兵庫「おまえたちは、ここで待て。……決して、早まるでないぞ」'] },
+      ...partyIn('gendo'),
+      { type: 'walk', who: 'hyogoJuku', to: 'hero' },
+      vanish('hyogoJuku'),
       { type: 'setFlag', flag: 'hyogoJoined' },
     ],
   },
-  /** 米蔵の地下のからくり工場の奥で待つ百俵からくり（第 5 章のボス）。負けて出直したときは口上を短くする。 */
+  /**
+   * 米蔵の地下のからくり工場の奥で待つ百俵からくり（第 5 章のボス）。負けて出直したときは口上を短くする。
+   * 奥へ上がる細い段（34, 12 か 34, 13）で始まり、工場の奥の俵の山が立ち上がって歩いてくる。勝つと北岸の蔵の前（大坂の 26, 4）へ移る（osakaEnter が第 5 章の終わりを行う）。
+   */
   hyakuhyo: {
     id: 'hyakuhyo',
     steps: [
+      face('hero', 'right'),
+      // 歯車のうなりとともに、天井まで積まれた俵の山がきしみながら立ち上がる
+      { type: 'say', lines: ['ギリ……ギリギリ……'] },
+      enemyActor('komeKuraHyakuhyo', 'hyakuhyo', 40, 13),
+      walk('komeKuraHyakuhyo', 'll'),
+      partyOut('hyogo'),
+      faceTo('hyogo', 'komeKuraHyakuhyo'),
+      partyOut('orin'),
+      faceTo('orin', 'komeKuraHyakuhyo'),
       {
         type: 'if',
         flag: 'hyakuhyoMet',
-        then: [{ type: 'say', lines: ['俵の山が、ふたたびきしみながら立ち上がった。', '兵庫「今度こそ、止めてみせる」'] }],
+        then: [{ type: 'say', lines: ['兵庫「また立ち上がるか。……今度こそ、止めてみせる」'] }],
         else: [
-          {
-            type: 'say',
-            lines: [
-              '工場の奥に、米俵が天井まで積み上げられていた。',
-              '歯車のうなりとともに、俵の山がきしみながら立ち上がる。百の俵を鎧のようにまとった、巨大なからくりだ。',
-              '兵庫「これが、町の米を食らう化け物か」',
-              'お凛〈怒〉「米を返してもらうよ！」',
-            ],
-          },
+          { type: 'say', lines: ['兵庫「百の米俵を、鎧のようにまとっておるのか……。これが、町の米を食らう化け物の正体か」'] },
+          { type: 'say', lines: ['お凛〈怒〉「米を返してもらうよ！」'] },
           { type: 'setFlag', flag: 'hyakuhyoMet' },
         ],
       },
       { type: 'battle', enemies: ['hyakuhyo'], level: 19 },
-      {
-        type: 'say',
-        lines: [
-          '百俵からくりは、俵をまき散らして崩れ落ちた。歯車が止まり、工場が静まり返る。',
-          '兵庫「……これで、米は町に戻せる。あとは、門弟たちを説き伏せるだけだ」',
-          '玄道「火を出さずに済めばよいがな」',
-          '町へ戻ろう。',
-        ],
-      },
+      // 百俵からくりは俵をまき散らして崩れ落ち、歯車が止まる
+      { type: 'say', lines: ['ガラガラガラ……！'] },
+      vanish('komeKuraHyakuhyo'),
+      { type: 'say', lines: ['シュウゥ……'] },
+      { type: 'say', lines: ['兵庫「……これで、米は町に戻せる。あとは、門弟たちを説き伏せるだけだ」'] },
+      partyOut('gendo'),
+      faceTo('gendo', 'hyogo'),
+      { type: 'say', lines: ['玄道「火を出さずに済めばよいがな」', '兵庫「夜が明ける前に、町へ戻ろう」'] },
+      ...partyIn('gendo'),
+      ...partyIn('orin'),
+      ...partyIn('hyogo'),
       { type: 'setFlag', flag: 'hyakuhyoDefeated' },
+      // 工場を出た北岸の蔵の前へ（大坂に入ったときのイベントで第 5 章が終わる）
+      { type: 'warp', mapId: 'osaka', x: 26, y: 4 },
     ],
   },
   /** 広島に入ったとき。初めてなら霞が戻る（away から戻し、平均レベルまで引き上げる）。 */
