@@ -861,6 +861,18 @@ describe('第 4 章の清水湊と伊賀上野', () => {
     expect(npcVisible(tomurai, { chapter2Cleared: true })).toBe(false);
     expect(npcVisible(tomurai, { chapter3Cleared: true })).toBe(true);
     expect(npcVisible(tomurai, { chapter3Cleared: true, orinJoined: true })).toBe(false);
+    // 奥の座敷の逆さ屏風と座棺は、辰五郎が殺されてから出る。棺は伊賀に着くと野辺送りを済ませて消え、屏風の前に位牌が置かれる
+    const kagu = MAPS.shimizuOyabun!.npcs;
+    const byobu = kagu.find((n) => n.name === '逆さ屏風')!;
+    const hitsugi = kagu.find((n) => n.name === '棺')!;
+    expect(npcVisible(byobu, { chapter2Cleared: true })).toBe(false);
+    expect(npcVisible(byobu, { chapter3Cleared: true })).toBe(true);
+    expect(npcVisible(byobu, { chapter3Cleared: true, igaArrived: true })).toBe(true);
+    expect(npcLines(byobu, { chapter3Cleared: true }).join('')).not.toContain('位牌');
+    expect(npcLines(byobu, { chapter3Cleared: true, igaArrived: true }).join('')).toContain('位牌');
+    expect(npcVisible(hitsugi, { chapter2Cleared: true })).toBe(false);
+    expect(npcVisible(hitsugi, { chapter3Cleared: true, orinJoined: true })).toBe(true);
+    expect(npcVisible(hitsugi, { chapter3Cleared: true, orinJoined: true, igaArrived: true })).toBe(false);
   });
 
   it('伊賀はお凛が加わる（orinJoined）まで入れず、まわりの街道もそれまでは東海道の敵・名古屋に戻る', () => {

@@ -73,6 +73,7 @@ export const SHIMIZU_BUILDINGS: BuildingDef[] = [
       {
         id: 'tatsugoro',
         name: '辰五郎',
+        // 第 3 章の終わりからは、このマスの東隣（4, 2）に棺を置く。NPC はフラグにかかわらず同じマスに重ねられない（maps.test.ts）ので、西寄りに立つ
         x: 3,
         y: 2,
         color: 0x8a3b2e,

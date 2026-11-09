@@ -2072,6 +2072,10 @@ export const EVENTS: Record<string, EventDef> = {
           '権六「…………」',
         ],
       },
+      // 権六は、それきり動かなくなり、辻に崩れ落ちる
+      { type: 'say', lines: ['ドサッ……'] },
+      vanish('kagiyaGonroku'),
+      wait(600),
       { type: 'say', lines: ['お凛〈悲〉「……おとっつぁん。仇は、討ったよ」', 'お凛「…………」'] },
       faceTo('orin', 'hero'),
       {
