@@ -421,7 +421,7 @@ describe('第 3 章の流れ', () => {
     expect(back.mapId).toBe('kyo');
     const town = MAPS.world!.towns!.find((t) => t.name === '京')!.to!;
     let crowd = 0;
-    for (const step of EVENTS.kyoEnter!.steps.flatMap((s) => (s.type === 'if' ? [...s.then, ...(s.else ?? [])] : [s])).flatMap((s) => (s.type === 'if' ? [...s.then, ...(s.else ?? [])] : [s]))) {
+    for (const step of walk(EVENTS.kyoEnter!.steps)) {
       if (step.type !== 'actor' || step.x === undefined || step.y === undefined || !step.id.startsWith('kyoMachibito')) continue;
       crowd++;
       // 画面は横 24 マス・縦 13 マス余り。入口から入ったときも、全滅で戻ったときも見える
@@ -431,6 +431,18 @@ describe('第 3 章の流れ', () => {
       }
     }
     expect(crowd).toBe(2);
+  });
+
+  it('第 3 章の終わりに峠道を下りてくる河原の人々は、鬼の巣から移った主人公の見える所に出る', () => {
+    const warp = requests('shuten', start).filter((r) => r.kind === 'warp').at(-1) as { x: number; y: number };
+    let people = 0;
+    for (const step of walk(EVENTS.kyoEnter!.steps)) {
+      if (step.type !== 'actor' || step.x === undefined || step.y === undefined || !step.id.startsWith('kyoKaeri')) continue;
+      people++;
+      expect(Math.abs(step.x - warp.x), step.id).toBeLessThanOrEqual(10);
+      expect(Math.abs(step.y - warp.y), step.id).toBeLessThanOrEqual(5);
+    }
+    expect(people).toBe(3);
   });
 
   it('第 3 章の地の文は、人の動きと台詞に置き換わっている（残すのは音と加入の知らせだけ）', () => {

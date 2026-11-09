@@ -402,12 +402,14 @@ const KYO_ARRIVE: EventStep[] = [
 /**
  * 酒呑の大鬼を倒して京に戻ったとき（第 3 章の終わり）。清水湊から、辰五郎が殺されたという急報が届く。
  * 鬼の巣から北の峠道の口（19, 5）へ移ったところで、人に戻った河原の人々が鴨川の河原へ帰り、飛脚が南から駆けてくる。
+ * 見送り: この変更より前のセーブで、酒呑の大鬼を倒したあと鬼の巣で全滅すると、東の入口のそば（全滅時の戻り先）でこの場面が始まり、
+ * 人々と飛脚が画面の外に出る（今は shuten が勝ったあとすぐ 19, 5 へ移るので起きない）。直すなら、人の位置を主人公からの相対にする。
  */
 const KYO_CHAPTER_END: EventStep[] = [
   actor('kyoKaeriA', 'npc_ninsoku', 18, 3, 'down'),
   actor('kyoKaeriB', 'npc_musume', 18, 2, 'down'),
   actor('kyoKaeriC', 'npc_rojin', 18, 1, 'down'),
-  // 峠道を下りて、三条の手前の通りを東の河原へ帰っていく（主人公の左を通る）
+  // 峠道を下りて、主人公のすぐ南の通り（y = 6）を東の河原へ帰っていく
   { type: 'walk', who: 'kyoKaeriC', path: 'dddddrrrrrrrrrrrrrrrr', wait: false },
   { type: 'walk', who: 'kyoKaeriB', path: 'ddddrrrrrrrrrrrrrrrrr', wait: false },
   walk('kyoKaeriA', 'dddrrrrrrrrrrrrrrrrrr'),
@@ -1858,12 +1860,13 @@ export const EVENTS: Record<string, EventDef> = {
       partyOut('kasumi'),
       {
         type: 'say',
-        lines: ['霞「鬼の体が、ほどけるように消えちまった……」', '霞「……待って、本堂の奥の牢に、人が囚われてる！」'],
+        lines: ['霞「鬼の体が、ほどけるように消えちまった……」'],
       },
-      // 鬼に変えられかけていた河原の人々。玄道が一人ずつ祓い、縄を解く
+      // 本堂の奥の牢に、鬼に変えられかけていた河原の人々が囚われている。玄道が一人ずつ祓い、縄を解く
       actor('oninosuToraware1', 'npc_ninsoku', 15, 4, 'down'),
       actor('oninosuToraware2', 'npc_musume', 23, 4, 'down'),
       actor('oninosuToraware3', 'npc_rojin', 25, 5, 'down'),
+      { type: 'say', lines: ['霞「……待って、本堂の奥の牢に、人が囚われてる！」'] },
       {
         type: 'say',
         lines: [
