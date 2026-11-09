@@ -708,6 +708,16 @@ describe('第 6 章の流れ', () => {
     expect(again.request.kind === 'say' && again.request.pages).toHaveLength(1);
   });
 
+  it('出島の通詞の話では、霞が出てきてから話し、話し終えると戻る', () => {
+    const list = requests('tsujiMeet', arrived);
+    const out = list.findIndex((q) => q.kind === 'stage' && q.step.type === 'actor' && q.step.id === 'kasumi');
+    const said = list.findIndex((q) => q.kind === 'say' && q.pages.some((p) => p.startsWith('霞「')));
+    const gone = list.findIndex((q) => q.kind === 'stage' && q.step.type === 'vanish' && q.step.who === 'kasumi');
+    expect(out).toBeGreaterThanOrEqual(0);
+    expect(said).toBeGreaterThan(out);
+    expect(gone).toBeGreaterThan(said);
+  });
+
   const heard = run('tsujiMeet', arrived);
 
   it('南蛮寺跡の礼拝堂の跡でからくり兵に勝つと shimabaraOpen。負けて出直すと口上を短くする', () => {
@@ -768,6 +778,9 @@ describe('第 6 章の流れ', () => {
     const ozutsuGone = stage.findIndex((s) => s.type === 'vanish' && s.who === 'kenkyujoOzutsu');
     const heroWalk = stage.findIndex((s) => s.type === 'walk' && s.who === 'hero');
     expect(heroWalk).toBeGreaterThan(ozutsuGone);
+    expect(stage[heroWalk]).toMatchObject({ to: { x: 15, y: 20 } });
+    expect(stage[heroWalk + 1]).toMatchObject({ type: 'walk', who: 'hero', path: 'l' });
+    expect(stage.find((s) => s.type === 'actor' && s.id === 'kenkyujoRansai')).toMatchObject({ x: 14, y: 21 });
     expect(canStep(MAPS.kenkyujo!, 14, 20)).toBe(true);
     // 蘭斎は最後の言葉のあとで消え、そのあと蘭斎は喋らない
     const ransaiGone = list.findIndex((q) => q.kind === 'stage' && q.step.type === 'vanish' && q.step.who === 'kenkyujoRansai');
@@ -804,6 +817,19 @@ describe('第 6 章の流れ', () => {
     expect(gone).toBeGreaterThan(0);
     expect(said).toBeGreaterThan(gone);
     expect(list.slice(0, gone).some((q) => q.kind === 'stage' && q.step.type === 'walk' && q.step.who === 'kasumi' && q.step.to === 'hero')).toBe(true);
+    // 霞は横、縦の順に主人公へ歩く。東の入口からも全滅後の戻り先からも、途中で通れないマスに当たらない
+    const kasumi = actors[0]!;
+    for (const p of [town, back]) {
+      const pos = { x: kasumi.x, y: kasumi.y };
+      while (pos.x !== p.x) {
+        pos.x += Math.sign(p.x - pos.x);
+        expect(canStep(MAPS.hiroshima!, pos.x, pos.y), `${pos.x},${pos.y} @${p.x},${p.y}`).toBe(true);
+      }
+      while (pos.y !== p.y) {
+        pos.y += Math.sign(p.y - pos.y);
+        expect(canStep(MAPS.hiroshima!, pos.x, pos.y), `${pos.x},${pos.y} @${p.x},${p.y}`).toBe(true);
+      }
+    }
   });
 
   it('長崎に着くと、オランダ人と人足が湊のほうへ歩いていき、仲間が町のことを話す', () => {
@@ -817,18 +843,15 @@ describe('第 6 章の流れ', () => {
     expect(pages).not.toContain('長崎。湊には');
   });
 
-  it('第 6 章の終わりは、船頭が湊から呼びにくる。東の入口からも全滅後の戻り先からも見える所に出る', () => {
+  it('第 6 章の終わりは、東の入口・全滅後の戻り先・熊本からの渡し船の湊のどこでも始まるので、決まった場所に人を出さず、仲間だけで話す', () => {
     const won = run('nanbanOzutsu', opened);
     const list = requests('nagasakiEnter', won);
-    const town = MAPS.world!.towns!.find((t) => t.name === '長崎')!.to!;
-    const back = respawnPoint('kenkyujo');
-    expect(back.mapId).toBe('nagasaki');
-    const actors = placed(list);
-    expect(actors.map((a) => a.id)).toEqual(['nagasakiKitamaeSendo']);
-    for (const a of actors) for (const p of [town, back]) expect(near(a, p), `${a.id} @${p.x},${p.y}`).toBe(true);
+    expect(respawnPoint('kenkyujo').mapId).toBe('nagasaki');
+    expect(placed(list)).toEqual([]);
     const pages = list.flatMap((q) => (q.kind === 'say' ? q.pages : [])).join('');
-    expect(pages).toContain('船頭「');
+    expect(pages).toContain('北前船');
     expect(pages).not.toContain('{hero}たちは');
+    expect(pages).not.toContain('船頭「');
     // 1 マス幅の道なので、同時に出る仲間は二人まで
     let out = 0;
     let most = 0;

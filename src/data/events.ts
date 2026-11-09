@@ -720,7 +720,7 @@ const OSAKA_CHAPTER_END: EventStep[] = [
 
 /**
  * 広島に初めて入ったとき（第 6 章の始まり）。霞が戻ってくる。
- * 東の入口（40, 13。全滅時の戻り先は 38, 18）のそばの橋（33〜34, 13）の東のたもと（35, 14）で、霞が欄干にもたれて待っている。
+ * 東の入口（40, 13。全滅時の戻り先は 38, 14）のそばの橋（33〜34, 13）の東のたもと（35, 14）で、霞が欄干にもたれて待っている。
  */
 const HIROSHIMA_ARRIVE: EventStep[] = [
   face('hero', 'left'),
@@ -789,7 +789,8 @@ const NAGASAKI_ARRIVE: EventStep[] = [
 
 /**
  * 南蛮大筒からくりを倒して長崎に戻ったとき（第 6 章の終わり）。北前船で金沢へ向かう（第 7 章への導線）。
- * 東の入口（42, 13）か、全滅時の戻り先（29, 9）で始まる。湊の北前船の船頭が、入口の西の通り（33〜35, 13）まで呼びにくる（どちらからも見える）。
+ * 東の入口（42, 13）、全滅時の戻り先（29, 9）、熊本からの渡し船の着く湊（14, 22）のどこでも始まるので、決まった場所に人は出さず、仲間だけで話す。
+ * 船には、湊の北前船の船頭（kitamaeSendo、13, 22）に話して乗る。
  */
 const NAGASAKI_CHAPTER_END: EventStep[] = [
   face('hero', 'left'),
@@ -808,25 +809,18 @@ const NAGASAKI_CHAPTER_END: EventStep[] = [
   ...partyIn('gendo'),
   partyOut('orin'),
   { type: 'say', lines: ['お凛「だったら、金沢で尻尾をつかんでやろうじゃないか」'] },
-  // 湊のほうから、北前船の船頭が通りを上ってくる
-  actor('nagasakiKitamaeSendo', 'npc_sendo', 33, 13, 'right'),
-  walk('nagasakiKitamaeSendo', 'rr'),
+  faceTo('kasumi', 'hero'),
   {
     type: 'say',
     lines: [
-      '船頭「おうい、旅の衆！ 加賀へ行きたい言うとったんは、あんたらかね」',
-      '船頭「わしの北前船が湊に入ったけえ。日本海をぐるりと回って、加賀の湊まで運んじゃるよ」',
+      '霞「ちょうど湊に、加賀へ回る北前船が入ってるって話だよ。日本海をぐるりと回って、加賀の湊まで運んでくれるはずさ」',
     ],
   },
-  faceTo('hero', 'nagasakiKitamaeSendo'),
   {
     type: 'say',
-    lines: ['{hero}「蘭斎さんから預かった祝詞もある。北の海を渡って、金沢へ乗りこもうじゃねえか」'],
-    linesF: ['{hero}「蘭斎さんから預かった祝詞もある。北の海を渡って、金沢へ乗りこもうじゃないか」'],
+    lines: ['{hero}「蘭斎さんから預かった祝詞もある。湊の船頭に頼んで、北の海を渡って金沢へ乗りこもうじゃねえか」'],
+    linesF: ['{hero}「蘭斎さんから預かった祝詞もある。湊の船頭に頼んで、北の海を渡って金沢へ乗りこもうじゃないか」'],
   },
-  { type: 'say', lines: ['船頭「よっしゃ。湊で待っとるけえ、支度ができたら声をかけんさい」'] },
-  walk('nagasakiKitamaeSendo', 'llll'),
-  vanish('nagasakiKitamaeSendo'),
   ...partyIn('kasumi'),
   ...partyIn('orin'),
   { type: 'setFlag', flag: 'chapter6Cleared' },
@@ -2418,7 +2412,7 @@ export const EVENTS: Record<string, EventDef> = {
       vanish('nanbanjiHeiB'),
       { type: 'say', lines: ['外法使い「ぐっ……蘭斎先生……！」', 'ボンッ！'] },
       vanish('nanbanjiGeho'),
-      // 霞が、外法使いの立っていた所（18, 8）から書き付けの束を拾う
+      // 霞が、外法使いの立っていた所（18, 7）の前（18, 8）まで行き、書き付けの束を拾う
       partyOut('kasumi'),
       { type: 'walk', who: 'kasumi', to: { x: 18, y: 8 } },
       face('kasumi', 'down'),

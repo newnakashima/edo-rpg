@@ -2499,7 +2499,8 @@ MAPS.hiroshima = {
     { x: 41, y: 13, to: 'world', toX: 41, toY: 32 },
     { x: 0, y: 13, to: 'world', toX: 39, toY: 32 },
   ],
-  respawn: { x: 38, y: 18 },
+  // 全滅で戻る場所は東の入口のそば（広島に着く前に街道で全滅したときも、橋のたもとで待つ霞が歩いてこられる。y = 16 の家並みより南の区画からは橋の通りへ出られない）
+  respawn: { x: 38, y: 14 },
   onEnter: { event: 'hiroshimaEnter', unless: 'kasumiRejoined' },
 };
 
