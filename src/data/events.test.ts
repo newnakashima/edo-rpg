@@ -1950,7 +1950,11 @@ describe('第 8 章・寄り道の町の演出（地の文を人の動きと台�
         return [];
       });
     for (const id of ids) {
-      for (const line of lines(EVENTS[id]!.steps)) if (!line.includes('「')) expect(allowedNarration(line), `${id}: ${line}`).toBe(true);
+      for (const line of lines(EVENTS[id]!.steps)) {
+        // 台詞は「話者「……」」の形だけにし、台詞の前後に地の文を続けない
+        if (line.includes('「')) expect(line, id).toMatch(/^[^「」、。]+「.*」$/u);
+        else expect(allowedNarration(line), `${id}: ${line}`).toBe(true);
+      }
     }
   });
 
@@ -2156,6 +2160,14 @@ describe('第 8 章・寄り道の町の演出（地の文を人の動きと台�
     const flown = { ...newGame('m', { mapId: 'hamamatsu', x: 50, y: 12 }), party: [createMember('hero', 7)], items: { takoItomaki: 99 }, flags: { intro: true, hamamatsuIntro: true, hamamatsuTakoAsked: true, hamamatsuTakoFound: true, hamamatsuTakoFlown: true } };
     const pages = pagesIn(requests('hamamatsuGenta', flown));
     expect(pages.every((p) => p.startsWith('源太「'))).toBe(true);
+    // 合戦の場面で持ち物がいっぱいなら、その場にいる弥平が話し、合戦は済んだことにする
+    const gassen = { ...flown, flags: { ...flown.flags, hamamatsuTakoFlown: false } };
+    const fullGassen = requests('hamamatsuGenta', gassen);
+    expect(actors(fullGassen)).toContain('yahei');
+    expect(pagesIn(fullGassen).some((p) => p.startsWith('弥平「……おや、荷物がいっぱい'))).toBe(true);
+    const after = run('hamamatsuGenta', gassen);
+    expect(after.flags.hamamatsuTakoFlown).toBe(true);
+    expect(after.flags.hamamatsuTakoDone).toBeFalsy();
     const found = { ...CH7_CLEARED, flags: { ...CH7_CLEARED.flags, shimabaraOpen: true, kumamotoIntro: true, kumamotoIdoAsked: true, kumamotoIdoFound: true } };
     const ret = pagesIn(requests('kumamotoMosaku', found));
     const told = ret.findIndex((p) => p.includes('「古井戸の底の水脈に、からくりが'));
