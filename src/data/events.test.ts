@@ -1818,8 +1818,10 @@ describe('寄り道の彦根（赤備えの具足を探す）', () => {
     }
   });
 
-  it('葛籠の中身は、佐和山が万金丹、町が糸切餅', () => {
+  it('葛籠の中身は、佐和山が万金丹・金創膏・道しるべの札、町が糸切餅', () => {
     expect(run('hikoneChest1', arrived).items.mankintan).toBe((arrived.items.mankintan ?? 0) + 1);
+    expect(run('hikoneChest3', arrived).items.kintsuba).toBe((arrived.items.kintsuba ?? 0) + 1);
+    expect(run('hikoneChest4', arrived).items.michishirube).toBe((arrived.items.michishirube ?? 0) + 1);
     expect(run('hikoneChest2', arrived).items.itokiriMochi).toBe((arrived.items.itokiriMochi ?? 0) + 1);
   });
 });
@@ -2139,7 +2141,7 @@ describe('第 8 章・寄り道の町の演出（地の文を人の動きと台�
     const heroStep = list[heroAt]!;
     const to = heroStep.kind === 'stage' && heroStep.step.type === 'walk' && typeof heroStep.step.to === 'object' ? heroStep.step.to : undefined;
     expect(to).toBeDefined();
-    const map = MAPS.hikone!;
+    const map = MAPS.hikoneSawayama!;
     const nusubito = map.npcs.find((n) => n.id === 'gusokuNusubito')!;
     // 盗人の隣で主人公が立てる（通れて、話しかけたときに人や物がいない）マスのどこからでも、横、縦の順にまっすぐ下がれる
     const d = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] } as const;
