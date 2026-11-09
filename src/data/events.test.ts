@@ -2152,6 +2152,17 @@ describe('第 8 章・寄り道の町の演出（地の文を人の動きと台�
     }
   });
 
+  it('浜松で糸巻きを受け取り直すときに持ち物がまだいっぱいなら、その場にいる源太が話す（弥平は合戦の場面にしかいない）。熊本の茂作には、主人公が水脈のからくりのことを話す', () => {
+    const flown = { ...newGame('m', { mapId: 'hamamatsu', x: 50, y: 12 }), party: [createMember('hero', 7)], items: { takoItomaki: 99 }, flags: { intro: true, hamamatsuIntro: true, hamamatsuTakoAsked: true, hamamatsuTakoFound: true, hamamatsuTakoFlown: true } };
+    const pages = pagesIn(requests('hamamatsuGenta', flown));
+    expect(pages.every((p) => p.startsWith('源太「'))).toBe(true);
+    const found = { ...CH7_CLEARED, flags: { ...CH7_CLEARED.flags, shimabaraOpen: true, kumamotoIntro: true, kumamotoIdoAsked: true, kumamotoIdoFound: true } };
+    const ret = pagesIn(requests('kumamotoMosaku', found));
+    const told = ret.findIndex((p) => p.includes('「古井戸の底の水脈に、からくりが'));
+    expect(told).toBeGreaterThan(0);
+    expect(told).toBeLessThan(ret.findIndex((p) => p.startsWith('茂作「水脈の水を')));
+  });
+
   it('彦根の工房で具足を届けると、大庭が戸口から入ってきて、持ち物がいっぱいでも話し終えて帰っていく', () => {
     const hikone = { ...newGame('m', { mapId: 'hikone', x: 50, y: 12 }), party: [createMember('hero', 10)], flags: { intro: true, chapter2Cleared: true, hikoneIntro: true, hikoneGusokuAsked: true, hikoneGusokuFound: true } };
     for (const state of [hikone, { ...hikone, items: { ...hikone.items, akazonaeKote: 99 } }]) {

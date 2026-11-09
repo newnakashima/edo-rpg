@@ -1081,16 +1081,17 @@ const HAMAMATSU_TAKO_ASK: EventStep[] = [
   { type: 'setFlag', flag: 'hamamatsuTakoAsked' },
 ];
 
-/** 凧師の弥平のお礼の凧の糸巻きを渡す（hamamatsuTakoDone）。持ちきれなければ渡さず、また話しかけたときに受け取れる。 */
-const HAMAMATSU_TAKO_REWARD: EventStep[] = [
-  {
-    type: 'giveItem',
-    item: 'takoItomaki',
-    ifFull: [{ type: 'say', lines: ['弥平「……おや、荷物がいっぱいのようじゃな。源太に預けておくから、また寄っておくれ」'] }, { type: 'end' }],
-  },
-  { type: 'say', lines: ['凧の糸巻きを受け取った。'] },
-  { type: 'setFlag', flag: 'hamamatsuTakoDone' },
-];
+/**
+ * 凧の糸巻きを渡す（hamamatsuTakoDone）。持ちきれなければ渡さず、また話しかけたときに受け取れる。
+ * 持ちきれないときの台詞は、その場にいる人が言う（合戦の場面では弥平、あとで源太に話しかけたときは源太）。
+ */
+function hamamatsuTakoReward(ifFullLine: string): EventStep[] {
+  return [
+    { type: 'giveItem', item: 'takoItomaki', ifFull: [{ type: 'say', lines: [ifFullLine] }, { type: 'end' }] },
+    { type: 'say', lines: ['凧の糸巻きを受け取った。'] },
+    { type: 'setFlag', flag: 'hamamatsuTakoDone' },
+  ];
+}
 
 /**
  * 初凧を源太に届けたあとの凧揚げ合戦。隣町の凧と糸を絡ませる「糸切り合戦」で、引けば隣町の糸を切って源太から祝儀（200 文）、
@@ -1156,7 +1157,7 @@ const HAMAMATSU_TAKO_GASSEN: EventStep[] = [
   },
   // 持ち物がいっぱいで受け取れなかったとき、次に話しかけても合戦の場面を繰り返さない
   { type: 'setFlag', flag: 'hamamatsuTakoFlown' },
-  ...HAMAMATSU_TAKO_REWARD,
+  ...hamamatsuTakoReward('弥平「……おや、荷物がいっぱいのようじゃな。源太に預けておくから、また寄っておくれ」'),
 ];
 
 /**
@@ -1326,6 +1327,11 @@ const KUMAMOTO_IDO_REWARD: EventStep[] = [
 /** 古井戸の底のからくりを壊したあと、茂作に知らせたとき（kumamotoIdoReturned → kumamotoIdoDone）。 */
 const KUMAMOTO_IDO_RETURN: EventStep[] = [
   { type: 'say', lines: ['茂作「おお……見てくだせえ！ 井戸の水が、底からどんどん湧いてきやがる！」'] },
+  {
+    type: 'say',
+    lines: ['{hero}「古井戸の底の水脈に、からくりが仕掛けてあった。鷲尾の手の者が、水を吸い上げて岩の割れ目へ捨ててやがったのさ。からくりは叩き壊してきたぜ」'],
+    linesF: ['{hero}「古井戸の底の水脈に、からくりが仕掛けてあったのさ。鷲尾の手の者が、水を吸い上げて岩の割れ目へ捨ててたんだよ。からくりは叩き壊してきた」'],
+  },
   // 井戸端の町娘（37, 22）と老女（44, 23）が、茂作（40, 22）のほうを向いて喜ぶ
   faceTo('idobataMusume', 'mosaku'),
   faceTo('idobataRoba', 'mosaku'),
@@ -3135,7 +3141,10 @@ export const EVENTS: Record<string, EventDef> = {
           {
             type: 'if',
             flag: 'hamamatsuTakoFlown',
-            then: [{ type: 'say', lines: ['源太「弥平じいさんから、糸巻きを預かってるぜ。受け取ってくんな」'] }, ...HAMAMATSU_TAKO_REWARD],
+            then: [
+              { type: 'say', lines: ['源太「弥平じいさんから、糸巻きを預かってるぜ。受け取ってくんな」'] },
+              ...hamamatsuTakoReward('源太「……なんだ、まだ荷物がいっぱいじゃねえか。糸巻きは預かっとくから、また寄ってくんな」'),
+            ],
             else: [
               {
                 type: 'if',
