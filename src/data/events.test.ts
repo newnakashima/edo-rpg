@@ -112,6 +112,9 @@ function maxPartyOut(list: Req[]): number {
   }
   return max;
 }
+/** 全員の HP を 1 にする（全回復の場面を確かめる）。 */
+const hurt = (state: GameState): GameState => ({ ...state, party: state.party.map((m) => ({ ...m, hp: 1 })) });
+const healed = (state: GameState) => state.party.every((m) => m.hp > 1);
 const STEP = { u: [0, -1], d: [0, 1], l: [-1, 0], r: [1, 0] } as const;
 /** who の nth 番目の歩き（path）を from から歩き終えたマス。通れないマスや、hero を渡せば主人公のマスを通ったら落とす。 */
 function walkEnd(list: Req[], who: string, from: { x: number; y: number }, mapId: string, hero?: { x: number; y: number }, nth = 0) {
@@ -1109,7 +1112,6 @@ describe('第 7 章の流れ', () => {
       [toro.x - 1, toro.y],
     ].filter(([x, y]) => canStep(MAPS.kenrokuen!, x!, y!));
     // 出した位置から、歩いた道をたどった位置（イベントのデータから求める）
-    const D = { u: [0, -1], d: [0, 1], l: [-1, 0], r: [1, 0] } as const;
     const pos = new Map<string, [number, number]>();
     for (const q of list.slice(0, battle)) {
       if (q.kind !== 'stage') continue;
@@ -1117,7 +1119,7 @@ describe('第 7 章の流れ', () => {
       if (q.step.type === 'walk' && pos.has(q.step.who) && q.step.path) {
         for (const c of q.step.path) {
           const [x, y] = pos.get(q.step.who)!;
-          const [dx, dy] = D[c as keyof typeof D];
+          const [dx, dy] = STEP[c as keyof typeof STEP];
           pos.set(q.step.who, [x + dx, y + dy]);
           expect(heroSpots.some(([hx, hy]) => hx === x + dx && hy === y + dy), `${q.step.who} が (${x + dx},${y + dy}) を通る`).toBe(false);
         }
@@ -1391,8 +1393,6 @@ describe('終章の流れ', () => {
     const end = list.findIndex((r) => r.kind === 'battle');
     return list.slice(0, end < 0 ? list.length : end).reduce((n, r) => n + (r.kind === 'say' ? r.pages.length : 0), 0);
   };
-  const hurt = (state: GameState): GameState => ({ ...state, party: state.party.map((m) => ({ ...m, hp: 1 })) });
-  const healed = (state: GameState) => state.party.every((m) => m.hp > 1);
 
   it('大手門の門番は、第 8 章を終えるまでは通さず、終えると加賀の手形で門を開ける（otemonOpen。門番がどく）', () => {
     const before = { ...ch8, flags: { ...ch8.flags, chapter8Cleared: false } };
@@ -2218,7 +2218,6 @@ describe('終章の演出（地の文を人の動きと台詞に）', () => {
     flags: { intro: true, kagaTegata: true, chapter7Cleared: true, edoIntro: true, kashaDefeated: true, chapter8Cleared: true },
   };
   const adjacent = (a: { x: number; y: number }, b: { x: number; y: number }) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y) === 1;
-  const hurtAll = (state: GameState): GameState => ({ ...state, party: state.party.map((m) => ({ ...m, hp: 1 })) });
   const triggerOf = (mapId: string, event: string) => MAPS[mapId]!.triggers!.find((t) => t.event === event)!;
 
   /**
@@ -2266,9 +2265,10 @@ describe('終章の演出（地の文を人の動きと台詞に）', () => {
     const list = requests('otemon', ch8);
     const monban = MAPS.edo!.npcs.find((n) => n.id === 'edoMonban')!;
     const hero = { x: monban.x, y: monban.y + 1 };
-    const end = walkEnd(list, 'edoMonban', monban, 'edo', hero);
-    expect(end.y).toBeLessThan(monban.y);
-    expect(vanished(list)).toContain('edoMonban');
+    // 扉 (32, 5) の前まで歩いてから消える（北の出口 (32, 7) にとどまらない）
+    expect(walkEnd(list, 'edoMonban', monban, 'edo', hero)).toEqual({ x: monban.x, y: monban.y - 2 });
+    const st = stages(list);
+    expect(st.findIndex((s) => s.type === 'vanish' && s.who === 'edoMonban')).toBeGreaterThan(st.findIndex((s) => s.type === 'walk' && s.who === 'edoMonban'));
     expect(pagesIn(list).join('')).not.toContain('脇へ退き');
     // 第 8 章を終える前は動かない
     expect(stages(requests('otemon', { ...ch8, flags: { ...ch8.flags, chapter8Cleared: false } }))).toEqual([]);
@@ -2314,17 +2314,17 @@ describe('終章の演出（地の文を人の動きと台詞に）', () => {
     expect(walkEnd(list, 'kinta', { x: t.x - 1, y: t.y }, 'edojo', t, 1)).toEqual(k);
     // 手当て（全回復）は金太の台詞のあと。戦闘の前と、手当ての台詞の前には治らない
     const runner = new EventRunner(EVENTS.okanegura!.steps);
-    let r = runner.next(hurtAll(ch8));
+    let r = runner.next(hurt(ch8));
     let healedBeforeWords = false;
     let sawWords = false;
     while (r.request.kind !== 'done') {
       if (r.request.kind === 'say' && r.request.pages.some((p) => p.includes('傷の手当て'))) sawWords = true;
-      if (!sawWords && r.state.party.every((m) => m.hp > 1)) healedBeforeWords = true;
+      if (!sawWords && healed(r.state)) healedBeforeWords = true;
       r = r.request.kind === 'battle' ? runner.next(r.state, { kind: 'battle', outcome: 'victory' }) : runner.next(r.state);
     }
     expect(sawWords).toBe(true);
     expect(healedBeforeWords).toBe(false);
-    expect(r.state.party.every((m) => m.hp > 1)).toBe(true);
+    expect(healed(r.state)).toBe(true);
     expect(maxPartyOut(list)).toBe(1);
     // 負けたら金太は出ない。出直すと、お凛は出ない
     const lost = requests('okanegura', ch8, 'defeat');
