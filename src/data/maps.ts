@@ -305,6 +305,8 @@ export const MAPS: Record<string, MapDef> = {
         sprite: 'npc_okami',
         lines: ['長屋のおかみ「隣の与吉さんも、狐火を見たって言った晩にいなくなったんだよ。おお、こわい」'],
         after: { flag: 'yakoDefeated', lines: ['長屋のおかみ「裏山の狐を退治してくれたんだって？ 与吉さんも、どこかで生きてりゃいいんだけどねえ」'] },
+        // 第 1 章でからくり屋敷から助け出され、清水へ帰ってくる
+        later: { flag: 'tetsubinDefeated', lines: ['長屋のおかみ「与吉さんが駿府から帰ってきたよ！ ……ゼンマイの夢を見るって、夜中にうなされてるけどね」'] },
       },
       {
         id: 'shimizuTeraotoko',

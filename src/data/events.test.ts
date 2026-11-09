@@ -9,7 +9,7 @@ import { EVENTS } from './events';
 import { TATSUGORO_JINGI } from './oyabunRequests';
 import { isKnownItem } from './items';
 import { SKILLS } from './skills';
-import { MAPS, npcVisible, tileAt } from './maps';
+import { MAPS, npcLines, npcVisible, tileAt } from './maps';
 import { EventRunner } from '../systems/eventScript';
 import { newGame, type GameState } from '../systems/gameState';
 import { createMember, memberLevel } from '../systems/party';
@@ -73,7 +73,7 @@ describe('イベントのデータ', () => {
 function run(id: string, state: GameState, outcome: 'victory' | 'defeat' = 'victory'): GameState {
   const runner = new EventRunner(EVENTS[id]!.steps);
   let r = runner.next(state);
-  for (let guard = 0; guard < 50 && r.request.kind !== 'done'; guard++) {
+  for (let guard = 0; guard < 400 && r.request.kind !== 'done'; guard++) {
     if (r.request.kind === 'choice') r = runner.next(r.state, { kind: 'choice', index: 0 });
     else if (r.request.kind === 'battle') r = runner.next(r.state, { kind: 'battle', outcome });
     else r = runner.next(r.state);
@@ -86,7 +86,7 @@ function requests(id: string, state: GameState, outcome: 'victory' | 'defeat' = 
   const runner = new EventRunner(EVENTS[id]!.steps);
   let r = runner.next(state);
   const list = [r.request];
-  for (let guard = 0; guard < 80 && r.request.kind !== 'done'; guard++) {
+  for (let guard = 0; guard < 400 && r.request.kind !== 'done'; guard++) {
     if (r.request.kind === 'choice') r = runner.next(r.state, { kind: 'choice', index: 0 });
     else if (r.request.kind === 'battle') r = runner.next(r.state, { kind: 'battle', outcome });
     else r = runner.next(r.state);
@@ -146,7 +146,7 @@ describe('第 1 章の流れ', () => {
   it('工房で霞が戦う前に仲間になり、戦ったあとで kasumiJoined が立つ。負けても先へ進める', () => {
     const runner = new EventRunner(EVENTS.kasumiMeet!.steps);
     let r = runner.next(start);
-    while (r.request.kind === 'say') r = runner.next(r.state);
+    while (r.request.kind === 'say' || r.request.kind === 'stage') r = runner.next(r.state);
     expect(r.request).toMatchObject({ kind: 'battle', enemies: ['karakuriNingyo', 'karakuriNingyo'], level: 4, canEscape: false, loseOk: true });
     expect(r.state.party.map((m) => m.id)).toEqual(['hero', 'kasumi']);
     expect(r.state.flags.kasumiJoined).toBeFalsy();
@@ -167,7 +167,7 @@ describe('第 1 章の流れ', () => {
   it('鉄瓶の前に夜叉丸が消え（yashamaruFled）、勝つと tetsubinDefeated、負けたら立たない', () => {
     const runner = new EventRunner(EVENTS.tetsubin!.steps);
     let r = runner.next(start);
-    while (r.request.kind === 'say') r = runner.next(r.state);
+    while (r.request.kind === 'say' || r.request.kind === 'stage') r = runner.next(r.state);
     expect(r.request).toMatchObject({ kind: 'battle', enemies: ['tetsubin'], level: 7, canEscape: false, loseOk: false });
     expect(r.state.flags.yashamaruFled).toBe(true);
     expect(run('tetsubin', start).flags.tetsubinDefeated).toBe(true);
@@ -177,13 +177,18 @@ describe('第 1 章の流れ', () => {
   it('鉄瓶に負けて出直すと、夜叉丸の場面は繰り返さず鉄瓶とだけ戦う', () => {
     const lost = run('tetsubin', start, 'defeat');
     expect(lost.flags.yashamaruFled).toBe(true);
-    const runner = new EventRunner(EVENTS.tetsubin!.steps);
-    const first = runner.next(lost);
-    expect(first.request.kind).toBe('say');
-    const pages = first.request.kind === 'say' ? first.request.pages.join('') : '';
-    expect(pages).not.toContain('夜叉丸');
-    expect(runner.next(first.state).request).toMatchObject({ kind: 'battle', enemies: ['tetsubin'] });
+    const list = requests('tetsubin', lost);
+    const battle = list.findIndex((r) => r.kind === 'battle');
+    expect(list[battle]).toMatchObject({ kind: 'battle', enemies: ['tetsubin'] });
+    const before = list.slice(0, battle).flatMap((r) => (r.kind === 'say' ? r.pages : [])).join('');
+    expect(before).not.toContain('夜叉丸');
     expect(run('tetsubin', lost).flags.tetsubinDefeated).toBe(true);
+  });
+
+  it('鉄瓶を倒すと、清水の長屋のおかみは与吉が帰ってきたと話す（霞の「与吉は清水の長屋へ帰る」と合わせる）', () => {
+    const okami = MAPS.shimizu!.npcs.find((n) => n.id === 'nagaya')!;
+    expect(npcLines(okami, { yakoDefeated: true }).join('')).toContain('生きてりゃ');
+    expect(npcLines(okami, { yakoDefeated: true, tetsubinDefeated: true }).join('')).toContain('帰ってきた');
   });
 
   it('鉄瓶を倒して駿府に入ると第 1 章が終わる', () => {
@@ -205,7 +210,7 @@ describe('第 1 章の流れ', () => {
 
 /** 台詞を読み進め、次に画面に頼むこと（台詞以外）の手前まで進める。 */
 function skipSay(runner: EventRunner, r: ReturnType<EventRunner['next']>): ReturnType<EventRunner['next']> {
-  while (r.request.kind === 'say') r = runner.next(r.state);
+  while (r.request.kind === 'say' || r.request.kind === 'stage') r = runner.next(r.state);
   return r;
 }
 
@@ -556,7 +561,7 @@ describe('第 7 章の流れ', () => {
     const runner = new EventRunner(EVENTS[id]!.steps);
     let r = runner.next(state);
     let last: { mapId: string; x: number; y: number } | undefined;
-    for (let guard = 0; guard < 50 && r.request.kind !== 'done'; guard++) {
+    for (let guard = 0; guard < 400 && r.request.kind !== 'done'; guard++) {
       if (r.request.kind === 'warp') last = { mapId: r.request.mapId, x: r.request.x, y: r.request.y };
       if (r.request.kind === 'choice') r = runner.next(r.state, { kind: 'choice', index: 0 });
       else if (r.request.kind === 'battle') r = runner.next(r.state, { kind: 'battle', outcome: 'victory' });
@@ -684,7 +689,7 @@ describe('第 8 章の流れ', () => {
     const runner = new EventRunner(EVENTS[id]!.steps);
     let r = runner.next(state);
     let last: { mapId: string; x: number; y: number } | undefined;
-    for (let guard = 0; guard < 50 && r.request.kind !== 'done'; guard++) {
+    for (let guard = 0; guard < 400 && r.request.kind !== 'done'; guard++) {
       if (r.request.kind === 'warp') last = { mapId: r.request.mapId, x: r.request.x, y: r.request.y };
       if (r.request.kind === 'choice') r = runner.next(r.state, { kind: 'choice', index: 0 });
       else if (r.request.kind === 'battle') r = runner.next(r.state, { kind: 'battle', outcome: 'victory' });
@@ -1094,7 +1099,7 @@ describe('寄り道の浜松（遠州の凧揚げ合戦）', () => {
   const runChoosing = (id: string, state: GameState, index: number) => {
     const runner = new EventRunner(EVENTS[id]!.steps);
     let r = runner.next(state);
-    for (let guard = 0; guard < 50 && r.request.kind !== 'done'; guard++) {
+    for (let guard = 0; guard < 400 && r.request.kind !== 'done'; guard++) {
       if (r.request.kind === 'choice') r = runner.next(r.state, { kind: 'choice', index });
       else if (r.request.kind === 'battle') r = runner.next(r.state, { kind: 'battle', outcome: 'victory' });
       else r = runner.next(r.state);
@@ -1281,7 +1286,7 @@ describe('寄り道の熊本（籠城の備えの井戸の謎）', () => {
     const runner = new EventRunner(EVENTS[id]!.steps);
     let r = runner.next(state);
     let last: { mapId: string; x: number; y: number } | undefined;
-    for (let guard = 0; guard < 50 && r.request.kind !== 'done'; guard++) {
+    for (let guard = 0; guard < 400 && r.request.kind !== 'done'; guard++) {
       if (r.request.kind === 'warp') last = { mapId: r.request.mapId, x: r.request.x, y: r.request.y };
       r = r.request.kind === 'choice' ? runner.next(r.state, { kind: 'choice', index }) : runner.next(r.state);
     }

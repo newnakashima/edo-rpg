@@ -2,7 +2,8 @@
 import { CHARACTERS, characterName, isGuest } from '../data/characters';
 import type { EventStep } from '../data/eventTypes';
 import { addItem, isKnownItem, itemCount, MAX_ITEM_COUNT } from '../data/items';
-import type { GameState } from './gameState';
+import type { CharacterSpriteId } from '../data/sprites';
+import type { Facing, GameState } from './gameState';
 import { addJingi } from './jingi';
 import { createMember, memberLevel, memberStats, restoreAll } from './party';
 import { totalExpForLevel } from './stats';
@@ -15,12 +16,45 @@ export type EventRequest =
   | { kind: 'choice'; prompt?: string; labels: string[] }
   | { kind: 'battle'; enemies: string[]; level: number; canEscape: boolean; loseOk: boolean }
   | { kind: 'warp'; mapId: string; x: number; y: number }
+  /** 演出（人を出す・歩かせる・向きを変える・消す・待つ）。画面が行い終えたら next を呼ぶ。 */
+  | { kind: 'stage'; step: StageStep }
   /** エンディングを出す（イベントはここで終わる）。 */
   | { kind: 'ending' }
   | { kind: 'done' };
 
 /** 画面から返す入力（選んだ選択肢、戦闘の結果）。 */
 export type EventInput = { kind: 'choice'; index: number } | { kind: 'battle'; outcome: 'victory' | 'defeat' | 'escaped' };
+
+export type StageStep = Extract<EventStep, { type: 'actor' | 'walk' | 'face' | 'vanish' | 'wait' }>;
+
+/**
+ * 演出で動かした人の今の姿（主人公は GameState が持つので含めない）。sprite・enemy は actor で出した人だけにある（マップの NPC は自分の画像）。
+ * 画面が演出を行うたびに書き込み、戦闘から戻ったフィールドがこれで人を置き直す。
+ */
+export interface StageActor {
+  sprite?: CharacterSpriteId;
+  /** 敵の画像で出した人（ENEMIES の ID）。 */
+  enemy?: string;
+  x: number;
+  y: number;
+  facing: Facing;
+  visible: boolean;
+}
+
+/** 歩く道の文字と向き。 */
+const PATH_FACING: Record<string, Facing> = { u: 'up', d: 'down', l: 'left', r: 'right' };
+
+/** 歩く道（u・d・l・r の並び）を向きの並びにする。ほかの文字は無視する。 */
+export function pathFacings(path: string): Facing[] {
+  return [...path].flatMap((c) => (PATH_FACING[c] ? [PATH_FACING[c]] : []));
+}
+
+/** from から to のマスまで、横、縦の順にまっすぐ歩く向きの並び。 */
+export function pathTo(from: { x: number; y: number }, to: { x: number; y: number }): Facing[] {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  return [...Array<Facing>(Math.abs(dx)).fill(dx > 0 ? 'right' : 'left'), ...Array<Facing>(Math.abs(dy)).fill(dy > 0 ? 'down' : 'up')];
+}
 
 interface Frame {
   steps: readonly EventStep[];
@@ -84,6 +118,8 @@ export class EventRunner {
   /** 入力を待っている手順（選択肢・戦闘）。 */
   private waiting: Extract<EventStep, { type: 'choice' | 'battle' }> | null = null;
   private finished = false;
+  /** 演出で出した・動かした人（ID ごと）。画面が書き込む。warp で別の場所に移ると空にする。 */
+  readonly stage = new Map<string, StageActor>();
 
   constructor(steps: readonly EventStep[]) {
     this.stack = [{ steps, index: 0 }];
@@ -168,7 +204,14 @@ export class EventRunner {
             state: s,
             request: { kind: 'battle', enemies: step.enemies, level: step.level, canEscape: step.canEscape ?? false, loseOk: step.ifLose !== undefined },
           };
+        case 'actor':
+        case 'walk':
+        case 'face':
+        case 'vanish':
+        case 'wait':
+          return { state: s, request: { kind: 'stage', step } };
         case 'warp':
+          this.stage.clear();
           return { state: { ...s, mapId: step.mapId, x: step.x, y: step.y }, request: { kind: 'warp', mapId: step.mapId, x: step.x, y: step.y } };
         case 'end':
           return this.finish(s);
