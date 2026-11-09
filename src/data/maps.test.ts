@@ -344,10 +344,10 @@ describe('マップのデータ', () => {
   });
 });
 
-/** 関所を通らずに歩いて行ける場所。withNpcs なら、いる NPC（hideFlag で消えていない人）も通れないものとする。 */
-function reachable(map: MapDef, from: { x: number; y: number }, flags: Record<string, boolean>, withNpcs = false): Set<string> {
+/** 関所を通らずに歩いて行ける場所と、そこまでの最短の歩数。withNpcs なら、いる NPC（hideFlag で消えていない人）も通れないものとする。 */
+function walkSteps(map: MapDef, from: { x: number; y: number }, flags: Record<string, boolean>, withNpcs = false): Map<string, number> {
   const npcs = new Set(withNpcs ? map.npcs.filter((n) => npcVisible(n, flags)).map((n) => `${n.x},${n.y}`) : []);
-  const seen = new Set<string>([`${from.x},${from.y}`]);
+  const steps = new Map<string, number>([[`${from.x},${from.y}`, 0]]);
   const queue = [from];
   while (queue.length > 0) {
     const p = queue.shift()!;
@@ -355,12 +355,17 @@ function reachable(map: MapDef, from: { x: number; y: number }, flags: Record<st
       const x = p.x + dx;
       const y = p.y + dy;
       const key = `${x},${y}`;
-      if (seen.has(key) || tileAt(map, x, y)?.blocked !== false || closedGateAt(map, x, y, flags) || npcs.has(key)) continue;
-      seen.add(key);
+      if (steps.has(key) || tileAt(map, x, y)?.blocked !== false || closedGateAt(map, x, y, flags) || npcs.has(key)) continue;
+      steps.set(key, steps.get(`${p.x},${p.y}`)! + 1);
       queue.push({ x, y });
     }
   }
-  return seen;
+  return steps;
+}
+
+/** 関所を通らずに歩いて行ける場所。withNpcs なら、いる NPC（hideFlag で消えていない人）も通れないものとする。 */
+function reachable(map: MapDef, from: { x: number; y: number }, flags: Record<string, boolean>, withNpcs = false): Set<string> {
+  return new Set(walkSteps(map, from, flags, withNpcs).keys());
 }
 
 /** その場所の上下左右のどれかに行けるか（話しかけられるか）。 */
@@ -1797,16 +1802,7 @@ describe('寄り道の彦根', () => {
       expect(near(area, npc.x, npc.y), id).toBe(true);
     }
     // 盗人は口から離れた頂にいる（戦い 1 回で終わらない）。人を避けて歩いた歩数を数える
-    const steps = new Map([[`${entry.x},${entry.y}`, 0]]);
-    const queue = [{ x: entry.x, y: entry.y }];
-    for (let p = queue.shift(); p; p = queue.shift()) {
-      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
-        const key = `${p.x + dx},${p.y + dy}`;
-        if (!area.has(key) || steps.has(key)) continue;
-        steps.set(key, steps.get(`${p.x},${p.y}`)! + 1);
-        queue.push({ x: p.x + dx, y: p.y + dy });
-      }
-    }
+    const steps = walkSteps(sawayama, { x: entry.x, y: entry.y }, {}, true);
     const nusubito = sawayama.npcs.find((n) => n.id === 'gusokuNusubito')!;
     expect(steps.get(`${nusubito.x},${nusubito.y + 1}`)).toBeGreaterThanOrEqual(40);
     // 城跡へは南の細い道からしか上がれない（hikoneGusoku の立ち位置の前提）
