@@ -743,13 +743,14 @@ const HIROSHIMA_ARRIVE: EventStep[] = [
   faceTo('gendo', 'kasumi'),
   { type: 'say', lines: ['玄道「からくりの源流を断てば、鷲尾の兵も増やせぬというわけか」'] },
   { type: 'say', lines: ['霞「そういうこと。西国街道を西へ、長崎まで。……また、よろしく頼むよ」'] },
+  // 玄道が先に戻る（主人公の下に出た玄道のマスを、霞が通らないように）
+  ...partyIn('gendo'),
   // 霞は橋のたもとから主人公のところへ歩いてきて、一行に戻る
   ...partyIn('kasumi'),
   // 広島に着くのは第 5 章の終わりに兵庫が抜けた 3 人のときだけなので、満員で rejoin が空振りすることはない。
   // 仲間の人数の決まりが変わって満員になりうるなら、イベントに「仲間がいるか」の条件を足して、戻れたときだけフラグを立てる
   { type: 'rejoin', member: 'kasumi' },
   { type: 'say', lines: ['霞が一行に戻った！'] },
-  ...partyIn('gendo'),
   ...partyIn('orin'),
   { type: 'setFlag', flag: 'kasumiRejoined' },
 ];
@@ -793,6 +794,7 @@ const NAGASAKI_ARRIVE: EventStep[] = [
  * 船には、湊の北前船の船頭（kitamaeSendo、13, 22）に話して乗る。
  */
 const NAGASAKI_CHAPTER_END: EventStep[] = [
+  // 熊本からの渡し船の着く湊（14, 22）は、隣の空いたマスが東の 1 つしかない（西には北前船の船頭が立つ）。どこで始まっても重ならないよう、仲間は一人ずつ出て戻る
   face('hero', 'left'),
   partyOut('kasumi'),
   {
@@ -802,19 +804,17 @@ const NAGASAKI_CHAPTER_END: EventStep[] = [
       '霞「加賀じゃ、殿様が病で伏せってることになってる。……だけど、人前に出てくる殿様は、顔色ひとつ変えないんだってさ」',
     ],
   },
+  ...partyIn('kasumi'),
   partyOut('gendo'),
-  faceTo('gendo', 'kasumi'),
   { type: 'say', lines: ['玄道「からくりの影武者か。江戸で鷲尾が将軍にしておることの、試しかもしれんな」'] },
-  // 東の入口の道は 1 マス幅で、仲間は二人までしか並べないので、玄道が戻ってからお凛が出る
   ...partyIn('gendo'),
   partyOut('orin'),
   { type: 'say', lines: ['お凛「だったら、金沢で尻尾をつかんでやろうじゃないか」'] },
-  faceTo('kasumi', 'hero'),
+  ...partyIn('orin'),
+  partyOut('kasumi'),
   {
     type: 'say',
-    lines: [
-      '霞「ちょうど湊に、加賀へ回る北前船が入ってるって話だよ。日本海をぐるりと回って、加賀の湊まで運んでくれるはずさ」',
-    ],
+    lines: ['霞「ちょうど湊に、加賀へ回る北前船が入ってるって話だよ。日本海をぐるりと回って、加賀の湊まで運んでくれるはずさ」'],
   },
   {
     type: 'say',
@@ -822,7 +822,6 @@ const NAGASAKI_CHAPTER_END: EventStep[] = [
     linesF: ['{hero}「蘭斎さんから預かった祝詞もある。湊の船頭に頼んで、北の海を渡って金沢へ乗りこもうじゃないか」'],
   },
   ...partyIn('kasumi'),
-  ...partyIn('orin'),
   { type: 'setFlag', flag: 'chapter6Cleared' },
 ];
 

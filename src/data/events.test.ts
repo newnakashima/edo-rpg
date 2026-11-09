@@ -846,13 +846,15 @@ describe('第 6 章の流れ', () => {
   it('第 6 章の終わりは、東の入口・全滅後の戻り先・熊本からの渡し船の湊のどこでも始まるので、決まった場所に人を出さず、仲間だけで話す', () => {
     const won = run('nanbanOzutsu', opened);
     const list = requests('nagasakiEnter', won);
-    expect(respawnPoint('kenkyujo').mapId).toBe('nagasaki');
+    const town = MAPS.world!.towns!.find((t) => t.name === '長崎')!.to!;
+    const back = respawnPoint('kenkyujo');
+    expect(back.mapId).toBe('nagasaki');
     expect(placed(list)).toEqual([]);
     const pages = list.flatMap((q) => (q.kind === 'say' ? q.pages : [])).join('');
     expect(pages).toContain('北前船');
     expect(pages).not.toContain('{hero}たちは');
     expect(pages).not.toContain('船頭「');
-    // 1 マス幅の道なので、同時に出る仲間は二人まで
+    // 熊本からの渡し船の着く湊（14, 22）は隣の空いたマスが 1 つだけなので、仲間は一人ずつ出る
     let out = 0;
     let most = 0;
     for (const q of list) {
@@ -861,7 +863,20 @@ describe('第 6 章の流れ', () => {
       if (q.step.type === 'vanish' && ['kasumi', 'gendo', 'orin'].includes(q.step.who)) out--;
       most = Math.max(most, out);
     }
-    expect(most).toBeLessThanOrEqual(2);
+    expect(most).toBe(1);
+    // どこで始まっても、主人公の隣に空いたマス（通れて、町の人がいない）がある
+    const nagasaki = MAPS.nagasaki!;
+    const ferry = [...walk(EVENTS.kumamotoWatashi!.steps)].find((st) => st.type === 'warp' && st.mapId === 'nagasaki');
+    expect(ferry).toBeDefined();
+    for (const p of [town, back, ferry as { x: number; y: number }]) {
+      const free = [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+      ].filter(([dx, dy]) => canStep(nagasaki, p.x + dx!, p.y + dy!) && !nagasaki.npcs.some((n) => n.x === p.x + dx! && n.y === p.y + dy!));
+      expect(free.length, `${p.x},${p.y}`).toBeGreaterThan(0);
+    }
   });
 });
 
