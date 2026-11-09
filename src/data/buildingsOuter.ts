@@ -101,7 +101,7 @@ export const YORIKI_BUILDINGS: BuildingDef[] = [
         color: 0x6a5a4a,
         sprite: 'npc_ninsoku',
         lines: ['中間「おいらは夜中に、荷車を蔵の前まで引いていくのが役目でさ。重てえ葛籠でよ……。中身？ 知らねえほうが身のためだって言われてらあ」'],
-        after: { flag: 'meiboFound', lines: ['中間「蔵から、さらわれた人の名簿が出たってよ。おいらが引いてた葛籠も……ああ、考えたくもねえ」'] },
+        after: { flag: 'meiboFound', lines: ['中間「蔵から、さらわれた人の名簿が出たってよ。おいらが引いてた荷も……ああ、考えたくもねえ」'] },
         later: { flag: 'chapter1Cleared', lines: ['中間「お屋敷は明け渡しだとさ。おいらも明日から口入れ屋通いだ」'] },
       },
       ...furniture('yorikiHokoninNagaya', [
