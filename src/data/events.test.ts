@@ -1205,9 +1205,10 @@ describe('第 8 章の流れ', () => {
     const runner = new EventRunner(EVENTS[id]!.steps);
     return skipSay(runner, runner.next(state)).request;
   };
-  /** 話しかけて、最初のページの数（2 回目以降は短い）。 */
+  /** 話しかけて、最初のページの数（2 回目以降は短い。人が出てくる演出は飛ばす）。 */
   const pagesOf = (id: string, state: GameState) => {
-    const r = new EventRunner(EVENTS[id]!.steps).next(state);
+    const runner = new EventRunner(EVENTS[id]!.steps);
+    const r = skipStage(runner, runner.next(state));
     return r.request.kind === 'say' ? r.request.pages.length : 0;
   };
 
@@ -1878,5 +1879,216 @@ describe('寄り道の熊本（籠城の備えの井戸の謎）', () => {
     expect(run('kumamotoChest1', arrived).items.konpeito).toBe((arrived.items.konpeito ?? 0) + 1);
     expect(run('kumamotoChest3', arrived).items.hangontan).toBe((arrived.items.hangontan ?? 0) + 1);
     expect(run('kumamotoChest2', arrived).items.karashiRenkon).toBe((arrived.items.karashiRenkon ?? 0) + 1);
+  });
+});
+
+describe('第 8 章・寄り道の町の演出（地の文を人の動きと台詞に）', () => {
+  const ch7Party = [createMember('hero', 25), createMember('gendo', 25), createMember('orin', 25), createMember('kasumi', 25)];
+  const ch7 = { ...newGame('m', { mapId: 'sendai', x: 50, y: 18 }), party: ch7Party, flags: { intro: true, chapter6Cleared: true, kanazawaArrived: true, tonoRescued: true, kagaTegata: true, chapter7Cleared: true } };
+  type Req = ReturnType<typeof requests>[number];
+  const actors = (list: Req[]) => list.flatMap((q) => (q.kind === 'stage' && q.step.type === 'actor' ? [q.step.id] : []));
+  const vanished = (list: Req[]) => list.flatMap((q) => (q.kind === 'stage' && q.step.type === 'vanish' ? [q.step.who] : []));
+  const pagesIn = (list: Req[]) => list.flatMap((q) => (q.kind === 'say' ? q.pages : []));
+  const battleAt = (list: Req[]) => list.findIndex((q) => q.kind === 'battle');
+  /** 一行の仲間が同時に何人出ているかの最大（主人公の隣の空きが少ない場面では一人ずつ出す）。 */
+  const maxPartyOut = (list: Req[]) => {
+    let out = 0;
+    let max = 0;
+    for (const q of list) {
+      if (q.kind !== 'stage') continue;
+      if (q.step.type === 'actor' && ['kasumi', 'gendo', 'orin'].includes(q.step.id)) max = Math.max(max, ++out);
+      if (q.step.type === 'vanish' && ['kasumi', 'gendo', 'orin'].includes(q.step.who)) out--;
+    }
+    return max;
+  };
+  /** 地の文として残してよいもの: 音、受け取った知らせ、調べた物の説明（熊本の井戸と水脈のからくり）。 */
+  const allowedNarration = (p: string) =>
+    /^[ぁ-んァ-ヶー、。…！ ]+$/u.test(p) || p.endsWith('を受け取った。') || /^(井戸の底に|地の下を流れる水脈に)/.test(p);
+  const ids = ['sendaiEnter', 'tatewaki', 'edoEnter', 'kokichi', 'hikeshiGashira', 'oharu', 'taikaEnter', 'kashaKarakuri', 'hamamatsuEnter', 'hamamatsuTako', 'hikoneEnter', 'hikoneGusoku', 'kumamotoEnter', 'kumamotoKarakuri', 'aizuEnter', 'heita'];
+
+  it('第 8 章と寄り道の町のイベントには、人の動きや居場所を語る地の文が残っていない', () => {
+    const lines = (steps: readonly EventStep[]): string[] =>
+      steps.flatMap((st) => {
+        if (st.type === 'say') return [...st.lines, ...(st.linesF ?? [])];
+        if (st.type === 'if') return [...lines(st.then), ...lines(st.else ?? [])];
+        if (st.type === 'choice') return st.options.flatMap((o) => lines(o.steps));
+        if (st.type === 'giveItem') return lines(st.ifFull ?? []);
+        if (st.type === 'battle') return lines(st.ifLose ?? []);
+        return [];
+      });
+    for (const id of [...ids, 'hamamatsuGenta', 'hikoneJinbei', 'kumamotoMosaku', 'kumamotoWatashi', 'aizuJuu', 'nagayaOoya']) {
+      for (const line of lines(EVENTS[id]!.steps)) if (!line.includes('「')) expect(allowedNarration(line), `${id}: ${line}`).toBe(true);
+    }
+  });
+
+  it('仙台に着くと、霞と玄道が出て話し、一行に戻る', () => {
+    const list = requests('sendaiEnter', ch7);
+    expect(actors(list)).toEqual(['kasumi', 'gendo']);
+    expect(vanished(list)).toEqual(['gendo', 'kasumi']);
+  });
+
+  const heard = run('tatewaki', run('sendaiEnter', ch7));
+
+  it('片平帯刀の屋敷では、霞が出て話し、刺客が庭から座敷へ踏み込んでくる。勝つと忍びは煙で、からくり同心は崩れて消える', () => {
+    const list = requests('tatewaki', run('sendaiEnter', ch7));
+    const b = battleAt(list);
+    expect(actors(list.slice(0, b))).toEqual(['kasumi', 'tatewakiShinobiA', 'tatewakiDoshin', 'tatewakiShinobiB']);
+    expect(vanished(list.slice(b))).toEqual(['tatewakiShinobiA', 'tatewakiShinobiB', 'tatewakiDoshin']);
+    // 霞は刺客が出てくる前に戻る（座敷の主人公の隣が刺客の道と重ならないように）
+    expect(vanished(list.slice(0, b))).toEqual(['kasumi']);
+  });
+
+  const arrived = run('edoEnter', heard);
+
+  it('江戸に着くと、町人とおかみが高札のお触れを読み上げて去り、仲間が一人ずつ出て話す', () => {
+    const list = requests('edoEnter', heard);
+    expect(actors(list).slice(0, 2)).toEqual(['edoKosatsuChonin', 'edoKosatsuOkami']);
+    expect(vanished(list)).toEqual(expect.arrayContaining(['edoKosatsuChonin', 'edoKosatsuOkami']));
+    expect(pagesIn(list).some((p) => p.startsWith('町人「') && p.includes('高札'))).toBe(true);
+    expect(maxPartyOut(list)).toBe(1);
+  });
+
+  const hidden = run('nagayaOoya', arrived);
+
+  it('小吉に初めて会うと、からくり同心と旗本奴が路地の東から駆けてきて、勝つと同心は崩れ、旗本奴は東へ逃げる', () => {
+    const list = requests('kokichi', hidden);
+    const b = battleAt(list);
+    expect(actors(list.slice(0, b))).toEqual(['kokichiDoshinA', 'kokichiYakko', 'kokichiDoshinB']);
+    expect(vanished(list.slice(b)).slice(0, 3)).toEqual(['kokichiDoshinA', 'kokichiDoshinB', 'kokichiYakko']);
+    expect(pagesIn(list).join('')).not.toContain('転がり込んで');
+  });
+
+  const met = run('kokichi', hidden);
+  const report = run('kokichi', run('hikeshiGashira', met));
+
+  it('火消しの頭の話では、霞が出てきて話す。小吉の知らせでは、お鈴を負ぶっていることを小吉が話し、玄道が出て寝顔を見る', () => {
+    const gashira = requests('hikeshiGashira', met);
+    expect(actors(gashira)).toEqual(['kasumi']);
+    const list = requests('kokichi', run('hikeshiGashira', met));
+    expect(actors(list)[0]).toBe('gendo');
+    const pages = pagesIn(list).join('');
+    expect(pages).not.toContain('負ぶっている');
+    expect(pages).toContain('背中で');
+    expect(maxPartyOut(list)).toBe(1);
+  });
+
+  it('お春の場面では、火付け盗賊とからくり同心が東の通りから駆けてきて、勝つと消える。半鐘のあと火消しの頭が西の通りから駆けつけて帰る', () => {
+    const list = requests('oharu', report);
+    const b = battleAt(list);
+    expect(actors(list.slice(0, b))).toEqual(expect.arrayContaining(['oharuTozokuA', 'oharuDoshin', 'oharuTozokuB']));
+    expect(vanished(list.slice(b))).toEqual(expect.arrayContaining(['oharuTozokuA', 'oharuDoshin', 'oharuTozokuB', 'oharuGashira']));
+    expect(actors(list.slice(b))).toContain('oharuGashira');
+    expect(pagesIn(list).join('')).not.toContain('こぼれ落ちた');
+    // 店先の上の空の娘も、地の文ではなく娘の台詞で見せる
+    expect(pagesIn(requests('oharu', met)).every((p) => p.startsWith('八百屋の娘「'))).toBe(true);
+  });
+
+  const fire = run('oharu', report);
+  const entered = run('taikaEnter', fire);
+
+  it('大火の町に入ると、主人公が 1 歩進み、隣の火消しが声をかけ、霞が南に出る', () => {
+    const taika = MAPS.edoTaika!;
+    const entry = MAPS.edo!.exits.find((e) => e.to === 'edoTaika')!;
+    expect([entry.toX, entry.toY]).toEqual([1, 32]);
+    const list = requests('taikaEnter', fire);
+    expect(list[0]).toMatchObject({ kind: 'stage', step: { type: 'walk', who: 'hero', path: 'r' } });
+    expect(canStep(taika, 2, 32)).toBe(true);
+    // (2, 32) の北は壁、南 (2, 33) は空いていて、霞はそこに出る。火消しは南東 (3, 33)
+    expect(canStep(taika, 2, 31)).toBe(false);
+    expect(canStep(taika, 2, 33)).toBe(true);
+    expect(taika.npcs.find((n) => n.id === 'taikaHikeshi1')).toMatchObject({ x: 3, y: 33 });
+    expect(actors(list)).toEqual(['kasumi']);
+  });
+
+  it('火車からくりは広場の奥から出てきて、勝つと崩れて消え、火消しの頭が西の通りから駆けつける。夜明けまでを地の文で語らない', () => {
+    const list = requests('kashaKarakuri', entered);
+    const b = battleAt(list);
+    expect(actors(list.slice(0, b))[0]).toBe('kasha');
+    expect(vanished(list.slice(b))[0]).toBe('kasha');
+    expect(actors(list.slice(b))).toContain('kashaGashira');
+    expect(pagesIn(list).join('')).not.toContain('明け方');
+    // 主人公の隣で空くのは西と東だけなので、仲間は一人ずつ出る
+    expect(maxPartyOut(list)).toBe(1);
+    const t = MAPS.edoTaika!.triggers!.find((x) => x.event === 'kashaKarakuri')!;
+    expect([t.x, t.y]).toEqual([44, 25]);
+    expect([canStep(MAPS.edoTaika!, 44, 24), canStep(MAPS.edoTaika!, 44, 26)]).toEqual([false, false]);
+  });
+
+  it('第 8 章の終わりは長屋の路地で、大家が西の家の前から主人公の西まで歩いてくる（主人公のマスを通らない）。仲間は一人ずつ出る', () => {
+    const won = run('kashaKarakuri', entered);
+    const list = requests('edoEnter', won);
+    const edo = MAPS.edo!;
+    const ooya = edo.npcs.find((n) => n.id === 'nagayaOoya')!;
+    const step = list.find((q) => q.kind === 'stage' && q.step.type === 'walk' && q.step.who === 'nagayaOoya');
+    expect(step?.kind).toBe('stage');
+    const path = step?.kind === 'stage' && step.step.type === 'walk' ? (step.step.path ?? '') : '';
+    const pos = { x: ooya.x, y: ooya.y };
+    const d = { u: [0, -1], d: [0, 1], l: [-1, 0], r: [1, 0] } as const;
+    for (const c of path) {
+      pos.x += d[c as keyof typeof d][0];
+      pos.y += d[c as keyof typeof d][1];
+      expect(canStep(edo, pos.x, pos.y), `(${pos.x},${pos.y})`).toBe(true);
+      expect(pos.x === 22 && pos.y === 16, '主人公のマスを通る').toBe(false);
+    }
+    expect(pos).toEqual({ x: 21, y: 16 });
+    expect(pagesIn(list).join('')).not.toContain('長屋に戻ると');
+    expect(maxPartyOut(list)).toBe(1);
+  });
+
+  it('寄り道の町に着くと、町の人が入口へ歩いてきて町のことを話し、去っていく（浜松・彦根は仲間を出さない）', () => {
+    const hamamatsu = { ...newGame('m', { mapId: 'hamamatsu', x: 50, y: 12 }), party: [createMember('hero', 7), createMember('kasumi', 7)], flags: { intro: true, chapter1Cleared: true, oigawaOpen: true } };
+    const ham = requests('hamamatsuEnter', hamamatsu);
+    expect(actors(ham)).toEqual(['hamamatsuChonin']);
+    expect(vanished(ham)).toEqual(['hamamatsuChonin']);
+    const hikone = { ...hamamatsu, flags: { ...hamamatsu.flags, chapter2Cleared: true } };
+    const hik = requests('hikoneEnter', hikone);
+    expect(actors(hik)).toEqual(['hikoneSamurai', 'hikoneChonin']);
+    expect(vanished(hik)).toEqual(['hikoneSamurai', 'hikoneChonin']);
+    const aizu = requests('aizuEnter', heard);
+    expect(actors(aizu)).toEqual(['aizuChonin', 'kasumi']);
+    // 入口の西隣は空いていて、町の人はそこで止まる
+    for (const [map, x, y] of [['hamamatsu', 49, 12], ['hikone', 49, 12], ['aizu', 49, 13]] as const) expect(canStep(MAPS[map]!, x, y), map).toBe(true);
+  });
+
+  it('熊本に着くと、渡し船の船頭が見送り、空の桶のおかみが通りかかり、仲間が出て話す', () => {
+    const kumamoto = { ...newGame('m', { mapId: 'kumamoto', x: 5, y: 32 }), party: ch7Party, flags: { intro: true, chapter5Cleared: true, kasumiRejoined: true, shimabaraOpen: true } };
+    const list = requests('kumamotoEnter', kumamoto);
+    expect(pagesIn(list)[0]).toMatch(/^船頭「/);
+    expect(actors(list)).toEqual(['gendo', 'kawashiriOkami', 'orin', 'kasumi']);
+    expect(MAPS.kumamoto!.npcs.find((n) => n.id === 'watashiSendo')).toMatchObject({ x: 3, y: 32 });
+    // 水脈のからくりを止めるのは、仲間が一人ずつ出て見せる
+    const karakuri = requests('kumamotoKarakuri', run('kumamotoMosaku', kumamoto));
+    const b = battleAt(karakuri);
+    expect(actors(karakuri.slice(0, b))).toEqual(expect.arrayContaining(['mizuGeho', 'mizuHeiA', 'mizuHeiB', 'mizuHeiC']));
+    expect(vanished(karakuri.slice(b))).toEqual(expect.arrayContaining(['mizuGeho', 'mizuHeiA', 'mizuHeiB', 'mizuHeiC']));
+    expect(actors(karakuri.slice(b))).toEqual(['kasumi', 'orin', 'gendo', 'kasumi']);
+    expect(maxPartyOut(karakuri)).toBe(1);
+  });
+
+  it('佐和山では、勝つと主人公が南東へ下がり、盗人は南の細い道を下りていく（主人公の立つマスを通らない）', () => {
+    const hikone = { ...newGame('m', { mapId: 'hikone', x: 50, y: 12 }), party: [createMember('hero', 10)], flags: { intro: true, chapter2Cleared: true, hikoneIntro: true, hikoneGusokuAsked: true } };
+    const list = requests('hikoneGusoku', hikone);
+    const heroWalk = list.find((q) => q.kind === 'stage' && q.step.type === 'walk' && q.step.who === 'hero');
+    expect(heroWalk).toMatchObject({ step: { to: { x: 46, y: 29 } } });
+    const map = MAPS.hikone!;
+    const nusubito = map.npcs.find((n) => n.id === 'gusokuNusubito')!;
+    // 盗人の隣で主人公が立てるのは南と東だけで、どちらからでも南東 (46, 29) へまっすぐ下がれる
+    const spots = [[nusubito.x, nusubito.y + 1], [nusubito.x + 1, nusubito.y], [nusubito.x - 1, nusubito.y], [nusubito.x, nusubito.y - 1]].filter(
+      ([x, y]) => canStep(map, x!, y!) && !map.npcs.some((n) => n.x === x && n.y === y),
+    );
+    expect(spots).toEqual([[45, 29], [46, 28]]);
+    for (let y = nusubito.y + 1; y <= nusubito.y + 6; y++) expect(canStep(map, nusubito.x, y), `(${nusubito.x},${y})`).toBe(true);
+  });
+
+  it('飯盛山では、送り狼と雪女が山道の南から出てきて、勝つと消える。平太は主人公のところへ歩いて一行と山を下りる', () => {
+    const aizu = { ...heard, flags: { ...heard.flags, aizuIntro: true, aizuJuuAsked: true } };
+    const list = requests('heita', aizu);
+    const b = battleAt(list);
+    expect(actors(list.slice(0, b))).toEqual(expect.arrayContaining(['iimoriOkamiA', 'iimoriOkamiB', 'iimoriOkamiC', 'iimoriYukiOnna']));
+    expect(vanished(list.slice(b))).toEqual(expect.arrayContaining(['iimoriOkamiA', 'iimoriOkamiB', 'iimoriOkamiC', 'iimoriYukiOnna', 'heita']));
+    expect(pagesIn(list).join('')).not.toContain('一行と山を下りた');
+    // 什の掟を唱える場面は、少年たちのいる日新館の庭で見せる（町に入ったときには出さない）
+    expect(pagesIn(requests('aizuEnter', heard)).join('')).not.toContain('ならぬことはならぬ');
+    expect(pagesIn(requests('aizuJuu', { ...heard, flags: { ...heard.flags, aizuIntro: true } }))[0]).toMatch(/^少年たち「一つ/);
   });
 });

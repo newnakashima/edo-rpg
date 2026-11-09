@@ -3,6 +3,8 @@
 // 主人公の位置は、決まったマスに乗るトリガーと warp の後でだけ分かる。マップに入ったとき・話しかけたときのイベントでは、
 // 主人公の歩く道と、主人公の隣に出た人（actor の x・y を省いた人）の道は見ない（画面は通れないマスの手前で止める）。
 // 主人公の位置が分かるときは、ほかの人を主人公のマスに出したり、主人公のマスを通らせたりしないことも見る（人どうしはぶつからない）。
+// 話しかけたときのイベントでは、主人公は話す相手の隣（通れて、いつもいる人のいないマス）のどれかに立っているので、
+// ほかの人をそのどのマスにも出したり通らせたりしないことを見る（主人公が歩いたら、その先は見ない。行き先が決まっていればそこを主人公の位置にする）。
 import { describe, expect, it } from 'vitest';
 import type { EventStep } from './eventTypes';
 import { ENEMIES } from './enemies';
@@ -26,6 +28,15 @@ function onHero(who: string, pos: { x: number; y: number }, hero: { x: number; y
 interface Start {
   map: MapDef;
   hero?: { x: number; y: number };
+  /** 話しかけたときのイベントで、主人公が立っているかもしれないマス（話す相手の隣）。 */
+  heroSpots?: { x: number; y: number }[];
+}
+
+/** 話す相手の隣で、主人公が立てるマス（通れて、いつもいる人〈showFlag も hideFlag もない人〉のいないマス）。 */
+function spotsAround(map: MapDef, x: number, y: number): { x: number; y: number }[] {
+  return Object.values(DELTA)
+    .map(([dx, dy]) => ({ x: x + dx, y: y + dy }))
+    .filter((p) => canStep(map, p.x, p.y) && !map.npcs.some((n) => n.x === p.x && n.y === p.y && !n.showFlag && !n.hideFlag));
 }
 
 function startsOf(eventId: string): Start[] {
@@ -33,7 +44,7 @@ function startsOf(eventId: string): Start[] {
   for (const map of Object.values(MAPS)) {
     if (map.onEnter?.event === eventId) starts.push({ map });
     for (const t of map.triggers ?? []) if (t.event === eventId) starts.push({ map, hero: { x: t.x, y: t.y } });
-    for (const n of map.npcs) if (n.event === eventId) starts.push({ map });
+    for (const n of map.npcs) if (n.event === eventId) starts.push({ map, heroSpots: spotsAround(map, n.x, n.y) });
     for (const g of map.gates ?? []) if (g.event === eventId) starts.push({ map });
   }
   return starts;
@@ -84,12 +95,16 @@ describe('イベントの演出', () => {
         for (const path of linearize(def.steps)) {
           let map = start.map;
           let hero = start.hero ? { ...start.hero } : undefined;
+          let spots = start.heroSpots ?? [];
+          /** 主人公でない人が、主人公が立っているかもしれないマスに入るか。 */
+          const onSpot = (who: string, pos: { x: number; y: number }) => who !== 'hero' && spots.some((p) => p.x === pos.x && p.y === pos.y);
           const where = new Map<string, { x: number; y: number }>(map.npcs.map((n) => [n.id, { x: n.x, y: n.y }]));
           const label = (s: string) => `${id} @${map.id}: ${s}`;
           for (const step of path) {
             if (step.type === 'warp') {
               map = MAPS[step.mapId]!;
               hero = { x: step.x, y: step.y };
+              spots = [];
               where.clear();
               for (const n of map.npcs) where.set(n.id, { x: n.x, y: n.y });
               continue;
@@ -104,6 +119,7 @@ describe('イベントの演出', () => {
                 expect(passable(map, step.x, step.y), label(`${step.id} を出す (${step.x},${step.y}) が通れない`)).toBe(true);
                 // 一行の仲間は、主人公から出てくる姿として主人公のマスに出してよい（第 1 章の蔵の霞）
                 if (hero && !PARTY.has(step.id)) expect(step.x === hero.x && step.y === hero.y, label(`${step.id} を主人公のマス (${step.x},${step.y}) に出す`)).toBe(false);
+                if (!PARTY.has(step.id)) expect(onSpot(step.id, { x: step.x, y: step.y }), label(`${step.id} を主人公が立っているかもしれないマス (${step.x},${step.y}) に出す`)).toBe(false);
                 where.set(step.id, { x: step.x, y: step.y });
               } else where.set(step.id, { x: NaN, y: NaN }); // 主人公の隣の空いたマス（画面が選ぶ）
               continue;
@@ -125,6 +141,15 @@ describe('イベントの演出', () => {
             }
             if (step.type !== 'walk') continue;
             expect((step.path === undefined) !== (step.to === undefined), label(`walk の ${step.who} は path か to のどちらか一つ`)).toBe(true);
+            if (step.who === 'hero' && spots.length > 0) {
+              // 話しかけたときのイベントで主人公が歩いたら、行き先が決まっていればそこを主人公の位置にする
+              spots = [];
+              if (typeof step.to === 'object') {
+                expect(passable(map, step.to.x, step.to.y), label(`主人公の行き先 (${step.to.x},${step.to.y}) が通れない`)).toBe(true);
+                hero = { ...step.to };
+              }
+              continue;
+            }
             const pos = step.who === 'hero' ? hero : where.get(step.who);
             if (step.who !== 'hero') expect(pos, label(`walk の ${step.who} がいない`)).toBeDefined();
             if (typeof step.to === 'object') {
@@ -136,6 +161,7 @@ describe('イベントの演出', () => {
                   pos.y += DELTA[d][1];
                   expect(passable(map, pos.x, pos.y), label(`${step.who} が通れない (${pos.x},${pos.y}) を歩く`)).toBe(true);
                   expect(onHero(step.who, pos, hero), label(`${step.who} が主人公のマス (${pos.x},${pos.y}) を通る`)).toBe(false);
+                  expect(onSpot(step.who, pos), label(`${step.who} が主人公が立っているかもしれないマス (${pos.x},${pos.y}) を通る`)).toBe(false);
                 }
               } else if (pos) Object.assign(pos, step.to);
               continue;
@@ -151,6 +177,7 @@ describe('イベントの演出', () => {
                   pos.y += DELTA[d][1];
                   expect(passable(map, pos.x, pos.y), label(`${step.who} が通れない (${pos.x},${pos.y}) を歩く`)).toBe(true);
                   expect(onHero(step.who, pos, hero), label(`${step.who} が主人公のマス (${pos.x},${pos.y}) を通る`)).toBe(false);
+                  expect(onSpot(step.who, pos), label(`${step.who} が主人公が立っているかもしれないマス (${pos.x},${pos.y}) を通る`)).toBe(false);
                 }
               }
               if (pos) Object.assign(pos, target ?? { x: NaN, y: NaN });
@@ -165,6 +192,7 @@ describe('イベントの演出', () => {
               pos.y += DELTA[d][1];
               expect(passable(map, pos.x, pos.y), label(`${step.who} が通れない (${pos.x},${pos.y}) を歩く`)).toBe(true);
               expect(onHero(step.who, pos, hero), label(`${step.who} が主人公のマス (${pos.x},${pos.y}) を通る`)).toBe(false);
+              expect(onSpot(step.who, pos), label(`${step.who} が主人公が立っているかもしれないマス (${pos.x},${pos.y}) を通る`)).toBe(false);
             }
           }
         }
