@@ -842,7 +842,7 @@ const KITAMAE_NAGASAKI: EventStep[] = [
               {
                 label: '金沢へ渡る',
                 steps: [
-                  { type: 'say', lines: ['船頭「よっしゃ、帆を上げえ！」', '北前船は日本海をぐるりと回り、加賀の金石の湊に着いた。'] },
+                  { type: 'say', lines: ['船頭「よっしゃ、帆を上げえ！ 日本海をぐるりと回って、加賀の金石の湊まで送っちゃるけえ」'] },
                   { type: 'warp', mapId: 'kanazawa', x: 4, y: 22 },
                 ],
               },
@@ -878,76 +878,129 @@ const KITAMAE_NAGASAKI: EventStep[] = [
 /**
  * 北前船に乗ったとき（第 7 章の始まり）。長崎の船頭に乗せてもらったとき（kitamaeSetSail）だけ船出の場面を出す。
  * 甲板の屋形（src/data/buildingsOuter.ts）から甲板へ出たときもマップに入り直すので、そのときは出さない。
+ * 船出の場面では、主人公は甲板の屋形の戸の東 (11, 10) にいる（KITAMAE_NAGASAKI の warp）。船頭が屋形の戸 (9, 10) から出てきて話し、屋形へ戻る。
  */
 const KITAMAE_ENTER: EventStep[] = [
   {
     type: 'if',
     flag: 'kitamaeSetSail',
     then: [
+      face('hero', 'left'),
+      actor('kitamaeSendoE', 'npc_sendo', 9, 10, 'right'),
+      walk('kitamaeSendoE', 'r'),
       {
         type: 'if',
         flag: 'kitamaeBoarded',
-        then: [{ type: 'say', lines: ['北前船は、ふたたび北の海へ漕ぎ出した。'] }],
+        then: [{ type: 'say', lines: ['船頭「さあ、もういっぺん北の海へ漕ぎ出すで。船首の化け物には、よう気をつけんさいよ」'] }],
         else: [
           {
             type: 'say',
             lines: [
-              '北前船は長崎の湊を出て、玄界灘から日本海へ。',
-              '船は西風を帆にはらんで、北へ、北へと進んでいく。',
+              '船頭「長崎の湊を出たら、玄界灘から日本海へ抜けて、西風を帆にはらんで北へ北へと上るんよ」',
               '船頭「船首の方へは近寄りなさんな。このあたりの海は、夜になると出るけえのう」',
-              'お凛「出るって、何がだい」',
-              '船頭「……船幽霊じゃ」',
             ],
           },
+          partyOut('orin'),
+          faceTo('orin', 'kitamaeSendoE'),
+          { type: 'say', lines: ['お凛「出るって、何がだい」', '船頭「……船幽霊じゃ」'] },
+          ...partyIn('orin'),
           { type: 'setFlag', flag: 'kitamaeBoarded' },
         ],
       },
+      walk('kitamaeSendoE', 'l'),
+      vanish('kitamaeSendoE'),
       { type: 'setFlag', flag: 'kitamaeSetSail', value: false },
     ],
   },
 ];
 
-/** 加賀金沢に初めて入ったとき。 */
+/**
+ * 加賀金沢に初めて入ったとき。北前船で金石の湊 (4, 22) に着いたところで始まる（町に入る道は、第 7 章を終えるまで湊だけ）。
+ * 湊の桟橋の主人公の隣には、空いたマスが 3 つ（西・東・南）あるので、仲間 3 人が並んで出る。
+ */
 const KANAZAWA_ARRIVE: EventStep[] = [
+  face('hero', 'right'),
+  partyOut('kasumi'),
   {
     type: 'say',
     lines: [
-      '加賀金沢。百万石の御城下は、うっすらと雪におおわれていた。',
+      '霞「ここが加賀金沢。百万石の御城下さ。……雪が積もってるね」',
       '霞「殿様は病で伏せってることになってる。それなのに、ときどき櫓から手を振る姿が見えるらしい」',
-      '玄道「顔色ひとつ変えずに、な。からくりの影武者なら、それも道理よ」',
-      'お凛「でも、どうやって確かめるんだい。お城には入れてもらえないだろう」',
-      '霞「殿様に古くから仕えた老臣が、ご家老に疎まれて屋敷に引きこもってるって聞いた。長町の武家屋敷だ。まずはそこを訪ねよう」',
     ],
   },
+  partyOut('gendo'),
+  { type: 'say', lines: ['玄道「顔色ひとつ変えずに、な。からくりの影武者なら、それも道理よ」'] },
+  partyOut('orin'),
+  { type: 'say', lines: ['お凛「でも、どうやって確かめるんだい。お城には入れてもらえないだろう」'] },
+  faceTo('kasumi', 'orin'),
+  { type: 'say', lines: ['霞「殿様に古くから仕えた老臣が、ご家老に疎まれて屋敷に引きこもってるって聞いた。長町の武家屋敷だ。まずはそこを訪ねよう」'] },
+  ...partyIn('orin'),
+  ...partyIn('gendo'),
+  ...partyIn('kasumi'),
   { type: 'setFlag', flag: 'kanazawaIntro' },
 ];
 
-/** 殿様を救い出して金沢に戻ったとき（第 7 章の終わり）。 */
+/**
+ * 殿様を救い出して金沢に戻ったとき（第 7 章の終わり）。座敷牢から城の門の前 (28, 15) へ warp したところで始まる（tonoRescue）。
+ * 殿様は城の門 (28, 13。鍵をかけた戸で人は立てない) の前の橋 (28, 14) に立っている。家臣が東の通りから玄蕃を捕らえた知らせを持って駆けてきて (29, 16)、
+ * 長瀬左近も東の通りから歩いてくる (29, 15)。主人公の隣は西に門番 (27, 15)、北に殿様、東に左近が立つので、空いたマスは南の 1 つ。仲間は一人ずつ出る。
+ */
 const KANAZAWA_CHAPTER_END: EventStep[] = [
+  face('hero', 'up'),
+  actor('kanazawaTono', 'kagaTono', 28, 14, 'down'),
+  actor('kanazawaKashin', 'npc_yakunin', 33, 16, 'left'),
+  walk('kanazawaKashin', 'llll'),
+  faceTo('kanazawaKashin', 'kanazawaTono'),
   {
     type: 'say',
     lines: [
-      '抜け穴から城へ戻った殿様の姿に、家臣たちは息をのんだ。',
-      '家老・土橋玄蕃は、からくりの影武者のことを問われると、何も言えずに捕らえられた。',
-      '城の大広間に、一行は呼ばれた。',
+      '家臣「殿！ ご家老・土橋玄蕃を捕らえましたぞ。からくりの影武者のことを問いただすと、ひと言も申し開きができませなんだ」',
+      '殿様「うむ。……玄蕃は白状した。からくりの影武者は、江戸の老中・鷲尾但馬守の差し金。加賀は、その試しに使われたのだと」',
       '殿様「そなたたちのおかげで、加賀は救われた。礼を言う」',
-      '殿様「玄蕃は白状した。からくりの影武者は、江戸の老中・鷲尾但馬守の差し金。加賀は、その試しに使われたのだと」',
       '殿様「鷲尾は、江戸城でも同じことをしておる。……上様のお姿を、もう一年も、誰もまともに見ておらぬのだ」',
-      '霞「やっぱり……将軍様の影武者を操ってるのは、鷲尾だ」',
-      '殿様「この手形を持っていくがよい。加賀百万石の名にかけて、江戸の御城の門をくぐれるようにしてある」',
-      '{hero}たちは、加賀の殿様から江戸城の手形を授かった！',
-      '長瀬左近「殿のお顔が、ようやく笑うてくだされた。……わしからも、これを」',
-      '長瀬左近から 3000 文を受け取った。',
-      '玄道「夜叉丸の娘は、江戸の鷲尾の屋敷か。……約束は、果たさねばならんな」',
-      'お凛「行こう、江戸へ。おとっつぁんの仇の、そのまた親玉のところへ」',
+    ],
+  },
+  partyOut('kasumi'),
+  faceTo('kasumi', 'kanazawaTono'),
+  { type: 'say', lines: ['霞「やっぱり……将軍様の影武者を操ってるのは、鷲尾だ」'] },
+  ...partyIn('kasumi'),
+  {
+    type: 'say',
+    lines: ['殿様「この手形を持っていくがよい。加賀百万石の名にかけて、江戸の御城の門をくぐれるようにしてある」', '{hero}たちは、加賀の殿様から江戸城の手形を授かった！'],
+  },
+  actor('kanazawaSakon', 'sakon', 33, 15, 'left'),
+  walk('kanazawaSakon', 'llll'),
+  { type: 'say', lines: ['長瀬左近「殿のお顔が、ようやく笑うてくだされた。……わしからも、これを」', '長瀬左近から 3000 文を受け取った。'] },
+  { type: 'giveMoney', amount: 3000 },
+  partyOut('gendo'),
+  { type: 'say', lines: ['玄道「夜叉丸の娘は、江戸の鷲尾の屋敷か。……約束は、果たさねばならんな」'] },
+  ...partyIn('gendo'),
+  partyOut('orin'),
+  { type: 'say', lines: ['お凛「行こう、江戸へ。おとっつぁんの仇の、そのまた親玉のところへ」'] },
+  ...partyIn('orin'),
+  {
+    type: 'say',
+    lines: [
       '殿様「待たれよ。手形はあっても、今の江戸の御城は鷲尾の手の者で固められておる。今すぐ門を叩くのは危うい。折を待たねばなるまい」',
       '殿様「それに、鷲尾の手は東北の藩にも伸びておると聞く。江戸へ入る前に、奥州の仙台を訪ねてはくれぬか」',
       '殿様「北国街道を東へ越えれば、陸路で仙台に出られる。伊達の家中で何が起きておるか、確かめてからでも遅くはあるまい」',
+    ],
+  },
+  // 殿様は城の中へ戻り、家臣と左近は東の通りへ帰っていく
+  vanish('kanazawaTono'),
+  walk('kanazawaKashin', 'rrrr'),
+  vanish('kanazawaKashin'),
+  walk('kanazawaSakon', 'rrrr'),
+  vanish('kanazawaSakon'),
+  partyOut('kasumi'),
+  {
+    type: 'say',
+    lines: [
       '霞「仙台なら、伊達の殿様の御側役の片平帯刀さまがいる。あたしの江戸の上役ともつながりのある味方だ。江戸の様子も、そこで聞けるはずだよ」',
       '霞「東の外れの番人も、もう通してくれるはずだ。北国街道を東へ、仙台へ向かおう」',
     ],
   },
-  { type: 'giveMoney', amount: 3000 },
+  ...partyIn('kasumi'),
   { type: 'setFlag', flag: 'kagaTegata' },
   { type: 'setFlag', flag: 'chapter7Cleared' },
 ];
@@ -2509,39 +2562,59 @@ export const EVENTS: Record<string, EventDef> = {
   kitamaeNagasaki: { id: 'kitamaeNagasaki', steps: KITAMAE_NAGASAKI },
   /** 北前船に乗ったとき。 */
   kitamaeEnter: { id: 'kitamaeEnter', steps: KITAMAE_ENTER },
-  /** 北前船の船首のくびれ。船幽霊と海坊主が船を襲う。倒すと金沢の湊に着く（kanazawaArrived）。 */
+  /**
+   * 北前船の船首のくびれ (31, 10〜11)。船幽霊と海坊主が船を襲う。倒すと金沢の湊に着く（kanazawaArrived）。
+   * 船幽霊は船首の両舷 (33, 9)(33, 12) から這い上がり、海坊主は船首の先 (37, 10) に身を起こす。船頭は後ろから駆けつける。
+   */
   funayureiAttack: {
     id: 'funayureiAttack',
     steps: [
+      face('hero', 'right'),
+      enemyActor('funayureiA', 'funayurei', 33, 9),
+      enemyActor('funayureiB', 'funayurei', 33, 12),
+      walk('funayureiA', 'd'),
+      walk('funayureiB', 'u'),
       {
         type: 'if',
         flag: 'funayureiMet',
-        then: [{ type: 'say', lines: ['海の底から、ふたたび青白い手が伸びてきた。', '「柄杓を……柄杓を貸せえ……」'] }],
+        then: [{ type: 'say', lines: ['船幽霊「柄杓を……柄杓を貸せえ……」'] }],
+        else: [
+          partyOut('kasumi'),
+          { type: 'say', lines: ['霞「……日が暮れたとたんに、この霧だ。見な、波間から青白い手が何本も伸びてくる」', '船幽霊「柄杓を……柄杓を貸せえ……」'] },
+          ...partyIn('kasumi'),
+        ],
+      },
+      // 船頭が船尾のほうから駆けつける
+      actor('funayureiSendo', 'npc_sendo', 26, 10, 'right'),
+      walk('funayureiSendo', 'rr'),
+      {
+        type: 'if',
+        flag: 'funayureiMet',
+        then: [{ type: 'say', lines: ['船頭「また出よったか！ 底を抜いた柄杓を投げるけえ、追い払うてくれ！」'] }],
         else: [
           {
             type: 'say',
-            lines: [
-              '日が暮れると、海に霧が立ちこめた。',
-              '船のまわりの波間から、青白い手が何本も伸びてくる。',
-              '「柄杓を……柄杓を貸せえ……」',
-              '船頭「船幽霊じゃ！ 柄杓を渡したら、それで水を汲み入れて船を沈めよる！」',
-              '船頭「底を抜いた柄杓を投げるけえ、そのあいだに追い払うてくれ！」',
-              '霧の向こうから、黒い大きな影が身を起こした。',
-            ],
+            lines: ['船頭「船幽霊じゃ！ 柄杓を渡したら、それで水を汲み入れて船を沈めよる！」', '船頭「底を抜いた柄杓を投げるけえ、そのあいだに追い払うてくれ！」'],
           },
           { type: 'setFlag', flag: 'funayureiMet' },
         ],
       },
+      // 霧の向こうの海から、黒い大きな影が船首の先へ身を起こす
+      enemyActor('funayureiUmibozu', 'umibozu', 37, 10),
+      walk('funayureiUmibozu', 'l'),
       { type: 'battle', enemies: ['funayurei', 'umibozu', 'funayurei'], level: 22 },
+      vanish('funayureiUmibozu'),
+      vanish('funayureiA'),
+      vanish('funayureiB'),
       {
         type: 'say',
-        lines: [
-          '船幽霊たちは、底の抜けた柄杓で空しく水をすくいながら、霧の中へ消えていった。',
-          '船頭「助かったわい。……ありゃあ、海で死んだ者の魂よ。成仏できずに、仲間を探しとるんじゃ」',
-          '玄道は、霧の晴れた海に向かって、しばらく経を唱えていた。',
-          '幾日かののち、船は加賀の金石の湊に着いた。',
-        ],
+        lines: ['船頭「助かったわい。見い、底の抜けた柄杓で、空しく水をすくいながら消えていきよった」', '船頭「……ありゃあ、海で死んだ者の魂よ。成仏できずに、仲間を探しとるんじゃ」'],
       },
+      partyOut('gendo'),
+      face('gendo', 'right'),
+      { type: 'say', lines: ['玄道「……南無。迷わず、行くべきところへ行かれよ」'] },
+      ...partyIn('gendo'),
+      { type: 'say', lines: ['船頭「霧も晴れた。この先は穏やかな海じゃ。あと幾日かで、加賀の金石の湊に着くけえの」'] },
       { type: 'setFlag', flag: 'kanazawaArrived' },
       { type: 'warp', mapId: 'kanazawa', x: 4, y: 22 },
     ],
@@ -2558,7 +2631,7 @@ export const EVENTS: Record<string, EventDef> = {
           {
             label: '長崎へ戻る',
             steps: [
-              { type: 'say', lines: ['北前船は日本海を西へ回り、長崎の湊に着いた。'] },
+              { type: 'say', lines: ['船頭「よっしゃ、帆を上げえ！ 日本海を西へ回って、長崎の湊まで送っちゃるけえ」'] },
               { type: 'warp', mapId: 'nagasaki', x: 14, y: 22 },
             ],
           },
@@ -2594,6 +2667,8 @@ export const EVENTS: Record<string, EventDef> = {
             flag: 'sakonHeard',
             then: [{ type: 'say', lines: ['長瀬左近「抜け穴の入口は、霞ヶ池の北の岸の、二本足の灯籠じゃ。殿を……殿を頼みましたぞ」'] }],
             else: [
+              partyOut('kasumi'),
+              faceTo('kasumi', 'sakon'),
               {
                 type: 'say',
                 lines: [
@@ -2608,6 +2683,7 @@ export const EVENTS: Record<string, EventDef> = {
                   '長瀬左近「兼六園の番人には、わしから話を通しておこう。……殿を、お救いくだされ」',
                 ],
               },
+              ...partyIn('kasumi'),
               { type: 'setFlag', flag: 'sakonHeard' },
             ],
           },
@@ -2615,7 +2691,10 @@ export const EVENTS: Record<string, EventDef> = {
       },
     ],
   },
-  /** 兼六園の徽軫灯籠。家老の配下の忍びに襲われ、退けると抜け穴の石が動く（nukeanaOpen）。 */
+  /**
+   * 兼六園の徽軫灯籠 (18, 8)。家老の配下の忍びに襲われ、退けると抜け穴の石 (14, 3)(15, 3) がどく（nukeanaOpen）。
+   * 主人公は灯籠の北・東・南のどれかに立って調べるので、忍びとからくり藩士はそのどこにも重ならない池の北の道 (16, 9)(21, 9) と北の道 (19, 5) に出る。
+   */
   kotojiToro: {
     id: 'kotojiToro',
     steps: [
@@ -2624,124 +2703,179 @@ export const EVENTS: Record<string, EventDef> = {
         flag: 'nukeanaOpen',
         then: [{ type: 'say', lines: ['二本の足で池をまたぐ灯籠だ。片方の足の下の石が、ずれたままになっている。'] }],
         else: [
+          { type: 'say', lines: ['池をまたぐように、二本の足で立つ石の灯籠。琴の糸を支える琴柱に似ていることから、徽軫灯籠と呼ばれる。'] },
+          partyOut('kasumi'),
           {
             type: 'say',
-            lines: [
-              '池をまたぐように、二本の足で立つ石の灯籠。琴の糸を支える琴柱に似ていることから、徽軫灯籠と呼ばれる。',
-              '霞「……見な。片方の足のまわりだけ、雪が踏み固められてる」',
-              '灯籠の足もとの石を押すと、北の木立の奥で、ごとりと重い音がした。',
-              '加賀の忍び「そこまでだ。ご家老の秘密を知った者は、生かして帰さぬ」',
-            ],
+            lines: ['霞「……見な。片方の足のまわりだけ、雪が踏み固められてる。足もとの石を押してみな」'],
           },
+          // 主人公が足もとの石を押すと、北の木立の奥で重い音がする
+          { type: 'say', lines: ['ゴトリ……'] },
+          face('kasumi', 'up'),
+          { type: 'say', lines: ['霞「北の木立の奥で、何か動いたね」'] },
+          ...partyIn('kasumi'),
+          enemyActor('toroShinobiA', 'kagaShinobi', 15, 9),
+          enemyActor('toroShinobiB', 'kagaShinobi', 22, 9),
+          enemyActor('toroHanshi', 'karakuriHanshi', 19, 4),
+          walk('toroShinobiA', 'r'),
+          walk('toroShinobiB', 'l'),
+          walk('toroHanshi', 'd'),
+          { type: 'say', lines: ['加賀の忍び「そこまでだ。ご家老の秘密を知った者は、生かして帰さぬ」'] },
           { type: 'battle', enemies: ['kagaShinobi', 'karakuriHanshi', 'kagaShinobi'], level: 22 },
+          // 忍びは煙玉で逃げ、からくり藩士は崩れ落ちる
+          { type: 'say', lines: ['ボウッ……'] },
+          vanish('toroShinobiA'),
+          vanish('toroShinobiB'),
+          vanish('toroHanshi'),
+          // 灯籠の仕掛けで動いた石が、北の細い道の脇へずれる
+          vanish('nukeIshiW'),
+          vanish('nukeIshiE'),
+          partyOut('gendo'),
+          face('gendo', 'up'),
           {
             type: 'say',
             lines: [
-              '北の木立の奥の細い道をふさいでいた苔むした石が、横にずれていた。',
-              '石の陰に、地の底へ下りる石段が口を開けている。',
+              '玄道「見よ。北の細い道をふさいでおった苔むした石がずれて、地の底へ下りる石段が口を開けておる」',
               '玄道「城の地下へ通じる抜け穴、か。……左近どのの言い伝えは、まことであったな」',
             ],
           },
+          ...partyIn('gendo'),
           { type: 'setFlag', flag: 'nukeanaOpen' },
         ],
       },
     ],
   },
-  /** からくり蔵の影武者の間。殿様に化けていたからくりの影武者（中ボス）。倒すと玄道が祝詞で魂のゼンマイを解き放つ。 */
+  /**
+   * からくり蔵の影武者の間。殿様に化けていたからくりの影武者（中ボス）。倒すと玄道が祝詞で魂のゼンマイを解き放つ。
+   * 主人公は間への細い入口 (3〜4, 21) にいる。上座の人形 (9, 24) が立ち上がり、入口の前 (5, 24) まで歩いてくる。
+   */
   kagemusha: {
     id: 'kagemusha',
     steps: [
+      face('hero', 'down'),
+      // 上座の人形が、影武者として立ち上がる（人形の置物を、戦闘の影武者の姿に置き換える）
+      vanish('kagemushaZa'),
+      enemyActor('guraKagemusha', 'kagemusha', 9, 24),
       {
         type: 'if',
         flag: 'kagemushaMet',
-        then: [{ type: 'say', lines: ['影武者が、ふたたび上座から立ち上がった。'] }],
+        then: [walk('guraKagemusha', 'llll'), { type: 'say', lines: ['影武者「控えよ……控えよ……」'] }],
         else: [
+          partyOut('kasumi'),
+          faceTo('kasumi', 'guraKagemusha'),
+          { type: 'say', lines: ['霞「上座に、殿様の装束を着た人が座ってる……」', '影武者「……何者じゃ。余は加賀の主であるぞ。控えよ」'] },
+          walk('guraKagemusha', 'llll'),
+          // 胸の奥から、ゼンマイの巻ける音がする
+          { type: 'say', lines: ['ギリ……ギリ……'] },
+          partyOut('orin'),
+          faceTo('orin', 'guraKagemusha'),
           {
             type: 'say',
-            lines: [
-              '広間の上座に、殿様の装束をまとった人物が座っている。',
-              '影武者「……何者じゃ。余は加賀の主であるぞ。控えよ」',
-              '声は殿様のものだが、口もとがかすかに遅れて動く。胸の奥から、ゼンマイの巻ける音がする。',
-              '霞「大広間でうなずいてたのは、あんただね」',
-              '影武者「控えよ。控えよ。控えよ……者ども、出あえ」',
-            ],
+            lines: ['お凛「声は殿様でも、口が声より遅れて動いてるよ。それに、胸の奥からゼンマイの音がする」', '霞「大広間でうなずいてたのは、あんただね」', '影武者「控えよ。控えよ。控えよ……」'],
           },
+          ...partyIn('orin'),
+          ...partyIn('kasumi'),
           { type: 'setFlag', flag: 'kagemushaMet' },
         ],
       },
       { type: 'battle', enemies: ['kagemusha'], level: 24 },
+      partyOut('gendo'),
+      faceTo('gendo', 'guraKagemusha'),
       {
         type: 'say',
         lines: [
-          '影武者の胸が割れ、青く光るゼンマイがのぞいた。ゼンマイには、人の名を書いた札が下がっている。',
-          '玄道「……蘭斎の祝詞を使うときが来たようだ」',
-          '玄道が祝詞を唱えると、ゼンマイがゆっくりとほどけ、青い光が天井へ昇っていった。',
-          '玄道「囚われておった魂は、これで行くべきところへ行ける」',
-          'お凛「殿様はどこだい。この先かい」',
-          '霞「東の通路の奥から、人の気配がする。……それと、嫌な気配もね」',
+          '玄道「胸が割れて、青く光るゼンマイがのぞいておる。……ゼンマイに、人の名を書いた札が下がっておるな」',
+          '玄道「蘭斎の祝詞を使うときが来たようだ」',
+          '玄道「……ゼンマイに縛られし御魂よ、ほどけて天へ昇られよ」',
         ],
       },
+      // ゼンマイがほどけ、青い光が天井へ昇っていく。影武者は抜け殻になって崩れる
+      { type: 'say', lines: ['ガシャン……'] },
+      vanish('guraKagemusha'),
+      { type: 'say', lines: ['玄道「囚われておった魂は、これで行くべきところへ行ける」'] },
+      ...partyIn('gendo'),
+      partyOut('orin'),
+      { type: 'say', lines: ['お凛「殿様はどこだい。この先かい」'] },
+      ...partyIn('orin'),
+      partyOut('kasumi'),
+      face('kasumi', 'right'),
+      { type: 'say', lines: ['霞「東の通路の奥から、人の気配がする。……それと、嫌な気配もね」'] },
+      ...partyIn('kasumi'),
       { type: 'setFlag', flag: 'kagemushaDefeated' },
     ],
   },
-  /** 座敷牢の前で待つ夜叉丸（第 7 章のボス）。倒すと、鷲尾に家族を人質に取られていたことを明かし、息を引き取る。 */
+  /**
+   * 座敷牢の前で待つ夜叉丸（第 7 章のボス）。倒すと、鷲尾に家族を人質に取られていたことを明かし、息を引き取る。
+   * 主人公は座敷牢の前の細い通路 (31, 25〜26) にいる。夜叉丸 (34, 25) が 1 歩進み出て立ちはだかる。
+   */
   yashamaruBattle: {
     id: 'yashamaruBattle',
     steps: [
+      face('hero', 'right'),
+      walk('yashamaruGura', 'l'),
       {
         type: 'if',
         flag: 'yashamaruMet',
         then: [{ type: 'say', lines: ['夜叉丸「何度来ても同じこと。……この先へは、行かせぬ」'] }],
         else: [
-          {
-            type: 'say',
-            lines: [
-              '座敷牢の前に、黒い狩衣の男が立っていた。般若の面が、灯りに白く浮かぶ。',
-              '夜叉丸「駿府、京……そして加賀。よくもここまで追ってきたものだ」',
-              '{hero}「殿様を返してもらおうか」',
-              '夜叉丸「それはできぬ。この牢の主を江戸へ連れ帰るのが、おれに課せられた役目だ」',
-              '玄道「おぬしほどの術者が、なぜ鷲尾の走狗に甘んじる」',
-              '夜叉丸「……問答は無用」',
-            ],
-          },
+          partyOut('kasumi'),
+          faceTo('kasumi', 'yashamaruGura'),
+          { type: 'say', lines: ['霞〈怒〉「黒い狩衣に、般若の面……夜叉丸！」', '夜叉丸「駿府、京……そして加賀。よくもここまで追ってきたものだ」'] },
+          ...partyIn('kasumi'),
+          { type: 'say', lines: ['{hero}「殿様を返してもらおうか」'], linesF: ['{hero}「殿様を返してもらうよ」'] },
+          { type: 'say', lines: ['夜叉丸「それはできぬ。この牢の主を江戸へ連れ帰るのが、おれに課せられた役目だ」'] },
+          partyOut('gendo'),
+          faceTo('gendo', 'yashamaruGura'),
+          { type: 'say', lines: ['玄道「おぬしほどの術者が、なぜ鷲尾の走狗に甘んじる」', '夜叉丸「……問答は無用」'] },
+          ...partyIn('gendo'),
           { type: 'setFlag', flag: 'yashamaruMet' },
         ],
       },
       { type: 'battle', enemies: ['yashamaru'], level: 25 },
+      // 夜叉丸は膝をつき、割れた面の下から、やつれた男の顔がのぞく
+      { type: 'say', lines: ['ピシッ……'] },
+      { type: 'say', lines: ['夜叉丸「……強いな。駿府で会ったときとは、別人だ」'] },
+      partyOut('gendo'),
+      faceTo('gendo', 'yashamaruGura'),
       {
         type: 'say',
         lines: [
-          '夜叉丸は膝をついた。割れた面の下から、やつれた男の顔がのぞいた。',
-          '夜叉丸「……強いな。駿府で会ったときとは、別人だ」',
-          '夜叉丸の胸もとに、青く光るゼンマイの印が浮かび上がる。',
-          '玄道「これは……鷲尾の呪の印か。しくじれば命を巻き取る仕掛けを、己の体に」',
+          '玄道「胸もとに、青く光るゼンマイの印……。これは、鷲尾の呪の印か。しくじれば命を巻き取る仕掛けを、己の体に」',
           '夜叉丸「鷲尾は、おれの妻と娘を屋敷に閉じ込めている。言うことを聞かねば、ふたりの魂をゼンマイに巻くと」',
           '夜叉丸「妻は、もう……。だが、娘のお鈴は、まだ生きているはずだ」',
           '夜叉丸「頼む。お鈴を……鷲尾の屋敷から……」',
-          '玄道は、蘭斎の祝詞を唱えた。ゼンマイの印がほどけ、夜叉丸の顔から苦しみの色が消えていった。',
+          '玄道「……蘭斎どのの祝詞よ。この者を縛るゼンマイを、ほどきたまえ」',
           '夜叉丸「……ああ、軽い。これほど体が軽いのは、何年ぶりか……」',
-          '夜叉丸は、静かに目を閉じた。',
-          '霞〈悲〉「……約束するよ。あんたの娘は、あたしたちが連れ出す」',
         ],
       },
+      // 夜叉丸は静かに目を閉じ、崩れ落ちる
+      { type: 'say', lines: ['ドサッ……'] },
+      vanish('yashamaruGura'),
+      ...partyIn('gendo'),
+      partyOut('kasumi'),
+      { type: 'say', lines: ['霞〈悲〉「……約束するよ。あんたの娘は、あたしたちが連れ出す」'] },
+      ...partyIn('kasumi'),
       { type: 'setFlag', flag: 'yashamaruDefeated' },
     ],
   },
-  /** 座敷牢の加賀の殿様。救い出すと、抜け穴から城へ戻る（tonoRescued。金沢に入ると第 7 章の終わり）。 */
+  /** 座敷牢の加賀の殿様。救い出すと、抜け穴から城へ戻る（tonoRescued。城の門の前へ warp し、金沢に入ったときの第 7 章の終わりへ）。 */
   tonoRescue: {
     id: 'tonoRescue',
     steps: [
+      { type: 'say', lines: ['殿様「……そなたらは、玄蕃の手の者ではないな」'] },
+      partyOut('kasumi'),
+      faceTo('kasumi', 'kagaTono'),
       {
         type: 'say',
         lines: [
-          '座敷牢の格子の奥に、痩せた男が端座していた。',
-          '殿様「……そなたらは、玄蕃の手の者ではないな」',
           '霞「公儀の……いや、ただの渡世人の一行さ。長瀬左近さまに頼まれて、お迎えにあがりました」',
           '殿様「左近が……。あの頑固者め、まだわしを見捨てておらなんだか」',
-          '{hero}は格子の錠を断ち切った。',
-          '殿様「礼を言う。……城へ戻るぞ。わしの顔を、家臣どもに見せてやらねばならぬ」',
         ],
       },
+      ...partyIn('kasumi'),
+      { type: 'say', lines: ['{hero}「下がっていてくだせえ。格子の錠を断ち切りやす」'], linesF: ['{hero}「下がっていてください。格子の錠を断ち切るよ」'] },
+      { type: 'say', lines: ['ガキン！'] },
+      { type: 'say', lines: ['殿様「礼を言う。……城へ戻るぞ。わしの顔を、家臣どもに見せてやらねばならぬ」'] },
       { type: 'setFlag', flag: 'tonoRescued' },
       { type: 'warp', mapId: 'kanazawa', x: 28, y: 15 },
     ],

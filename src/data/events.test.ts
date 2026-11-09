@@ -915,16 +915,23 @@ describe('第 7 章の流れ', () => {
   it('北前船の船出の場面は、長崎の船頭に乗せてもらったときだけ出る（甲板の屋形から出たときは出ない）', () => {
     const sailing = run('kitamaeNagasaki', ch6);
     expect(sailing.flags.kitamaeSetSail).toBe(true);
-    const first = new EventRunner(EVENTS.kitamaeEnter!.steps).next(sailing);
-    expect(first.request.kind === 'say' && first.request.pages).toHaveLength(5);
+    const first = requests('kitamaeEnter', sailing);
+    // 船頭が屋形の戸から出てきて話し、お凛が出て問い返す。船の進みを地の文で語らない
+    expect(first.find((q) => q.kind === 'stage' && q.step.type === 'actor')).toMatchObject({ step: { id: 'kitamaeSendoE', sprite: 'npc_sendo', x: 9, y: 10 } });
+    const firstPages = first.flatMap((q) => (q.kind === 'say' ? q.pages : []));
+    expect(firstPages.every((p) => p.includes('「'))).toBe(true);
+    expect(firstPages).toContain('お凛「出るって、何がだい」');
+    expect(first.some((q) => q.kind === 'stage' && q.step.type === 'actor' && q.step.id === 'orin')).toBe(true);
+    expect(first.some((q) => q.kind === 'stage' && q.step.type === 'vanish' && q.step.who === 'kitamaeSendoE')).toBe(true);
     const boarded = run('kitamaeEnter', sailing);
     expect(boarded.flags.kitamaeBoarded).toBe(true);
     expect(boarded.flags.kitamaeSetSail).toBeFalsy();
     // 屋形から甲板へ出たとき（もう一度 onEnter が走る）は何も出さない
     expect(new EventRunner(EVENTS.kitamaeEnter!.steps).next(boarded).request.kind).toBe('done');
-    // 負けて長崎から乗り直すと、短い船出の場面
-    const again = new EventRunner(EVENTS.kitamaeEnter!.steps).next(run('kitamaeNagasaki', boarded));
-    expect(again.request.kind === 'say' && again.request.pages).toHaveLength(1);
+    // 負けて長崎から乗り直すと、短い船出の場面（船頭のひと言だけ）
+    const again = requests('kitamaeEnter', run('kitamaeNagasaki', boarded)).flatMap((q) => (q.kind === 'say' ? q.pages : []));
+    expect(again).toHaveLength(1);
+    expect(again[0]).toMatch(/^船頭「/);
   });
 
   it('船首で船幽霊と海坊主（Lv22）に勝つと kanazawaArrived で金沢の湊へ。負けたら着かず、出直すと口上を短くする', () => {
@@ -937,8 +944,29 @@ describe('第 7 章の流れ', () => {
     expect(run('funayureiAttack', boarded).flags.kanazawaArrived).toBe(true);
     const lost = run('funayureiAttack', boarded, 'defeat');
     expect(lost.flags.kanazawaArrived).toBeFalsy();
-    const retry = new EventRunner(EVENTS.funayureiAttack!.steps).next(lost);
-    expect(retry.request.kind === 'say' && retry.request.pages).toHaveLength(2);
+    const retry = requests('funayureiAttack', lost);
+    const retryBefore = retry.slice(0, retry.findIndex((q) => q.kind === 'battle')).flatMap((q) => (q.kind === 'say' ? q.pages : []));
+    expect(retryBefore).toHaveLength(2);
+    expect(retryBefore.join('')).not.toContain('霞「');
+  });
+
+  it('船首では、船幽霊が両舷から這い上がり、海坊主が船首の先に出て、船頭が後ろから駆けつける。勝つと消え、玄道が経を唱える', () => {
+    const boarded = run('kitamaeEnter', run('kitamaeNagasaki', ch6));
+    const list = requests('funayureiAttack', boarded);
+    const battle = list.findIndex((q) => q.kind === 'battle');
+    const shown = list.slice(0, battle).flatMap((q) => (q.kind === 'stage' && q.step.type === 'actor' ? [q.step.id] : []));
+    expect(shown).toEqual(expect.arrayContaining(['funayureiA', 'funayureiB', 'funayureiUmibozu', 'funayureiSendo']));
+    const gone = list.slice(battle).flatMap((q) => (q.kind === 'stage' && q.step.type === 'vanish' ? [q.step.who] : []));
+    expect(gone).toEqual(expect.arrayContaining(['funayureiA', 'funayureiB', 'funayureiUmibozu']));
+    // 船頭が出てから船頭が話す
+    const sendoOut = list.findIndex((q) => q.kind === 'stage' && q.step.type === 'actor' && q.step.id === 'funayureiSendo');
+    const sendoSays = list.findIndex((q) => q.kind === 'say' && q.pages.some((p) => p.startsWith('船頭「')));
+    expect(sendoSays).toBeGreaterThan(sendoOut);
+    const pages = list.flatMap((q) => (q.kind === 'say' ? q.pages : [])).join('');
+    expect(pages).toContain('船幽霊「');
+    expect(pages).toContain('玄道「……南無');
+    expect(pages).not.toContain('玄道は、');
+    expect(pages).not.toContain('幾日かののち');
   });
 
   const arrived = run('funayureiAttack', run('kitamaeEnter', run('kitamaeNagasaki', ch6)));
@@ -982,9 +1010,91 @@ describe('第 7 章の流れ', () => {
       expect(run(id, opened).flags[flag]).toBe(true);
       const lost = run(id, opened, 'defeat');
       expect(lost.flags[flag]).toBeFalsy();
-      const retry = new EventRunner(EVENTS[id]!.steps).next(lost);
-      expect(retry.request.kind === 'say' && retry.request.pages).toHaveLength(1);
+      const retry = requests(id, lost);
+      const retryBefore = retry.slice(0, retry.findIndex((q) => q.kind === 'battle')).flatMap((q) => (q.kind === 'say' ? q.pages : []));
+      expect(retryBefore, id).toHaveLength(1);
     }
+  });
+
+  it('金沢に着くと、湊の桟橋で仲間 3 人が出て話し、一行に戻る。町のようすを地の文で語らない', () => {
+    const list = requests('kanazawaEnter', arrived);
+    const out = list.flatMap((q) => (q.kind === 'stage' && q.step.type === 'actor' ? [q.step.id] : []));
+    expect(out).toEqual(['kasumi', 'gendo', 'orin']);
+    const back = list.flatMap((q) => (q.kind === 'stage' && q.step.type === 'vanish' ? [q.step.who] : []));
+    expect(back).toEqual(expect.arrayContaining(['kasumi', 'gendo', 'orin']));
+    const pages = list.flatMap((q) => (q.kind === 'say' ? q.pages : []));
+    expect(pages.every((p) => p.includes('「'))).toBe(true);
+    // 湊（4, 22）の隣の空いたマス（通れて、町の人がいない）は 3 つある
+    const kanazawa = MAPS.kanazawa!;
+    const free = [
+      [3, 22],
+      [5, 22],
+      [4, 21],
+      [4, 23],
+    ].filter(([x, y]) => canStep(kanazawa, x!, y!) && !kanazawa.npcs.some((n) => n.x === x && n.y === y));
+    expect(free.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('長瀬左近の話では、霞が出てきてから話し、話し終えると戻る', () => {
+    const list = requests('sakonMeet', intro);
+    const out = list.findIndex((q) => q.kind === 'stage' && q.step.type === 'actor' && q.step.id === 'kasumi');
+    const said = list.findIndex((q) => q.kind === 'say' && q.pages.some((p) => p.startsWith('霞「')));
+    const gone = list.findIndex((q) => q.kind === 'stage' && q.step.type === 'vanish' && q.step.who === 'kasumi');
+    expect(out).toBeGreaterThanOrEqual(0);
+    expect(said).toBeGreaterThan(out);
+    expect(gone).toBeGreaterThan(said);
+  });
+
+  it('徽軫灯籠では、忍びとからくり藩士が出てきて、勝つと消え、抜け穴の石もどく。石が動くのを地の文で語らない', () => {
+    const list = requests('kotojiToro', heard);
+    const battle = list.findIndex((q) => q.kind === 'battle');
+    const shown = list.slice(0, battle).flatMap((q) => (q.kind === 'stage' && q.step.type === 'actor' ? [q.step.id] : []));
+    expect(shown).toEqual(expect.arrayContaining(['toroShinobiA', 'toroShinobiB', 'toroHanshi']));
+    const gone = list.slice(battle).flatMap((q) => (q.kind === 'stage' && q.step.type === 'vanish' ? [q.step.who] : []));
+    expect(gone).toEqual(expect.arrayContaining(['toroShinobiA', 'toroShinobiB', 'toroHanshi', 'nukeIshiW', 'nukeIshiE']));
+    const pages = list.flatMap((q) => (q.kind === 'say' ? q.pages : [])).join('');
+    expect(pages).not.toContain('石を押すと');
+    expect(pages).not.toContain('ずれていた');
+    // 敵が出るマスは、灯籠を調べる主人公の立つマス（北・東・南）に重ならない
+    const toro = MAPS.kenrokuen!.npcs.find((n) => n.id === 'kotojiToro')!;
+    const heroSpots = [
+      [toro.x, toro.y - 1],
+      [toro.x + 1, toro.y],
+      [toro.x, toro.y + 1],
+      [toro.x - 1, toro.y],
+    ].filter(([x, y]) => canStep(MAPS.kenrokuen!, x!, y!));
+    const ends = { toroShinobiA: [16, 9], toroShinobiB: [21, 9], toroHanshi: [19, 5] };
+    for (const [, [x, y]] of Object.entries(ends)) expect(heroSpots.some(([hx, hy]) => hx === x && hy === y)).toBe(false);
+  });
+
+  it('影武者は上座の人形が立ち上がって入口の前まで歩いてくる。勝つと玄道の祝詞で崩れて消える', () => {
+    const list = requests('kagemusha', opened);
+    const battle = list.findIndex((q) => q.kind === 'battle');
+    const before = list.slice(0, battle);
+    const zaGone = before.findIndex((q) => q.kind === 'stage' && q.step.type === 'vanish' && q.step.who === 'kagemushaZa');
+    const actorOut = before.findIndex((q) => q.kind === 'stage' && q.step.type === 'actor' && q.step.id === 'guraKagemusha');
+    expect(zaGone).toBeGreaterThanOrEqual(0);
+    expect(actorOut).toBeGreaterThan(zaGone);
+    expect(before.find((q) => q.kind === 'stage' && q.step.type === 'actor' && q.step.id === 'guraKagemusha')).toMatchObject({ step: { enemy: 'kagemusha', x: 9, y: 24 } });
+    expect(list.slice(battle).some((q) => q.kind === 'stage' && q.step.type === 'vanish' && q.step.who === 'guraKagemusha')).toBe(true);
+    const pages = list.flatMap((q) => (q.kind === 'say' ? q.pages : [])).join('');
+    // 一人で戦うのに「者ども、出あえ」と呼ばない。祝詞を地の文で語らない
+    expect(pages).not.toContain('出あえ');
+    expect(pages).not.toContain('玄道が祝詞を唱えると');
+    expect(pages).not.toContain('広間の上座に');
+  });
+
+  it('夜叉丸は座敷牢の前で 1 歩進み出て、勝つと玄道の祝詞のあとで崩れ落ちて消える。そのあと夜叉丸は話さない', () => {
+    const list = requests('yashamaruBattle', opened);
+    const battle = list.findIndex((q) => q.kind === 'battle');
+    expect(list.slice(0, battle).some((q) => q.kind === 'stage' && q.step.type === 'walk' && q.step.who === 'yashamaruGura')).toBe(true);
+    const gone = list.findIndex((q) => q.kind === 'stage' && q.step.type === 'vanish' && q.step.who === 'yashamaruGura');
+    expect(gone).toBeGreaterThan(battle);
+    expect(list.slice(gone).some((q) => q.kind === 'say' && q.pages.some((p) => p.startsWith('夜叉丸「')))).toBe(false);
+    const pages = list.flatMap((q) => (q.kind === 'say' ? q.pages : [])).join('');
+    expect(pages).not.toContain('夜叉丸は膝をついた');
+    expect(pages).not.toContain('玄道は、蘭斎の祝詞を唱えた');
+    expect(pages).not.toContain('静かに目を閉じた');
   });
 
   it('殿様を救うと tonoRescued で城の前へ。金沢に入ると第 7 章が終わり（chapter7Cleared・kagaTegata）、褒美は一度だけ', () => {
@@ -1011,6 +1121,46 @@ describe('第 7 章の流れ', () => {
     expect(last).toContain('北国街道');
     expect(last).toContain('仙台');
     expect(pages.slice(tegata).some((p) => p.includes('陸路'))).toBe(true);
+  });
+
+  it('第 7 章の終わりは城の門の前で、殿様が橋に立ち、家臣と長瀬左近が東の通りから来て話す。大広間に呼ばれたと地の文で語らない', () => {
+    const rescued = run('tonoRescue', run('yashamaruBattle', run('kagemusha', opened)));
+    const list = requests('kanazawaEnter', rescued);
+    const placed = list.flatMap((q) => (q.kind === 'stage' && q.step.type === 'actor' && q.step.x !== undefined ? [q.step.id] : []));
+    expect(placed).toEqual(['kanazawaTono', 'kanazawaKashin', 'kanazawaSakon']);
+    // 話す人は、話す前に出ている
+    for (const [id, speaker] of [
+      ['kanazawaTono', '殿様「'],
+      ['kanazawaKashin', '家臣「'],
+      ['kanazawaSakon', '長瀬左近「'],
+    ] as const) {
+      const out = list.findIndex((q) => q.kind === 'stage' && q.step.type === 'actor' && q.step.id === id);
+      const said = list.findIndex((q) => q.kind === 'say' && q.pages.some((p) => p.startsWith(speaker)));
+      expect(said, id).toBeGreaterThan(out);
+    }
+    const pages = list.flatMap((q) => (q.kind === 'say' ? q.pages : [])).join('');
+    expect(pages).not.toContain('大広間に、一行は呼ばれた');
+    expect(pages).not.toContain('捕らえられた。');
+    // 主人公 (28, 15) の隣で空いているのは南だけなので、仲間は一人ずつ出る
+    let out = 0;
+    let most = 0;
+    for (const q of list) {
+      if (q.kind !== 'stage') continue;
+      if (q.step.type === 'actor' && q.step.x === undefined) out++;
+      if (q.step.type === 'vanish' && ['kasumi', 'gendo', 'orin'].includes(q.step.who)) out--;
+      most = Math.max(most, out);
+    }
+    expect(most).toBe(1);
+    expect(canStep(MAPS.kanazawa!, 28, 16)).toBe(true);
+  });
+
+  it('座敷牢の殿様の場面では、霞が出てきて話し、錠を断ち切るのは主人公の台詞と音で見せる', () => {
+    const won = run('yashamaruBattle', run('kagemusha', opened));
+    const list = requests('tonoRescue', won);
+    expect(list.some((q) => q.kind === 'stage' && q.step.type === 'actor' && q.step.id === 'kasumi')).toBe(true);
+    const pages = list.flatMap((q) => (q.kind === 'say' ? q.pages : [])).join('');
+    expect(pages).not.toContain('{hero}は格子の錠を断ち切った');
+    expect(pages).toContain('ガキン！');
   });
 });
 
