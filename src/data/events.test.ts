@@ -95,6 +95,38 @@ function requests(id: string, state: GameState, outcome: 'victory' | 'defeat' = 
   return list;
 }
 
+// 演出のテストの補助（requests が集めた要求の並びから読む）
+type Req = ReturnType<typeof requests>[number];
+const stages = (list: Req[]) => list.flatMap((q) => (q.kind === 'stage' ? [q.step] : []));
+const actors = (list: Req[]) => stages(list).flatMap((s) => (s.type === 'actor' ? [s.id] : []));
+const vanished = (list: Req[]) => stages(list).flatMap((s) => (s.type === 'vanish' ? [s.who] : []));
+const pagesIn = (list: Req[]) => list.flatMap((q) => (q.kind === 'say' ? q.pages : []));
+const battleAt = (list: Req[]) => list.findIndex((q) => q.kind === 'battle');
+/** 一行の仲間が同時に何人出ているかの最大（主人公の隣の空きが少ない場面では一人ずつ出す）。 */
+function maxPartyOut(list: Req[]): number {
+  let out = 0;
+  let max = 0;
+  for (const s of stages(list)) {
+    if (s.type === 'actor' && ['kasumi', 'gendo', 'orin'].includes(s.id)) max = Math.max(max, ++out);
+    if (s.type === 'vanish' && ['kasumi', 'gendo', 'orin'].includes(s.who)) out--;
+  }
+  return max;
+}
+const STEP = { u: [0, -1], d: [0, 1], l: [-1, 0], r: [1, 0] } as const;
+/** who の nth 番目の歩き（path）を from から歩き終えたマス。通れないマスや、hero を渡せば主人公のマスを通ったら落とす。 */
+function walkEnd(list: Req[], who: string, from: { x: number; y: number }, mapId: string, hero?: { x: number; y: number }, nth = 0) {
+  const step = stages(list).filter((s) => s.type === 'walk' && s.who === who)[nth];
+  expect(step?.type, `${who} が歩かない`).toBe('walk');
+  const pos = { x: from.x, y: from.y };
+  for (const c of step?.type === 'walk' ? (step.path ?? '') : '') {
+    pos.x += STEP[c as keyof typeof STEP][0];
+    pos.y += STEP[c as keyof typeof STEP][1];
+    expect(canStep(MAPS[mapId]!, pos.x, pos.y), `${who} (${pos.x},${pos.y})`).toBe(true);
+    if (hero) expect(pos.x === hero.x && pos.y === hero.y, `${who} が主人公のマスを通る`).toBe(false);
+  }
+  return pos;
+}
+
 describe('女主人公の台詞（linesF）', () => {
   it('linesF は lines と同じページ数で、主人公の台詞のページが同じ位置にある', () => {
     const isHero = (p: string) => /^\{hero\}(〈.〉)?「/u.test(p);
@@ -1900,22 +1932,6 @@ describe('寄り道の熊本（籠城の備えの井戸の謎）', () => {
 
 describe('第 8 章・寄り道の町の演出（地の文を人の動きと台詞に）', () => {
   const ch7 = CH7_CLEARED;
-  type Req = ReturnType<typeof requests>[number];
-  const actors = (list: Req[]) => list.flatMap((q) => (q.kind === 'stage' && q.step.type === 'actor' ? [q.step.id] : []));
-  const vanished = (list: Req[]) => list.flatMap((q) => (q.kind === 'stage' && q.step.type === 'vanish' ? [q.step.who] : []));
-  const pagesIn = (list: Req[]) => list.flatMap((q) => (q.kind === 'say' ? q.pages : []));
-  const battleAt = (list: Req[]) => list.findIndex((q) => q.kind === 'battle');
-  /** 一行の仲間が同時に何人出ているかの最大（主人公の隣の空きが少ない場面では一人ずつ出す）。 */
-  const maxPartyOut = (list: Req[]) => {
-    let out = 0;
-    let max = 0;
-    for (const q of list) {
-      if (q.kind !== 'stage') continue;
-      if (q.step.type === 'actor' && ['kasumi', 'gendo', 'orin'].includes(q.step.id)) max = Math.max(max, ++out);
-      if (q.step.type === 'vanish' && ['kasumi', 'gendo', 'orin'].includes(q.step.who)) out--;
-    }
-    return max;
-  };
   /** 調べた物の説明として残す地の文（熊本の井戸・古井戸・水脈のからくり）。 */
   const DESCRIPTIONS = new Set([
     '井戸の底に、わずかな水が濁って溜まっている。',
@@ -2073,19 +2089,8 @@ describe('第 8 章・寄り道の町の演出（地の文を人の動きと台�
     expect(warp).toMatchObject({ kind: 'warp', mapId: 'edo' });
     const hero = warp?.kind === 'warp' ? { x: warp.x, y: warp.y } : { x: NaN, y: NaN };
     const ooya = edo.npcs.find((n) => n.id === 'nagayaOoya')!;
-    const step = list.find((q) => q.kind === 'stage' && q.step.type === 'walk' && q.step.who === 'nagayaOoya');
-    expect(step?.kind).toBe('stage');
-    const path = step?.kind === 'stage' && step.step.type === 'walk' ? (step.step.path ?? '') : '';
-    const pos = { x: ooya.x, y: ooya.y };
-    const d = { u: [0, -1], d: [0, 1], l: [-1, 0], r: [1, 0] } as const;
-    for (const c of path) {
-      pos.x += d[c as keyof typeof d][0];
-      pos.y += d[c as keyof typeof d][1];
-      expect(canStep(edo, pos.x, pos.y), `(${pos.x},${pos.y})`).toBe(true);
-      expect(pos.x === hero.x && pos.y === hero.y, '主人公のマスを通る').toBe(false);
-    }
     // 大家は主人公の西隣で止まる
-    expect(pos).toEqual({ x: hero.x - 1, y: hero.y });
+    expect(walkEnd(list, 'nagayaOoya', ooya, 'edo', hero)).toEqual({ x: hero.x - 1, y: hero.y });
     expect(pagesIn(list).join('')).not.toContain('長屋に戻ると');
     expect(maxPartyOut(list)).toBe(1);
   });
@@ -2212,38 +2217,9 @@ describe('終章の演出（地の文を人の動きと台詞に）', () => {
     party: [createMember('hero', 29), createMember('gendo', 29), createMember('orin', 29), createMember('kasumi', 29)],
     flags: { intro: true, kagaTegata: true, chapter7Cleared: true, edoIntro: true, kashaDefeated: true, chapter8Cleared: true },
   };
-  type Req = ReturnType<typeof requests>[number];
-  const stages = (list: Req[]) => list.flatMap((q) => (q.kind === 'stage' ? [q.step] : []));
-  const actors = (list: Req[]) => stages(list).flatMap((s) => (s.type === 'actor' ? [s.id] : []));
-  const vanished = (list: Req[]) => stages(list).flatMap((s) => (s.type === 'vanish' ? [s.who] : []));
-  const pagesIn = (list: Req[]) => list.flatMap((q) => (q.kind === 'say' ? q.pages : []));
-  const battleAt = (list: Req[]) => list.findIndex((q) => q.kind === 'battle');
-  const D = { u: [0, -1], d: [0, 1], l: [-1, 0], r: [1, 0] } as const;
-  /** 歩く人の、歩き終えたマス（通れないマスや主人公のマスを通ったら落とす）。 */
-  const walkEnd = (list: Req[], who: string, from: { x: number; y: number }, mapId: string, hero?: { x: number; y: number }, nth = 0) => {
-    const step = stages(list).filter((s) => s.type === 'walk' && s.who === who)[nth];
-    expect(step?.type, `${who} が歩かない`).toBe('walk');
-    const pos = { x: from.x, y: from.y };
-    for (const c of step?.type === 'walk' ? (step.path ?? '') : '') {
-      pos.x += D[c as keyof typeof D][0];
-      pos.y += D[c as keyof typeof D][1];
-      expect(canStep(MAPS[mapId]!, pos.x, pos.y), `${who} (${pos.x},${pos.y})`).toBe(true);
-      if (hero) expect(pos.x === hero.x && pos.y === hero.y, `${who} が主人公のマスを通る`).toBe(false);
-    }
-    return pos;
-  };
   const adjacent = (a: { x: number; y: number }, b: { x: number; y: number }) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y) === 1;
+  const hurtAll = (state: GameState): GameState => ({ ...state, party: state.party.map((m) => ({ ...m, hp: 1 })) });
   const triggerOf = (mapId: string, event: string) => MAPS[mapId]!.triggers!.find((t) => t.event === event)!;
-  /** 一行の仲間が同時に何人出ているかの最大。 */
-  const maxPartyOut = (list: Req[]) => {
-    let out = 0;
-    let max = 0;
-    for (const s of stages(list)) {
-      if (s.type === 'actor' && ['kasumi', 'gendo', 'orin'].includes(s.id)) max = Math.max(max, ++out);
-      if (s.type === 'vanish' && ['kasumi', 'gendo', 'orin'].includes(s.who)) out--;
-    }
-    return max;
-  };
 
   /**
    * 終章のイベント（大手門の門番と、本丸御殿・松の廊下）。松の廊下に入ったときと休息の間の兵庫（榊兵庫の再登場のタスク）と、
@@ -2305,6 +2281,9 @@ describe('終章の演出（地の文を人の動きと台詞に）', () => {
     const kokichi = MAPS.edojo!.npcs.find((n) => n.id === 'kokichiJo')!;
     const there = walkEnd(list, 'kokichiJo', kokichi, 'edojo', hero);
     expect(adjacent(there, hero)).toBe(true);
+    // 小吉と主人公が向き合ってから話す
+    const talk = list.findIndex((q) => q.kind === 'say');
+    expect(stages(list.slice(0, talk))).toEqual(expect.arrayContaining([{ type: 'face', who: 'kokichiJo', toward: 'hero' }, { type: 'face', who: 'hero', toward: 'kokichiJo' }]));
     expect(walkEnd(list, 'kokichiJo', there, 'edojo', hero, 1)).toEqual({ x: kokichi.x, y: kokichi.y });
     expect(actors(list)).toEqual(['kasumi']);
     expect(pagesIn(list).join('')).not.toContain('一行は');
@@ -2331,9 +2310,22 @@ describe('終章の演出（地の文を人の動きと台詞に）', () => {
     const kintaStep = stages(list).find((s) => s.type === 'actor' && s.id === 'kinta');
     const k = kintaStep?.type === 'actor' ? { x: kintaStep.x!, y: kintaStep.y! } : { x: NaN, y: NaN };
     expect(walkEnd(list, 'kinta', k, 'edojo', t)).toEqual({ x: t.x - 1, y: t.y });
-    // 手当て（全回復）は金太の台詞のあと
-    const healAt = list.findIndex((q) => q.kind === 'say' && q.pages.some((p) => p.includes('傷の手当て')));
-    expect(healAt).toBeGreaterThan(b);
+    // 金太は来た道を天窓の下へ戻ってから消える
+    expect(walkEnd(list, 'kinta', { x: t.x - 1, y: t.y }, 'edojo', t, 1)).toEqual(k);
+    // 手当て（全回復）は金太の台詞のあと。戦闘の前と、手当ての台詞の前には治らない
+    const runner = new EventRunner(EVENTS.okanegura!.steps);
+    let r = runner.next(hurtAll(ch8));
+    let healedBeforeWords = false;
+    let sawWords = false;
+    while (r.request.kind !== 'done') {
+      if (r.request.kind === 'say' && r.request.pages.some((p) => p.includes('傷の手当て'))) sawWords = true;
+      if (!sawWords && r.state.party.every((m) => m.hp > 1)) healedBeforeWords = true;
+      r = r.request.kind === 'battle' ? runner.next(r.state, { kind: 'battle', outcome: 'victory' }) : runner.next(r.state);
+    }
+    expect(sawWords).toBe(true);
+    expect(healedBeforeWords).toBe(false);
+    expect(r.state.party.every((m) => m.hp > 1)).toBe(true);
+    expect(maxPartyOut(list)).toBe(1);
     // 負けたら金太は出ない。出直すと、お凛は出ない
     const lost = requests('okanegura', ch8, 'defeat');
     expect(actors(lost)).not.toContain('kinta');
@@ -2368,7 +2360,10 @@ describe('終章の演出（地の文を人の動きと台詞に）', () => {
   it('鬼塚典膳は 1 歩進み出て話し、勝つと刀を納めて崩れ落ち、消える。負けたら消えない', () => {
     const list = requests('tenzen', ch8);
     const tenzen = MAPS.matsuNoRoka!.npcs.find((n) => n.id === 'tenzenRoka')!;
-    for (const t of MAPS.matsuNoRoka!.triggers!.filter((x) => x.event === 'tenzen')) walkEnd(list, 'tenzenRoka', tenzen, 'matsuNoRoka', t);
+    for (const t of MAPS.matsuNoRoka!.triggers!.filter((x) => x.event === 'tenzen')) {
+      expect(walkEnd(list, 'tenzenRoka', tenzen, 'matsuNoRoka', t)).toEqual({ x: tenzen.x - 1, y: tenzen.y });
+    }
+    expect(maxPartyOut(list)).toBe(1);
     expect(vanished(list.slice(battleAt(list)))).toContain('tenzenRoka');
     expect(vanished(requests('tenzen', ch8, 'defeat'))).not.toContain('tenzenRoka');
     expect(pagesIn(list).join('')).not.toContain('膝をついた');

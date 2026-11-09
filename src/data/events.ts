@@ -3816,7 +3816,7 @@ export const EVENTS: Record<string, EventDef> = {
   /**
    * 江戸の大手門の門番。第 8 章を終えると、加賀の手形で門を開ける（otemonOpen。門番がどき、橋から江戸城の本丸御殿へ入れる）。
    * 門番は大手門の橋 (32, 8) に立ち、主人公は南の (32, 9) から話す（北の (32, 7) は本丸御殿への出口）。
-   * 門番が開門を呼ばわると扉が開き、門番は橋を北へ歩いて門の内へ入る（消える）。
+   * 門番が開門を呼ばわると扉が開き、門番は橋を北へ扉の前 (32, 6) まで歩いて消える（扉 (32, 5) のマスには歩いて入れないので、門の内へ入ったことにする）。
    */
   otemon: {
     id: 'otemon',
@@ -3852,6 +3852,7 @@ export const EVENTS: Record<string, EventDef> = {
     steps: [
       walk('kokichiJo', 'rrdd'),
       faceTo('kokichiJo', 'hero'),
+      faceTo('hero', 'kokichiJo'),
       {
         type: 'say',
         lines: [
