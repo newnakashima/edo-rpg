@@ -58,7 +58,8 @@ export type EventStep =
    * 演出: 歩かせる。who は 'hero'、マップの NPC の ID、actor で出した人の ID。path は u（上）・d（下）・l（左）・r（右）の並び。
    * path の代わりに to を書くと、その人（'hero' も書ける）かそのマス（{ x, y }）まで横、縦の順にまっすぐ歩く（仲間が主人公に戻るとき、戸口へ入るとき）。
    * 通れないマスの手前で止まる（eventStage.test.ts が、位置の分かる人の道が通れるかを確かめる）。
-   * 歩き終えてから次の手順へ進む（wait: false なら歩き出したらすぐ次へ進み、二人を一緒に歩かせられる）。
+   * 歩き終えてから次の手順へ進む（wait: false なら歩き出したらすぐ次へ進み、二人を一緒に歩かせられる。
+   * そのあとは、その人が歩き終える前にイベントが終わったり戦闘に入ったりしないよう、もっと長い歩きか wait を挟む）。
    * 動かしたマップの NPC は、イベントが終わると元の位置に戻る（残さない人は hideFlag で消す）。
    */
   | { type: 'walk'; who: string; path?: string; to?: string | { x: number; y: number }; wait?: false }

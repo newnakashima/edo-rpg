@@ -9,7 +9,7 @@ import { EVENTS } from './events';
 import { TATSUGORO_JINGI } from './oyabunRequests';
 import { isKnownItem } from './items';
 import { SKILLS } from './skills';
-import { MAPS, npcVisible, tileAt } from './maps';
+import { MAPS, npcLines, npcVisible, tileAt } from './maps';
 import { EventRunner } from '../systems/eventScript';
 import { newGame, type GameState } from '../systems/gameState';
 import { createMember, memberLevel } from '../systems/party';
@@ -183,6 +183,12 @@ describe('第 1 章の流れ', () => {
     const before = list.slice(0, battle).flatMap((r) => (r.kind === 'say' ? r.pages : [])).join('');
     expect(before).not.toContain('夜叉丸');
     expect(run('tetsubin', lost).flags.tetsubinDefeated).toBe(true);
+  });
+
+  it('鉄瓶を倒すと、清水の長屋のおかみは与吉が帰ってきたと話す（霞の「与吉は清水の長屋へ帰る」と合わせる）', () => {
+    const okami = MAPS.shimizu!.npcs.find((n) => n.id === 'nagaya')!;
+    expect(npcLines(okami, { yakoDefeated: true }).join('')).toContain('生きてりゃ');
+    expect(npcLines(okami, { yakoDefeated: true, tetsubinDefeated: true }).join('')).toContain('帰ってきた');
   });
 
   it('鉄瓶を倒して駿府に入ると第 1 章が終わる', () => {

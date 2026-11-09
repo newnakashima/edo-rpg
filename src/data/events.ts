@@ -178,7 +178,7 @@ const SUNPU_CHAPTER_END: EventStep[] = [
   {
     type: 'say',
     lines: [
-      '霞「助け出した人たちは、みんな家へ送り届けたよ。与吉は、清水の長屋へ帰るってさ」',
+      '霞「助かった人たちは、家へ送り届けたよ。与吉は、清水の長屋へ帰るってさ」',
       '霞「黒田は役目を解かれた。一座のほうは、一夜のうちに小屋をたたんで消えちまった」',
       '霞「さらった人をからくりに変えて、何に使うつもりだったのか……。手がかりは、名簿の最後の行だね」',
       '霞「『金の鱗、尾張より届く』……名古屋だ。西へ行くよ、{hero}」',
@@ -359,7 +359,8 @@ const INTRO: EventStep[] = [
       '子分「あっしは湊の見回りがありやすんで。ごゆっくり」',
     ],
   },
-  walk('introKobun', 'llllll'),
+  // 来た道を東へ戻っていく（主人公のマスを通らないよう、街道の下の段へ下りてから）
+  walk('introKobun', 'drrrrrrrrrr'),
   vanish('introKobun'),
   { type: 'say', lines: ['（十字キーで移動、決定で話す・調べる、取消でメニュー）'] },
   { type: 'setFlag', flag: 'intro' },
@@ -1316,20 +1317,22 @@ export const EVENTS: Record<string, EventDef> = {
       face('hero', 'up'),
       { type: 'say', lines: ['ごろつき「おっと、ここから先は通さねえ。黒田の旦那に雇われてんだ」'] },
       { type: 'battle', enemies: ['gorotsuki', 'gorotsuki', 'bakeChochin'], level: 4 },
-      // ごろつきは逃げ出す
+      // 化け提灯は消え、主人公が蔵の前から下がると、ごろつきは東の庭へ逃げ出す
       vanish('kuraChochin'),
+      { type: 'walk', who: 'hero', to: { x: 29, y: 6 } },
+      face('hero', 'up'),
+      { type: 'walk', who: 'kuraGorotsukiB', path: 'rr', wait: false },
+      walk('kuraGorotsukiA', 'drrrr'),
       vanish('kuraGorotsukiA'),
-      walk('kuraGorotsukiB', 'rr'),
       vanish('kuraGorotsukiB'),
-      // 霞が蔵に入って、帳面を持って出てくる
-      partyOut('kasumi'),
+      // 霞が主人公から出て蔵に入り、帳面を持って出てくる
+      actor('kasumi', 'kasumi', 29, 6, 'up'),
       { type: 'say', lines: ['霞「中を見てくる。見張ってな」'] },
-      { type: 'walk', who: 'kasumi', to: { x: 29, y: 4 } },
+      walk('kasumi', 'uu'),
       vanish('kasumi'),
       wait(800),
       actor('kasumi', 'kasumi', 29, 4, 'down'),
       walk('kasumi', 'd'),
-      faceTo('kasumi', 'hero'),
       {
         type: 'say',
         lines: [

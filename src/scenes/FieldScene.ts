@@ -187,8 +187,8 @@ export class FieldScene extends Phaser.Scene {
     this.enterPending = shouldRunEnterEvent(map.id, pending, data.fromMapId);
     if (pending) {
       this.runner = pending.runner;
-      // 戦闘の前に演出で出した・動かした人を、その姿のまま置き直す
-      for (const [id, actor] of pending.runner.stage) this.placeStageActor(id, actor);
+      // 戦闘の前に演出で出した・動かした人を、その姿のまま置き直す（全滅で別のマップへ戻されたときは置かない）
+      if (pending.fromMapId === map.id) for (const [id, actor] of pending.runner.stage) this.placeStageActor(id, actor);
       this.advanceEvent(pending.resume);
     } else {
       this.runEnterEvent();
@@ -270,7 +270,7 @@ export class FieldScene extends Phaser.Scene {
         return;
       case 'done':
         this.runner = null;
-        this.clearStage();
+        this.clearStage(runner);
         this.controls.flush();
         // イベントで立ったフラグで、姿を消す NPC（仲間になった人、どいた見張りなど）を隠す
         this.refreshNpcs();
@@ -481,16 +481,21 @@ export class FieldScene extends Phaser.Scene {
     return runner.stage.get(who)?.sprite ?? this.map.npcs.find((n) => n.id === who)?.sprite;
   }
 
-  /** イベントが終わったら、演出で出した人を消し、動かしたマップの NPC を元の位置と向きに戻す。 */
-  private clearStage(): void {
+  /**
+   * イベントが終わったら、演出で出した人を消し、演出で動かしたマップの NPC を元の位置と向きに戻す
+   * （演出で触っていない NPC はそのまま。話しかけて振り向いた向きを変えない）。
+   */
+  private clearStage(runner: EventRunner): void {
     for (const sprite of this.stageSprites.values()) {
       this.tweens.killTweensOf(sprite);
       sprite.destroy();
     }
     this.stageSprites.clear();
     for (const npc of this.map.npcs) {
+      if (!runner.stage.has(npc.id)) continue;
       const obj = this.npcObjects.get(npc.id);
       if (!obj) continue;
+      this.tweens.killTweensOf(obj);
       obj.setPosition(npc.x * TILE, npc.y * TILE);
       if (npc.sprite && obj instanceof Phaser.GameObjects.Sprite) obj.setDepth(personDepth(npc.y)).setFrame(idleFrame(npc.facing ?? 'down'));
     }

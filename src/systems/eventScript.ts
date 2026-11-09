@@ -42,7 +42,7 @@ export interface StageActor {
 }
 
 /** 歩く道の文字と向き。 */
-export const PATH_FACING: Record<string, Facing> = { u: 'up', d: 'down', l: 'left', r: 'right' };
+const PATH_FACING: Record<string, Facing> = { u: 'up', d: 'down', l: 'left', r: 'right' };
 
 /** 歩く道（u・d・l・r の並び）を向きの並びにする。ほかの文字は無視する。 */
 export function pathFacings(path: string): Facing[] {

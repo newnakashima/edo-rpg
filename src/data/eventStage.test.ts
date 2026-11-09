@@ -1,5 +1,7 @@
 // イベントの演出（actor・walk・face・vanish）のデータを確かめる。
 // 人を出す場所・歩く道が通れるマスか、動かす人がいるかを、イベントを始めるマップで分岐ごとにたどって見る。
+// 主人公の位置は、決まったマスに乗るトリガーと warp の後でだけ分かる。マップに入ったとき・話しかけたときのイベントでは、
+// 主人公の歩く道と、主人公の隣に出た人（actor の x・y を省いた人）の道は見ない（画面は通れないマスの手前で止める）。
 import { describe, expect, it } from 'vitest';
 import type { EventStep } from './eventTypes';
 import { ENEMIES } from './enemies';
@@ -28,8 +30,11 @@ function startsOf(eventId: string): Start[] {
   return starts;
 }
 
-/** 分岐をすべて開いた手順の並び（if の両方、選択肢のそれぞれ、負けたとき）。多すぎるときは打ち切る。 */
-function linearize(steps: readonly EventStep[], limit = 512): EventStep[][] {
+/** 分岐の組み合わせの上限（超えたら、確かめ漏れにならないようテストを落とす）。 */
+const PATH_LIMIT = 512;
+
+/** 分岐をすべて開いた手順の並び（if の両方、選択肢のそれぞれ、負けたとき）。 */
+function linearize(steps: readonly EventStep[], limit = PATH_LIMIT + 1): EventStep[][] {
   let paths: EventStep[][] = [[]];
   for (const step of steps) {
     let branches: EventStep[][][] = [];
@@ -65,6 +70,7 @@ describe('イベントの演出', () => {
 
   for (const [id, def] of staged) {
     it(`${id}: 出す人・歩く道が通れるマスで、動かす人がいる`, () => {
+      expect(linearize(def.steps).length, `${id} の分岐の組み合わせが多すぎて確かめきれない`).toBeLessThanOrEqual(PATH_LIMIT);
       for (const start of startsOf(id)) {
         for (const path of linearize(def.steps)) {
           let map = start.map;
@@ -97,6 +103,10 @@ describe('イベントの演出', () => {
               if (step.toward && step.toward !== 'hero') expect(where.has(step.toward), label(`face の toward ${step.toward} がいない`)).toBe(true);
               continue;
             }
+            if (step.type === 'wait') {
+              expect(step.ms, label('wait の時間')).toBeGreaterThan(0);
+              continue;
+            }
             if (step.type === 'vanish') {
               expect(step.who, label('vanish は主人公に使えない')).not.toBe('hero');
               expect(where.has(step.who), label(`vanish の ${step.who} がいない`)).toBe(true);
@@ -121,6 +131,15 @@ describe('イベントの演出', () => {
             if (step.to !== undefined) {
               if (step.to !== 'hero') expect(where.has(step.to), label(`walk の to ${step.to} がいない`)).toBe(true);
               const target = step.to === 'hero' ? hero : where.get(step.to);
+              // 両方の位置が分かれば、横、縦の順の道が通れるかを見る（行き先のマスは人がいても入れる）
+              if (pos && target && !Number.isNaN(pos.x) && !Number.isNaN(target.x)) {
+                const steps = pathTo(pos, target);
+                for (const d of steps.slice(0, -1)) {
+                  pos.x += DELTA[d][0];
+                  pos.y += DELTA[d][1];
+                  expect(passable(map, pos.x, pos.y), label(`${step.who} が通れない (${pos.x},${pos.y}) を歩く`)).toBe(true);
+                }
+              }
               if (pos) Object.assign(pos, target ?? { x: NaN, y: NaN });
               continue;
             }
