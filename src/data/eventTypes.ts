@@ -1,5 +1,7 @@
 // イベントスクリプトの形。シナリオはこの形のデータ（events.ts）として書き、systems/eventScript.ts が実行する。
+import type { Facing } from '../systems/gameState';
 import type { CharacterId } from './characters';
+import type { CharacterSpriteId } from './sprites';
 
 /**
  * イベントの 1 手順。
@@ -44,6 +46,28 @@ export type EventStep =
   | { type: 'warp'; mapId: string; x: number; y: number }
   /** イベントをここで終える。 */
   | { type: 'end' }
+  /**
+   * 演出: 人をイベントの間だけ出す（台詞を言う人をその場に見せる。docs/events.md の「演出」）。
+   * x・y を省くと、主人公の足元から隣の空いたマスへ 1 歩出る（一行の仲間が主人公から出てくる。主人公の向きの横、後ろ、前の順に探す）。
+   * 同じ id の人がもういれば、その人を置き直す。
+   * イベントが終わると消える。残したい人はマップの NPC（showFlag）で置く。
+   * 姿は sprite（人の画像）か enemy（戦闘にしか出ない敵の画像を半分の大きさで。ENEMIES の ID）のどちらか一つを書く。
+   */
+  | { type: 'actor'; id: string; sprite?: CharacterSpriteId; enemy?: string; x?: number; y?: number; facing?: Facing }
+  /**
+   * 演出: 歩かせる。who は 'hero'、マップの NPC の ID、actor で出した人の ID。path は u（上）・d（下）・l（左）・r（右）の並び。
+   * path の代わりに to を書くと、その人（'hero' も書ける）かそのマス（{ x, y }）まで横、縦の順にまっすぐ歩く（仲間が主人公に戻るとき、戸口へ入るとき）。
+   * 通れないマスの手前で止まる（eventStage.test.ts が、位置の分かる人の道が通れるかを確かめる）。
+   * 歩き終えてから次の手順へ進む（wait: false なら歩き出したらすぐ次へ進み、二人を一緒に歩かせられる）。
+   * 動かしたマップの NPC は、イベントが終わると元の位置に戻る（残さない人は hideFlag で消す）。
+   */
+  | { type: 'walk'; who: string; path?: string; to?: string | { x: number; y: number }; wait?: false }
+  /** 演出: 向きを変える。dir か、toward（その人のほうを向く。'hero' も書ける）のどちらかを書く。 */
+  | { type: 'face'; who: string; dir?: Facing; toward?: string }
+  /** 演出: 人を見えなくする（イベントの間。マップの NPC を後まで消すときは hideFlag も立てる）。主人公には使えない。 */
+  | { type: 'vanish'; who: string }
+  /** 演出: 少し待つ（ミリ秒）。 */
+  | { type: 'wait'; ms: number }
   /** イベントを終え、エンディング（スタッフロールと「完」）を出してタイトルへ戻る（終章のからくり大権現を倒したあと）。 */
   | { type: 'ending' };
 

@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { ENCOUNTERS } from '../data/enemies';
+import { ENCOUNTERS, enemyImageKey } from '../data/enemies';
 import { canStep, closedGateAt, encounterAt, MAPS, npcLines, npcObjectFrame, npcVisible, respawnPoint, START_POSITION, tileAt, townAction, type EventTrigger, type MapDef, type NpcDef } from '../data/maps';
 import { mapTileImages } from '../data/mapParts';
 import { cameraScroll } from '../ui/cameraScroll';
@@ -41,7 +41,7 @@ import { pendingOyabunGift } from '../data/oyabunGifts';
 import { pendingOyabunRequest } from '../data/oyabunRequests';
 import { oyabunStayCost, stayAtOyabun } from '../systems/jingi';
 import { CHAR_DISPLAY_ORIGIN, heroSprite, idleFrame, objectDepth, objectDisplayOrigin, objectKey, oppositeFacing, personDepth, shouldStandStill, spriteKey, walkAnimKey, walkDepthRow, type CharacterSpriteId } from '../data/sprites';
-import { EventRunner, type EventInput } from '../systems/eventScript';
+import { EventRunner, pathFacings, pathTo, type EventInput, type StageActor, type StageStep } from '../systems/eventScript';
 import { fieldCancelLabel } from '../ui/cancelLabel';
 import { Controls, setCancelLabel } from '../ui/input';
 import { FieldMenu } from '../ui/FieldMenu';
@@ -59,6 +59,12 @@ const DELTA: Record<Facing, [number, number]> = {
 };
 
 const MOVE_MS = 140;
+/** 演出で人が歩く 1 歩の時間（ミリ秒）。プレイヤーの歩きより少しゆっくり見せる。 */
+const STAGE_MOVE_MS = 220;
+/** 演出で敵の画像を出すときの大きさ（戦闘の画像の半分。雑魚 64px は 32px、ボス 96px は 48px）。 */
+const ENEMY_STAGE_SCALE = 0.5;
+/** 歩行のコマがある人（ほかの人は歩くときに小さく跳ねて見せる）。 */
+const WALKING_SPRITES: ReadonlySet<CharacterSpriteId> = new Set(['hero_m', 'hero_f', 'kasumi', 'gendo', 'orin', 'tatsugoro']);
 
 interface Overlay {
   update(c: Controls): void;
@@ -78,6 +84,8 @@ export class FieldScene extends Phaser.Scene {
   private npcSprites = new Map<string, Phaser.GameObjects.Sprite>();
   /** NPC の表示（画像のない NPC の仮の人も含む）。showFlag が立つまでと、hideFlag が立ったら隠す。 */
   private npcObjects = new Map<string, Phaser.GameObjects.Image | Phaser.GameObjects.Sprite>();
+  /** 演出で出した人（イベントの間だけ。actor の ID ごと）。 */
+  private stageSprites = new Map<string, Phaser.GameObjects.Sprite | Phaser.GameObjects.Image>();
   private moving = false;
   /** 行っている途中のイベント。 */
   private runner: EventRunner | null = null;
@@ -138,6 +146,7 @@ export class FieldScene extends Phaser.Scene {
     for (const sign of mapSigns(map)) this.add.image(sign.x * TILE, sign.y * TILE, signKey(sign.kind)).setOrigin(0).setDepth(1);
     this.npcSprites = new Map();
     this.npcObjects = new Map();
+    this.stageSprites = new Map();
     for (const npc of map.npcs) {
       if (npc.sprite) {
         const sprite = this.add
@@ -178,6 +187,8 @@ export class FieldScene extends Phaser.Scene {
     this.enterPending = shouldRunEnterEvent(map.id, pending, data.fromMapId);
     if (pending) {
       this.runner = pending.runner;
+      // 戦闘の前に演出で出した・動かした人を、その姿のまま置き直す
+      for (const [id, actor] of pending.runner.stage) this.placeStageActor(id, actor);
       this.advanceEvent(pending.resume);
     } else {
       this.runEnterEvent();
@@ -254,13 +265,234 @@ export class FieldScene extends Phaser.Scene {
         this.cameras.main.fadeOut(1200, 0, 0, 0);
         this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Ending'));
         return;
+      case 'stage':
+        this.performStage(runner, request.step, () => this.advanceEvent());
+        return;
       case 'done':
         this.runner = null;
+        this.clearStage();
         this.controls.flush();
         // イベントで立ったフラグで、姿を消す NPC（仲間になった人、どいた見張りなど）を隠す
         this.refreshNpcs();
         this.runEnterEvent();
         return;
+    }
+  }
+
+  /** 演出の 1 手順を行い、終わったら done を呼ぶ。動かした人の姿は runner.stage に書く（戦闘から戻ったときに置き直すため）。 */
+  private performStage(runner: EventRunner, step: StageStep, done: () => void): void {
+    switch (step.type) {
+      case 'actor': {
+        const state = getState();
+        const actor: StageActor = { sprite: step.sprite, enemy: step.enemy, x: step.x ?? state.x, y: step.y ?? state.y, facing: step.facing ?? state.facing, visible: true };
+        runner.stage.set(step.id, actor);
+        this.placeStageActor(step.id, actor);
+        if (step.x !== undefined) {
+          done();
+          return;
+        }
+        // 主人公の足元から、隣の空いたマスへ 1 歩出る
+        const dir = this.freeSideOfHero(runner);
+        if (dir) this.walkStage(runner, step.id, [dir], () => this.setStageFacing(runner, step.id, state.facing), done);
+        else done();
+        return;
+      }
+      case 'face': {
+        const dir = step.dir ?? (step.toward !== undefined ? this.facingToward(runner, step.who, step.toward) : undefined);
+        if (dir) this.setStageFacing(runner, step.who, dir);
+        done();
+        return;
+      }
+      case 'vanish': {
+        const actor = this.stageActorOf(runner, step.who);
+        if (actor) {
+          runner.stage.set(step.who, { ...actor, visible: false });
+          this.stageObject(step.who)?.setVisible(false);
+        }
+        done();
+        return;
+      }
+      case 'wait':
+        this.time.delayedCall(step.ms, done);
+        return;
+      case 'walk': {
+        const target = typeof step.to === 'string' ? this.stagePosition(runner, step.to) : step.to;
+        const from = this.stagePosition(runner, step.who);
+        const dirs = target && from ? pathTo(from, target) : pathFacings(step.path ?? '');
+        if (step.wait === false) {
+          this.walkStage(runner, step.who, dirs, () => {}, () => {}, target);
+          done();
+        } else this.walkStage(runner, step.who, dirs, () => {}, done, target);
+        return;
+      }
+    }
+  }
+
+  /** 主人公の隣の空いたマスの向き（主人公の向きの横、後ろ、前の順）。人や物のいるマスと通れないマスは避ける。 */
+  private freeSideOfHero(runner: EventRunner): Facing | undefined {
+    const state = getState();
+    const order: Facing[] =
+      state.facing === 'up' || state.facing === 'down' ? ['left', 'right', oppositeFacing(state.facing), state.facing] : ['up', 'down', oppositeFacing(state.facing), state.facing];
+    return order.find((d) => {
+      const x = state.x + DELTA[d][0];
+      const y = state.y + DELTA[d][1];
+      return canStep(this.map, x, y) && !this.npcAt(x, y) && ![...runner.stage.values()].some((a) => a.visible && a.x === x && a.y === y);
+    });
+  }
+
+  /** 演出で動かせる人の今の姿（主人公は除く）。まだ動かしていないマップの NPC は、マップに書いた位置から。 */
+  private stageActorOf(runner: EventRunner, who: string): StageActor | undefined {
+    const staged = runner.stage.get(who);
+    if (staged) return staged;
+    const npc = this.map.npcs.find((n) => n.id === who);
+    if (!npc) return undefined;
+    return { x: npc.x, y: npc.y, facing: npc.facing ?? 'down', visible: npcVisible(npc, getState().flags) };
+  }
+
+  private stageObject(who: string): Phaser.GameObjects.Sprite | Phaser.GameObjects.Image | undefined {
+    if (who === 'hero') return this.player;
+    return this.stageSprites.get(who) ?? this.npcObjects.get(who);
+  }
+
+  /** 人の位置（主人公は GameState、ほかは演出の姿）。 */
+  private stagePosition(runner: EventRunner, who: string): { x: number; y: number } | undefined {
+    if (who === 'hero') return getState();
+    return this.stageActorOf(runner, who);
+  }
+
+  /** who が toward のほうを向く向き（同じ場所なら undefined）。上下と左右で離れているほうを優先する。 */
+  private facingToward(runner: EventRunner, who: string, toward: string): Facing | undefined {
+    const from = this.stagePosition(runner, who);
+    const to = this.stagePosition(runner, toward);
+    if (!from || !to) return undefined;
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    if (dx === 0 && dy === 0) return undefined;
+    if (Math.abs(dx) >= Math.abs(dy)) return dx > 0 ? 'right' : 'left';
+    return dy > 0 ? 'down' : 'up';
+  }
+
+  private setStageFacing(runner: EventRunner, who: string, dir: Facing): void {
+    if (who === 'hero') {
+      setState({ ...getState(), facing: dir });
+      this.player.setFrame(idleFrame(dir));
+      return;
+    }
+    const actor = this.stageActorOf(runner, who);
+    if (!actor) return;
+    runner.stage.set(who, { ...actor, facing: dir });
+    const obj = this.stageObject(who);
+    if (obj instanceof Phaser.GameObjects.Sprite) obj.setFrame(idleFrame(dir));
+  }
+
+  /** 演出の人を置く（出す・置き直す）。actor で出した人は新しく作り、マップの NPC は位置と向きと表示を変える。 */
+  private placeStageActor(id: string, actor: StageActor): void {
+    let obj = this.stageObject(id);
+    const key = actor.sprite ? spriteKey(actor.sprite) : actor.enemy ? enemyImageKey(actor.enemy) : undefined;
+    // 同じ ID で姿を変えたら作り直す
+    if (obj && key && obj !== this.player && this.stageSprites.has(id) && obj.texture.key !== key) {
+      obj.destroy();
+      this.stageSprites.delete(id);
+      obj = undefined;
+    }
+    if (!obj && actor.sprite) {
+      const created = this.add.sprite(0, 0, spriteKey(actor.sprite), idleFrame(actor.facing)).setDisplayOrigin(CHAR_DISPLAY_ORIGIN.x, CHAR_DISPLAY_ORIGIN.y);
+      this.stageSprites.set(id, created);
+      obj = created;
+    } else if (!obj && actor.enemy) {
+      // 敵の画像は半分の大きさで、下端の中央をタイルの下端の中央に合わせる
+      const created = this.add.image(0, 0, enemyImageKey(actor.enemy)).setScale(ENEMY_STAGE_SCALE);
+      created.setDisplayOrigin(created.width / 2 - (TILE / 2) / ENEMY_STAGE_SCALE, created.height - TILE / ENEMY_STAGE_SCALE);
+      this.stageSprites.set(id, created);
+      obj = created;
+    }
+    if (!obj || obj === this.player) return;
+    obj.setPosition(actor.x * TILE, actor.y * TILE).setDepth(personDepth(actor.y)).setVisible(actor.visible);
+    if (obj instanceof Phaser.GameObjects.Sprite) obj.setFrame(idleFrame(actor.facing));
+  }
+
+  /**
+   * 1 歩ずつ歩かせる。通れないマスの手前で止まる（goal のマスは、人がいても入れる。仲間が主人公に戻るとき）。
+   * 歩き終えたら（止まったときも）立ち姿にして beforeDone、done の順に呼ぶ。
+   */
+  private walkStage(runner: EventRunner, who: string, dirs: Facing[], beforeDone: () => void, done: () => void, goal?: { x: number; y: number }): void {
+    const dir = dirs[0];
+    const obj = this.stageObject(who);
+    if (!dir || !obj) {
+      if (obj instanceof Phaser.GameObjects.Sprite) {
+        obj.stop();
+        const facing = who === 'hero' ? getState().facing : this.stageActorOf(runner, who)?.facing;
+        if (facing) obj.setFrame(idleFrame(facing));
+      }
+      beforeDone();
+      done();
+      return;
+    }
+    const from = this.stagePosition(runner, who);
+    if (!from) {
+      done();
+      return;
+    }
+    const [dx, dy] = DELTA[dir];
+    const nx = from.x + dx;
+    const ny = from.y + dy;
+    if (who === 'hero') setState({ ...getState(), facing: dir });
+    else {
+      const actor = this.stageActorOf(runner, who);
+      if (actor) runner.stage.set(who, { ...actor, facing: dir });
+    }
+    const isGoal = goal !== undefined && goal.x === nx && goal.y === ny;
+    if (!isGoal && !canStep(this.map, nx, ny)) {
+      this.walkStage(runner, who, [], beforeDone, done);
+      return;
+    }
+    const sprite = obj instanceof Phaser.GameObjects.Sprite ? obj : undefined;
+    const spriteId = who === 'hero' ? this.playerSprite : this.stageSpriteId(runner, who);
+    // 主人公が歩くあいだは、毎フレームの立ち姿に戻す処理（update）を止める
+    if (who === 'hero') this.moving = true;
+    if (sprite && spriteId && WALKING_SPRITES.has(spriteId)) sprite.play(walkAnimKey(spriteId, dir), true);
+    else sprite?.setFrame(idleFrame(dir));
+    obj.setDepth(personDepth(walkDepthRow(from.y, ny)));
+    // 歩行のコマのない人は、歩くあいだ小さく跳ねる
+    const hop = !spriteId || !WALKING_SPRITES.has(spriteId);
+    if (hop) this.tweens.add({ targets: obj, displayOriginY: obj.displayOriginY + 2 / obj.scaleY, duration: STAGE_MOVE_MS / 2, yoyo: true });
+    this.tweens.add({
+      targets: obj,
+      x: nx * TILE,
+      y: ny * TILE,
+      duration: STAGE_MOVE_MS,
+      onComplete: () => {
+        obj.setDepth(personDepth(ny));
+        if (who === 'hero') {
+          this.moving = false;
+          setState({ ...getState(), x: nx, y: ny });
+        }
+        else {
+          const actor = this.stageActorOf(runner, who);
+          if (actor) runner.stage.set(who, { ...actor, x: nx, y: ny });
+        }
+        this.walkStage(runner, who, dirs.slice(1), beforeDone, done, goal);
+      },
+    });
+  }
+
+  /** 演出の人の画像（actor で出した人はその画像、マップの NPC は NPC の画像）。 */
+  private stageSpriteId(runner: EventRunner, who: string): CharacterSpriteId | undefined {
+    return runner.stage.get(who)?.sprite ?? this.map.npcs.find((n) => n.id === who)?.sprite;
+  }
+
+  /** イベントが終わったら、演出で出した人を消し、動かしたマップの NPC を元の位置と向きに戻す。 */
+  private clearStage(): void {
+    for (const sprite of this.stageSprites.values()) {
+      this.tweens.killTweensOf(sprite);
+      sprite.destroy();
+    }
+    this.stageSprites.clear();
+    for (const npc of this.map.npcs) {
+      const obj = this.npcObjects.get(npc.id);
+      if (!obj) continue;
+      obj.setPosition(npc.x * TILE, npc.y * TILE);
+      if (npc.sprite && obj instanceof Phaser.GameObjects.Sprite) obj.setDepth(personDepth(npc.y)).setFrame(idleFrame(npc.facing ?? 'down'));
     }
   }
 
