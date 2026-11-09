@@ -88,7 +88,9 @@ describe('施設・民家以外の建物の屋内（テストプレイの指摘:
       const entrance = town.exits.find((e) => e.to === map.id)!;
       expect(map.exits, map.id).toHaveLength(1);
       const exit = map.exits[0]!;
-      expect({ to: exit.to, x: exit.toX, y: exit.toY }, map.id).toEqual({ to: town.id, x: entrance.x, y: entrance.y + 1 });
+      // 戸口の 1 マス下へ戻る（東を向く北前船の屋形の戸だけは、戸の東のマス）
+      const front = map.id === 'kitamaeYakata' ? { x: entrance.x + 1, y: entrance.y } : { x: entrance.x, y: entrance.y + 1 };
+      expect({ to: exit.to, x: exit.toX, y: exit.toY }, map.id).toEqual({ to: town.id, ...front });
       expect({ x: entrance.toX, y: entrance.toY }, map.id).toEqual({ x: exit.x, y: exit.y - 1 });
       // 出口は下の壁の切れ目
       expect(exit.y, map.id).toBe(map.rows.length - 1);
@@ -311,5 +313,68 @@ describe('施設・民家以外の建物の屋内（テストプレイの指摘:
     for (const [map, id] of [['edoIzakaya', 'edoIzakayaYashi'], ['edoOyabunYashiki', 'edoOyabunKobun']] as const) {
       expect(MAPS[map]!.npcs.find((n) => n.id === id)?.after?.flag, id).toBe(oyabunRequestId('edo'));
     }
+  });
+});
+
+describe('町でないマップの建物の屋内（与力・黒田の屋敷、出島、北前船）', () => {
+  // マップ → そこへ入ったときに立つマスと、すべての戸の前まで歩けるようになるフラグ
+  const OUTER: Record<string, { start: { x: number; y: number }; flags: Record<string, boolean> }> = {
+    yoriki: { start: { x: 17, y: 22 }, flags: { meiboFound: true } },
+    dejima: { start: { x: 30, y: 9 }, flags: {} },
+    kitamaebune: { start: { x: 11, y: 10 }, flags: {} },
+  };
+
+  it.each(Object.keys(OUTER))('%s の戸（D）はすべて入れ、入口から戸の前まで歩ける。戸口と屋内は 1 対 1', (mapId) => {
+    const map = MAPS[mapId]!;
+    const area = reachable(map, OUTER[mapId]!.start);
+    const doors: string[] = [];
+    map.rows.forEach((row, y) =>
+      [...row].forEach((ch, x) => {
+        if (ch !== 'D') return;
+        const entrance = map.exits.find((e) => e.x === x && e.y === y);
+        expect(entrance, `${x},${y}`).toBeDefined();
+        expect(canStep(map, x, y), `${x},${y}`).toBe(true);
+        expect(buildingTown(entrance!.to), `${x},${y}`).toBe(mapId);
+        // 戸の外に立つマス（屋内の出口の戻り先）まで歩ける
+        const inside = MAPS[entrance!.to]!;
+        expect(area.has(`${inside.exits[0]!.toX},${inside.exits[0]!.toY}`), `${x},${y}`).toBe(true);
+        doors.push(entrance!.to);
+      }),
+    );
+    expect(doors.sort()).toEqual(buildings.filter((m) => buildingTown(m.id) === mapId).map((m) => m.id).sort());
+  });
+
+  it('黒田の屋敷の女中、出島のカピタン・通詞・商館の手代・医者・蔵番は建物の中にいる。用人は庭に残る', () => {
+    expect(MAPS.yorikiHokoninNagaya!.npcs.some((n) => n.id === 'yorikiJochu')).toBe(true);
+    expect(MAPS.yoriki!.npcs.map((n) => n.id)).toEqual(['yorikiYonin']);
+    expect(MAPS.dejimaTsujiBeya!.npcs.find((n) => n.id === 'tsuji')?.event).toBe('tsujiMeet');
+    expect(MAPS.dejimaKapitanBeya!.npcs.some((n) => n.id === 'kapitan')).toBe(true);
+    expect(MAPS.dejimaShokan!.npcs.find((n) => n.id === 'dejimaShop')).toMatchObject({ action: 'shop', shop: 'dejimaShop' });
+    expect(MAPS.dejimaIshaBeya!.npcs.some((n) => n.id === 'dejimaDoctor')).toBe(true);
+    expect(MAPS.dejimaNigura!.npcs.some((n) => n.id === 'dejimaKura')).toBe(true);
+    const moved = ['kapitan', 'tsuji', 'dejimaShop', 'dejimaDoctor', 'dejimaKura'];
+    expect(MAPS.dejima!.npcs.some((n) => moved.includes(n.id))).toBe(false);
+    // 商館の看板は、今までどおり商館の戸の左の壁に掛かる
+    expect(MAPS.dejima!.exits.find((e) => e.to === 'dejimaShokan')?.sign).toBe('shokan');
+  });
+
+  it('黒田の屋敷の蔵の戸の前はごろつきのイベントのマスで、蔵には名簿が見つかった（meiboFound）あとにだけ入れる', () => {
+    const yoriki = MAPS.yoriki!;
+    const entrance = yoriki.exits.find((e) => e.to === 'yorikiKuraNaka')!;
+    const front = { x: entrance.x, y: entrance.y + 1 };
+    expect(yoriki.triggers!.find((t) => t.x === front.x && t.y === front.y)).toMatchObject({ event: 'yorikiKura', unless: 'meiboFound' });
+    // 戸へは、その前のマスからしか入れない
+    const neighbors = [[1, 0], [-1, 0], [0, -1]].filter(([dx, dy]) => tileAt(yoriki, entrance.x + dx!, entrance.y + dy!)?.blocked === false);
+    expect(neighbors).toEqual([]);
+  });
+
+  it('北前船の屋形の戸は東を向き、屋形から出ると戸の東の甲板に立つ。屋形の中には敵が出ず、全滅したら長崎へ', () => {
+    const ship = MAPS.kitamaebune!;
+    const entrance = ship.exits.find((e) => e.to === 'kitamaeYakata')!;
+    expect({ x: entrance.x, y: entrance.y }).toEqual({ x: 9, y: 10 });
+    expect(MAPS.kitamaeYakata!.exits[0]).toMatchObject({ to: 'kitamaebune', toX: 10, toY: 10 });
+    expect(tileAt(ship, 9, 11)?.blocked).toBe(true);
+    expect(MAPS.kitamaeYakata!.encounter).toBeUndefined();
+    expect(MAPS.kitamaeYakata!.respawnMap).toBe('nagasaki');
   });
 });

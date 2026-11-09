@@ -1860,8 +1860,10 @@ describe('ダンジョンから入口の外へ戻る（道しるべの札・抜�
     }
   });
 
-  it('歩いて出られないダンジョンは、出口のないものだけ', () => {
-    for (const id of sealed) expect(MAPS[id]?.exits, id).toEqual([]);
+  it('歩いて出られないダンジョンは、出口のないもの（出口がそのダンジョンの中の建物へ入る戸だけのものを含む）だけ', () => {
+    for (const id of sealed) expect(MAPS[id]!.exits.filter((e) => buildingTown(e.to) !== id), id).toEqual([]);
+    // 北前船の甲板から屋形には入れるが、屋形は船の外ではない
+    expect(MAPS.kitamaebune!.exits.map((e) => e.to)).toEqual(['kitamaeYakata']);
   });
 
   it('奥の階からは、手前の階を通って入口の外へ戻る', () => {

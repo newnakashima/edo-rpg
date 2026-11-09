@@ -452,6 +452,8 @@ const KITAMAE_NAGASAKI: EventStep[] = [
                 label: '乗る',
                 steps: [
                   { type: 'say', lines: ['船頭「よっしゃ、帆を上げえ！ 加賀の湊まで、十日の船旅じゃ」'] },
+                  // 船に乗ったときだけ、甲板で船出の場面を出す（屋形から甲板へ出たときは出さない。KITAMAE_ENTER）
+                  { type: 'setFlag', flag: 'kitamaeSetSail' },
                   { type: 'warp', mapId: 'kitamaebune', x: 11, y: 10 },
                 ],
               },
@@ -465,24 +467,34 @@ const KITAMAE_NAGASAKI: EventStep[] = [
   },
 ];
 
-/** 北前船に乗ったとき（第 7 章の始まり）。 */
+/**
+ * 北前船に乗ったとき（第 7 章の始まり）。長崎の船頭に乗せてもらったとき（kitamaeSetSail）だけ船出の場面を出す。
+ * 甲板の屋形（src/data/buildingsOuter.ts）から甲板へ出たときもマップに入り直すので、そのときは出さない。
+ */
 const KITAMAE_ENTER: EventStep[] = [
   {
     type: 'if',
-    flag: 'kitamaeBoarded',
-    then: [{ type: 'say', lines: ['北前船は、ふたたび北の海へ漕ぎ出した。'] }],
-    else: [
+    flag: 'kitamaeSetSail',
+    then: [
       {
-        type: 'say',
-        lines: [
-          '北前船は長崎の湊を出て、玄界灘から日本海へ。',
-          '船は西風を帆にはらんで、北へ、北へと進んでいく。',
-          '船頭「船首の方へは近寄りなさんな。このあたりの海は、夜になると出るけえのう」',
-          'お凛「出るって、何がだい」',
-          '船頭「……船幽霊じゃ」',
+        type: 'if',
+        flag: 'kitamaeBoarded',
+        then: [{ type: 'say', lines: ['北前船は、ふたたび北の海へ漕ぎ出した。'] }],
+        else: [
+          {
+            type: 'say',
+            lines: [
+              '北前船は長崎の湊を出て、玄界灘から日本海へ。',
+              '船は西風を帆にはらんで、北へ、北へと進んでいく。',
+              '船頭「船首の方へは近寄りなさんな。このあたりの海は、夜になると出るけえのう」',
+              'お凛「出るって、何がだい」',
+              '船頭「……船幽霊じゃ」',
+            ],
+          },
+          { type: 'setFlag', flag: 'kitamaeBoarded' },
         ],
       },
-      { type: 'setFlag', flag: 'kitamaeBoarded' },
+      { type: 'setFlag', flag: 'kitamaeSetSail', value: false },
     ],
   },
 ];

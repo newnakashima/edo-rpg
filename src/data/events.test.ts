@@ -571,8 +571,23 @@ describe('第 7 章の流れ', () => {
     expect(warpOf('kitamaeNagasaki', { ...ch6, flags: { ...ch6.flags, kanazawaArrived: true } })).toMatchObject({ mapId: 'kanazawa' });
   });
 
+  it('北前船の船出の場面は、長崎の船頭に乗せてもらったときだけ出る（甲板の屋形から出たときは出ない）', () => {
+    const sailing = run('kitamaeNagasaki', ch6);
+    expect(sailing.flags.kitamaeSetSail).toBe(true);
+    const first = new EventRunner(EVENTS.kitamaeEnter!.steps).next(sailing);
+    expect(first.request.kind === 'say' && first.request.pages).toHaveLength(5);
+    const boarded = run('kitamaeEnter', sailing);
+    expect(boarded.flags.kitamaeBoarded).toBe(true);
+    expect(boarded.flags.kitamaeSetSail).toBeFalsy();
+    // 屋形から甲板へ出たとき（もう一度 onEnter が走る）は何も出さない
+    expect(new EventRunner(EVENTS.kitamaeEnter!.steps).next(boarded).request.kind).toBe('done');
+    // 負けて長崎から乗り直すと、短い船出の場面
+    const again = new EventRunner(EVENTS.kitamaeEnter!.steps).next(run('kitamaeNagasaki', boarded));
+    expect(again.request.kind === 'say' && again.request.pages).toHaveLength(1);
+  });
+
   it('船首で船幽霊と海坊主（Lv22）に勝つと kanazawaArrived で金沢の湊へ。負けたら着かず、出直すと口上を短くする', () => {
-    const boarded = run('kitamaeEnter', ch6);
+    const boarded = run('kitamaeEnter', run('kitamaeNagasaki', ch6));
     expect(boarded.flags.kitamaeBoarded).toBe(true);
     const runner = new EventRunner(EVENTS.funayureiAttack!.steps);
     const r = skipSay(runner, runner.next(boarded));
@@ -585,7 +600,7 @@ describe('第 7 章の流れ', () => {
     expect(retry.request.kind === 'say' && retry.request.pages).toHaveLength(2);
   });
 
-  const arrived = run('funayureiAttack', run('kitamaeEnter', ch6));
+  const arrived = run('funayureiAttack', run('kitamaeEnter', run('kitamaeNagasaki', ch6)));
 
   it('金沢に初めて入ると kanazawaIntro。2 回目からは何もしない。金沢の船頭は長崎へ戻せる', () => {
     const intro = run('kanazawaEnter', arrived);
