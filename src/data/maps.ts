@@ -1220,7 +1220,8 @@ MAPS.nagoya = {
     { x: 51, y: 17, to: 'world', toX: 93, toY: 27 },
     { x: 51, y: 18, to: 'world', toX: 93, toY: 27 },
   ],
-  respawn: { x: 28, y: 16 },
+  // 全滅で戻る場所は東の入口のそば（名古屋に着く前に東海道で全滅したときも、着いたときの町の人の場面が画面の中で起きる）
+  respawn: { x: 48, y: 18 },
   onEnter: { event: 'nagoyaEnter', unless: 'chapter2Cleared' },
 };
 
@@ -1436,6 +1437,19 @@ MAPS.tenshu = {
       object: 'shachiDaiza',
       lines: ['大棟の上に、金の鯱の台座がある。鯱の姿はない。'],
       after: { flag: 'kinshachiDefeated', lines: ['金の鱗を取り戻した。鯱は、明日にも職人の手で元の姿に戻されるという。'] },
+    },
+    {
+      // 大凧で降りた欄干（1, 23）の北で、凧をつないで待つ。金鯱からくりの場面では後ろから駆け上がってくる
+      id: 'tenshuKinta',
+      name: '金太',
+      x: 1,
+      y: 22,
+      color: 0xd08a3a,
+      sprite: 'kinta',
+      facing: 'down',
+      lines: ['金太「凧はここにつないどく。鯱は、この上の大棟だ。……おれも、すぐ後から行く」'],
+      showFlag: 'kintaFlew',
+      hideFlag: 'kinshachiDefeated',
     },
     {
       id: 'tenshuChest',
