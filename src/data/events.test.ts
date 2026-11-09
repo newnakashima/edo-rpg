@@ -1082,6 +1082,8 @@ describe('第 7 章の流れ', () => {
     for (const [id, [x, y]] of pos) expect(heroSpots.some(([hx, hy]) => hx === x && hy === y), id).toBe(false);
   });
 
+  // 見送り（P2）: 戦闘をはさむ演出（影武者の人形を消す・夜叉丸が進み出る）を、戦闘から戻ったときに置き直すことは
+  // FieldScene の仕組み（runner.stage の置き直し）に任せ、ここでは確かめていない。FieldScene を動かすテストの仕組みができたら足す
   it('影武者は上座の人形が立ち上がって入口の前まで歩いてくる。勝つと玄道の祝詞で崩れて消える', () => {
     const list = requests('kagemusha', opened);
     const battle = list.findIndex((q) => q.kind === 'battle');
@@ -1156,7 +1158,7 @@ describe('第 7 章の流れ', () => {
     const pages = list.flatMap((q) => (q.kind === 'say' ? q.pages : [])).join('');
     expect(pages).not.toContain('大広間に、一行は呼ばれた');
     expect(pages).not.toContain('捕らえられた。');
-    // 主人公 (28, 15) の隣で空いているのは南だけなので、仲間は一人ずつ出る
+    // 主人公 (28, 15) の隣は、左近が来るまでは東と南、来たあとは南だけが空くので、仲間は一人ずつ出る
     let out = 0;
     let most = 0;
     for (const q of list) {
