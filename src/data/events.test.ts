@@ -579,12 +579,74 @@ describe('第 5 章の流れ', () => {
     expect(run('hyakuhyo', joined).flags.hyakuhyoDefeated).toBe(true);
     const lost = run('hyakuhyo', joined, 'defeat');
     expect(lost.flags.hyakuhyoDefeated).toBeFalsy();
-    const retry = new EventRunner(EVENTS.hyakuhyo!.steps).next(lost);
-    expect(retry.request.kind).toBe('say');
-    const pages = retry.request.kind === 'say' ? retry.request.pages.join('') : '';
-    expect(pages).not.toContain('お凛「');
-    expect(pages).toContain('兵庫「');
+    const list = requests('hyakuhyo', lost);
+    const battle = list.findIndex((q) => q.kind === 'battle');
+    const before = list.slice(0, battle).flatMap((q) => (q.kind === 'say' ? q.pages : [])).join('');
+    expect(before).not.toContain('お凛');
+    expect(before).toContain('今度こそ');
     expect(run('hyakuhyo', lost).flags.hyakuhyoDefeated).toBe(true);
+  });
+
+  it('百俵からくりは工場の奥から歩いてきて、勝つと崩れて消え、北岸の蔵の前へ移る（大坂に入ったときのイベントで第 5 章が終わる）', () => {
+    const list = requests('hyakuhyo', joined);
+    const battle = list.findIndex((q) => q.kind === 'battle');
+    expect(list.slice(0, battle).some((q) => q.kind === 'stage' && q.step.type === 'actor' && q.step.id === 'komeKuraHyakuhyo')).toBe(true);
+    expect(list.slice(battle).some((q) => q.kind === 'stage' && q.step.type === 'vanish' && q.step.who === 'komeKuraHyakuhyo')).toBe(true);
+    const warp = list.filter((q) => q.kind === 'warp').at(-1);
+    expect(warp).toEqual({ kind: 'warp', mapId: 'osaka', x: 26, y: 4 });
+    expect(canStep(MAPS.osaka!, 26, 4)).toBe(true);
+    // 蔵の戸（米蔵の地下の出口が戻す所）と同じ場所
+    expect(MAPS.komeKura!.exits!.every((e) => e.to === 'osaka' && e.toX === 26 && e.toY === 4)).toBe(true);
+    expect(MAPS.osaka!.onEnter?.event).toBe('osakaEnter');
+    // 負けたら移らない
+    expect(requests('hyakuhyo', joined, 'defeat').some((q) => q.kind === 'warp')).toBe(false);
+  });
+
+  it('私塾の兵庫は、加わると主人公のところへ歩いて消える', () => {
+    const list = requests('hyogoMeet', arrived);
+    const join = list.findIndex((q) => q.kind === 'stage' && q.step.type === 'vanish' && q.step.who === 'hyogoJuku');
+    expect(join).toBeGreaterThan(0);
+    expect(list.slice(0, join).some((q) => q.kind === 'stage' && q.step.type === 'walk' && q.step.who === 'hyogoJuku' && q.step.to === 'hero')).toBe(true);
+    expect(MAPS.osakaJuku!.npcs.find((n) => n.id === 'hyogoJuku')?.hideFlag).toBe('hyogoJoined');
+  });
+
+  it('大坂に着く前に街道で全滅しても、着いたときの町人は戻った主人公の見える所に出る', () => {
+    const back = respawnPoint('world', 58, 34, ch4.flags);
+    expect(back.mapId).toBe('osaka');
+    const town = MAPS.world!.towns!.find((t) => t.name === '大坂')!.to!;
+    const branch = EVENTS.osakaEnter!.steps[0]!;
+    const inner = branch.type === 'if' ? (branch.else ?? []) : [];
+    const steps = inner.flatMap((s) => (s.type === 'if' ? [...s.then, ...(s.else ?? [])] : [s]));
+    let crowd = 0;
+    for (const step of steps) {
+      if (step.type !== 'actor' || step.x === undefined || step.y === undefined) continue;
+      crowd++;
+      for (const p of [back, town]) {
+        expect(Math.abs(step.x - p.x), step.id).toBeLessThanOrEqual(10);
+        expect(Math.abs(step.y - p.y), step.id).toBeLessThanOrEqual(5);
+      }
+    }
+    expect(crowd).toBe(2);
+  });
+
+  it('第 5 章の終わりは北岸の蔵の前で、門弟たちが橋へ押し寄せ、兵庫が止めて立ち去る。人は蔵の前から見える所に出る', () => {
+    const list = requests('osakaEnter', run('hyakuhyo', joined));
+    const stage = list.flatMap((q) => (q.kind === 'stage' ? [q.step] : []));
+    const actors = stage.filter((s) => s.type === 'actor');
+    expect(actors.map((a) => a.id)).toEqual(expect.arrayContaining(['hyogo', 'osakaMonteiA', 'osakaMonteiB', 'osakaMonteiC', 'osakaHikyaku']));
+    for (const a of actors) {
+      if (a.type !== 'actor' || a.x === undefined || a.y === undefined) continue;
+      expect(Math.abs(a.x - 26), a.id).toBeLessThanOrEqual(10);
+      expect(Math.abs(a.y - 4), a.id).toBeLessThanOrEqual(9);
+    }
+    // 兵庫が姿を消してから一行を離れる
+    const vanished = list.findIndex((q) => q.kind === 'stage' && q.step.type === 'vanish' && q.step.who === 'hyogo');
+    const said = list.findIndex((q) => q.kind === 'say' && q.pages.some((p) => p.includes('榊兵庫が一行を離れた')));
+    expect(vanished).toBeGreaterThan(0);
+    expect(said).toBeGreaterThan(vanished);
+    const pages = list.flatMap((q) => (q.kind === 'say' ? q.pages : [])).join('');
+    expect(pages).toContain('門弟「');
+    expect(pages).toContain('飛脚「');
   });
 
   it('百俵からくりを倒して大坂に入ると第 5 章が終わり（chapter5Cleared）、兵庫が抜ける。霞は預けたまま', () => {
