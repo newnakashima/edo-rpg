@@ -1729,8 +1729,10 @@ describe('寄り道の浜松（遠州の凧揚げ合戦）', () => {
     }
   });
 
-  it('葛籠の中身は、松林が金創膏、町がうなぎの蒲焼', () => {
+  it('葛籠の中身は、松林が金創膏・気付け薬・道しるべの札、町がうなぎの蒲焼', () => {
     expect(run('hamamatsuChest1', arrived).items.kintsuba).toBe((arrived.items.kintsuba ?? 0) + 1);
+    expect(run('hamamatsuChest3', arrived).items.kitsukegusuri).toBe((arrived.items.kitsukegusuri ?? 0) + 1);
+    expect(run('hamamatsuChest4', arrived).items.michishirube).toBe((arrived.items.michishirube ?? 0) + 1);
     expect(run('hamamatsuChest2', arrived).items.unagi).toBe((arrived.items.unagi ?? 0) + 1);
   });
 });

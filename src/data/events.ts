@@ -3166,8 +3166,8 @@ export const EVENTS: Record<string, EventDef> = {
     ],
   },
   /**
-   * 松林の奥の浪人 (8, 31)。源太の頼みを聞いたあとなら、浪人・雲助・獺（Lv7）を退けて初凧を取り返す（hamamatsuTakoFound）。
-   * 雲助と獺は松林の東 (12, 30)(12, 32) から出てきて浪人の東隣の列 (10, 30)(10, 32) に並ぶ。
+   * 中田島の松林（MAPS.hamamatsuMatsubayashi）の奥の浪人 (4, 5)。源太の頼みを聞いたあとなら、浪人・雲助・獺（Lv7）を退けて初凧を取り返す（hamamatsuTakoFound）。
+   * 雲助と獺は空き地の東 (8, 4)(8, 6) から出てきて (6, 4)(6, 6) に並ぶ。
    * 負けた雲助と獺は東へ逃げる。浪人の四方はどれも主人公が立っているかもしれないマスなので、浪人は歩かせずに足音で逃げたことを見せる。
    */
   hamamatsuTako: {
@@ -3178,8 +3178,8 @@ export const EVENTS: Record<string, EventDef> = {
         flag: 'hamamatsuTakoAsked',
         then: [
           { type: 'say', lines: ['浪人「なんだ、てめえ。この凧は、おれたちが拾ったもんだ。返してほしけりゃ、酒手を置いていきな」'] },
-          enemyActor('takoKumosuke', 'kumosuke', 12, 30),
-          enemyActor('takoKawauso', 'kawauso', 12, 32),
+          enemyActor('takoKumosuke', 'kumosuke', 8, 4),
+          enemyActor('takoKawauso', 'kawauso', 8, 6),
           { type: 'walk', who: 'takoKumosuke', path: 'll', wait: false },
           walk('takoKawauso', 'll'),
           {
@@ -3216,6 +3216,8 @@ export const EVENTS: Record<string, EventDef> = {
   },
   hamamatsuChest1: chest('hamamatsuChest1', 'kintsuba', '金創膏'),
   hamamatsuChest2: chest('hamamatsuChest2', 'unagi', 'うなぎの蒲焼'),
+  hamamatsuChest3: chest('hamamatsuChest3', 'kitsukegusuri', '気付け薬'),
+  hamamatsuChest4: chest('hamamatsuChest4', 'michishirube', '道しるべの札'),
   // 寄り道の彦根（第 3 章、名古屋から京へ向かう途中）
   /** 彦根に入ったとき。初めてなら町の紹介。 */
   hikoneEnter: { id: 'hikoneEnter', steps: [{ type: 'if', flag: 'hikoneIntro', then: [], else: HIKONE_ARRIVE }] },

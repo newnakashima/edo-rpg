@@ -3449,7 +3449,8 @@ MAPS.sendai = {
 /**
  * 寄り道の浜松（第 2 章、大井川を渡ったあと。東海道から南へ折れた先）。
  * 北西に堀と石垣を巡らせた浜松城（出世城）、北に寺、北東に凧師の弥平の家。中ほどを東海道が東西に通り、その南に店並び（旅籠・茶屋・飛脚・よろず屋・刀鍛冶・うなぎ屋）、
- * 裏通りの南に長屋（大工の棟梁の家）。松林を抜けた南は中田島の砂丘で、凧揚げ合戦の場。砂丘の西の松林の奥に、初凧を奪った浪人たちがいる。その先は遠州灘。
+ * 裏通りの南に長屋（大工の棟梁の家）。松林を抜けた南は中田島の砂丘で、凧揚げ合戦の場。その先は遠州灘。
+ * 砂丘の西の外れから、中田島の松林（MAPS.hamamatsuMatsubayashi。ダンジョン）へ入る。松林の奥に、初凧を奪った浪人たちがいる。
  * サブイベント: 遠州の凧揚げ合戦の手伝い（hamamatsuTakoAsked → 松林で浪人たちから初凧を取り返す hamamatsuTakoFound → 若衆頭の源太に届けて合戦 hamamatsuTakoDone）。
  */
 MAPS.hamamatsu = {
@@ -3487,10 +3488,10 @@ MAPS.hamamatsu = {
     'TTTTTTTTTTTTTTTTTTTTTTTTT==TTTTTTTTTTTTTTTTTTTTTTTTT',
     'TTTTTTTTTTTTTTTTTTTTTTTTT==TTTTTTTTTTTTTTTTTTTTTTTTT',
     'TTTTTTTTTTTTTT...........==.....................T..T',
-    'TT......TT...T.RRRRRRR,..==.........TT.,,,,,,,,,,,,T',
-    'TT,TT,,,,,,,.T.RRRRRRR,......,,,,,,,...,,,,,TT,,,,,T',
-    'TT,,,,,,,,,,.T.WWWDWWW,......,,,,,,,...,,,...,,,,,,T',
-    'TT.................................................T',
+    'TTTTTTTTTTTT.T.RRRRRRR,..==.........TT.,,,,,,,,,,,,T',
+    'TTTTTTTTTT,,.T.RRRRRRR,......,,,,,,,...,,,,,TT,,,,,T',
+    '..,,,TTTT,,,.T.WWWDWWW,......,,,,,,,...,,,...,,,,,,T',
+    '...................................................T',
     'T~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~T',
     'T~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~T',
     'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
@@ -3567,27 +3568,84 @@ MAPS.hamamatsu = {
       lines: ['隣町の若衆「今年の合戦も、おれたちの町が糸を切ってやるぜ。……初凧が揚がらねえんじゃ、張り合いがねえけどな」'],
       after: { flag: 'hamamatsuTakoDone', lines: ['隣町の若衆「あの初凧、砂丘の空でいちばん高く揚がってやがったな。……まあ、めでてえ凧だ。来年こそ決着をつけるぞ」'] },
     },
-    // 砂丘の西の松林の奥
-    { id: 'takoRonin', name: '浪人', x: 8, y: 31, color: 0x5a5a5a, sprite: 'npc_ronin', event: 'hamamatsuTako', hideFlag: 'hamamatsuTakoFound' },
-    {
-      id: 'hatsudako',
-      name: '初凧',
-      x: 5,
-      y: 29,
-      color: 0x8a7a5a,
-      object: 'oodako',
-      lines: ['松の枝に、大きな四角い凧が引っかかっている。真ん中に、太い筆で「初　喜之助」と書いてある。'],
-      hideFlag: 'hamamatsuTakoFound',
-    },
-    { id: 'hamamatsuChest1', name: '葛籠', x: 2, y: 32, color: 0x8a6a3a, object: 'tsuzura', event: 'hamamatsuChest1' },
   ],
   exits: [
     // 東の東海道から、ワールドマップの脇道へ
     { x: 51, y: 12, to: 'world', toX: 100, toY: 32 },
     { x: 51, y: 13, to: 'world', toX: 100, toY: 32 },
+    // 砂丘の西の外れから、中田島の松林へ
+    { x: 0, y: 31, to: 'hamamatsuMatsubayashi', toX: 38, toY: 21 },
+    { x: 0, y: 32, to: 'hamamatsuMatsubayashi', toX: 38, toY: 22 },
   ],
   respawn: { x: 5, y: 20 },
   onEnter: { event: 'hamamatsuEnter', unless: 'hamamatsuIntro' },
+};
+
+/**
+ * 中田島の松林（寄り道の浜松）。砂丘の西に広がる、潮風に曲がった松の林。砂の小道が林の中を縫い、潮だまりがところどころに残る。
+ * 東の口（浜松の砂丘の西の外れ）から入り、林の真ん中の辻で北東の空き地・西の小道に分かれる。西の小道を北へ行った奥の空き地に、初凧を奪った浪人たちがいる。
+ * 東海道と同じ敵が出る。
+ */
+MAPS.hamamatsuMatsubayashi = {
+  id: 'hamamatsuMatsubayashi',
+  name: '中田島の松林',
+  areaLevel: 7,
+  tileset: 'yama',
+  rows: [
+    'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
+    'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
+    'TTT,,,,,,TTTTTTTTTTTTTTTTTTTTT,,,,,TTTTT',
+    'TT,,....,,TTTTTTTTTTTTTTTTTT,,,..,,,TTTT',
+    'TT,......,,TTTTTTT,,,TTTTTT,,.....^,,TTT',
+    'TT,,......,TTTTTT,,.,,TTTTT,,..,,,,,TTTT',
+    'TTT,,....,,,TTTT,,...,,TTTT,,,,TTT,,TTTT',
+    'TTTT,,..,,,,,TT,,,.^.,,,TT,,,,TTTTT,TTTT',
+    'TTTTTT..TTT,,,,,,,...,,,,,,,TTTTTTT,,TTT',
+    'TTTTTT..TTTT,,,,,TT..TTTT,,TTTTTTTT,,TTT',
+    'TTTTT,..,TTTTTTTTTT..TTTTTTTTTTTT,,,,TTT',
+    'TTTT,,..,,TTTTTTTTT..,TTTTTTTTTT,,~~,TTT',
+    'TTT,,,...,,TTTTTTT,,..,,TTTTTTT,,~~~,,TT',
+    'TTT,^,,..,,TTTTTT,,,...,,TTTTTT,,~~,,TTT',
+    'TTTT,,,..,,TTTTT,,TT....,,TTTTTT,,,,TTTT',
+    'TTTTT,,..TTTTTT,,TTTT....,,TTTTTT,,TTTTT',
+    'TTTTTT...TTTTT,,TTTTTTT...,,TTTTT,,TTTTT',
+    'TTTTT,,..,,TTT,,TTTTTTTT...,,,TTT,,TTTTT',
+    'TTTT,,~~~,,,,,,TTTTTTTTTT....,,,,,,TTTTT',
+    'TTT,,~~~~~,,,,TTTTTTTTTTTTT.....,,,TTTTT',
+    'TTT,,,~~~,,,TTTTTTTTTTTTTTTTT.....,,TTTT',
+    'TTTT,,,,,,,TTTTTTTTTTTTTTTTTTTT.........',
+    'TTTTTT,,^,TTTTTTTTTTTTTTTTTTTTTT,.......',
+    'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT,,,TTT',
+    'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
+    'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
+  ],
+  npcs: [
+    // 北西の奥の空き地
+    { id: 'takoRonin', name: '浪人', x: 4, y: 5, color: 0x5a5a5a, sprite: 'npc_ronin', event: 'hamamatsuTako', hideFlag: 'hamamatsuTakoFound' },
+    {
+      id: 'hatsudako',
+      name: '初凧',
+      x: 4,
+      y: 3,
+      color: 0x8a7a5a,
+      object: 'oodako',
+      lines: ['松の枝に、大きな四角い凧が引っかかっている。真ん中に、太い筆で「初　喜之助」と書いてある。'],
+      hideFlag: 'hamamatsuTakoFound',
+    },
+    // 南西の潮だまりのそば
+    { id: 'hamamatsuChest1', name: '葛籠', x: 6, y: 22, color: 0x8a6a3a, object: 'tsuzura', event: 'hamamatsuChest1' },
+    // 北東の空き地
+    { id: 'hamamatsuChest3', name: '葛籠', x: 33, y: 3, color: 0x8a6a3a, object: 'tsuzura', event: 'hamamatsuChest3' },
+    // 西の小道の脇の岩陰
+    { id: 'hamamatsuChest4', name: '葛籠', x: 4, y: 12, color: 0x8a6a3a, object: 'tsuzura', event: 'hamamatsuChest4' },
+  ],
+  exits: [
+    // 東の口から、浜松の砂丘の西の外れへ戻る
+    { x: 39, y: 21, to: 'hamamatsu', toX: 1, toY: 31 },
+    { x: 39, y: 22, to: 'hamamatsu', toX: 1, toY: 32 },
+  ],
+  encounter: 'tokaido',
+  respawnMap: 'hamamatsu',
 };
 
 /**

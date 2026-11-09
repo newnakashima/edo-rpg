@@ -49,8 +49,8 @@ describe('タイルの画像', () => {
       nagasaki: 'nanban', dejima: 'nanban', edo: 'nagaya',
       // ワールドマップ（街道）
       world: 'field',
-      // 野山（清水湊の裏山・原城跡）
-      urayama: 'yama', harajo: 'yama',
+      // 野山（清水湊の裏山・原城跡・浜松の松林）
+      urayama: 'yama', harajo: 'yama', hamamatsuMatsubayashi: 'yama',
     };
     // 民家の屋内（src/data/minka.ts）と、施設・民家以外の建物の屋内（src/data/buildings.ts）はすべて屋内の見た目
     const inside = Object.values(MAPS).filter((m) => isMinka(m.id) || buildingTown(m.id));
@@ -1615,6 +1615,7 @@ describe('寄り道の会津若松', () => {
 describe('寄り道の浜松', () => {
   const world = MAPS.world!;
   const hamamatsu = MAPS.hamamatsu!;
+  const matsubayashi = MAPS.hamamatsuMatsubayashi!;
   // 町と、町の建物の中の人
   const everyone = [hamamatsu, ...Object.values(MAPS).filter((m) => buildingTown(m.id) === 'hamamatsu')].flatMap((m) => m.npcs);
   const town = world.towns!.find((t) => t.name === '浜松')!;
@@ -1655,21 +1656,50 @@ describe('寄り道の浜松', () => {
     expect(tileAt(hamamatsu, hamamatsu.respawn!.x, hamamatsu.respawn!.y)?.blocked).toBe(false);
   });
 
-  it('入口から松林の奥の浪人・初凧・葛籠まで歩いて行け、砂丘の源太や町の人に話しかけられる', () => {
+  it('入口から砂丘の源太や町の人に話しかけられ、砂丘の西の外れの松林の口まで歩いて行ける', () => {
     const area = reachable(hamamatsu, town.to!, {}, true);
     // 弥平・棟梁とおかみ・旅籠の主人・寺の僧は建物の中（入れることは buildings.test.ts で確かめる）
-    for (const id of ['takoRonin', 'hatsudako', 'hamamatsuChest1', 'genta', 'tonariWakashu', 'hamamatsuChest2', 'hamamatsuKodomo', 'hamamatsuRojin']) {
+    for (const id of ['genta', 'tonariWakashu', 'hamamatsuChest2', 'hamamatsuKodomo', 'hamamatsuRojin']) {
       const npc = hamamatsu.npcs.find((n) => n.id === id)!;
       expect(near(area, npc.x, npc.y), id).toBe(true);
     }
+    for (const out of hamamatsu.exits.filter((e) => e.to === 'hamamatsuMatsubayashi')) expect(area.has(`${out.x},${out.y}`)).toBe(true);
     // 浜松城の中へは、門番がふさいで入れない
     expect(area.has('12,6')).toBe(false);
     // 町の広さ（テストプレイの指摘: マップが小さすぎる）
     expect(reachable(hamamatsu, town.to!, {}).size).toBeGreaterThan(900);
   });
 
+  it('中田島の松林は東海道の敵が出るダンジョン（寄り道イベントのボリュームが小さいという指摘）。東の口から砂丘の西の外れへ戻り、全滅したら浜松へ', () => {
+    expect(matsubayashi.encounter).toBe('tokaido');
+    expect(matsubayashi.areaLevel).toBe(hamamatsu.areaLevel);
+    expect(isDungeon(matsubayashi)).toBe(true);
+    expect(respawnPoint('hamamatsuMatsubayashi')).toEqual({ mapId: 'hamamatsu', ...hamamatsu.respawn });
+    // 町の口と松林の口が、互いの隣に着く（出口のマスに着いてすぐ戻らない）
+    for (const into of hamamatsu.exits.filter((e) => e.to === 'hamamatsuMatsubayashi')) {
+      expect(tileAt(matsubayashi, into.toX, into.toY)?.blocked).toBe(false);
+      expect(matsubayashi.exits.some((e) => e.x === into.toX && e.y === into.toY)).toBe(false);
+      expect(matsubayashi.exits.some((e) => Math.abs(e.x - into.toX) + Math.abs(e.y - into.toY) === 1)).toBe(true);
+    }
+    for (const back of matsubayashi.exits) {
+      expect(back.to).toBe('hamamatsu');
+      expect(tileAt(hamamatsu, back.toX, back.toY)?.blocked).toBe(false);
+      expect(hamamatsu.exits.some((e) => e.x === back.toX && e.y === back.toY)).toBe(false);
+    }
+    expect(escapePoint('hamamatsuMatsubayashi')).toEqual({ mapId: 'hamamatsu', x: 1, y: 31 });
+    // 口から奥の浪人・初凧・葛籠まで歩いて行ける。浪人は口から離れた奥にいる（戦い 1 回で終わらない）
+    const entry = matsubayashi.exits[0]!;
+    const area = reachable(matsubayashi, { x: entry.x, y: entry.y }, {}, true);
+    for (const id of ['takoRonin', 'hatsudako', 'hamamatsuChest1', 'hamamatsuChest3', 'hamamatsuChest4']) {
+      const npc = matsubayashi.npcs.find((n) => n.id === id)!;
+      expect(near(area, npc.x, npc.y), id).toBe(true);
+    }
+    const ronin = matsubayashi.npcs.find((n) => n.id === 'takoRonin')!;
+    expect(Math.abs(ronin.x - entry.x) + Math.abs(ronin.y - entry.y)).toBeGreaterThanOrEqual(40);
+  });
+
   it('浪人と初凧は、初凧を取り返す（hamamatsuTakoFound）と消える。町の人の台詞は取り返す・合戦が済む（hamamatsuTakoDone）と変わる', () => {
-    for (const id of ['takoRonin', 'hatsudako']) expect(hamamatsu.npcs.find((n) => n.id === id)?.hideFlag, id).toBe('hamamatsuTakoFound');
+    for (const id of ['takoRonin', 'hatsudako']) expect(matsubayashi.npcs.find((n) => n.id === id)?.hideFlag, id).toBe('hamamatsuTakoFound');
     const want: Record<string, string> = {
       hamamatsuTeahouse: 'hamamatsuTakoFound',
       toryo: 'hamamatsuTakoFound',
