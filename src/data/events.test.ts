@@ -9,7 +9,7 @@ import { EVENTS } from './events';
 import { TATSUGORO_JINGI } from './oyabunRequests';
 import { isKnownItem } from './items';
 import { SKILLS } from './skills';
-import { MAPS, npcLines, npcVisible, respawnPoint, tileAt } from './maps';
+import { canStep, MAPS, npcLines, npcVisible, respawnPoint, tileAt } from './maps';
 import { EventRunner } from '../systems/eventScript';
 import { newGame, type GameState } from '../systems/gameState';
 import { createMember, memberLevel } from '../systems/party';
@@ -207,6 +207,12 @@ describe('第 1 章の流れ', () => {
     expect(refused.flags.yashikiChest1).toBeFalsy();
   });
 });
+
+/** 演出（stage）の要求を飛ばす。 */
+function skipStage(runner: EventRunner, r: ReturnType<EventRunner['next']>): ReturnType<EventRunner['next']> {
+  while (r.request.kind === 'stage') r = runner.next(r.state);
+  return r;
+}
 
 /** 台詞を読み進め、次に画面に頼むこと（台詞以外）の手前まで進める。 */
 function skipSay(runner: EventRunner, r: ReturnType<EventRunner['next']>): ReturnType<EventRunner['next']> {
@@ -471,10 +477,14 @@ describe('第 4 章の流れ', () => {
   });
 
   it('第 3 章を終えて清水湊に入ると弔いの場面で、お凛が加わり（orinJoined）、形見のからくり銃を持っている。もう一度起きても増えない', () => {
-    const runner = new EventRunner(EVENTS.shimizuEnter!.steps);
-    const first = runner.next(ch3);
-    expect(first.request.kind).toBe('say');
-    expect(first.request.kind === 'say' ? first.request.pages.join('') : '').toContain('弔い');
+    // 町の入口で弔いの鉦を聞き、辰五郎一家の屋敷へ移って、棺の前でお凛が仇討ちを誓う
+    const reqs = requests('shimizuEnter', ch3);
+    expect(reqs[0]?.kind === 'say' ? reqs[0].pages.join('') : '').toContain('カーン');
+    const warp = reqs.find((r) => r.kind === 'warp');
+    // 屋敷の土間（出口の 2 マス上）。通れるマスに出る
+    expect(warp).toEqual({ kind: 'warp', mapId: 'shimizuOyabun', x: 8, y: 10 });
+    expect(canStep(MAPS.shimizuOyabun!, 8, 10)).toBe(true);
+    expect(reqs.flatMap((r) => (r.kind === 'say' ? r.pages : [])).join('')).toContain('おとっつぁんの仇は');
     const joined = run('shimizuEnter', ch3);
     expect(joined.flags.orinJoined).toBe(true);
     expect(joined.party.map((m) => m.id)).toEqual(['hero', 'kasumi', 'gendo', 'orin']);
@@ -496,9 +506,14 @@ describe('第 4 章の流れ', () => {
     expect(r.request).toMatchObject({ kind: 'battle', enemies: ['oboro'], level: 15, canEscape: false, loseOk: false });
     expect(r.state.flags.oboroMet).toBe(true);
     expect(run('oboro', withOrin).flags.oboroDefeated).toBe(true);
+    // 勝つと、朧は煙とともに姿を消す
+    const won = requests('oboro', withOrin);
+    const battleAt = won.findIndex((q) => q.kind === 'battle');
+    expect(won.slice(battleAt).some((q) => q.kind === 'stage' && q.step.type === 'vanish' && q.step.who === 'igaOboro')).toBe(true);
     const lost = run('oboro', withOrin, 'defeat');
     expect(lost.flags.oboroDefeated).toBeFalsy();
-    const retry = new EventRunner(EVENTS.oboro!.steps).next(lost);
+    const retryRunner = new EventRunner(EVENTS.oboro!.steps);
+    const retry = skipStage(retryRunner, retryRunner.next(lost));
     expect(retry.request.kind).toBe('say');
     const pages = retry.request.kind === 'say' ? retry.request.pages.join('') : '';
     expect(pages).not.toContain('お師匠');
@@ -512,12 +527,17 @@ describe('第 4 章の流れ', () => {
     const r = skipSay(runner, runner.next(start));
     expect(r.request).toMatchObject({ kind: 'battle', enemies: ['gonroku'], level: 16, canEscape: false, loseOk: false });
     const won = run('gonroku', start);
+    // 撃たれた権六は、倒れて画面から消える
+    const reqs = requests('gonroku', start);
+    const battleAt = reqs.findIndex((q) => q.kind === 'battle');
+    expect(reqs.slice(battleAt).some((q) => q.kind === 'stage' && q.step.type === 'vanish' && q.step.who === 'kagiyaGonroku')).toBe(true);
     expect(won.flags.gonrokuDefeated).toBe(true);
     expect(won.flags.chapter4Cleared).toBe(true);
     const lost = run('gonroku', start, 'defeat');
     expect(lost.flags.gonrokuDefeated).toBeFalsy();
     expect(lost.flags.chapter4Cleared).toBeFalsy();
-    const retry = new EventRunner(EVENTS.gonroku!.steps).next(lost);
+    const retryRunner = new EventRunner(EVENTS.gonroku!.steps);
+    const retry = skipStage(retryRunner, retryRunner.next(lost));
     expect(retry.request.kind).toBe('say');
     const pages = retry.request.kind === 'say' ? retry.request.pages.join('') : '';
     expect(pages).not.toContain('凛だ');
