@@ -1951,9 +1951,12 @@ describe('第 8 章・寄り道の町の演出（地の文を人の動きと台�
       });
     for (const id of ids) {
       for (const line of lines(EVENTS[id]!.steps)) {
-        // 台詞は「話者「……」」の形だけにし、台詞の前後に地の文を続けない
-        if (line.includes('「')) expect(line, id).toMatch(/^[^「」、。]+「.*」$/u);
-        else expect(allowedNarration(line), `${id}: ${line}`).toBe(true);
+        // 台詞は「話者「……」」の形だけにし、台詞の前後に地の文を続けない（「門番が笑って「……」」のように、話者の後ろに助詞や動きを書かない）
+        if (line.includes('「')) {
+          expect(line, id).toMatch(/^[^「」、。\s]+「.*」$/u);
+          const speaker = line.slice(0, line.indexOf('「')).replace(/〈.〉$/u, '');
+          expect(speaker, `${id}: ${line}`).not.toMatch(/[がはをにてでと]$/u);
+        } else expect(allowedNarration(line), `${id}: ${line}`).toBe(true);
       }
     }
   });
@@ -2168,6 +2171,8 @@ describe('第 8 章・寄り道の町の演出（地の文を人の動きと台�
     const after = run('hamamatsuGenta', gassen);
     expect(after.flags.hamamatsuTakoFlown).toBe(true);
     expect(after.flags.hamamatsuTakoDone).toBeFalsy();
+    expect(after.items.takoItomaki).toBe(99);
+    expect(pagesIn(fullGassen)).not.toContain('凧の糸巻きを受け取った。');
     const found = { ...CH7_CLEARED, flags: { ...CH7_CLEARED.flags, shimabaraOpen: true, kumamotoIntro: true, kumamotoIdoAsked: true, kumamotoIdoFound: true } };
     const ret = pagesIn(requests('kumamotoMosaku', found));
     const told = ret.findIndex((p) => p.includes('「古井戸の底の水脈に、からくりが'));
