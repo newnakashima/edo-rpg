@@ -1063,8 +1063,23 @@ describe('第 7 章の流れ', () => {
       [toro.x, toro.y + 1],
       [toro.x - 1, toro.y],
     ].filter(([x, y]) => canStep(MAPS.kenrokuen!, x!, y!));
-    const ends = { toroShinobiA: [16, 9], toroShinobiB: [21, 9], toroHanshi: [19, 5] };
-    for (const [, [x, y]] of Object.entries(ends)) expect(heroSpots.some(([hx, hy]) => hx === x && hy === y)).toBe(false);
+    // 出した位置から、歩いた道をたどった位置（イベントのデータから求める）
+    const D = { u: [0, -1], d: [0, 1], l: [-1, 0], r: [1, 0] } as const;
+    const pos = new Map<string, [number, number]>();
+    for (const q of list.slice(0, battle)) {
+      if (q.kind !== 'stage') continue;
+      if (q.step.type === 'actor' && q.step.id.startsWith('toro') && q.step.x !== undefined && q.step.y !== undefined) pos.set(q.step.id, [q.step.x, q.step.y]);
+      if (q.step.type === 'walk' && pos.has(q.step.who) && q.step.path) {
+        for (const c of q.step.path) {
+          const [x, y] = pos.get(q.step.who)!;
+          const [dx, dy] = D[c as keyof typeof D];
+          pos.set(q.step.who, [x + dx, y + dy]);
+          expect(heroSpots.some(([hx, hy]) => hx === x + dx && hy === y + dy), `${q.step.who} が (${x + dx},${y + dy}) を通る`).toBe(false);
+        }
+      }
+    }
+    expect([...pos.keys()].sort()).toEqual(['toroHanshi', 'toroShinobiA', 'toroShinobiB']);
+    for (const [id, [x, y]] of pos) expect(heroSpots.some(([hx, hy]) => hx === x && hy === y), id).toBe(false);
   });
 
   it('影武者は上座の人形が立ち上がって入口の前まで歩いてくる。勝つと玄道の祝詞で崩れて消える', () => {

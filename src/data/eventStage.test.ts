@@ -2,6 +2,7 @@
 // 人を出す場所・歩く道が通れるマスか、動かす人がいるかを、イベントを始めるマップで分岐ごとにたどって見る。
 // 主人公の位置は、決まったマスに乗るトリガーと warp の後でだけ分かる。マップに入ったとき・話しかけたときのイベントでは、
 // 主人公の歩く道と、主人公の隣に出た人（actor の x・y を省いた人）の道は見ない（画面は通れないマスの手前で止める）。
+// 主人公の位置が分かるときは、ほかの人を主人公のマスに出したり、主人公のマスを通らせたりしないことも見る（人どうしはぶつからない）。
 import { describe, expect, it } from 'vitest';
 import type { EventStep } from './eventTypes';
 import { ENEMIES } from './enemies';
@@ -12,6 +13,14 @@ import { EventRunner, pathFacings, pathTo } from '../systems/eventScript';
 import { newGame } from '../systems/gameState';
 
 const DELTA = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] } as const;
+
+/** フィールドで姿を見せる一行の仲間（events.ts の partyOut）。 */
+const PARTY = new Set(['kasumi', 'gendo', 'orin', 'hyogo']);
+
+/** 主人公でない人が、位置の分かる主人公のマスを通るか（人どうしはぶつからないので、重なって見える）。 */
+function onHero(who: string, pos: { x: number; y: number }, hero: { x: number; y: number } | undefined): boolean {
+  return who !== 'hero' && hero !== undefined && pos.x === hero.x && pos.y === hero.y;
+}
 
 /** イベントを始めるマップと、主人公の位置（分かるときだけ。決まった場所に乗るトリガー）。 */
 interface Start {
@@ -93,6 +102,8 @@ describe('イベントの演出', () => {
               expect((step.x === undefined) === (step.y === undefined), label(`${step.id} の x・y は両方書くか両方省く`)).toBe(true);
               if (step.x !== undefined && step.y !== undefined) {
                 expect(passable(map, step.x, step.y), label(`${step.id} を出す (${step.x},${step.y}) が通れない`)).toBe(true);
+                // 一行の仲間は、主人公から出てくる姿として主人公のマスに出してよい（第 1 章の蔵の霞）
+                if (hero && !PARTY.has(step.id)) expect(step.x === hero.x && step.y === hero.y, label(`${step.id} を主人公のマス (${step.x},${step.y}) に出す`)).toBe(false);
                 where.set(step.id, { x: step.x, y: step.y });
               } else where.set(step.id, { x: NaN, y: NaN }); // 主人公の隣の空いたマス（画面が選ぶ）
               continue;
@@ -124,6 +135,7 @@ describe('イベントの演出', () => {
                   pos.x += DELTA[d][0];
                   pos.y += DELTA[d][1];
                   expect(passable(map, pos.x, pos.y), label(`${step.who} が通れない (${pos.x},${pos.y}) を歩く`)).toBe(true);
+                  expect(onHero(step.who, pos, hero), label(`${step.who} が主人公のマス (${pos.x},${pos.y}) を通る`)).toBe(false);
                 }
               } else if (pos) Object.assign(pos, step.to);
               continue;
@@ -138,6 +150,7 @@ describe('イベントの演出', () => {
                   pos.x += DELTA[d][0];
                   pos.y += DELTA[d][1];
                   expect(passable(map, pos.x, pos.y), label(`${step.who} が通れない (${pos.x},${pos.y}) を歩く`)).toBe(true);
+                  expect(onHero(step.who, pos, hero), label(`${step.who} が主人公のマス (${pos.x},${pos.y}) を通る`)).toBe(false);
                 }
               }
               if (pos) Object.assign(pos, target ?? { x: NaN, y: NaN });
@@ -151,6 +164,7 @@ describe('イベントの演出', () => {
               pos.x += DELTA[d][0];
               pos.y += DELTA[d][1];
               expect(passable(map, pos.x, pos.y), label(`${step.who} が通れない (${pos.x},${pos.y}) を歩く`)).toBe(true);
+              expect(onHero(step.who, pos, hero), label(`${step.who} が主人公のマス (${pos.x},${pos.y}) を通る`)).toBe(false);
             }
           }
         }
