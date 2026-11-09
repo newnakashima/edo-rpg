@@ -817,6 +817,11 @@ describe('第 6 章の流れ', () => {
     expect(gone).toBeGreaterThan(0);
     expect(said).toBeGreaterThan(gone);
     expect(list.slice(0, gone).some((q) => q.kind === 'stage' && q.step.type === 'walk' && q.step.who === 'kasumi' && q.step.to === 'hero')).toBe(true);
+    // 玄道（東の入口では主人公の下、霞の歩く y = 14 に出る）は、霞が歩き出す前に戻る
+    const kasumiWalk = list.findIndex((q) => q.kind === 'stage' && q.step.type === 'walk' && q.step.who === 'kasumi');
+    const gendoGone = list.findIndex((q) => q.kind === 'stage' && q.step.type === 'vanish' && q.step.who === 'gendo');
+    expect(gendoGone).toBeGreaterThan(0);
+    expect(gendoGone).toBeLessThan(kasumiWalk);
     // 霞は横、縦の順に主人公へ歩く。東の入口からも全滅後の戻り先からも、途中で通れないマスに当たらない
     const kasumi = actors[0]!;
     for (const p of [town, back]) {
