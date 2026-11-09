@@ -73,7 +73,7 @@ export const SHIMIZU_BUILDINGS: BuildingDef[] = [
       {
         id: 'tatsugoro',
         name: '辰五郎',
-        x: 4,
+        x: 3,
         y: 2,
         color: 0x8a3b2e,
         sprite: 'tatsugoro',
@@ -90,7 +90,20 @@ export const SHIMIZU_BUILDINGS: BuildingDef[] = [
         sprite: 'orin',
         lines: ['お凛「おとっつぁんもおとっつぁんだよ。よそ者なんかに頼るなんて」'],
         after: { flag: 'yakoDefeated', lines: ['お凛「……狐を退治したんだってね。礼は言っとくよ。けど、まだ認めたわけじゃないからね」'] },
-        // 第 4 章の始まり（辰五郎の弔い）で仲間になる
+        // 第 3 章の終わり（辰五郎が殺される）からは、奥の座敷で父の枕元に付き添う（orinTomurai）
+        hideFlag: 'chapter3Cleared',
+      },
+      {
+        // 辰五郎の弔い（第 4 章の始まり。shimizuEnter）の間、父の枕元に座っている。弔いの場面で仲間になる
+        id: 'orinTomurai',
+        name: 'お凛',
+        x: 5,
+        y: 2,
+        color: 0xd04a4a,
+        sprite: 'orin',
+        facing: 'left',
+        lines: ['お凛「…………」'],
+        showFlag: 'chapter3Cleared',
         hideFlag: 'orinJoined',
       },
       oyabunNpc('shimizu', { x: 8, y: 7 })!,
@@ -110,6 +123,25 @@ export const SHIMIZU_BUILDINGS: BuildingDef[] = [
         { name: '箪笥', x: 16, y: 1, object: 'tansu', lines: ['お凛の箪笥だ。引き出しから、火薬の匂いがかすかにする。'] },
         { name: '刀掛け', x: 1, y: 6, object: 'katanakake', lines: ['一家の長脇差が、刀掛けにずらりと並んでいる。'] },
         { name: '酒樽', x: 16, y: 6, object: 'sakadaru', lines: ['祝いの菰樽だ。「清水一家江」と書いた札が下がっている。'] },
+        // 辰五郎が殺されたあと、親分の座敷に逆さ屏風を立て、その前に座棺（早桶）を置く。一行が伊賀へ発ったあとに野辺送りを済ませ、位牌を置く
+        {
+          name: '逆さ屏風',
+          x: 4,
+          y: 1,
+          object: 'byobu',
+          showFlag: 'chapter3Cleared',
+          lines: ['逆さに立てた屏風だ。線香の煙が、細く立ちのぼっている。'],
+          after: { flag: 'igaArrived', lines: ['逆さ屏風の前に、辰五郎の位牌が置かれている。線香の煙が、細く立ちのぼっている。'] },
+        },
+        {
+          name: '棺',
+          x: 4,
+          y: 2,
+          object: 'kibako',
+          showFlag: 'chapter3Cleared',
+          hideFlag: 'igaArrived',
+          lines: ['白木の座棺だ。辰五郎親分が、この中で眠っている。'],
+        },
       ]),
     ],
   },

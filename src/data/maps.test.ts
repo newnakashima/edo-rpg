@@ -853,9 +853,14 @@ describe('第 4 章の清水湊と伊賀上野', () => {
   it('清水湊に入ると shimizuEnter を行い（序章の始まりと辰五郎の弔い）、お凛が加わったら行わない。お凛は加わると清水湊から消える', () => {
     const shimizu = MAPS.shimizu!;
     expect(shimizu.onEnter).toEqual({ event: 'shimizuEnter', unless: 'orinJoined' });
+    // 辰五郎が殺されてからは、自分の部屋を出て奥の座敷の父の棺のそば（orinTomurai）にいる。弔いで加わると消える
     const orin = MAPS.shimizuOyabun!.npcs.find((n) => n.id === 'orin')!;
-    expect(npcVisible(orin, { chapter3Cleared: true })).toBe(true);
-    expect(npcVisible(orin, { orinJoined: true })).toBe(false);
+    expect(npcVisible(orin, { chapter2Cleared: true })).toBe(true);
+    expect(npcVisible(orin, { chapter3Cleared: true })).toBe(false);
+    const tomurai = MAPS.shimizuOyabun!.npcs.find((n) => n.id === 'orinTomurai')!;
+    expect(npcVisible(tomurai, { chapter2Cleared: true })).toBe(false);
+    expect(npcVisible(tomurai, { chapter3Cleared: true })).toBe(true);
+    expect(npcVisible(tomurai, { chapter3Cleared: true, orinJoined: true })).toBe(false);
   });
 
   it('伊賀はお凛が加わる（orinJoined）まで入れず、まわりの街道もそれまでは東海道の敵・名古屋に戻る', () => {

@@ -209,6 +209,12 @@ describe('第 1 章の流れ', () => {
 });
 
 /** 台詞を読み進め、次に画面に頼むこと（台詞以外）の手前まで進める。 */
+/** 演出（stage）の要求を飛ばす。 */
+function skipStage(runner: EventRunner, r: ReturnType<EventRunner['next']>): ReturnType<EventRunner['next']> {
+  while (r.request.kind === 'stage') r = runner.next(r.state);
+  return r;
+}
+
 function skipSay(runner: EventRunner, r: ReturnType<EventRunner['next']>): ReturnType<EventRunner['next']> {
   while (r.request.kind === 'say' || r.request.kind === 'stage') r = runner.next(r.state);
   return r;
@@ -471,10 +477,11 @@ describe('第 4 章の流れ', () => {
   });
 
   it('第 3 章を終えて清水湊に入ると弔いの場面で、お凛が加わり（orinJoined）、形見のからくり銃を持っている。もう一度起きても増えない', () => {
-    const runner = new EventRunner(EVENTS.shimizuEnter!.steps);
-    const first = runner.next(ch3);
-    expect(first.request.kind).toBe('say');
-    expect(first.request.kind === 'say' ? first.request.pages.join('') : '').toContain('弔い');
+    // 町の入口で弔いの鉦を聞き、辰五郎一家の屋敷へ移って、棺の前でお凛が仇討ちを誓う
+    const reqs = requests('shimizuEnter', ch3);
+    expect(reqs[0]?.kind === 'say' ? reqs[0].pages.join('') : '').toContain('カーン');
+    expect(reqs).toContainEqual(expect.objectContaining({ kind: 'warp', mapId: 'shimizuOyabun' }));
+    expect(reqs.flatMap((r) => (r.kind === 'say' ? r.pages : [])).join('')).toContain('おとっつぁんの仇は');
     const joined = run('shimizuEnter', ch3);
     expect(joined.flags.orinJoined).toBe(true);
     expect(joined.party.map((m) => m.id)).toEqual(['hero', 'kasumi', 'gendo', 'orin']);
@@ -498,7 +505,8 @@ describe('第 4 章の流れ', () => {
     expect(run('oboro', withOrin).flags.oboroDefeated).toBe(true);
     const lost = run('oboro', withOrin, 'defeat');
     expect(lost.flags.oboroDefeated).toBeFalsy();
-    const retry = new EventRunner(EVENTS.oboro!.steps).next(lost);
+    const retryRunner = new EventRunner(EVENTS.oboro!.steps);
+    const retry = skipStage(retryRunner, retryRunner.next(lost));
     expect(retry.request.kind).toBe('say');
     const pages = retry.request.kind === 'say' ? retry.request.pages.join('') : '';
     expect(pages).not.toContain('お師匠');
@@ -517,7 +525,8 @@ describe('第 4 章の流れ', () => {
     const lost = run('gonroku', start, 'defeat');
     expect(lost.flags.gonrokuDefeated).toBeFalsy();
     expect(lost.flags.chapter4Cleared).toBeFalsy();
-    const retry = new EventRunner(EVENTS.gonroku!.steps).next(lost);
+    const retryRunner = new EventRunner(EVENTS.gonroku!.steps);
+    const retry = skipStage(retryRunner, retryRunner.next(lost));
     expect(retry.request.kind).toBe('say');
     const pages = retry.request.kind === 'say' ? retry.request.pages.join('') : '';
     expect(pages).not.toContain('凛だ');
