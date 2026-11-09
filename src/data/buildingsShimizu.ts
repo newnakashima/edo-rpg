@@ -134,6 +134,8 @@ export const SHIMIZU_BUILDINGS: BuildingDef[] = [
           lines: ['逆さに立てた屏風だ。線香の煙が、細く立ちのぼっている。'],
           after: { flag: 'igaArrived', lines: ['逆さ屏風の前に、辰五郎の位牌が置かれている。線香の煙が、細く立ちのぼっている。'] },
         },
+        // 見送り（レビューの P2）: 座棺の専用の画像がないため、木の箱（kibako）で代えている。江戸の座棺（早桶）は四角い木の桶なので形は近いが、
+        // 白木の座棺らしく見せるなら、pixellab-generation スキルで座棺の画像を作り、OBJECT_DEFS に足して差し替える
         {
           name: '棺',
           x: 4,
