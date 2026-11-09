@@ -3255,9 +3255,9 @@ export const EVENTS: Record<string, EventDef> = {
     ],
   },
   /**
-   * 佐和山の城跡の盗人 (45, 28)。甚兵衛の頼みを聞いたあとなら、赤備えに怒って現れる亡霊武者 2（Lv11）を退けて具足を取り返す（hikoneGusokuFound）。
-   * 城跡へは南の細い道 (45, 30) からしか上がれず、盗人の西は具足櫃 (44, 28) なので、主人公は盗人の南 (45, 29) か東 (46, 28) に立っている。
-   * 亡霊武者は崩れた石垣の陰の西 (43, 28) と東 (47, 29) に立ち上がる。勝ったら主人公が南東 (46, 29) へ下がり、盗人は南の道を逃げていく。
+   * 佐和山（MAPS.hikoneSawayama）の頂の城跡の盗人 (18, 2)。甚兵衛の頼みを聞いたあとなら、赤備えに怒って現れる亡霊武者 2（Lv11）を退けて具足を取り返す（hikoneGusokuFound）。
+   * 城跡へは南の細い道 (18, 4) からしか上がれず、盗人の西は具足櫃 (17, 2) なので、主人公は盗人の南 (18, 3) か東 (19, 2) に立っている。
+   * 亡霊武者は崩れた石垣の陰の西 (16, 2) と東 (20, 3) に立ち上がる。勝ったら主人公が南東 (19, 3) へ下がり、盗人は南の道を逃げていく。
    */
   hikoneGusoku: {
     id: 'hikoneGusoku',
@@ -3271,9 +3271,9 @@ export const EVENTS: Record<string, EventDef> = {
             lines: ['盗人「な、なんだ、てめえ。この具足は、おれが京で高く売りさばくんだ。邪魔をするな！」', '{hero}「そいつは、具足師が命がけで預かってる品だ。返してもらうぜ」'],
             linesF: ['盗人「な、なんだ、てめえ。この具足は、おれが京で高く売りさばくんだ。邪魔をするな！」', '{hero}「そいつは、具足師が命がけで預かってる品だよ。返してもらおうか」'],
           },
-          enemyActor('sawayamaBoreiW', 'boreiMusha', 43, 28),
+          enemyActor('sawayamaBoreiW', 'boreiMusha', 16, 2),
           wait(300),
-          enemyActor('sawayamaBoreiE', 'boreiMusha', 47, 29),
+          enemyActor('sawayamaBoreiE', 'boreiMusha', 20, 3),
           wait(300),
           { type: 'say', lines: ['盗人「ひっ、亡霊……！ た、助けてくれえ！」'] },
           // 盗人は石垣のほうを向いてうずくまる
@@ -3286,7 +3286,7 @@ export const EVENTS: Record<string, EventDef> = {
           { type: 'say', lines: ['亡霊武者「……見事……なり……」'] },
           vanish('sawayamaBoreiW'),
           vanish('sawayamaBoreiE'),
-          { type: 'walk', who: 'hero', to: { x: 46, y: 29 } },
+          { type: 'walk', who: 'hero', to: { x: 19, y: 3 } },
           faceTo('gusokuNusubito', 'hero'),
           { type: 'say', lines: ['盗人「も、もう盗みなんかしねえ！ 具足は返す！」'] },
           walk('gusokuNusubito', 'dddddd'),
@@ -3304,6 +3304,8 @@ export const EVENTS: Record<string, EventDef> = {
   },
   hikoneChest1: chest('hikoneChest1', 'mankintan', '万金丹'),
   hikoneChest2: chest('hikoneChest2', 'itokiriMochi', '糸切餅'),
+  hikoneChest3: chest('hikoneChest3', 'kintsuba', '金創膏'),
+  hikoneChest4: chest('hikoneChest4', 'michishirube', '道しるべの札'),
   // 寄り道の熊本（第 6 章、島原の湊から渡し船で渡る）
   /** 熊本に入ったとき。初めてなら町の紹介。 */
   kumamotoEnter: { id: 'kumamotoEnter', steps: [{ type: 'if', flag: 'kumamotoIntro', then: [], else: KUMAMOTO_ARRIVE }] },

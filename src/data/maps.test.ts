@@ -49,8 +49,8 @@ describe('タイルの画像', () => {
       nagasaki: 'nanban', dejima: 'nanban', edo: 'nagaya',
       // ワールドマップ（街道）
       world: 'field',
-      // 野山（清水湊の裏山・原城跡・浜松の松林）
-      urayama: 'yama', harajo: 'yama', hamamatsuMatsubayashi: 'yama',
+      // 野山（清水湊の裏山・原城跡・浜松の松林・彦根の佐和山）
+      urayama: 'yama', harajo: 'yama', hamamatsuMatsubayashi: 'yama', hikoneSawayama: 'yama',
     };
     // 民家の屋内（src/data/minka.ts）と、施設・民家以外の建物の屋内（src/data/buildings.ts）はすべて屋内の見た目
     const inside = Object.values(MAPS).filter((m) => isMinka(m.id) || buildingTown(m.id));
@@ -1715,6 +1715,7 @@ describe('寄り道の浜松', () => {
 describe('寄り道の彦根', () => {
   const world = MAPS.world!;
   const hikone = MAPS.hikone!;
+  const sawayama = MAPS.hikoneSawayama!;
   // 町と、町の建物の中の人
   const everyone = [hikone, ...Object.values(MAPS).filter((m) => buildingTown(m.id) === 'hikone')].flatMap((m) => m.npcs);
   const town = world.towns!.find((t) => t.name === '彦根')!;
@@ -1754,21 +1755,67 @@ describe('寄り道の彦根', () => {
     expect(tileAt(hikone, hikone.respawn!.x, hikone.respawn!.y)?.blocked).toBe(false);
   });
 
-  it('入口から佐和山の頂の盗人・具足櫃・葛籠まで歩いて行け、工房の甚兵衛や町の人に話しかけられる', () => {
+  it('入口から工房の甚兵衛や町の人に話しかけられ、長屋の南の東の外れの佐和山の登り口まで歩いて行ける', () => {
     const area = reachable(hikone, town.to!, {}, true);
     // 甚兵衛・埋木舎の老女・旅籠の主人・寺の僧は建物の中（入れることは buildings.test.ts で確かめる）
-    for (const id of ['gusokuNusubito', 'gusokuBitsu', 'sawayamaSekihi', 'hikoneChest1', 'jinbeiDeshi', 'hikoneChest2', 'hikoneOkami', 'hikoneAshigaru', 'hikoneKodomo', 'hikoneRojin']) {
+    for (const id of ['jinbeiDeshi', 'hikoneChest2', 'hikoneOkami', 'hikoneAshigaru', 'hikoneKodomo', 'hikoneRojin']) {
       const npc = hikone.npcs.find((n) => n.id === id)!;
       expect(near(area, npc.x, npc.y), id).toBe(true);
     }
+    const mouths = hikone.exits.filter((e) => e.to === 'hikoneSawayama');
+    expect(mouths.length).toBeGreaterThan(0);
+    for (const out of mouths) expect(area.has(`${out.x},${out.y}`)).toBe(true);
     // 彦根城の中へは、門番がふさいで入れない
     expect(area.has('15,6')).toBe(false);
     // 町の広さ（テストプレイの指摘: マップが小さすぎる）
     expect(reachable(hikone, town.to!, {}).size).toBeGreaterThan(900);
   });
 
+  it('佐和山は東海道の敵が出るダンジョン（寄り道イベントのボリュームが小さいという指摘）。南の口から長屋の南の東の外れへ戻り、全滅したら彦根へ', () => {
+    expect(sawayama.encounter).toBe('tokaido');
+    expect(sawayama.areaLevel).toBe(hikone.areaLevel);
+    expect(isDungeon(sawayama)).toBe(true);
+    expect(respawnPoint('hikoneSawayama')).toEqual({ mapId: 'hikone', ...hikone.respawn });
+    // 町の口と佐和山の口が、互いの隣に着く（出口のマスに着いてすぐ戻らない）
+    for (const into of hikone.exits.filter((e) => e.to === 'hikoneSawayama')) {
+      expect(tileAt(sawayama, into.toX, into.toY)?.blocked).toBe(false);
+      expect(sawayama.exits.some((e) => e.x === into.toX && e.y === into.toY)).toBe(false);
+      expect(sawayama.exits.some((e) => Math.abs(e.x - into.toX) + Math.abs(e.y - into.toY) === 1)).toBe(true);
+    }
+    for (const back of sawayama.exits) {
+      expect(back.to).toBe('hikone');
+      expect(tileAt(hikone, back.toX, back.toY)?.blocked).toBe(false);
+      expect(hikone.exits.some((e) => e.x === back.toX && e.y === back.toY)).toBe(false);
+      expect(hikone.exits.some((e) => e.to === 'hikoneSawayama' && Math.abs(e.x - back.toX) + Math.abs(e.y - back.toY) === 1)).toBe(true);
+    }
+    expect(escapePoint('hikoneSawayama')).toEqual({ mapId: 'hikone', x: 28, y: 35 });
+    // 口から頂の盗人・具足櫃・石碑・葛籠まで歩いて行ける
+    const entry = sawayama.exits[0]!;
+    const area = reachable(sawayama, { x: entry.x, y: entry.y }, {}, true);
+    for (const id of ['gusokuNusubito', 'gusokuBitsu', 'sawayamaSekihi', 'hikoneChest1', 'hikoneChest3', 'hikoneChest4']) {
+      const npc = sawayama.npcs.find((n) => n.id === id)!;
+      expect(near(area, npc.x, npc.y), id).toBe(true);
+    }
+    // 盗人は口から離れた頂にいる（戦い 1 回で終わらない）。人を避けて歩いた歩数を数える
+    const steps = new Map([[`${entry.x},${entry.y}`, 0]]);
+    const queue = [{ x: entry.x, y: entry.y }];
+    for (let p = queue.shift(); p; p = queue.shift()) {
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+        const key = `${p.x + dx},${p.y + dy}`;
+        if (!area.has(key) || steps.has(key)) continue;
+        steps.set(key, steps.get(`${p.x},${p.y}`)! + 1);
+        queue.push({ x: p.x + dx, y: p.y + dy });
+      }
+    }
+    const nusubito = sawayama.npcs.find((n) => n.id === 'gusokuNusubito')!;
+    expect(steps.get(`${nusubito.x},${nusubito.y + 1}`)).toBeGreaterThanOrEqual(40);
+    // 城跡へは南の細い道からしか上がれない（hikoneGusoku の立ち位置の前提）
+    expect(tileAt(sawayama, nusubito.x, nusubito.y + 2)?.blocked).toBe(false);
+    for (const dx of [-3, -2, -1, 1, 2, 3]) expect(tileAt(sawayama, nusubito.x + dx, nusubito.y + 2)?.blocked, `${dx}`).toBe(true);
+  });
+
   it('盗人と具足櫃は、具足を取り返す（hikoneGusokuFound）と消える。町の人の台詞は取り返す・届ける（hikoneGusokuReturned・hikoneGusokuDone）と変わる', () => {
-    for (const id of ['gusokuNusubito', 'gusokuBitsu']) expect(hikone.npcs.find((n) => n.id === id)?.hideFlag, id).toBe('hikoneGusokuFound');
+    for (const id of ['gusokuNusubito', 'gusokuBitsu']) expect(sawayama.npcs.find((n) => n.id === id)?.hideFlag, id).toBe('hikoneGusokuFound');
     const want: Record<string, string> = {
       hikoneTeahouse: 'hikoneGusokuReturned',
       jinbeiDeshi: 'hikoneGusokuReturned',

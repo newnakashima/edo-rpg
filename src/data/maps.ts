@@ -3651,7 +3651,7 @@ MAPS.hamamatsuMatsubayashi = {
 /**
  * 寄り道の彦根（第 3 章、名古屋から京へ向かう途中。京と名古屋を結ぶ街道から北へ折れた先）。
  * 西に琵琶湖、北西に湖の水を引いた堀と石垣を巡らせた彦根城、北に埋木舎と具足師の甚兵衛の工房。中ほどを街道が東西に通り、その南に店並び（旅籠・茶屋・飛脚・よろず屋・刀鍛冶・近江商人の店）と長屋。
- * 長屋の南を抜けると、西に寺と墓所、東に佐和山。佐和山の山道を登った頂の城跡に、赤備えの具足を盗んだ盗人がいる。
+ * 長屋の南を抜けると、西に寺と墓所、東に佐和山の登り口。登り口から、佐和山（MAPS.hikoneSawayama。ダンジョン）へ入る。佐和山の頂の城跡に、赤備えの具足を盗んだ盗人がいる。
  * サブイベント: 赤備えの具足を探す（hikoneGusokuAsked → 佐和山の城跡で盗人と亡霊武者から取り返す hikoneGusokuFound → 甚兵衛に届けてお礼 hikoneGusokuDone）。
  */
 MAPS.hikone = {
@@ -3688,13 +3688,13 @@ MAPS.hikone = {
     'T~~~,....................==........................T',
     'T~~~TTTTTTTTTTTTTTTTTTTTT==TTTTTTTTTTTTTTTTTTTTTTTTT',
     'T~~~TTTTTTTTTTTTTTTTTTTTT==TTTTTTTTTTTTTTTTTTTTTTTTT',
-    'T~~~,,,,,,,,,,,,,,,T,,,,,==,TTTTTTTTTTTTTT^.....^TTT',
-    'T~~~,,,,RRRRRRRRR,,,,T,,,==,TTTTTTTTTTTTTT^.....^TTT',
-    'T~~~,,,,RRRRRRRRR,,,,,,,,==,T...TTTTTTTTTT^^^.^^^TTT',
-    'T~~~,,,,WWWWDWWWW,,,,,,,,==,T.T.TTTTTTTTTTTTT.TTTTTT',
-    'T~~~,.......................T.T............TT.TTTTTT',
-    'T~~~,,,,,,,,,,,,,,,,,,,,,,,.T.TTTTTTT.TTTTTTT.TTTTTT',
-    'T~~~,,,,,,,,,,,,,TRRRRRRR,,.T.TTTTTTT.........TTTTTT',
+    'T~~~,,,,,,,,,,,,,,,T,,,,,==,TTTTTTTTTTTTTTTTTTTTTTTT',
+    'T~~~,,,,RRRRRRRRR,,,,T,,,==,TTTTTTTTTTTTTTTTTTTTTTTT',
+    'T~~~,,,,RRRRRRRRR,,,,,,,,==,TTTTTTTTTTTTTTTTTTTTTTTT',
+    'T~~~,,,,WWWWDWWWW,,,,,,,,==,TTTTTTTTTTTTTTTTTTTTTTTT',
+    'T~~~,.......................TTTTTTTTTTTTTTTTTTTTTTTT',
+    'T~~~,,,,,,,,,,,,,,,,,,,,,,,.TTTTTTTTTTTTTTTTTTTTTTTT',
+    'T~~~,,,,,,,,,,,,,TRRRRRRR,,.,TTTTTTTTTTTTTTTTTTTTTTT',
     'T~~~,,,,,,,,,,,,,,RRRRRRR,,...TTTTTTTTTTTTTTTTTTTTTT',
     'T~~~,,,,,,,,,,,,,,WWWDWWW,,,TTTTTTTTTTTTTTTTTTTTTTTT',
     'T~~~,,,,,,,,,,T,,,.......,,,TTTTTTTTTTTTTTTTTTTTTTTT',
@@ -3798,13 +3798,77 @@ MAPS.hikone = {
       object: 'haka',
       lines: ['古い墓石に、朱で家紋が描かれている。赤備えで戦った侍の墓だろうか。'],
     },
+    // 長屋の南の東の外れ、佐和山の登り口の目印
+    {
+      id: 'sawayamaJizo',
+      name: '地蔵',
+      x: 28,
+      y: 34,
+      color: 0x8a8a8a,
+      object: 'jizo',
+      lines: ['登り口に、苔むした地蔵が立っている。この先の山道を登れば、佐和山だ。'],
+    },
+  ],
+  exits: [
+    // 東の街道から、ワールドマップの脇道へ
+    { x: 51, y: 12, to: 'world', toX: 83, toY: 23 },
+    { x: 51, y: 13, to: 'world', toX: 83, toY: 23 },
+    // 長屋の南の東の外れ、佐和山の登り口から、佐和山の山道へ
+    { x: 29, y: 35, to: 'hikoneSawayama', toX: 18, toY: 26 },
+  ],
+  respawn: { x: 8, y: 20 },
+  onEnter: { event: 'hikoneEnter', unless: 'hikoneIntro' },
+};
+
+/**
+ * 佐和山（寄り道の彦根）。関ヶ原で負けた大名の城があった山。城は取り壊され、石垣も彦根城へ運ばれて、崩れた石垣だけが残る。
+ * 南の登り口（彦根の長屋の南の東の外れ）から入り、麓の草地で西の池・東の山道に分かれる。東の山道をつづら折りに北東の尾根まで登り、
+ * 二の丸の跡の石垣の脇を西へ回りこんで、頂の本丸の跡へ上がる。頂の城跡に、赤備えの具足を盗んだ盗人がいる。
+ * 東海道と同じ敵が出る（彦根のまわりの脇道と同じ）。
+ */
+MAPS.hikoneSawayama = {
+  id: 'hikoneSawayama',
+  name: '佐和山',
+  areaLevel: 10,
+  tileset: 'yama',
+  rows: [
+    'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
+    'TTTTTTTTTTTTTTT^^^^^^^TTTTTTTTTTTTTT',
+    'TTTTTTTTTTTTTTT^.....^TTTTTTTTTTTTTT',
+    'TTTTTTTTTTTTTTT^.....^TTTTTTTTTTTTTT',
+    'TTTTTTTTTTTTT,,^^^.^^^,,TTTTTTTTTTTT',
+    'TTTTT,,,,TTT,,,,,,.,,,,,,TTTT,,,,TTT',
+    'TTTT,,..,,T,,^^^^^.^^^^^,,,T,,..,,TT',
+    'TTTT,....,,,,^,,,...,,,^,,,,,,..^,TT',
+    'TTTT,,..,,,,,^,.......,^,,TT,,...,TT',
+    'TTTTT,..,TTT,^^^^,,,^^^^,TTTT,,.,,TT',
+    'TTTTT,,.,TTTT,,,,,,,,,,,TTTTT,,.,TTT',
+    'TTTTTT,.,,TTTTTTTTTTTTTTTTTT,,..,TTT',
+    'TTTTTT,..,,TTTTTTTTTTTTTT,,,,..,,TTT',
+    'TTTTT,,,..,,TTTTT,.,TTTT,,....,,TTTT',
+    'TTTT,,~~,..,,TTT,,.,,TT,,..,,,TTTTTT',
+    'TTTT,~~~,,..,,,,,...,,,,..,,TTTTTTTT',
+    'TTTT,,~~,,,.......^.......,,TTTTTTTT',
+    'TTTTT,,,,TTTTTTTT^^^TTTTT,,.,TTTTTTT',
+    'TTTTTTTTTTTTTTTTTTTTTTTTT,,..,,TTTTT',
+    'TTTT,,,,TTTTTTTTTTTTTTTTTT,,.,,TTTTT',
+    'TTT,,^..,,TTTTTTTTTTTTTT,,,..,TTTTTT',
+    'TTT,,...,,,,TTTTTTTTTTT,,...,,TTTTTT',
+    'TTTT,,...,,,,,TTTTTT,,,...,,TTTTTTTT',
+    'TTTTTT,,....,,,,,,,,,....,,TTTTTTTTT',
+    'TTTTTTTT,,,.......^.....,,TTTTTTTTTT',
+    'TTTTTTTTTTTTTT,,.....,,TTTTTTTTTTTTT',
+    'TTTTTTTTTTTTTTTTT...TTTTTTTTTTTTTTTT',
+    'TTTTTTTTTTTTTTTTT..TTTTTTTTTTTTTTTTT',
+  ],
+  npcs: [
     // 佐和山の頂の城跡
-    { id: 'gusokuNusubito', name: '盗人', x: 45, y: 28, color: 0x5a5a5a, sprite: 'npc_ronin', event: 'hikoneGusoku', hideFlag: 'hikoneGusokuFound' },
+    { id: 'gusokuNusubito', name: '盗人', x: 18, y: 2, color: 0x5a5a5a, sprite: 'npc_ronin', event: 'hikoneGusoku', hideFlag: 'hikoneGusokuFound' },
     {
       id: 'gusokuBitsu',
       name: '具足櫃',
-      x: 44,
-      y: 28,
+      x: 17,
+      y: 2,
       color: 0x8a6a3a,
       object: 'kibako',
       lines: ['朱の漆を塗った具足櫃。蓋の隙間から、赤い具足がのぞいている。'],
@@ -3813,21 +3877,26 @@ MAPS.hikone = {
     {
       id: 'sawayamaSekihi',
       name: '石碑',
-      x: 47,
-      y: 28,
+      x: 20,
+      y: 2,
       color: 0x8a8a8a,
       object: 'sekihi',
       lines: ['崩れた石垣のそばに、小さな石碑が立っている。「佐和山城跡」と読める。'],
     },
-    { id: 'hikoneChest1', name: '葛籠', x: 42, y: 32, color: 0x8a6a3a, object: 'tsuzura', event: 'hikoneChest1' },
+    // 二の丸の跡の西の、崩れた石垣の陰
+    { id: 'hikoneChest1', name: '葛籠', x: 5, y: 7, color: 0x8a6a3a, object: 'tsuzura', event: 'hikoneChest1' },
+    // 麓の西の池のそば
+    { id: 'hikoneChest3', name: '葛籠', x: 4, y: 21, color: 0x8a6a3a, object: 'tsuzura', event: 'hikoneChest3' },
+    // 北東の尾根の、岩の陰
+    { id: 'hikoneChest4', name: '葛籠', x: 33, y: 8, color: 0x8a6a3a, object: 'tsuzura', event: 'hikoneChest4' },
   ],
   exits: [
-    // 東の街道から、ワールドマップの脇道へ
-    { x: 51, y: 12, to: 'world', toX: 83, toY: 23 },
-    { x: 51, y: 13, to: 'world', toX: 83, toY: 23 },
+    // 南の登り口から、彦根の長屋の南の東の外れへ戻る
+    { x: 17, y: 27, to: 'hikone', toX: 28, toY: 35 },
+    { x: 18, y: 27, to: 'hikone', toX: 28, toY: 35 },
   ],
-  respawn: { x: 8, y: 20 },
-  onEnter: { event: 'hikoneEnter', unless: 'hikoneIntro' },
+  encounter: 'tokaido',
+  respawnMap: 'hikone',
 };
 
 /**
