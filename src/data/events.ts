@@ -718,56 +718,117 @@ const OSAKA_CHAPTER_END: EventStep[] = [
   { type: 'setFlag', flag: 'chapter5Cleared' },
 ];
 
-/** 広島に初めて入ったとき（第 6 章の始まり）。霞が戻ってくる。 */
+/**
+ * 広島に初めて入ったとき（第 6 章の始まり）。霞が戻ってくる。
+ * 東の入口（40, 13。全滅時の戻り先は 38, 18）のそばの橋（33〜34, 13）の東のたもと（35, 14）で、霞が欄干にもたれて待っている。
+ */
 const HIROSHIMA_ARRIVE: EventStep[] = [
+  face('hero', 'left'),
+  actor('kasumi', 'kasumi', 35, 14, 'up'),
+  partyOut('orin'),
+  { type: 'say', lines: ['お凛「川がいくつにも分かれて、どこもかしこも橋だらけの町だねえ」'] },
+  { type: 'say', lines: ['霞「遅かったじゃないか。くたばってなくて何よりだよ」'] },
+  faceTo('kasumi', 'hero'),
+  faceTo('orin', 'kasumi'),
+  { type: 'say', lines: ['お凛「霞！ 江戸はどうだったんだい」'] },
   {
     type: 'say',
     lines: [
-      '安芸広島。いくつにも分かれた川に、橋が架かる城下町だ。',
-      '橋のたもとで、見覚えのある影が欄干にもたれていた。',
-      '霞「遅かったじゃないか。くたばってなくて何よりだよ」',
-      'お凛「霞！ 江戸はどうだったんだい」',
       '霞「……上役は動かなかった。鷲尾の手は、公儀隠密の頭にまで回ってる。あたしの知らせは、握りつぶされたよ」',
       '霞「でも、ただで帰ってきたわけじゃない。からくりの出どころを突き止めた」',
       '霞「長崎だ。出島のオランダ商館から、南蛮の機械学の書が密かに持ち出されてる。持ち出したのは、出島で学んだ蘭学者らしい」',
-      '玄道「からくりの源流を断てば、鷲尾の兵も増やせぬというわけか」',
-      '霞「そういうこと。西国街道を西へ、長崎まで。……また、よろしく頼むよ」',
-      '霞が一行に戻った！',
     ],
   },
+  partyOut('gendo'),
+  faceTo('gendo', 'kasumi'),
+  { type: 'say', lines: ['玄道「からくりの源流を断てば、鷲尾の兵も増やせぬというわけか」'] },
+  { type: 'say', lines: ['霞「そういうこと。西国街道を西へ、長崎まで。……また、よろしく頼むよ」'] },
+  // 霞は橋のたもとから主人公のところへ歩いてきて、一行に戻る
+  ...partyIn('kasumi'),
   // 広島に着くのは第 5 章の終わりに兵庫が抜けた 3 人のときだけなので、満員で rejoin が空振りすることはない。
   // 仲間の人数の決まりが変わって満員になりうるなら、イベントに「仲間がいるか」の条件を足して、戻れたときだけフラグを立てる
   { type: 'rejoin', member: 'kasumi' },
+  { type: 'say', lines: ['霞が一行に戻った！'] },
+  ...partyIn('gendo'),
+  ...partyIn('orin'),
   { type: 'setFlag', flag: 'kasumiRejoined' },
 ];
 
-/** 長崎に初めて入ったとき。 */
+/**
+ * 長崎に初めて入ったとき。東の入口（42, 13）から入る（長崎に着く前は、全滅しても長崎には戻らない）。
+ * 入口の西の通り（x = 33〜43、y = 13 の 1 マス幅の道）で、オランダ人と荷を担いだ人足が湊のほうへ歩いていく。
+ */
 const NAGASAKI_ARRIVE: EventStep[] = [
+  // 町のほう（西）を向く。道が 1 マス幅なので、仲間は主人公の東（入口）と西に一人ずつ出る
+  face('hero', 'left'),
+  actor('nagasakiOranda', 'npc_oranda', 39, 13, 'right'),
+  actor('nagasakiNinsoku', 'npc_ninsoku', 38, 13, 'right'),
+  { type: 'say', lines: ['人足「カピタンさまのお荷物は、出島まで運びますけん。ほかに、なんか言いつけはなかですか」'] },
+  faceTo('nagasakiOranda', 'nagasakiNinsoku'),
+  { type: 'say', lines: ['オランダ人「ヤア。……ダンキュウ」'] },
+  // 二人は、湊のほうへ坂を下りていく
+  { type: 'walk', who: 'nagasakiNinsoku', path: 'llllll', wait: false },
+  walk('nagasakiOranda', 'llllll'),
+  vanish('nagasakiOranda'),
+  vanish('nagasakiNinsoku'),
+  partyOut('orin'),
+  { type: 'say', lines: ['お凛「今の人、髪がお天道さまみたいな色だったね。……異国の言葉が、そこらじゅうで飛び交ってるよ」'] },
+  partyOut('kasumi'),
+  faceTo('kasumi', 'hero'),
   {
     type: 'say',
     lines: [
-      '長崎。湊には唐やオランダの船が浮かび、坂の町に異国の言葉が行き交っている。',
-      '湊の先に、扇の形をした小さな島が見える。あれが出島だ。',
+      '霞「ここが長崎さ。湊の先の、扇の形をした小さな島が出島だよ」',
       '霞「出島の通詞に話を聞こう。書が消えた蔵のことを、いちばんよく知ってるはずだ」',
     ],
   },
+  ...partyIn('kasumi'),
+  ...partyIn('orin'),
   { type: 'setFlag', flag: 'nagasakiArrived' },
 ];
 
-/** 南蛮大筒からくりを倒して長崎に戻ったとき（第 6 章の終わり）。北前船で金沢へ向かう（第 7 章への導線）。 */
+/**
+ * 南蛮大筒からくりを倒して長崎に戻ったとき（第 6 章の終わり）。北前船で金沢へ向かう（第 7 章への導線）。
+ * 東の入口（42, 13）か、全滅時の戻り先（29, 9）で始まる。湊の北前船の船頭が、入口の西の通り（33〜35, 13）まで呼びにくる（どちらからも見える）。
+ */
 const NAGASAKI_CHAPTER_END: EventStep[] = [
+  face('hero', 'left'),
+  partyOut('kasumi'),
   {
     type: 'say',
     lines: [
-      '長崎に戻ると、湊に一隻の北前船が入っていた。',
-      '霞「蘭斎の帳面を読んだよ。研究所のからくりは、加賀の金沢にも送られてる」',
+      '霞「研究所から持ってきた蘭斎の帳面を読んだよ。研究所のからくりは、加賀の金沢にも送られてる」',
       '霞「加賀じゃ、殿様が病で伏せってることになってる。……だけど、人前に出てくる殿様は、顔色ひとつ変えないんだってさ」',
-      '玄道「からくりの影武者か。江戸で鷲尾が将軍にしておることの、試しかもしれんな」',
-      'お凛「だったら、金沢で尻尾をつかんでやろうじゃないか」',
-      '北前船の船頭「金沢へ行くんなら、わしの船に乗りんさい。日本海をぐるりと回って、加賀の湊まで運んじゃるけえ」',
-      '{hero}たちは、蘭斎から託された祝詞を胸に、北の海を目指すことにした。',
     ],
   },
+  partyOut('gendo'),
+  faceTo('gendo', 'kasumi'),
+  { type: 'say', lines: ['玄道「からくりの影武者か。江戸で鷲尾が将軍にしておることの、試しかもしれんな」'] },
+  // 東の入口の道は 1 マス幅で、仲間は二人までしか並べないので、玄道が戻ってからお凛が出る
+  ...partyIn('gendo'),
+  partyOut('orin'),
+  { type: 'say', lines: ['お凛「だったら、金沢で尻尾をつかんでやろうじゃないか」'] },
+  // 湊のほうから、北前船の船頭が通りを上ってくる
+  actor('nagasakiKitamaeSendo', 'npc_sendo', 33, 13, 'right'),
+  walk('nagasakiKitamaeSendo', 'rr'),
+  {
+    type: 'say',
+    lines: [
+      '船頭「おうい、旅の衆！ 加賀へ行きたい言うとったんは、あんたらかね」',
+      '船頭「わしの北前船が湊に入ったけえ。日本海をぐるりと回って、加賀の湊まで運んじゃるよ」',
+    ],
+  },
+  faceTo('hero', 'nagasakiKitamaeSendo'),
+  {
+    type: 'say',
+    lines: ['{hero}「蘭斎さんから預かった祝詞もある。北の海を渡って、金沢へ乗りこもうじゃねえか」'],
+    linesF: ['{hero}「蘭斎さんから預かった祝詞もある。北の海を渡って、金沢へ乗りこもうじゃないか」'],
+  },
+  { type: 'say', lines: ['船頭「よっしゃ。湊で待っとるけえ、支度ができたら声をかけんさい」'] },
+  walk('nagasakiKitamaeSendo', 'llll'),
+  vanish('nagasakiKitamaeSendo'),
+  ...partyIn('kasumi'),
+  ...partyIn('orin'),
   { type: 'setFlag', flag: 'chapter6Cleared' },
 ];
 
@@ -2313,89 +2374,139 @@ export const EVENTS: Record<string, EventDef> = {
               '通詞「ゼンマイと歯車で、人の手を借りずに動く仕掛けの書です。オランダでも、まだ試しの段の学問だとか」',
               '通詞「持ち出したのは、若林蘭斎という蘭学者でしょう。出島で学び、誰よりもあの書に夢中でした」',
               '通詞「一年ほど前から、江戸の偉いお方の後ろ盾を得たと言って、長崎を離れていました。ところがこのごろ、東の山の南蛮寺跡で姿を見たという者がいるのです」',
-              '霞「南蛮寺跡か。奉行所が石段をふさいでたね。……公儀の札を見せれば通してくれるだろう」',
-              '通詞「蘭斎どのは、悪い人ではないのです。学問のためなら、誰の金でも受け取ってしまう……それだけの人なのです」',
             ],
           },
+          partyOut('kasumi'),
+          faceTo('kasumi', 'tsuji'),
+          { type: 'say', lines: ['霞「南蛮寺跡か。奉行所が石段をふさいでたね。……公儀の札を見せれば通してくれるだろう」'] },
+          { type: 'say', lines: ['通詞「蘭斎どのは、悪い人ではないのです。学問のためなら、誰の金でも受け取ってしまう……それだけの人なのです」'] },
+          ...partyIn('kasumi'),
           { type: 'setFlag', flag: 'dejimaHeard' },
         ],
       },
     ],
   },
-  /** 南蛮寺跡の礼拝堂の跡。研究所のからくり兵と戦い、蘭斎の書き付けから島原の原城跡を知る（shimabaraOpen）。 */
+  /**
+   * 南蛮寺跡の礼拝堂の跡。研究所のからくり兵と戦い、蘭斎の書き付けから島原の原城跡を知る（shimabaraOpen）。
+   * 礼拝堂の跡の入口（17, 10 か 18, 10）で始まる。からくり兵が礼拝堂の左右から、外法使いが祭壇の脇から出てくる。
+   */
   nanbanjiOku: {
     id: 'nanbanjiOku',
     steps: [
+      face('hero', 'up'),
+      { type: 'say', lines: ['ガシャリ……ガシャリ……'] },
+      enemyActor('nanbanjiHeiA', 'nanbanHei', 12, 8),
+      enemyActor('nanbanjiHeiB', 'nanbanHei', 23, 8),
+      enemyActor('nanbanjiGeho', 'gehoTsukai', 18, 6),
+      { type: 'walk', who: 'nanbanjiHeiA', path: 'rrrr', wait: false },
+      { type: 'walk', who: 'nanbanjiHeiB', path: 'llll', wait: false },
+      walk('nanbanjiGeho', 'd'),
+      wait(400),
       {
         type: 'if',
         flag: 'nanbanjiOkuMet',
-        then: [{ type: 'say', lines: ['礼拝堂の跡の前で、ふたたび鉄の兵が立ちはだかった。'] }],
+        then: [{ type: 'say', lines: ['外法使い「懲りぬ奴らだ。……今度こそ、ゼンマイの糧にしてくれる」'] }],
         else: [
-          {
-            type: 'say',
-            lines: [
-              '焼け落ちた礼拝堂の跡から、がしゃり、がしゃりと鉄の足音が近づいてくる。',
-              '南蛮の鎧をまとったからくりの兵が、外法使いに率いられて現れた。',
-              '外法使い「蘭斎先生の邪魔はさせぬ」',
-            ],
-          },
+          { type: 'say', lines: ['外法使い「南蛮の鎧をまとうた鉄の兵の味、とくと見るがよい。……蘭斎先生の邪魔はさせぬ」'] },
           { type: 'setFlag', flag: 'nanbanjiOkuMet' },
         ],
       },
       { type: 'battle', enemies: ['nanbanHei', 'gehoTsukai', 'nanbanHei'], level: 19 },
+      // からくり兵は崩れ、外法使いは煙を残して消える
+      { type: 'say', lines: ['ガシャン……！'] },
+      vanish('nanbanjiHeiA'),
+      vanish('nanbanjiHeiB'),
+      { type: 'say', lines: ['外法使い「ぐっ……蘭斎先生……！」', 'ボンッ！'] },
+      vanish('nanbanjiGeho'),
+      // 霞が、外法使いの立っていた所（18, 8）から書き付けの束を拾う
+      partyOut('kasumi'),
+      { type: 'walk', who: 'kasumi', to: { x: 18, y: 8 } },
+      face('kasumi', 'down'),
       {
         type: 'say',
         lines: [
-          '礼拝堂の跡の床に、書き付けの束が落ちていた。蘭斎の字だ。',
-          '「魂のゼンマイ、ここにては力足らず。島原の古城の地の底にて、試しを続けるべし」',
-          '「乱にて死せる者、あまたあり。かの地には、魂の力が満ちておる」',
-          '玄道〈怒〉「……死者の魂まで、からくりの糧にする気か」',
-          '霞「島原の原城跡だ。長崎から東の街道で行ける」',
+          '霞「外法使いが、書き付けの束を落としていったよ。……蘭斎の字だ」',
+          '霞「『魂のゼンマイ、ここにては力足らず。島原の古城の地の底にて、試しを続けるべし』」',
+          '霞「『乱にて死せる者、あまたあり。かの地には、魂の力が満ちておる』」',
         ],
       },
+      partyOut('gendo'),
+      faceTo('gendo', 'kasumi'),
+      { type: 'say', lines: ['玄道〈怒〉「……死者の魂まで、からくりの糧にする気か」'] },
+      { type: 'say', lines: ['霞「島原の原城跡だ。長崎から東の街道で行ける」'] },
+      ...partyIn('kasumi'),
+      ...partyIn('gendo'),
       { type: 'setFlag', flag: 'shimabaraOpen' },
     ],
   },
-  /** 原城跡の地下の研究所で待つ南蛮大筒からくり（第 6 章のボス）。倒すと、深手の蘭斎が祝詞を託して息を引き取る。 */
+  /**
+   * 原城跡の地下の研究所で待つ南蛮大筒からくり（第 6 章のボス）。倒すと、深手の蘭斎が祝詞を託して息を引き取る。
+   * 奥の研究室への細い入口（15, 19 か 16, 19）で始まる。大筒からくりが研究室の奥から入口の前（16, 20）へ出てきてふさぎ、蘭斎は机の脇（14, 21）にいる。
+   */
   nanbanOzutsu: {
     id: 'nanbanOzutsu',
     steps: [
+      face('hero', 'down'),
+      actor('kenkyujoRansai', 'npc_rojin', 14, 21, 'up'),
+      { type: 'say', lines: ['ギギ……ギギギギ……'] },
+      enemyActor('kenkyujoOzutsu', 'nanbanOzutsu', 17, 21),
+      walk('kenkyujoOzutsu', 'lu'),
+      partyOut('kasumi'),
+      faceTo('kasumi', 'kenkyujoOzutsu'),
       {
         type: 'if',
         flag: 'nanbanOzutsuMet',
-        then: [{ type: 'say', lines: ['大筒の砲口が、ふたたびこちらを向いた。', '霞「構えに入ったら、身を守るんだよ！」'] }],
+        then: [{ type: 'say', lines: ['霞「また大筒がこっちを向いたよ！ 構えに入ったら、身を守るんだ！」'] }],
         else: [
+          { type: 'say', lines: ['蘭斎「……来るな。その子は、止められん。わしにも、もう止められんのだ……」'] },
           {
             type: 'say',
-            lines: [
-              '奥の研究室の入口を、鉄の巨体がふさいでいた。',
-              '背に南蛮の大筒を負い、胸の奥でいくつものゼンマイが青く光っている。',
-              '研究室の奥から、かすれた声がした。',
-              '蘭斎「……来るな。その子は、止められん。わしにも、もう止められんのだ……」',
-              '大筒が、ゆっくりとこちらを向いた。',
-              '霞「大筒の構えに入ったら、身を守るんだよ！」',
-            ],
+            lines: ['霞「背中に南蛮の大筒、胸にはゼンマイが青く光ってる……。こいつが研究所の番人か」', '霞「大筒の構えに入ったら、身を守るんだよ！」'],
           },
           { type: 'setFlag', flag: 'nanbanOzutsuMet' },
         ],
       },
       { type: 'battle', enemies: ['nanbanOzutsu'], level: 22 },
+      // 胸のゼンマイがはじけ、大筒からくりが崩れ落ちる
+      { type: 'say', lines: ['バチンッ……！ ガラガラガラ……！'] },
+      vanish('kenkyujoOzutsu'),
+      // 主人公は研究室に入り、机の脇の蘭斎の前（14, 20）へ。玄道は主人公の左（13, 20）に出る
+      { type: 'walk', who: 'hero', to: { x: 15, y: 20 } },
+      walk('hero', 'l'),
+      face('hero', 'down'),
+      partyOut('gendo'),
+      { type: 'say', lines: ['玄道「……ゼンマイに閉じ込められておった魂が、青い光になって昇っていく」'] },
+      faceTo('kenkyujoRansai', 'hero'),
       {
         type: 'say',
         lines: [
-          '南蛮大筒からくりは、胸のゼンマイをはじけさせて崩れ落ちた。青い光が、ひとつ、またひとつと天井へ昇っていく。',
-          '研究室の奥で、白髪の男が机にもたれていた。胸に、鉄のかけらが深く刺さっている。',
           '蘭斎「……わしが、若林蘭斎だ。からくりで、人を重い仕事から解き放てると……そう信じて、鷲尾様の金を受け取った」',
           '蘭斎「だが、からくりを動かすには、人の魂をゼンマイに巻き込まねばならなかった。気づいたときには、もう引き返せなかった」',
           '蘭斎「……せめて、これを持っていってくれ。魂のゼンマイをほどき、閉じ込めた魂を解き放つ祝詞だ」',
-          '蘭斎は、震える手で一枚の書き付けを玄道に渡した。',
-          '玄道「……確かに預かった。おぬしの学問は、わしらが正しく使おう」',
-          '蘭斎「出島の、あの書は……美しかった。わしは、ただ……」',
-          '蘭斎は、それきり動かなくなった。',
-          '玄道は、長いあいだ経を唱えていた。',
-          '長崎に戻ろう。',
         ],
       },
+      walk('gendo', 'd'),
+      faceTo('gendo', 'kenkyujoRansai'),
+      { type: 'say', lines: ['玄道は、蘭斎から祝詞の書き付けを受け取った。'] },
+      { type: 'say', lines: ['玄道「……確かに預かった。おぬしの学問は、わしらが正しく使おう」'] },
+      { type: 'say', lines: ['蘭斎「出島の、あの書は……美しかった。わしは、ただ……」'] },
+      wait(600),
+      { type: 'say', lines: ['ドサッ……'] },
+      vanish('kenkyujoRansai'),
+      partyOut('orin'),
+      { type: 'say', lines: ['お凛〈悲〉「……蘭斎さん？」'] },
+      { type: 'say', lines: ['玄道〈悲〉「……逝きおった。南無阿弥陀仏、南無阿弥陀仏……」'] },
+      { type: 'walk', who: 'kasumi', to: { x: 16, y: 20 } },
+      face('kasumi', 'down'),
+      { type: 'say', lines: ['霞「……机の帳面は、あたしが預かっていくよ。からくりをどこへ送ったか、書いてあるかもしれない」'] },
+      {
+        type: 'say',
+        lines: ['{hero}「……蘭斎さんの祝詞、無駄にはしねえ。長崎へ戻ろう」'],
+        linesF: ['{hero}「……蘭斎さんの祝詞、無駄にはしないよ。長崎へ戻ろう」'],
+      },
+      ...partyIn('kasumi'),
+      ...partyIn('gendo'),
+      ...partyIn('orin'),
       { type: 'setFlag', flag: 'nanbanOzutsuDefeated' },
       { type: 'setFlag', flag: 'noritoLearned' },
     ],
