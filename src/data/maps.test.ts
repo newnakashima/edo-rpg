@@ -1646,6 +1646,10 @@ describe('寄り道の会津若松', () => {
     expect(steps.get(`${heita.x},${heita.y + 1}`)).toBeGreaterThanOrEqual(40);
     // 送り狼と雪女の出てくる山道の南 (16〜20, 5) は通れるマスで、洞門の前へは (20, 4) からしか上がれない（heita の立ち位置の前提）
     for (let x = 16; x <= 20; x++) expect(tileAt(iimori, x, 5)?.blocked, `${x},5`).toBe(false);
+    // 平太に話しかけられるのは西・東・南の 3 マスだけで、送り狼と雪女の出るマス・歩く先 (20, 4) と重ならない
+    const sides = [[-1, 0], [1, 0], [0, 1], [0, -1]].map(([dx, dy]) => ({ x: heita.x + dx!, y: heita.y + dy! })).filter((p) => area.has(`${p.x},${p.y}`));
+    expect(sides).toEqual([{ x: 18, y: 2 }, { x: 20, y: 2 }, { x: 19, y: 3 }]);
+    for (const p of sides) expect(p.y).toBeLessThan(4);
     for (let x = 15; x <= 23; x++) expect(tileAt(iimori, x, 4)?.blocked, `${x},4`).toBe(x !== 20);
   });
 

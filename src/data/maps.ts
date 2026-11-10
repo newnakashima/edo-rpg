@@ -36,7 +36,7 @@ export type TileKind = (typeof TILE_KINDS)[number];
  */
 export const TILESETS = {
   /**
-   * 雪の町と庭（金沢・兼六園・会津若松）。地面は雪（部品の組の lower と同じ絵に差し替えた）、戸は雪国の町家の絵の戸口。
+   * 雪の町と庭と山（金沢・兼六園・会津若松・飯盛山）。地面は雪（部品の組の lower と同じ絵に差し替えた）、戸は雪国の町家の絵の戸口。
    * 草・道・水・岩・森・屋根・壁は部品（src/data/mapParts.ts）で描くので、ここに残した grass・road・tree・roof・rock の
    * 1 枚の画像は描画に使われない（読み込みは続ける。public/assets/README.md の方針どおり残した）。
    */
