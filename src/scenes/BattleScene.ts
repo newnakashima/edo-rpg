@@ -28,7 +28,8 @@ import { gainExp } from '../systems/party';
 import { playBgm } from '../systems/audio';
 import { defaultRng } from '../systems/random';
 import { getState, reportBattleOutcome, setState } from '../state';
-import { Controls } from '../ui/input';
+import { CANCEL, menuCancelLabel } from '../ui/cancelLabel';
+import { Controls, setCancelLabel } from '../ui/input';
 import { COLORS, GAME_HEIGHT, GAME_WIDTH, setupCamera, textStyle } from '../ui/theme';
 import { itemIcon, SKILL_ICON } from '../ui/icons';
 import { drawWindow, Menu, menuHeight, MessageWindow, type MenuItem } from '../ui/widgets';
@@ -644,10 +645,14 @@ export class BattleScene extends Phaser.Scene {
 
   update(): void {
     if (this.message.isOpen) {
+      setCancelLabel(CANCEL);
       this.message.update(this.controls);
       return;
     }
     if (this.busy) return;
-    this.menus[this.menus.length - 1]?.update(this.controls);
+    const top = this.menus[this.menus.length - 1];
+    // 最初の仲間のコマンドなど、取消で戻れないメニューでは取消ボタンを薄く出す
+    if (top) setCancelLabel(menuCancelLabel(top.cancelable));
+    top?.update(this.controls);
   }
 }

@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { EQUIPMENT } from './equipment';
 import { addItem, ITEMS, MAX_ITEM_COUNT, ownedItems, removeItem } from './items';
 import { SHOPS } from './shops';
+import { MAPS } from './maps';
+import { izakayaPrice } from '../systems/facilities';
 import { ENEMY_DROPS } from './drops';
 
 describe('所持品', () => {
@@ -82,6 +84,11 @@ describe('道具の品ぞろえ', () => {
     for (const id of sellers) expect(SHOPS[id]?.goods, id).toContain('kiseru');
     const restoresMp = Object.values(ITEMS).filter((x) => x.id !== 'tabako' && ['healMp', 'fullMp', 'healBoth'].includes(x.effect.kind));
     for (const item of restoresMp) expect(ITEMS.tabako!.price, item.id).toBeLessThan(item.price);
+    // 居酒屋（一杯で全員の気力を戻す）より、4 人がそれぞれ一服するほうが安い（売っている町の敵レベルで比べる）
+    for (const id of sellers) {
+      const level = MAPS[id.replace(/Yorozu$/, '')]!.areaLevel!;
+      expect(ITEMS.tabako!.price * 4, id).toBeLessThan(izakayaPrice(level));
+    }
   });
 
   it('同じ効き目の道具は、高いほど回復量が多い', () => {

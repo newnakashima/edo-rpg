@@ -10,6 +10,7 @@ import type { EventStep } from './eventTypes';
 import { ENEMIES } from './enemies';
 import { EVENTS } from './events';
 import { canStep, MAPS, type MapDef } from './maps';
+import { speakerOf } from './faces';
 import { CHARACTER_SPRITES } from './sprites';
 import { EventRunner, pathFacings, pathTo } from '../systems/eventScript';
 import { newGame } from '../systems/gameState';
@@ -236,4 +237,39 @@ describe('演出の手順の実行', () => {
   it('歩く道は u・d・l・r を向きにする', () => {
     expect(pathFacings('udlr')).toEqual(['up', 'down', 'left', 'right']);
   });
+});
+
+describe('台詞を言う仲間が画面にいる', () => {
+  // テストプレイの指摘「その場に表示されていない人物が喋っている」。一行の仲間（霞・玄道・お凛・兵庫）は主人公に重なって見えないので、
+  // 台詞を言う前に actor（partyOut）で出しておく。マップに同じ姿の NPC（加入前・一時離脱中の仲間など）がいれば、その人が話しているとみなす。
+  const MEMBER_OF: Record<string, string> = { 霞: 'kasumi', 玄道: 'gendo', お凛: 'orin', 兵庫: 'hyogo', 榊兵庫: 'hyogo' };
+  for (const [id, def] of Object.entries(EVENTS)) {
+    const starts = startsOf(id);
+    if (starts.length === 0) continue;
+    it(`${id}: 仲間の台詞は、その仲間が出ている間だけ`, () => {
+      for (const start of starts) {
+        for (const path of linearize(def.steps)) {
+          let map = start.map;
+          /** 見えている人の ID → 姿。 */
+          const shown = new Map<string, string | undefined>(map.npcs.map((n) => [n.id, n.sprite]));
+          for (const step of path) {
+            if (step.type === 'warp') {
+              map = MAPS[step.mapId]!;
+              shown.clear();
+              for (const n of map.npcs) shown.set(n.id, n.sprite);
+            } else if (step.type === 'actor') shown.set(step.id, step.sprite);
+            else if (step.type === 'vanish') shown.delete(step.who);
+            else if (step.type === 'say') {
+              for (const line of [...step.lines, ...(step.linesF ?? [])]) {
+                const member = MEMBER_OF[speakerOf(line) ?? ''];
+                if (!member) continue;
+                const visible = [...shown.entries()].some(([who, sprite]) => who === member || sprite === member);
+                expect(visible, `${id} @${map.id}: ${line}`).toBe(true);
+              }
+            }
+          }
+        }
+      }
+    });
+  }
 });
