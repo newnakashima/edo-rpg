@@ -365,7 +365,11 @@ export class FieldScene extends Phaser.Scene {
     }
   }
 
-  /** route の道が通れるマス（通れて、主人公・見えている NPC・歩く本人のほかの演出の人がいない）。 */
+  /**
+   * route の道が通れるマス（通れて、主人公・見えている NPC・歩く本人のほかの演出の人がいない）。
+   * シーンには単体テストの仕組みがないので、eventStage.test.ts が同じ規則を写して道を確かめている
+   * （ここを変えたら、あちらの occupied も合わせる。本来は純粋な関数に切り出して両方で使うべきだが、この PR では見送った）。
+   */
   private openForRoute(runner: EventRunner, who: string, x: number, y: number): boolean {
     const state = getState();
     if (!canStep(this.map, x, y) || (state.x === x && state.y === y)) return false;

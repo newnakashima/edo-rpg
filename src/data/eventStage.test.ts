@@ -215,6 +215,8 @@ describe('イベントの演出', () => {
               if (freeBeside) expect(pos.x === goal.x && pos.y === goal.y + 1, label(`${step.who} が ${step.to} のすぐ手前に立って隠す`)).toBe(false);
               if (typeof step.to === 'object') expect(dist, label(`${step.who} が行き先 (${goal.x},${goal.y}) に着かない（${pos.x},${pos.y} で止まる）`)).toBe(0);
               else if (freeBeside) expect(dist, label(`${step.who} が ${step.to} (${goal.x},${goal.y}) の隣に着かない（${pos.x},${pos.y} で止まる）`)).toBe(1);
+              // 隣に空きがないときは「3 マス以内」だけを見る。止まる位置は町ごとの屋内の形と先に来た人の位置で決まるため、
+              // 個々の位置は固定しない（止まり方の規則そのものは eventScript.test.ts の routeTo のテストで確かめる）
               else expect(dist, label(`${step.who} が ${step.to} (${goal.x},${goal.y}) のそばに着かない（${pos.x},${pos.y} で止まる）`)).toBeLessThanOrEqual(3);
               continue;
             }

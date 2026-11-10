@@ -299,3 +299,22 @@ describe('route の止まる場所', () => {
     expect(Math.abs(end.x - 2) + Math.abs(end.y - 1)).toBe(1);
   });
 });
+
+describe('route のすぐ手前の扱い', () => {
+  const walkEnd = (from: { x: number; y: number }, dirs: string[]) =>
+    dirs.reduce((p, d) => ({ x: p.x + ({ up: 0, down: 0, left: -1, right: 1 } as Record<string, number>)[d]!, y: p.y + ({ up: -1, down: 1, left: 0, right: 0 } as Record<string, number>)[d]! }), from);
+
+  it('すぐ手前より、2 マス離れた空きを選ぶ', () => {
+    // 行き先 (1,0) の左右はふさがり、すぐ手前 (1,1) と、2 マス離れた (0,1) が空いている
+    const rows = ['#.#', '...'];
+    const open = (x: number, y: number) => rows[y]?.[x] === '.' && !(x === 1 && y === 0);
+    expect(walkEnd({ x: 2, y: 1 }, routeTo({ x: 2, y: 1 }, { x: 1, y: 0 }, open))).not.toEqual({ x: 1, y: 1 });
+    expect(walkEnd({ x: 0, y: 1 }, routeTo({ x: 0, y: 1 }, { x: 1, y: 0 }, open))).toEqual({ x: 0, y: 1 });
+  });
+
+  it('一本道でも、すぐ手前には入らず 2 マス離れたところで止まる', () => {
+    const rows = ['#.#', '#.#', '#.#', '#.#'];
+    const open = (x: number, y: number) => rows[y]?.[x] === '.' && !(x === 1 && y === 0);
+    expect(walkEnd({ x: 1, y: 3 }, routeTo({ x: 1, y: 3 }, { x: 1, y: 0 }, open))).toEqual({ x: 1, y: 2 });
+  });
+});
