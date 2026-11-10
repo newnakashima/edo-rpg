@@ -1682,6 +1682,15 @@ const OHARU_FIRE: EventStep[] = [
   { type: 'setFlag', flag: 'taikaStarted' },
 ];
 
+/**
+ * からくり大権現の巨大な姿（将軍の間の上座。戦闘と同じ大きさの画像で、6 マス四方）。
+ * 足元は主人公の立つ間の中（18, 6）のすぐ上で、頭は天井（0 行目）に届く。上座の上様（17, 1）と鷲尾の脇（18, 1）を覆う。
+ */
+const DAIGONGEN_ACTOR = 'daigongenZa';
+function daigongenActor(grow?: true): EventStep {
+  return { type: 'actor', id: DAIGONGEN_ACTOR, enemy: 'karakuriDaigongen', scale: 1, ...(grow ? { grow } : {}), x: 18, y: 5 };
+}
+
 /** 鷲尾を倒したあと（からくり大権現との戦いの前）。閉じ込められた魂の光が一行を癒やす。 */
 const DAIGONGEN_BATTLE: EventStep[] = [
   {
@@ -1700,6 +1709,13 @@ const DAIGONGEN_BATTLE: EventStep[] = [
       '玄道が、蘭斎の祝詞を朗々と唱えた。',
       '大権現の胸のゼンマイが、ひとつ、またひとつとほどけ、青い光が天井へ昇っていく。',
       '鷲尾「やめろ……わしの……わしの泰平が……」',
+    ],
+  },
+  // 巨大な姿が崩れ落ちて消える
+  vanish(DAIGONGEN_ACTOR),
+  {
+    type: 'say',
+    lines: [
       '金色の腕が崩れ落ち、歯車の山の中に、鷲尾の姿は消えた。',
       '昇っていく光の中に、寄り添うふたつの影が見えた。夜叉丸と、その妻らしい女の影だった。',
       '玄道〈悲〉「夜叉丸よ。お鈴は、確かに守った。……安心して行け」',
@@ -4223,6 +4239,7 @@ export const EVENTS: Record<string, EventDef> = {
    * 将軍の間の口で待つ鷲尾（終章のボス）。勝つと（washioDefeated）、鷲尾が将軍の影武者と一つになったからくり大権現と続けて戦う。
    * 大権現を倒すと（daigongenDefeated）エンディング（gameCleared）。大権現に負けて出直すと、鷲尾とは戦わずに大権現とだけ戦う。
    * 口に乗ると主人公が間の中まで進み、上座の上様（影武者）と鷲尾の二人を画面に入れる。鷲尾は一行の前へ出て話し、負けると上様の脇へ駆け上がる。
+   * 二人は歯車に呑まれて消え、上座にからくり大権現の巨大な姿（DAIGONGEN_ACTOR）がふくらむ。大権現を倒すと、その姿も崩れ落ちて消える。
    */
   shogunNoMa: {
     id: 'shogunNoMa',
@@ -4233,7 +4250,8 @@ export const EVENTS: Record<string, EventDef> = {
       {
         type: 'if',
         flag: 'washioDefeated',
-        then: [{ type: 'say', lines: ['将軍の間の上座で、からくり大権現が金色の腕を広げて待ち構えていた。'] }],
+        // 大権現に負けて出直したとき。上座に巨大な姿が待つ
+        then: [daigongenActor(), { type: 'say', lines: ['鷲尾の声「まだ懲りぬか、下郎ども。……ゼンマイの中で、泰平を見るがよい」'] }],
         else: [
           // 上様のかたわらの鷲尾（18, 3）が、一行の前（18, 4）へ出てくる
           walk('washioZa', 'd'),
@@ -4274,15 +4292,12 @@ export const EVENTS: Record<string, EventDef> = {
           // 鷲尾が上座へ駆け上がり、上様（17, 1）の脇（18, 1）で背に手をかける
           walk('washioZa', 'uuu'),
           faceTo('washioZa', 'kagemushaShogun'),
-          {
-            type: 'say',
-            lines: [
-              '鷲尾が上座の上様の背に手をかけると、上様の胸が開き、無数の歯車があふれ出した。',
-              '歯車は鷲尾の体を呑み込み、金色の腕を何本も生やして、天井まで膨れ上がっていく……！',
-            ],
-          },
-          // 歯車に呑まれて消える（演出で動かした鷲尾は、大権現の戦いから戻ると演出の位置に置き直されるので、ここで消しておく）
+          { type: 'say', lines: ['鷲尾が上座の上様の背に手をかけると、上様の胸が開き、無数の歯車があふれ出した。'] },
+          // 歯車に呑まれて消える（演出で動かした鷲尾は、大権現の戦いから戻ると演出の位置に置き直されるので、ここで消しておく）。
+          // 上様も歯車の中に呑まれ、二人のいた上座から、金色の腕を何本も生やした巨大な姿が天井までふくらむ
           vanish('washioZa'),
+          vanish('kagemushaShogun'),
+          daigongenActor(true),
           partyOut('kasumi'),
           { type: 'say', lines: ['霞「なんだ、あれは……！」'] },
           ...partyIn('kasumi'),

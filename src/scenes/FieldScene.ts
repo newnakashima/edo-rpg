@@ -63,6 +63,13 @@ const MOVE_MS = 140;
 const STAGE_MOVE_MS = 220;
 /** 演出で敵の画像を出すときの大きさ（戦闘の画像の半分。雑魚 64px は 32px、ボス 96px は 48px）。 */
 const ENEMY_STAGE_SCALE = 0.5;
+/** 演出で敵の画像をふくらませる時間（ミリ秒。actor の grow）。 */
+const STAGE_GROW_MS = 1200;
+
+/** 演出の敵の画像の大きさを変える。下端の中央を、置いたタイルの下端の中央に合わせたまま。 */
+function setEnemyStageScale(image: Phaser.GameObjects.Image, scale: number): Phaser.GameObjects.Image {
+  return image.setScale(scale).setDisplayOrigin(image.width / 2 - TILE / 2 / scale, image.height - TILE / scale);
+}
 /** 歩行のコマがある人（ほかの人は歩くときに小さく跳ねて見せる）。 */
 const WALKING_SPRITES: ReadonlySet<CharacterSpriteId> = new Set(['hero_m', 'hero_f', 'kasumi', 'gendo', 'orin', 'tatsugoro']);
 
@@ -284,9 +291,35 @@ export class FieldScene extends Phaser.Scene {
     switch (step.type) {
       case 'actor': {
         const state = getState();
-        const actor: StageActor = { sprite: step.sprite, enemy: step.enemy, x: step.x ?? state.x, y: step.y ?? state.y, facing: step.facing ?? state.facing, visible: true };
+        const actor: StageActor = {
+          sprite: step.sprite,
+          enemy: step.enemy,
+          ...(step.scale !== undefined ? { scale: step.scale } : {}),
+          x: step.x ?? state.x,
+          y: step.y ?? state.y,
+          facing: step.facing ?? state.facing,
+          visible: true,
+        };
         runner.stage.set(step.id, actor);
         this.placeStageActor(step.id, actor);
+        const obj = this.stageObject(step.id);
+        if (step.grow && step.enemy && obj instanceof Phaser.GameObjects.Image) {
+          // 半分の大きさから scale までふくらませる（戦闘から戻って置き直すときは、ふくらませずに scale のまま置く）
+          const to = actor.scale ?? ENEMY_STAGE_SCALE;
+          setEnemyStageScale(obj, ENEMY_STAGE_SCALE);
+          this.tweens.addCounter({
+            from: ENEMY_STAGE_SCALE,
+            to,
+            duration: STAGE_GROW_MS,
+            ease: 'Sine.easeIn',
+            onUpdate: (tween) => setEnemyStageScale(obj, tween.getValue() ?? to),
+            onComplete: () => {
+              setEnemyStageScale(obj, to);
+              done();
+            },
+          });
+          return;
+        }
         if (step.x !== undefined) {
           done();
           return;
@@ -400,9 +433,8 @@ export class FieldScene extends Phaser.Scene {
       this.stageSprites.set(id, created);
       obj = created;
     } else if (!obj && actor.enemy) {
-      // 敵の画像は半分の大きさで、下端の中央をタイルの下端の中央に合わせる
-      const created = this.add.image(0, 0, enemyImageKey(actor.enemy)).setScale(ENEMY_STAGE_SCALE);
-      created.setDisplayOrigin(created.width / 2 - (TILE / 2) / ENEMY_STAGE_SCALE, created.height - TILE / ENEMY_STAGE_SCALE);
+      // 敵の画像は半分の大きさ（scale があればその大きさ）で、下端の中央をタイルの下端の中央に合わせる
+      const created = setEnemyStageScale(this.add.image(0, 0, enemyImageKey(actor.enemy)), actor.scale ?? ENEMY_STAGE_SCALE);
       this.stageSprites.set(id, created);
       obj = created;
     }
