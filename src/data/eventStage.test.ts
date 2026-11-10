@@ -242,6 +242,9 @@ describe('演出の手順の実行', () => {
 describe('台詞を言う仲間が画面にいる', () => {
   // テストプレイの指摘「その場に表示されていない人物が喋っている」。一行の仲間（霞・玄道・お凛・兵庫）は主人公に重なって見えないので、
   // 台詞を言う前に actor（partyOut）で出しておく。マップに同じ姿の NPC（加入前・一時離脱中の仲間など）がいれば、その人が話しているとみなす。
+  // 出し消しのフラグ（showFlag・hideFlag）を持つ NPC は、イベントの途中でそのフラグが立てば出す・消す（加入して hideFlag が立った仲間は、
+  // そのあと partyOut しないと話せない）。イベントの始まりのフラグは分からないので、始まりではマップに書いた人はみな見えているとみなす
+  // （始まりの時点で hideFlag が立って消えている人が話す誤りは、このテストでは見つけられない）。
   const MEMBER_OF: Record<string, string> = { 霞: 'kasumi', 玄道: 'gendo', お凛: 'orin', 兵庫: 'hyogo', 榊兵庫: 'hyogo' };
   for (const [id, def] of Object.entries(EVENTS)) {
     const starts = startsOf(id);
@@ -257,6 +260,18 @@ describe('台詞を言う仲間が画面にいる', () => {
               map = MAPS[step.mapId]!;
               shown.clear();
               for (const n of map.npcs) shown.set(n.id, n.sprite);
+            } else if (step.type === 'setFlag') {
+              // value: false はフラグを下ろす（出し消しが逆になる）
+              const on = step.value !== false;
+              for (const n of map.npcs) {
+                if (n.hideFlag === step.flag) {
+                  if (on) shown.delete(n.id);
+                  else shown.set(n.id, n.sprite);
+                } else if (n.showFlag === step.flag) {
+                  if (on) shown.set(n.id, n.sprite);
+                  else shown.delete(n.id);
+                }
+              }
             } else if (step.type === 'actor') shown.set(step.id, step.sprite);
             else if (step.type === 'vanish') shown.delete(step.who);
             else if (step.type === 'say') {
