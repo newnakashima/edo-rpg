@@ -121,6 +121,10 @@ describe('イベントの演出', () => {
               expect((step.sprite === undefined) !== (step.enemy === undefined), label(`${step.id} の姿は sprite か enemy のどちらか一つ`)).toBe(true);
               if (step.sprite) expect(CHARACTER_SPRITES as readonly string[], label(step.sprite)).toContain(step.sprite);
               if (step.enemy) expect(ENEMIES[step.enemy]?.image, label(`${step.enemy} の画像がない`)).toBeTruthy();
+              if (step.scale !== undefined || step.grow) expect(step.enemy, label(`${step.id} の scale・grow は enemy の姿だけ`)).toBeDefined();
+              if (step.scale !== undefined) expect(step.scale, label(`${step.id} の scale`)).toBeGreaterThan(0);
+              // grow は半分の大きさからふくらむので、scale は半分より大きい
+              if (step.grow) expect(step.scale ?? 0.5, label(`${step.id} の grow の scale`)).toBeGreaterThan(0.5);
               expect(step.id, label('actor の ID が主人公と同じ')).not.toBe('hero');
               expect((step.x === undefined) === (step.y === undefined), label(`${step.id} の x・y は両方書くか両方省く`)).toBe(true);
               if (step.x !== undefined && step.y !== undefined) {

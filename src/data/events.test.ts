@@ -1616,6 +1616,54 @@ describe('終章の流れ', () => {
     expect(pagesIn(list).some((p) => p.includes('上座に、上様が端然と'))).toBe(false);
   });
 
+  it('鷲尾が上様と一つになると、マップにもからくり大権現の巨大な姿が出て、倒すと消える', () => {
+    const map = MAPS.matsuNoRoka!;
+    const hero = { x: 18, y: 6 };
+    const isGiant = (q: Req) => q.kind === 'stage' && q.step.type === 'actor' && q.step.id === 'daigongenZa';
+    const vanished = (list: Req[], who: string) => list.findIndex((q) => q.kind === 'stage' && q.step.type === 'vanish' && q.step.who === who);
+    const battleAt = (list: Req[]) => list.flatMap((q, i) => (q.kind === 'battle' ? [i] : []));
+
+    // 初めて: 鷲尾に勝ったあと、鷲尾と上様が消えてから、巨大な姿がふくらむ。大権現に勝つと消える
+    const list = requests('shogunNoMa', ch8);
+    const [washioBattle, daigongenBattle] = battleAt(list);
+    const giantAt = list.findIndex(isGiant);
+    const giant = (list[giantAt] as Extract<Req, { kind: 'stage' }>).step;
+    expect(giant).toEqual({ type: 'actor', id: 'daigongenZa', enemy: 'karakuriDaigongen', scale: 1, grow: true, x: 18, y: 5 });
+    expect(giantAt).toBeGreaterThan(washioBattle!);
+    expect(giantAt).toBeLessThan(daigongenBattle!);
+    for (const who of ['washioZa', 'kagemushaShogun']) {
+      expect(vanished(list, who), who).toBeGreaterThan(washioBattle!);
+      expect(vanished(list, who), who).toBeLessThan(giantAt);
+    }
+    expect(vanished(list, 'daigongenZa')).toBeGreaterThan(daigongenBattle!);
+    expect(list.findIndex((q) => q.kind === 'say' && q.pages.some((p) => p.includes('崩れ去り')))).toBeGreaterThan(vanished(list, 'daigongenZa'));
+
+    // 大権現に負けて出直したとき: 巨大な姿は初めから上座にいて（ふくらまない）、戦いの前に出る
+    const again = requests('shogunNoMa', { ...ch8, flags: { ...ch8.flags, washioMet: true, washioDefeated: true } });
+    const againAt = again.findIndex(isGiant);
+    expect((again[againAt] as Extract<Req, { kind: 'stage' }>).step).toEqual({ type: 'actor', id: 'daigongenZa', enemy: 'karakuriDaigongen', scale: 1, x: 18, y: 5 });
+    expect(againAt).toBeLessThan(battleAt(again)[0]!);
+    expect(vanished(again, 'daigongenZa')).toBeGreaterThan(battleAt(again)[0]!);
+
+    // 画像（96 px 四方を scale 倍）の下端の中央が (18, 5) の下端の中央。主人公のカメラの中に収まり、
+    // 下の台詞の窓（66 px）にかからず、主人公（18, 6）より上で、上様と鷲尾のいた上座を覆う（戦闘の画像と同じ大きさで巨大に見える）
+    const size = 96 * (giant.type === 'actor' ? giant.scale! : 0);
+    const left = 18 * 16 + 8 - size / 2;
+    const bottom = (5 + 1) * 16;
+    const top = bottom - size;
+    const scrollX = cameraScroll(hero.x * 16 + 8, Math.max(...map.rows.map((r) => r.length)) * 16, GAME_WIDTH);
+    const scrollY = cameraScroll(hero.y * 16 + 8, map.rows.length * 16, GAME_HEIGHT);
+    expect(size).toBeGreaterThanOrEqual(5 * 16);
+    expect(left).toBeGreaterThanOrEqual(scrollX);
+    expect(left + size).toBeLessThanOrEqual(scrollX + GAME_WIDTH);
+    expect(top).toBeGreaterThanOrEqual(scrollY);
+    expect(bottom).toBeLessThanOrEqual(scrollY + GAME_HEIGHT - 66);
+    expect(bottom).toBeLessThanOrEqual(hero.y * 16);
+    for (const p of [map.npcs.find((n) => n.id === 'kagemushaShogun')!, { x: 18, y: 1 }]) {
+      expect(p.x * 16 >= left && (p.x + 1) * 16 <= left + size && p.y * 16 >= top, `${p.x},${p.y}`).toBe(true);
+    }
+  });
+
   it('エンディングの茶屋の場面は、主人公が女なら台詞を変える', () => {
     const pagesOf = (state: GameState) =>
       requests('shogunNoMa', state).flatMap((r) => (r.kind === 'say' ? r.pages : [])).filter((p) => p.includes('勝手に'));

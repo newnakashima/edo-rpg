@@ -35,6 +35,8 @@ export interface StageActor {
   sprite?: CharacterSpriteId;
   /** 敵の画像で出した人（ENEMIES の ID）。 */
   enemy?: string;
+  /** 敵の画像の大きさ（省くと半分）。 */
+  scale?: number;
   x: number;
   y: number;
   facing: Facing;

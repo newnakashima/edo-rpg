@@ -52,8 +52,10 @@ export type EventStep =
    * 同じ id の人がもういれば、その人を置き直す。
    * イベントが終わると消える。残したい人はマップの NPC（showFlag）で置く。
    * 姿は sprite（人の画像）か enemy（戦闘にしか出ない敵の画像を半分の大きさで。ENEMIES の ID）のどちらか一つを書く。
+   * enemy の画像は、scale で大きさを変えられる（既定 0.5。1 で戦闘と同じ大きさ。終章のからくり大権現の巨大な姿）。
+   * grow を書くと、半分の大きさから scale（0.5 より大きく）までふくらんでから次の手順へ進む（変身の演出）。下端の中央は動かない。
    */
-  | { type: 'actor'; id: string; sprite?: CharacterSpriteId; enemy?: string; x?: number; y?: number; facing?: Facing }
+  | { type: 'actor'; id: string; sprite?: CharacterSpriteId; enemy?: string; scale?: number; grow?: true; x?: number; y?: number; facing?: Facing }
   /**
    * 演出: 歩かせる。who は 'hero'、マップの NPC の ID、actor で出した人の ID。path は u（上）・d（下）・l（左）・r（右）の並び。
    * path の代わりに to を書くと、その人（'hero' も書ける）かそのマス（{ x, y }）まで横、縦の順にまっすぐ歩く（仲間が主人公に戻るとき、戸口へ入るとき）。
