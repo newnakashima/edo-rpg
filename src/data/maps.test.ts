@@ -1532,11 +1532,19 @@ describe('終章の江戸城', () => {
     const beforeWashio = reachable(wallTriggers(washioOnly), landing, {}, true);
     const shogun = matsu.npcs.find((n) => n.id === 'kagemushaShogun')!;
     expect(near(beforeWashio, shogun.x, shogun.y)).toBe(false);
-    // 休息の間の兵庫と金太は、典膳の手前にいる
-    for (const id of ['hyogoRoka', 'kintaRoka']) {
+    // 休息の間の火消しの若い衆と金太は、典膳の手前にいる
+    for (const id of ['hikeshiRoka', 'kintaRoka']) {
       const n = matsu.npcs.find((x) => x.id === id)!;
       expect(near(beforeTenzen, n.x, n.y), id).toBe(true);
     }
+    // 典膳を通らなければ兵庫の現れる場所へ行けず、兵庫の現れる場所を通らなければ鷲尾の場所へ行けない
+    for (const t of trigger(matsu, 'hyogoReturn')) expect(beforeTenzen.has(`${t.x},${t.y}`)).toBe(false);
+    const returnOnly = { ...matsu, triggers: trigger(matsu, 'hyogoReturn') };
+    const beforeReturn = reachable(wallTriggers(returnOnly), landing, {}, true);
+    for (const t of trigger(matsu, 'shogunNoMa')) expect(beforeReturn.has(`${t.x},${t.y}`)).toBe(false);
+    // 残った兵庫は、将軍の間への道をふさがない
+    const afterReturn = reachable(matsu, landing, { hyogoReturned: true }, true);
+    for (const t of trigger(matsu, 'shogunNoMa')) expect(afterReturn.has(`${t.x},${t.y}`)).toBe(true);
   });
 
   it('本丸御殿と松の廊下は江戸城の敵が出て、全滅したら江戸の旅籠の前に戻る', () => {

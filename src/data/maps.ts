@@ -2201,7 +2201,7 @@ MAPS.osaka = {
       sprite: 'npc_kodomo',
       lines: ['子ども「この路地の北側の長屋の、東から二つ目の戸が、榊先生の私塾やで。先生は、奥で書を教えてはる」'],
       after: { flag: 'hyogoJoined', lines: ['子ども「先生は、あんたらと蔵へ行かはったんやろ。……おいら、ここで帰りを待っとるんや」'] },
-      later: { flag: 'chapter5Cleared', lines: ['子ども「先生は奉行所へ行かはった。……塾は、門弟のみんなで続けていくんや」'] },
+      later: { flag: 'chapter5Cleared', lines: ['子ども「先生は、橋の上で撃たれて川に落ちはった……。みんな死んだ言うけど、おいらは信じへん」'] },
     },
     {
       id: 'kuraGuardW',
@@ -4832,8 +4832,8 @@ MAPS.edojo = {
 };
 
 /**
- * 終章の松の廊下と将軍の間。西の休息の間（榊兵庫・金太）から松の廊下を東へ。廊下の中ほどで鬼塚典膳が待ち、
- * 東の廊下と溜の間を抜けた北の口で鷲尾が待つ。奥の上座に将軍の影武者。
+ * 終章の松の廊下と将軍の間。西の休息の間（火消しの若い衆・金太）から松の廊下を東へ。廊下の中ほどで鬼塚典膳が待ち、
+ * 東の廊下で榊兵庫が再び現れて追っ手を引き受け、溜の間を抜けた北の口で鷲尾が待つ。奥の上座に将軍の影武者。
  */
 MAPS.matsuNoRoka = {
   id: 'matsuNoRoka',
@@ -4868,14 +4868,13 @@ MAPS.matsuNoRoka = {
   ],
   npcs: [
     {
-      id: 'hyogoRoka',
-      name: '榊兵庫',
+      id: 'hikeshiRoka',
+      name: '火消しの若い衆',
       x: 2,
       y: 11,
-      color: 0x2a3a5a,
-      sprite: 'hyogo',
-      event: 'hyogoRoka',
-      showFlag: 'matsuEntered',
+      color: 0x3a4a8a,
+      sprite: 'npc_hikeshi',
+      event: 'hikeshiRoka',
     },
     {
       id: 'kintaRoka',
@@ -4888,6 +4887,18 @@ MAPS.matsuNoRoka = {
       sprite: 'kinta',
       lines: ['金太「文なら、おれの凧で飛脚に届けてやるよ！ 記録を残していきな」'],
       action: 'hikyaku',
+    },
+    {
+      // 将軍の間の口の手前で、後ろから来る追っ手を引き受ける（hyogoReturned で現れる。廊下の北の側の 20, 11 は空けておく）
+      id: 'hyogoRoka',
+      name: '榊兵庫',
+      x: 20,
+      y: 12,
+      color: 0x2a3a5a,
+      sprite: 'hyogo',
+      facing: 'right',
+      event: 'hyogoRoka',
+      showFlag: 'hyogoReturned',
     },
     {
       id: 'tenzenRoka',
@@ -4934,6 +4945,9 @@ MAPS.matsuNoRoka = {
     // 松の廊下の中ほどで、鬼塚典膳が待つ（終章の中ボス）
     { x: 20, y: 18, event: 'tenzen', unless: 'tenzenDefeated' },
     { x: 20, y: 19, event: 'tenzen', unless: 'tenzenDefeated' },
+    // 将軍の間へ向かう東の廊下で、からくりの手下がふさぐ。死んだと思われていた榊兵庫が現れて引き受ける
+    { x: 24, y: 11, event: 'hyogoReturn', unless: 'hyogoReturned' },
+    { x: 24, y: 12, event: 'hyogoReturn', unless: 'hyogoReturned' },
     // 将軍の間の口で、鷲尾が待つ（終章のボス。勝つとからくり大権現、倒すとエンディング）
     { x: 17, y: 9, event: 'shogunNoMa', unless: 'daigongenDefeated' },
     { x: 18, y: 9, event: 'shogunNoMa', unless: 'daigongenDefeated' },

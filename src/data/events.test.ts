@@ -1438,17 +1438,54 @@ describe('終章の流れ', () => {
     expect(run('ookuBakeneko', ch8, 'defeat').flags.ookuCleared).toBeFalsy();
   });
 
-  it('松の廊下に入ると兵庫が待っていて（matsuEntered）、話しかけると全回復する', () => {
+  it('松の廊下に入ると（matsuEntered）、休息の間の火消しの若い衆が話しかけるたびに全回復する。兵庫はまだいない', () => {
     const entered = run('matsuEnter', ch8);
     expect(entered.flags.matsuEntered).toBe(true);
     expect(MAPS.matsuNoRoka!.onEnter).toEqual({ event: 'matsuEnter', unless: 'matsuEntered' });
+    const hikeshi = MAPS.matsuNoRoka!.npcs.find((n) => n.id === 'hikeshiRoka')!;
+    expect(npcVisible(hikeshi, ch8.flags)).toBe(true);
+    expect(healed(run('hikeshiRoka', hurt(entered)))).toBe(true);
     const hyogo = MAPS.matsuNoRoka!.npcs.find((n) => n.id === 'hyogoRoka')!;
-    expect(npcVisible(hyogo, ch8.flags)).toBe(false);
-    expect(npcVisible(hyogo, entered.flags)).toBe(true);
-    expect(healed(run('hyogoRoka', hurt(entered)))).toBe(true);
+    expect(npcVisible(hyogo, entered.flags)).toBe(false);
     // 金太は飛脚の代わりに記録を預かる
     expect(MAPS.matsuNoRoka!.npcs.find((n) => n.id === 'kintaRoka')?.action).toBe('hikyaku');
     expect(MAPS.edojo!.npcs.find((n) => n.id === 'kokichiJo')?.action).toBe('hikyaku');
+  });
+
+  it('将軍の間の手前で手下（Lv29、4 体）に勝つと兵庫が現れて引き受け（hyogoReturned）、以後は話しかけるたびに全回復する。負けたら立たず、出直すと口上を短くする', () => {
+    const entered = run('tenzen', run('matsuEnter', ch8));
+    const b = battles('hyogoReturn', entered)[0];
+    expect(b).toMatchObject({ kind: 'battle', level: 29, canEscape: false, loseOk: false });
+    expect(b?.kind === 'battle' && b.enemies.length).toBe(4);
+    const won = run('hyogoReturn', entered);
+    expect(won.flags.hyogoReturned).toBe(true);
+    // 兵庫は一行には加わらない
+    expect(won.party.map((m) => m.id)).not.toContain('hyogo');
+    const hyogo = MAPS.matsuNoRoka!.npcs.find((n) => n.id === 'hyogoRoka')!;
+    expect(npcVisible(hyogo, won.flags)).toBe(true);
+    expect(healed(run('hyogoRoka', hurt(won)))).toBe(true);
+    const lost = run('hyogoReturn', entered, 'defeat');
+    expect(lost.flags.hyogoReturned).toBeFalsy();
+    expect(lost.flags.hyogoReturnMet).toBe(true);
+    expect(firstPages('hyogoReturn', lost)).toBeLessThan(firstPages('hyogoReturn', entered));
+  });
+
+  it('兵庫は勝ったあとに後ろから現れ、生きていたわけを話し、マップの兵庫の場所まで歩いて残る', () => {
+    const entered = run('tenzen', run('matsuEnter', ch8));
+    const list = requests('hyogoReturn', entered);
+    const battle = list.findIndex((q) => q.kind === 'battle');
+    const appear = list.findIndex((q) => q.kind === 'stage' && q.step.type === 'actor' && q.step.id === 'hyogo');
+    expect(appear).toBeGreaterThan(battle);
+    const pages = pagesIn(list).join('');
+    expect(pages).toContain('生きて');
+    expect(pages).toContain('網打ちの舟');
+    const npc = MAPS.matsuNoRoka!.npcs.find((n) => n.id === 'hyogoRoka')!;
+    const start = list[appear]!;
+    const from = start.kind === 'stage' && start.step.type === 'actor' ? { x: start.step.x!, y: start.step.y! } : { x: 0, y: 0 };
+    // 後ろの廊下から主人公（24, 11）の脇まで来て話し、主人公の南の側を通って北の口の手下の前へ進む
+    const hero = { x: 24, y: 11 };
+    const near = walkEnd(list, 'hyogo', from, 'matsuNoRoka', hero);
+    expect(walkEnd(list, 'hyogo', near, 'matsuNoRoka', hero, 1)).toEqual({ x: npc.x, y: npc.y });
   });
 
   it('鬼塚典膳（Lv30）に勝つと tenzenDefeated。負けたら立たず、出直すと口上を短くする', () => {
@@ -2226,10 +2263,9 @@ describe('終章の演出（地の文を人の動きと台詞に）', () => {
   const triggerOf = (mapId: string, event: string) => MAPS[mapId]!.triggers!.find((t) => t.event === event)!;
 
   /**
-   * 終章のイベント（大手門の門番と、本丸御殿・松の廊下）。松の廊下に入ったときと休息の間の兵庫（榊兵庫の再登場のタスク）と、
-   * 将軍の間（ラスボスの間・エンディングのタスク）は、そちらのタスクで作り直すので除く。
+   * 終章のイベント（大手門の門番と、本丸御殿・松の廊下）。将軍の間（ラスボスの間・エンディングのタスク）は、そちらのタスクで作り直すので除く。
    */
-  const LATER = new Set(['matsuEnter', 'hyogoRoka', 'shogunNoMa']);
+  const LATER = new Set(['shogunNoMa']);
   const ids = [
     'otemon',
     ...new Set(
@@ -2245,7 +2281,7 @@ describe('終章の演出（地の文を人の動きと台詞に）', () => {
   const allowedNarration = (p: string) => /^[ぁ-んァ-ヶー、。…！]+$/u.test(p);
 
   it('終章のイベントには、人の動きや居場所を語る地の文が残っていない', () => {
-    expect(ids).toEqual(['otemon', 'edojoEnter', 'jouguchi', 'okanegura', 'ookuBakeneko', 'tenzen']);
+    expect(ids).toEqual(['otemon', 'edojoEnter', 'jouguchi', 'okanegura', 'ookuBakeneko', 'matsuEnter', 'tenzen', 'hyogoReturn', 'hikeshiRoka', 'hyogoRoka']);
     const lines = (steps: readonly EventStep[]): string[] =>
       steps.flatMap((st) => {
         if (st.type === 'say') return [...st.lines, ...(st.linesF ?? [])];
