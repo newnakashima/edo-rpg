@@ -1604,9 +1604,8 @@ describe('寄り道の会津若松（什の掟を守る少年たち）', () => {
     expect(pagesOf('aizuJuu', done)).toBe(1);
     expect(EQUIPMENT.okiagariKoboshi?.slot).toBe('accessory');
     for (const shop of Object.values(SHOPS)) expect(shop.goods, shop.id).not.toContain('okiagariKoboshi');
-    const aizu = MAPS.aizu!;
-    const onMountain = aizu.npcs.find((n) => n.id === 'heita')!;
-    const atHome = aizu.npcs.find((n) => n.id === 'heitaHome')!;
+    const onMountain = MAPS.aizuIimoriyama!.npcs.find((n) => n.id === 'heita')!;
+    const atHome = MAPS.aizu!.npcs.find((n) => n.id === 'heitaHome')!;
     expect([npcVisible(onMountain, heard.flags), npcVisible(atHome, heard.flags)]).toEqual([true, false]);
     expect([npcVisible(onMountain, found.flags), npcVisible(atHome, found.flags)]).toEqual([false, true]);
   });
@@ -1626,8 +1625,10 @@ describe('寄り道の会津若松（什の掟を守る少年たち）', () => {
     expect(got.items.okiagariKoboshi).toBe(1);
   });
 
-  it('葛籠の中身は、飯盛山が朝鮮人参、町が身不知柿', () => {
+  it('葛籠の中身は、飯盛山が朝鮮人参・加賀棒茶・道しるべの札、町が身不知柿', () => {
     expect(run('aizuChest1', heard).items.ninjin).toBe((heard.items.ninjin ?? 0) + 1);
+    expect(run('aizuChest3', heard).items.bocha).toBe((heard.items.bocha ?? 0) + 1);
+    expect(run('aizuChest4', heard).items.michishirube).toBe((heard.items.michishirube ?? 0) + 1);
     expect(run('aizuChest2', heard).items.mishirazuGaki).toBe((heard.items.mishirazuGaki ?? 0) + 1);
   });
 });
