@@ -4036,8 +4036,7 @@ export const EVENTS: Record<string, EventDef> = {
       partyOut('gendo'),
       { type: 'say', lines: ['玄道「松の廊下……。この廊下で刀を抜けば、身分を問わず切腹と聞く」'] },
       ...partyIn('gendo'),
-      { type: 'say', lines: ['若い衆「おーい、こっちでさあ！」'] },
-      // 休息の間から廊下を通って、主人公の前（2, 20）まで下りてくる
+      // 休息の間から廊下を通って、主人公の前（2, 20）まで下りてきてから話す
       walk('hikeshiRoka', 'dddrddddddl'),
       {
         type: 'say',
@@ -4099,6 +4098,8 @@ export const EVENTS: Record<string, EventDef> = {
       { type: 'say', lines: ['ガシャン、ガシャン、ガシャン……'] },
       enemyActor('matsuKinjuA', 'karakuriKinju', 17, 10),
       enemyActor('matsuKinjuB', 'karakuriKinju', 18, 10),
+      { type: 'walk', who: 'matsuKinjuA', path: 'd', wait: false },
+      walk('matsuKinjuB', 'd'),
       enemyActor('matsuOniwabanA', 'karakuriOniwaban', 32, 11),
       enemyActor('matsuOniwabanB', 'karakuriOniwaban', 32, 12),
       { type: 'walk', who: 'matsuOniwabanA', path: 'll', wait: false },
@@ -4134,12 +4135,14 @@ export const EVENTS: Record<string, EventDef> = {
           '兵庫「その経は、もうしばらく取っておいてくれ。……傷が癒えてから、鷲尾を追って江戸へ下った。火消しの頭に頼んで、ここまで紛れ込んできたのだ」',
         ],
       },
-      // 兵庫は（24, 12）の側を西へ進み、北の口の手下の前（20, 12）へ
-      walk('hyogo', 'llllll'),
+      // 兵庫は（24, 12）の側を西へ進み、北の口から下りてきた手下（17, 11）（18, 11）の隣（19, 11）で斬り払う
+      walk('hyogo', 'lllllllu'),
       face('hyogo', 'left'),
       { type: 'say', lines: ['ザンッ！'] },
       vanish('matsuKinjuA'),
       vanish('matsuKinjuB'),
+      // 廊下の南の側（20, 12）へ下がり、後ろから来る追っ手に向き直る（北の側は将軍の間への道として空ける）
+      walk('hyogo', 'dr'),
       face('hero', 'left'),
       { type: 'say', lines: ['ガシャン、ガシャン……'] },
       // 後ろから、追っ手がさらに押し寄せる

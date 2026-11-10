@@ -679,7 +679,7 @@ describe('第 5 章の流れ', () => {
     expect(crowd).toBe(2);
   });
 
-  it('第 5 章の終わりは北岸の蔵の前で、門弟たちが橋へ押し寄せ、兵庫が止めて立ち去る。人は蔵の前から見える所に出る', () => {
+  it('第 5 章の終わりは北岸の蔵の前で、門弟たちが橋へ押し寄せ、兵庫が止める。人は蔵の前から見える所に出る', () => {
     const list = requests('osakaEnter', run('hyakuhyo', joined));
     const stage = list.flatMap((q) => (q.kind === 'stage' ? [q.step] : []));
     const actors = stage.filter((s) => s.type === 'actor');
@@ -702,6 +702,36 @@ describe('第 5 章の流れ', () => {
     const hikyaku = stage.filter((s) => s.type === 'walk' && s.who === 'osakaHikyaku');
     expect(hikyaku[0]).toMatchObject({ path: 'uuuuuuu' });
     expect(hikyaku[1]).toMatchObject({ path: 'ddddddd' });
+  });
+
+  it('第 5 章の終わりに、兵庫は橋の上で鉄砲に撃たれて川へ落ち、羽織しか上がらない（死んだと思わせる）', () => {
+    const list = requests('osakaEnter', run('hyakuhyo', joined));
+    const bang = list.findIndex((q) => q.kind === 'say' && q.pages.includes('ダーン！'));
+    const shooter = list.findIndex((q) => q.kind === 'stage' && q.step.type === 'actor' && q.step.id === 'osakaTeppo');
+    const fell = list.findIndex((q) => q.kind === 'stage' && q.step.type === 'vanish' && q.step.who === 'hyogo');
+    const splash = list.findIndex((q) => q.kind === 'say' && q.pages.includes('ザブン……！'));
+    expect(bang).toBeGreaterThan(0);
+    expect(shooter).toBeGreaterThan(bang);
+    expect(fell).toBeGreaterThan(shooter);
+    expect(splash).toBeGreaterThan(fell);
+    // 兵庫は橋の端から川へ落ちる（消える前のマスの隣が川）
+    const hyogoStart = stages(list).find((st) => st.type === 'actor' && st.id === 'hyogo')!;
+    let pos = hyogoStart.type === 'actor' ? { x: hyogoStart.x!, y: hyogoStart.y! } : { x: 0, y: 0 };
+    for (let i = 0; i < 3; i++) pos = walkEnd(list, 'hyogo', pos, 'osaka', undefined, i);
+    expect(stages(list).filter((st) => st.type === 'walk' && st.who === 'hyogo')).toHaveLength(3);
+    expect([[-1, 0], [1, 0], [0, -1], [0, 1]].some(([dx, dy]) => MAPS.osaka!.rows[pos.y + dy!]![pos.x + dx!] === '~')).toBe(true);
+    const pages = pagesIn(list).join('');
+    expect(pages).toContain('羽織だけ');
+    expect(pages).toContain('口は封じた');
+  });
+
+  it('第 5 章の後の大坂の人は、兵庫が奉行所へ行ったとは言わない', () => {
+    // 大坂の町と、その建物の中（osakaJuku など）
+    const afterCleared = Object.values(MAPS)
+      .filter((m) => m.id.startsWith('osaka'))
+      .flatMap((m) => m.npcs.flatMap((n) => [n.after, n.later].filter((c) => c?.flag === 'chapter5Cleared').flatMap((c) => c!.lines)));
+    expect(afterCleared.some((l) => l.includes('先生'))).toBe(true);
+    for (const l of afterCleared) expect(l).not.toMatch(/奉行所へ(行かはった|行かれた)|名乗り出/u);
   });
 
   it('大坂に着いたとき、主人公は町のほうを向き、霞は上か下に出て東の街道へ戻る（主人公のマスを通らない）', () => {
@@ -1445,6 +1475,16 @@ describe('終章の流れ', () => {
     const hikeshi = MAPS.matsuNoRoka!.npcs.find((n) => n.id === 'hikeshiRoka')!;
     expect(npcVisible(hikeshi, ch8.flags)).toBe(true);
     expect(healed(run('hikeshiRoka', hurt(entered)))).toBe(true);
+    // 若い衆は休息の間から主人公の前まで下りてきてから話し、元の場所へ戻る
+    const list = requests('matsuEnter', ch8);
+    const exit = MAPS.edojo!.exits.find((e) => e.to === 'matsuNoRoka')!;
+    const hero = { x: exit.toX, y: exit.toY };
+    const there = walkEnd(list, 'hikeshiRoka', hikeshi, 'matsuNoRoka', hero);
+    expect(Math.abs(there.x - hero.x) + Math.abs(there.y - hero.y)).toBe(1);
+    expect(walkEnd(list, 'hikeshiRoka', there, 'matsuNoRoka', hero, 1)).toEqual({ x: hikeshi.x, y: hikeshi.y });
+    const firstWalk = list.findIndex((q) => q.kind === 'stage' && q.step.type === 'walk' && q.step.who === 'hikeshiRoka');
+    const firstWords = list.findIndex((q) => q.kind === 'say' && q.pages.some((p) => p.startsWith('若い衆「')));
+    expect(firstWords).toBeGreaterThan(firstWalk);
     const hyogo = MAPS.matsuNoRoka!.npcs.find((n) => n.id === 'hyogoRoka')!;
     expect(npcVisible(hyogo, entered.flags)).toBe(false);
     // 金太は飛脚の代わりに記録を預かる
@@ -1485,7 +1525,12 @@ describe('終章の流れ', () => {
     // 後ろの廊下から主人公（24, 11）の脇まで来て話し、主人公の南の側を通って北の口の手下の前へ進む
     const hero = { x: 24, y: 11 };
     const near = walkEnd(list, 'hyogo', from, 'matsuNoRoka', hero);
-    expect(walkEnd(list, 'hyogo', near, 'matsuNoRoka', hero, 1)).toEqual({ x: npc.x, y: npc.y });
+    // 北の口から下りてきた手下の隣で斬り払ってから、廊下の南の側へ下がる
+    const slash = walkEnd(list, 'hyogo', near, 'matsuNoRoka', hero, 1);
+    const kinju = stages(list).filter((st) => st.type === 'actor' && st.id.startsWith('matsuKinju'));
+    expect(kinju).toHaveLength(2);
+    for (const k of kinju) if (k.type === 'actor') expect(Math.abs(k.x! - slash.x) + Math.abs(k.y! + 1 - slash.y), k.id).toBeLessThanOrEqual(2);
+    expect(walkEnd(list, 'hyogo', slash, 'matsuNoRoka', hero, 2)).toEqual({ x: npc.x, y: npc.y });
   });
 
   it('鬼塚典膳（Lv30）に勝つと tenzenDefeated。負けたら立たず、出直すと口上を短くする', () => {
