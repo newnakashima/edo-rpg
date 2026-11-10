@@ -3,10 +3,10 @@
 // - ほかの屋敷のある 14 町: 屋敷の若い衆のメニューに「親分の頼みを聞く」が出る。若い衆が親分の頼み（一家の縄張りを荒らす連中を追い払う）を伝え、
 //   引き受けると、ちょうど屋敷へ押しかけてきた相手と戦う。勝つと仁義ポイントを得る。町ごとに 1 回。
 //   親分は屋敷の奥にいて画面に出ないので、話すのは若い衆と、押しかけてきた相手だけにする。
-//   押しかけてきた相手はマップに出していない（町の頼まれごとと同じ。イベントで人を出して動かす仕組みがまだない）。
-//   本来は相手を戸口の前に出して歩かせてから喋らせるべきで、フェーズ 5「キャラクターを出して動かす」でまとめて直す。
+//   押しかけてきた相手（戦う敵と同じ姿・同じ数）は、屋敷の戸口から入ってきて主人公の隣まで歩いてから話し、戦いのあと戸口から去る
+//   （町の頼まれごとと同じ。src/data/jingiRequests.ts の jingiBattleSteps）。
 import type { EventDef } from './eventTypes';
-import { jingiBattleSteps, type MenuRequest } from './jingiRequests';
+import { jingiBattleSteps, requestRoom, type MenuRequest } from './jingiRequests';
 import { MAPS } from './maps';
 import { OYABUN } from './oyabun';
 import { oyabunStayCost } from '../systems/jingi';
@@ -39,8 +39,12 @@ interface OyabunRequestDef {
   confront: string[];
   /** 戦う相手（3 人）。 */
   enemies: string[];
-  /** 勝ったあとの台詞（仁義ポイントの知らせの前）。 */
+  /** 勝ったあとの相手の捨て台詞（相手はそのあと戸口から去る）。 */
+  flee: string[];
+  /** 相手が去ったあとの若い衆の台詞（仁義ポイントの知らせの前）。 */
   thanks: string[];
+  /** 負けたときの相手の捨て台詞（相手はそのあと戸口から去る）。 */
+  taunt: string[];
 }
 
 /** 屋敷のある町（清水湊を除く）の親分の頼み。清水湊は序章の辰五郎の頼みがあたる。 */
@@ -52,7 +56,9 @@ export const OYABUN_REQUESTS: Record<string, OyabunRequestDef> = {
     ],
     confront: ['流れ者「おう、安倍川一家の屋敷はここか！ 渡しの縄張りは、今日からおれたちのもんだ！」', '{hero}「渡し賃をかすめる連中に、縄張りもへったくれもあるかい」'],
     enemies: ['bakuto', 'gorotsuki', 'gorotsuki'],
-    thanks: ['流れ者「ち、ちくしょう……川向こうへ帰るぞ！」', '若い衆「これで渡しの衆も安心して舟を出せやす。親分も、きっとお喜びになりやす」'],
+    flee: ['流れ者「ち、ちくしょう……川向こうへ帰るぞ！」'],
+    thanks: ['若い衆「これで渡しの衆も安心して舟を出せやす。親分も、きっとお喜びになりやす」'],
+    taunt: ['流れ者「へっ、口ほどにもねえ。渡しの縄張りは、もらったも同然だ」'],
   },
   nagoya: {
     ask: [
@@ -61,7 +67,9 @@ export const OYABUN_REQUESTS: Record<string, OyabunRequestDef> = {
     ],
     confront: ['雲助の頭「熱田一家の若造ども、話はついたか？ 市の所場代は、これからおれたちが取り立てる！」', '{hero}「市の衆から巻き上げる銭なんざ、一文だってねえよ」'],
     enemies: ['kumosuke', 'gorotsuki', 'kumosuke'],
-    thanks: ['雲助の頭「お、覚えてやがれ……！」', '若い衆「熱田の市も、これで元どおりでさあ。親分にしっかり伝えておきやす」'],
+    flee: ['雲助の頭「お、覚えてやがれ……！」'],
+    thanks: ['若い衆「熱田の市も、これで元どおりでさあ。親分にしっかり伝えておきやす」'],
+    taunt: ['雲助の頭「ふん、助っ人がこの程度か。市の所場代は、明日から取り立てるぜ」'],
   },
   hamamatsu: {
     ask: [
@@ -70,7 +78,9 @@ export const OYABUN_REQUESTS: Record<string, OyabunRequestDef> = {
     ],
     confront: ['浪人「天竜一家とやら、筏の通り銭に口を出すな。さもなくば、屋敷ごと叩き斬るぞ」', '{hero}「川で汗を流す衆から銭をむしる侍に、斬られる覚えはねえな」'],
     enemies: ['oihagiRonin', 'gorotsuki', 'gorotsuki'],
-    thanks: ['浪人「く……拙者の負けだ。遠州からは手を引こう」', '若い衆「筏師たちも喜びやす。親分にも、ようく伝えておきやす」'],
+    flee: ['浪人「く……拙者の負けだ。遠州からは手を引こう」'],
+    thanks: ['若い衆「筏師たちも喜びやす。親分にも、ようく伝えておきやす」'],
+    taunt: ['浪人「笑止。筏の通り銭は、これまでどおり拙者がいただく」'],
   },
   kyo: {
     ask: [
@@ -79,7 +89,9 @@ export const OYABUN_REQUESTS: Record<string, OyabunRequestDef> = {
     ],
     confront: ['よその一家の代貸「鴨川一家の衆、祇園の賭場は今夜からうちのもんや。おとなしゅう明け渡しな！」', '{hero}「縄張りが欲しけりゃ、筋を通して頼みに来るもんだ」'],
     enemies: ['bakuto', 'bakuto', 'oihagiRonin'],
-    thanks: ['よその一家の代貸「く……都はあきらめたるわ……！」', '若い衆「祇園の賭場は守られました。親分も、きっと胸をなでおろしてはります」'],
+    flee: ['よその一家の代貸「く……都はあきらめたるわ……！」'],
+    thanks: ['若い衆「祇園の賭場は守られました。親分も、きっと胸をなでおろしてはります」'],
+    taunt: ['よその一家の代貸「なんや、助っ人いうてもこんなもんかいな。また出直したるわ」'],
   },
   hikone: {
     ask: [
@@ -88,7 +100,9 @@ export const OYABUN_REQUESTS: Record<string, OyabunRequestDef> = {
     ],
     confront: ['荒くれ「芹川一家、漁師の肩を持つんじゃねえ！ 湖の魚は、おれたちの言い値で買うんだ！」', '{hero}「網を切って値をたたくのは、商いじゃなくて追い剥ぎだ」'],
     enemies: ['gorotsuki', 'oihagiRonin', 'gorotsuki'],
-    thanks: ['荒くれ「わ、わかった……もう網には手を出さねえ……」', '若い衆「漁師たちも、これで安心して湖へ出られます。親分にお伝えしておきます」'],
+    flee: ['荒くれ「わ、わかった……もう網には手を出さねえ……」'],
+    thanks: ['若い衆「漁師たちも、これで安心して湖へ出られます。親分にお伝えしておきます」'],
+    taunt: ['荒くれ「へっ、弱え弱え。湖の魚は、おれたちの言い値で買うからな」'],
   },
   iga: {
     ask: [
@@ -97,7 +111,9 @@ export const OYABUN_REQUESTS: Record<string, OyabunRequestDef> = {
     ],
     confront: ['偽の一家の者「柘植一家の名は、もうおれたちのもんだ！ 本物なんぞ、山に埋めてやる！」', '{hero}「人様の名で旅人を脅すたあ、渡世人の風上にも置けねえな」'],
     enemies: ['oihagiRonin', 'bakuto', 'bakuto'],
-    thanks: ['偽の一家の者「ひ、ひいっ……もう名は騙らねえ……！」', '若い衆「これで一家の名も守られた。親分も、渡世人さんの義理堅さに感じ入っておられるぞ」'],
+    flee: ['偽の一家の者「ひ、ひいっ……もう名は騙らねえ……！」'],
+    thanks: ['若い衆「これで一家の名も守られた。親分も、渡世人さんの義理堅さに感じ入っておられるぞ」'],
+    taunt: ['偽の一家の者「ははっ、本物の一家の助っ人が、このざまか」'],
   },
   osaka: {
     ask: [
@@ -106,7 +122,9 @@ export const OYABUN_REQUESTS: Record<string, OyabunRequestDef> = {
     ],
     confront: ['用心棒くずれ「道頓堀一家か。芝居小屋の木戸は、わしらが仕切る。手を引かんと、痛い目見るで」', '{hero}「芝居を楽しみに来た客の銭をかすめる奴に、引く手はねえよ」'],
     enemies: ['yojinbo', 'gorotsuki', 'gorotsuki'],
-    thanks: ['用心棒くずれ「あかん……退散や……！」', '若い衆「これで小屋も幕を開けられますわ。親分にも、ようお伝えしときます」'],
+    flee: ['用心棒くずれ「あかん……退散や……！」'],
+    thanks: ['若い衆「これで小屋も幕を開けられますわ。親分にも、ようお伝えしときます」'],
+    taunt: ['用心棒くずれ「なんや、歯ごたえのない。木戸の銭は、わしらがもらうで」'],
   },
   hiroshima: {
     ask: [
@@ -115,7 +133,9 @@ export const OYABUN_REQUESTS: Record<string, OyabunRequestDef> = {
     ],
     confront: ['海賊「宮島一家、よくも邪魔してくれたのう！ 屋敷ごと沈めちゃるけえ！」', '{hero}「参詣の衆を襲う奴に、海の上も陸の上もねえ」'],
     enemies: ['kaizoku', 'kaizoku', 'kaizoku'],
-    thanks: ['海賊「お、覚えとれ……！」', '若い衆「これで参詣船も安心じゃ。親分も、きっと喜んでくれんさる」'],
+    flee: ['海賊「お、覚えとれ……！」'],
+    thanks: ['若い衆「これで参詣船も安心じゃ。親分も、きっと喜んでくれんさる」'],
+    taunt: ['海賊「なんじゃ、口ほどにもないのう。また来ちゃるけえ」'],
   },
   nagasaki: {
     ask: [
@@ -124,7 +144,9 @@ export const OYABUN_REQUESTS: Record<string, OyabunRequestDef> = {
     ],
     confront: ['抜け荷の頭「思案橋一家、おれたちの商いに首を突っ込むな！ 丸山はおれたちの遊び場だ！」', '{hero}「お上の目を盗んで、町の衆にまで迷惑をかけるんじゃねえ」'],
     enemies: ['kaizoku', 'yojinbo', 'bakuto'],
-    thanks: ['抜け荷の頭「くそっ……長崎は引き上げだ！」', '若い衆「丸山も静かになるばい。親分にも伝えとくけん」'],
+    flee: ['抜け荷の頭「くそっ……長崎は引き上げだ！」'],
+    thanks: ['若い衆「丸山も静かになるばい。親分にも伝えとくけん」'],
+    taunt: ['抜け荷の頭「ふん、思案橋一家の助っ人も、たいしたことはねえな」'],
   },
   kumamoto: {
     ask: [
@@ -133,7 +155,9 @@ export const OYABUN_REQUESTS: Record<string, OyabunRequestDef> = {
     ],
     confront: ['浪人「白川一家、人足の肩を持つとは笑止。まとめて斬って捨ててくれる」', '{hero}「堤を築く衆の手間賃をくすねる刀なんざ、なまくらだ」'],
     enemies: ['oihagiRonin', 'yojinbo', 'oihagiRonin'],
-    thanks: ['浪人「む、無念……肥後からは去る……」', '若い衆「人足たちも、これで普請に精が出るたい。親分にしっかり伝えとくけん」'],
+    flee: ['浪人「む、無念……肥後からは去る……」'],
+    thanks: ['若い衆「人足たちも、これで普請に精が出るたい。親分にしっかり伝えとくけん」'],
+    taunt: ['浪人「他愛もない。手間賃は、これからも拙者らが預かる」'],
   },
   kanazawa: {
     ask: [
@@ -142,7 +166,9 @@ export const OYABUN_REQUESTS: Record<string, OyabunRequestDef> = {
     ],
     confront: ['旗本くずれ「浅野川一家とやら、直参に楯突くとは無礼千万！ 成敗してくれる！」', '{hero}「芸妓の簪を取り上げる直参なんざ、聞いたことがねえな」'],
     enemies: ['hatamotoYakko', 'bakuto', 'bakuto'],
-    thanks: ['旗本くずれ「お、おのれ……江戸へ帰る！」', '若い衆「茶屋街も、これで元の華やかさや。親分にもお伝えしとくまっし」'],
+    flee: ['旗本くずれ「お、おのれ……江戸へ帰る！」'],
+    thanks: ['若い衆「茶屋街も、これで元の華やかさや。親分にもお伝えしとくまっし」'],
+    taunt: ['旗本くずれ「直参に楯突いた報いだ。思い知ったか」'],
   },
   sendai: {
     ask: [
@@ -151,7 +177,9 @@ export const OYABUN_REQUESTS: Record<string, OyabunRequestDef> = {
     ],
     confront: ['よその一家の者「広瀬川一家、みちのくの賭場はおれたちがいただく！ 覚悟しやがれ！」', '{hero}「賭場を荒らして縄張りを盗るのは、渡世の筋じゃねえ」'],
     enemies: ['bakuto', 'yojinbo', 'bakuto'],
-    thanks: ['よその一家の者「く……国へ帰るべ……！」', '若い衆「河原の賭場も守れた。親分にも、よぐ伝えておぐ」'],
+    flee: ['よその一家の者「く……国へ帰るべ……！」'],
+    thanks: ['若い衆「河原の賭場も守れた。親分にも、よぐ伝えておぐ」'],
+    taunt: ['よその一家の者「へっ、みちのくの賭場は、いずれおれたちのもんだべ」'],
   },
   aizu: {
     ask: [
@@ -160,7 +188,9 @@ export const OYABUN_REQUESTS: Record<string, OyabunRequestDef> = {
     ],
     confront: ['盗賊「猪苗代一家、峠の荷に手を出すな！ 言うことを聞かねえなら、屋敷ごと燃やしてやる！」', '{hero}「雪の峠で難儀する衆を襲う奴は、雪よりも冷てえな」'],
     enemies: ['hitsukeTozoku', 'oihagiRonin', 'hitsukeTozoku'],
-    thanks: ['盗賊「ひ、ひい……峠からは手を引く……！」', '若い衆「これで荷も無事に峠を越えられる。親分にも、ちゃんと伝えておくべ」'],
+    flee: ['盗賊「ひ、ひい……峠からは手を引く……！」'],
+    thanks: ['若い衆「これで荷も無事に峠を越えられる。親分にも、ちゃんと伝えておくべ」'],
+    taunt: ['盗賊「へへっ、峠の荷は、これからもいただいていくぜ」'],
   },
   edo: {
     ask: [
@@ -169,7 +199,9 @@ export const OYABUN_REQUESTS: Record<string, OyabunRequestDef> = {
     ],
     confront: ['旗本奴「浅草一家だと？ 町人風情が、天下の旗本に指図するか！」', '{hero}「縁日の露店を荒らす旗本なんざ、天下の恥だ」'],
     enemies: ['hatamotoYakko', 'hatamotoYakko', 'yojinbo'],
-    thanks: ['旗本奴「お、覚えておれ……！」', '若い衆「縁日の衆も、これでひと安心でさあ。親分にも、しっかりお伝えしやす」'],
+    flee: ['旗本奴「お、覚えておれ……！」'],
+    thanks: ['若い衆「縁日の衆も、これでひと安心でさあ。親分にも、しっかりお伝えしやす」'],
+    taunt: ['旗本奴「町人風情の助っ人が、天下の旗本にかなうものか」'],
   },
 };
 
@@ -177,11 +209,15 @@ export const OYABUN_REQUESTS: Record<string, OyabunRequestDef> = {
 export function oyabunRequestEvent(town: string, def: OyabunRequestDef, areaLevel: number): EventDef {
   const id = oyabunRequestId(town);
   const accept = jingiBattleSteps({
+    room: requestRoom(town, 'oyabun'),
+    // 相手は、引き受けたところへ屋敷に押しかけてくる（戸口から入ってきてから話す）
     confront: ['若い衆「ありがてえ！ ……と、噂をすりゃあ、来やがった！」', ...def.confront],
     enemies: def.enemies,
     level: oyabunRequestLevel(areaLevel),
-    lose: ['相手は、言いたいことだけ言って引き上げていった……', '若い衆「面目ねえ……。また奴らが来たら、頼みやすぜ」'],
+    flee: def.flee,
     thanks: def.thanks,
+    taunt: def.taunt,
+    lose: ['若い衆「面目ねえ……。また奴らが来たら、頼みやすぜ」'],
     reward: oyabunRequestReward(areaLevel),
     flag: id,
   });

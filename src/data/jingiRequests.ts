@@ -4,6 +4,7 @@
 // 町をぶらついている文無しの博徒を親分に紹介しても、仁義ポイントを得る（下の「博徒の紹介」）。
 import type { EventDef, EventStep } from './eventTypes';
 import { MAPS } from './maps';
+import { buildingTown } from './buildings';
 import { OYABUN, bakutoIntroduceEventId, bakutoIntroducedFlag, bakutoMeetEventId, bakutoSentFlag } from './oyabun';
 import { TOWN_FACILITY_DOORS } from './townFacilities';
 import { oyabunStayCost } from '../systems/jingi';
@@ -53,11 +54,15 @@ export function jingiRequestEnemies(kind: JingiRequestKind, areaLevel: number): 
 interface RequestText {
   /** 頼まれる台詞。 */
   ask: string[];
-  /** 引き受けて相手に向き合う台詞（戦闘の前）。 */
+  /** 引き受けたあと、相手が戸口から入ってきて主人公の隣まで来てからの台詞（戦闘の前）。 */
   confront: string[];
-  /** 勝ったあとの台詞（仁義ポイントの知らせの前）。 */
+  /** 勝ったあと、相手が去る前の台詞（相手の捨て台詞）。 */
+  flee: string[];
+  /** 相手が去ったあとの台詞（仁義ポイントの知らせの前）。 */
   thanks: string[];
-  /** 負けたとき（相手は引き上げ、頼まれごとはまた引き受けられる）。 */
+  /** 負けたとき、相手が去る前の台詞（頼まれごとはまた引き受けられる）。 */
+  taunt: string[];
+  /** 負けて、相手が去ったあとの台詞。 */
   lose: string[];
   /** 断ったとき。 */
   decline: string[];
@@ -66,22 +71,30 @@ interface RequestText {
 const TEXT: Record<JingiRequestKind, RequestText> = {
   tobaku: {
     ask: [
-      '中盆「……旦那方、ちょいと耳を貸しておくんなせえ。奥の盆茣蓙の客、どうも賽に細工をしてやがる」',
-      '中盆「ところが仲間を連れていて、うちの若い者じゃ手が出せねえ。懲らしめちゃもらえやせんか」',
+      '中盆「……旦那方、ちょいと耳を貸しておくんなせえ。近ごろ、賽に細工をして荒稼ぎしていく客がいやしてね」',
+      '中盆「ところが仲間を連れていて、うちの若い者じゃ手が出せねえ。そろそろ顔を出す頃合いなんで、懲らしめちゃもらえやせんか」',
     ],
-    confront: ['{hero}「おい、その賽を見せてもらおうか。……やけに重いな。鉛でも仕込んであるのかい」', 'イカサマ師「な、何しやがる！ 野郎ども、やっちまえ！」'],
-    thanks: ['イカサマ師「ち、ちくしょう……覚えてやがれ！」', '中盆「おかげで賭場の顔が立ちやした。このご恩は、親分にもしっかり伝えておきやす」'],
-    lose: ['イカサマ師たちは、勝ち逃げを決め込んで出ていった……', '中盆「面目ねえ……。また奴らが来たら、頼みやすぜ」'],
+    confront: [
+      'イカサマ師「おう、今日も遊ばせてもらうぜ。……なんだ、てめえは」',
+      '{hero}「懐の賽を見せてもらおうか。……やけに重いな。鉛でも仕込んであるのかい」',
+      'イカサマ師「な、何しやがる！ 野郎ども、やっちまえ！」',
+    ],
+    flee: ['イカサマ師「ち、ちくしょう……覚えてやがれ！」'],
+    thanks: ['中盆「おかげで賭場の顔が立ちやした。このご恩は、親分にもしっかり伝えておきやす」'],
+    taunt: ['イカサマ師「へっ、口ほどにもねえ。今日の稼ぎは、いただいていくぜ」'],
+    lose: ['中盆「面目ねえ……。また奴らが来たら、頼みやすぜ」'],
     decline: ['中盆「さいですかい……。気が向いたら、また声をかけておくんなせえ」'],
   },
   izakaya: {
     ask: [
-      '亭主「お客さん、助けておくんなせえ。奥で酔っ払いどもが暴れてやして、皿は割るわ、ほかのお客は殴るわで……」',
-      '亭主「お役人を呼ぶほどのことでもねえし、渡世人のお方なら、うまく鎮めてくださるかと」',
+      '亭主「お客さん、助けておくんなせえ。表で酔っ払いどもが暴れてやして、さっきもうちの暖簾を引きちぎっていきやがった……」',
+      '亭主「また飲ませろと戻ってくるに決まってまさあ。お役人を呼ぶほどのことでもねえし、渡世人のお方なら、うまく鎮めてくださるかと」',
     ],
-    confront: ['{hero}「そのへんにしておけ。酒がまずくなる」', '酔っ払い「なんだとぉ？ 渡世人がでけえ口を……やる気かぁ！」'],
-    thanks: ['酔っ払い「う、うう……酔いがさめちまった……勘弁してくれ……」', '亭主「助かりやした！ この町の親分さんにも、ようく話しておきやす」'],
-    lose: ['酔っ払いどもは、勘定も払わずに千鳥足で出ていった……', '亭主「お怪我はねえですかい。また暴れたら、頼みやす」'],
+    confront: ['酔っ払い「おぅい、亭主ぅ！ 酒だ、酒もってこぉい！」', '{hero}「そのへんにしておけ。酒がまずくなる」', '酔っ払い「なんだとぉ？ 渡世人がでけえ口を……やる気かぁ！」'],
+    flee: ['酔っ払い「う、うう……酔いがさめちまった……勘弁してくれ……」'],
+    thanks: ['亭主「助かりやした！ この町の親分さんにも、ようく話しておきやす」'],
+    taunt: ['酔っ払い「へへっ、弱えくせに……ひっく。河岸を変えるぞぉ」'],
+    lose: ['亭主「お怪我はねえですかい。……勘定も払わずに行っちまいやがった。また暴れたら、頼みやす」'],
     decline: ['亭主「そうですかい……。どなたか、腕っぷしの強いお方はいねえもんかねえ」'],
   },
   gyoro: {
@@ -90,34 +103,96 @@ const TEXT: Record<JingiRequestKind, RequestText> = {
       '女将「今夜ひと晩、座敷の外で用心棒を務めてはいただけませんか」',
     ],
     confront: [
-      '夜が更けたころ、廊下に荒い足音が響いた。',
       '酔った侍「太夫を出せ！ 拙者を袖にするとは何ごとか！」',
       '{hero}「太夫は今宵、お前さんの座敷には上がらねえよ。帰んな」',
       '酔った侍「渡世人ふぜいが……！ ものども、斬って捨てい！」',
     ],
-    thanks: ['酔った侍「お、覚えておれ……！」', '太夫「おかげさまで、無事にお務めを果たせました。このご恩は忘れません」', '女将「土地の親分さんにも、よろしくお伝えしておきますよ」'],
-    lose: ['侍たちは暴れるだけ暴れて、引き上げていった……', '女将「太夫は奥に隠しておりましたので、無事でございます。またお頼みしてもよろしいでしょうか」'],
+    flee: ['酔った侍「お、覚えておれ……！」'],
+    thanks: ['女将「おかげさまで、太夫も無事にお務めを果たせました。このご恩は忘れません」', '女将「土地の親分さんにも、よろしくお伝えしておきますよ」'],
+    taunt: ['酔った侍「ふん、興がさめたわ。今宵はこれまでにしてやる」'],
+    lose: ['女将「太夫は奥に隠しておりましたので、無事でございます。またお頼みしてもよろしいでしょうか」'],
     decline: ['女将「さようでございますか……。無理にとは申しません」'],
   },
 };
 
+/** 頼まれごと・親分の頼みの部屋（施設の人の立つ屋内マップ）と、相手が出入りする戸口（屋内の出口のマス）。 */
+export interface RequestRoom {
+  mapId: string;
+  door: { x: number; y: number };
+  /** 頼んだ施設の人（中盆・亭主・女将・若い衆）の NPC の ID。相手が去ったあと、主人公はこの人のほうを向く。 */
+  keeper: string;
+}
+
+/** その町で、action（tobaku・izakaya・gyoro・oyabun）の人が立つ屋内マップと、その出口（ない町は undefined）。 */
+export function requestRoom(town: string, action: string): RequestRoom | undefined {
+  const map = Object.values(MAPS).find((m) => buildingTown(m.id) === town && m.npcs.some((n) => n.action === action));
+  const exit = map?.exits[0];
+  const keeper = map?.npcs.find((n) => n.action === action);
+  return map && exit && keeper ? { mapId: map.id, door: { x: exit.x, y: exit.y }, keeper: keeper.id } : undefined;
+}
+
+/** 頼まれごとの相手の演出の ID（i 番目の敵。0 が頭）。 */
+export function rivalId(i: number): string {
+  return `rival${i}`;
+}
+
+/**
+ * 相手（戦う敵と同じ姿・同じ数）が戸口から入ってきて、主人公の隣まで歩く（屋内の形が町ごとに違うので、通れるマスをたどる route で）。
+ * 一人ずつ入り、後の人は先に来た人を避けて主人公のそばに寄る。そろったら、相手と主人公が向き合う。
+ */
+function rivalsEnter(room: RequestRoom, enemies: readonly string[]): EventStep[] {
+  return [
+    ...enemies.flatMap((enemy, i): EventStep[] => [
+      { type: 'actor', id: rivalId(i), enemy, x: room.door.x, y: room.door.y, facing: 'up' },
+      { type: 'walk', who: rivalId(i), to: 'hero', route: true },
+    ]),
+    { type: 'face', who: 'hero', toward: rivalId(0) },
+  ];
+}
+
+/** 相手が後から来た人から順に戸口へ歩いて去る（来た道を戻るので、先に来た人がふさがない）。去ったら、主人公は施設の人のほうを向く。 */
+function rivalsLeave(room: RequestRoom, count: number): EventStep[] {
+  return [
+    ...Array.from({ length: count }, (_, k) => count - 1 - k).flatMap((i): EventStep[] => [
+      { type: 'walk', who: rivalId(i), to: { ...room.door }, route: true },
+      { type: 'vanish', who: rivalId(i) },
+    ]),
+    { type: 'face', who: 'hero', toward: room.keeper },
+  ];
+}
+
 /**
  * 仁義ポイントを得る戦闘の手順（町の頼まれごと・親分の頼み〈src/data/oyabunRequests.ts〉で共通）。
- * confront のあと逃げられない戦闘をし、勝てば thanks・仁義ポイント・知らせのあと flag を立てる。
- * 負けたら lose を出して終わる（全滅にはせず、フラグも立てないので、また引き受けられる）。
+ * 相手が戸口から入ってきて主人公の隣まで来て、confront のあと逃げられない戦闘をする。
+ * 勝てば flee のあと相手が戸口から去り、thanks・仁義ポイント・知らせのあと flag を立てる。
+ * 負けたら taunt のあと相手が去り、lose を出して終わる（全滅にはせず、フラグも立てないので、また引き受けられる）。
+ * room（部屋）が分からなければ、相手を出さない（どの町にも屋内があるので、jingiRequests.test.ts が確かめる）。
  */
 export function jingiBattleSteps(p: {
+  room: RequestRoom | undefined;
   confront: string[];
   enemies: string[];
   level: number;
-  lose: string[];
+  flee: string[];
   thanks: string[];
+  taunt: string[];
+  lose: string[];
   reward: number;
   flag: string;
 }): EventStep[] {
+  const enter = p.room ? rivalsEnter(p.room, p.enemies) : [];
+  const leave = p.room ? rivalsLeave(p.room, p.enemies.length) : [];
   return [
+    ...enter,
     { type: 'say', lines: p.confront },
-    { type: 'battle', enemies: p.enemies, level: p.level, ifLose: [{ type: 'say', lines: p.lose }, { type: 'end' }] },
+    {
+      type: 'battle',
+      enemies: p.enemies,
+      level: p.level,
+      ifLose: [{ type: 'say', lines: p.taunt }, ...leave, { type: 'say', lines: p.lose }, { type: 'end' }],
+    },
+    { type: 'say', lines: p.flee },
+    ...leave,
     { type: 'say', lines: p.thanks },
     { type: 'addJingi', amount: p.reward },
     // 上限で丸められたときに増えた量を偽らないよう、数値は今の仁義ポイント（{jingi}）を出す
@@ -131,11 +206,14 @@ export function jingiRequestEvent(town: string, kind: JingiRequestKind, areaLeve
   const id = jingiRequestId(town, kind);
   const text = TEXT[kind];
   const accept = jingiBattleSteps({
+    room: requestRoom(town, kind),
     confront: text.confront,
     enemies: jingiRequestEnemies(kind, areaLevel),
     level: jingiRequestLevel(areaLevel),
-    lose: text.lose,
+    flee: text.flee,
     thanks: text.thanks,
+    taunt: text.taunt,
+    lose: text.lose,
     reward: jingiRequestReward(areaLevel),
     // 果たしたら、イベントの ID と同じ名前のフラグを立てる（pendingJingiRequest が見る）
     flag: id,

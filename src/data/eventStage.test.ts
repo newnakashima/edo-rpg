@@ -12,7 +12,10 @@ import { EVENTS } from './events';
 import { canStep, MAPS, type MapDef } from './maps';
 import { speakerOf } from './faces';
 import { CHARACTER_SPRITES } from './sprites';
-import { EventRunner, pathFacings, pathTo } from '../systems/eventScript';
+import { EventRunner, pathFacings, pathTo, routeTo } from '../systems/eventScript';
+import { townOf } from './buildings';
+import { JINGI_REQUEST_KINDS, jingiRequestId } from './jingiRequests';
+import { oyabunRequestId } from './oyabunRequests';
 import { newGame } from '../systems/gameState';
 
 const DELTA = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] } as const;
@@ -48,10 +51,18 @@ function spotsAround(map: MapDef, x: number, y: number): { x: number; y: number 
     );
 }
 
+/** 施設の人のメニューから始まるイベント（頼まれごと・親分の頼み）の ID。 */
+function menuEventIds(town: string, action: string | undefined): string[] {
+  if (action === 'oyabun') return [oyabunRequestId(town)];
+  return JINGI_REQUEST_KINDS.filter((k) => k === action).map((k) => jingiRequestId(town, k));
+}
+
 function startsOf(eventId: string): Start[] {
   const starts: Start[] = [];
   for (const map of Object.values(MAPS)) {
     if (map.onEnter?.event === eventId) starts.push({ map });
+    // 施設の人のメニューから始まるイベントは、主人公が施設の人の隣のどのマスに立っていても確かめる（それぞれを主人公の位置の分かる始まりにする）
+    for (const n of map.npcs) if (menuEventIds(townOf(map.id), n.action).includes(eventId)) for (const spot of spotsAround(map, n.x, n.y)) starts.push({ map, hero: spot });
     for (const t of map.triggers ?? []) if (t.event === eventId) starts.push({ map, hero: { x: t.x, y: t.y } });
     for (const n of map.npcs) if (n.event === eventId) starts.push({ map, heroSpots: spotsAround(map, n.x, n.y) });
     for (const g of map.gates ?? []) if (g.event === eventId) starts.push({ map });
@@ -108,6 +119,8 @@ describe('イベントの演出', () => {
           /** 主人公でない人が、主人公が立っているかもしれないマスに入るか。 */
           const onSpot = (who: string, pos: { x: number; y: number }) => who !== 'hero' && spots.some((p) => p.x === pos.x && p.y === pos.y);
           const where = new Map<string, { x: number; y: number }>(map.npcs.map((n) => [n.id, { x: n.x, y: n.y }]));
+          /** vanish で消えた人（route の道をふさがない）。 */
+          const gone = new Set<string>();
           const label = (s: string) => `${id} @${map.id}: ${s}`;
           for (const step of path) {
             if (step.type === 'warp') {
@@ -135,6 +148,7 @@ describe('イベントの演出', () => {
                 if (!PARTY.has(step.id)) expect(onSpot(step.id, { x: step.x, y: step.y }), label(`${step.id} を主人公が立っているかもしれないマス (${step.x},${step.y}) に出す`)).toBe(false);
                 where.set(step.id, { x: step.x, y: step.y });
               } else where.set(step.id, { x: NaN, y: NaN }); // 主人公の隣の空いたマス（画面が選ぶ）
+              gone.delete(step.id);
               continue;
             }
             if (step.type === 'face') {
@@ -150,6 +164,7 @@ describe('イベントの演出', () => {
             if (step.type === 'vanish') {
               expect(step.who, label('vanish は主人公に使えない')).not.toBe('hero');
               expect(where.has(step.who), label(`vanish の ${step.who} がいない`)).toBe(true);
+              gone.add(step.who);
               continue;
             }
             if (step.type !== 'walk') continue;
@@ -166,6 +181,45 @@ describe('イベントの演出', () => {
             }
             const pos = step.who === 'hero' ? hero : where.get(step.who);
             if (step.who !== 'hero') expect(pos, label(`walk の ${step.who} がいない`)).toBeDefined();
+            if (step.route) {
+              // 通れて人のいないマスをたどる道（画面と同じ routeTo）。行き先のマスへ、人ならその隣まで着くか
+              expect(step.to, label(`route の ${step.who} に to がない`)).toBeDefined();
+              const target = typeof step.to === 'object' ? step.to : step.to === 'hero' ? hero : where.get(step.to ?? '');
+              if (typeof step.to === 'string' && step.to !== 'hero') expect(where.has(step.to), label(`walk の to ${step.to} がいない`)).toBe(true);
+              if (!pos || !target || Number.isNaN(pos.x) || Number.isNaN(target.x)) {
+                if (pos) Object.assign(pos, { x: NaN, y: NaN });
+                continue;
+              }
+              const occupied = (x: number, y: number) =>
+                (step.who !== 'hero' && hero !== undefined && hero.x === x && hero.y === y) ||
+                [...where.entries()].some(([id, p]) => id !== step.who && !gone.has(id) && p.x === x && p.y === y);
+              const goal = { ...target };
+              const open = (x: number, y: number) => passable(map, x, y) && !occupied(x, y);
+              /** routeTo の道を歩いた先。 */
+              const reach = (to: { x: number; y: number }) =>
+                routeTo(pos, to, open).reduce((p, d) => ({ x: p.x + DELTA[d][0], y: p.y + DELTA[d][1] }), { x: pos.x, y: pos.y });
+              // 歩き出す前に、行き先の人の隣（すぐ手前を除く。手前に立つと画像で隠すので）に、たどり着ける空いたマスがあるか
+              // （なければ、先に来た人のそば〈狭い通り道なら、その後ろ。彦根の妓楼の 3 人目は戸口に立ちふさがる〉で、3 マス以内に止まる）
+              const freeBeside = Object.values(DELTA).some(([dx, dy]) => {
+                const p = { x: goal.x + dx, y: goal.y + dy };
+                if (dy === 1 || !open(p.x, p.y)) return false;
+                const r = reach(p);
+                return r.x === p.x && r.y === p.y;
+              });
+              for (const d of routeTo(pos, goal, open)) {
+                pos.x += DELTA[d][0];
+                pos.y += DELTA[d][1];
+                expect(onSpot(step.who, pos), label(`${step.who} が主人公が立っているかもしれないマス (${pos.x},${pos.y}) を通る`)).toBe(false);
+              }
+              const dist = Math.abs(pos.x - goal.x) + Math.abs(pos.y - goal.y);
+              if (freeBeside) expect(pos.x === goal.x && pos.y === goal.y + 1, label(`${step.who} が ${step.to} のすぐ手前に立って隠す`)).toBe(false);
+              if (typeof step.to === 'object') expect(dist, label(`${step.who} が行き先 (${goal.x},${goal.y}) に着かない（${pos.x},${pos.y} で止まる）`)).toBe(0);
+              else if (freeBeside) expect(dist, label(`${step.who} が ${step.to} (${goal.x},${goal.y}) の隣に着かない（${pos.x},${pos.y} で止まる）`)).toBe(1);
+              // 隣に空きがないときは「3 マス以内」だけを見る。止まる位置は町ごとの屋内の形と先に来た人の位置で決まるため、
+              // 個々の位置は固定しない（止まり方の規則そのものは eventScript.test.ts の routeTo のテストで確かめる）
+              else expect(dist, label(`${step.who} が ${step.to} (${goal.x},${goal.y}) のそばに着かない（${pos.x},${pos.y} で止まる）`)).toBeLessThanOrEqual(3);
+              continue;
+            }
             if (typeof step.to === 'object') {
               expect(passable(map, step.to.x, step.to.y), label(`${step.who} の行き先 (${step.to.x},${step.to.y}) が通れない`)).toBe(true);
               // 横、縦の順にまっすぐ歩く道が通れるか

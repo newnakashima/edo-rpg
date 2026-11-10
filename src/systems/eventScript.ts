@@ -58,6 +58,50 @@ export function pathTo(from: { x: number; y: number }, to: { x: number; y: numbe
   return [...Array<Facing>(Math.abs(dx)).fill(dx > 0 ? 'right' : 'left'), ...Array<Facing>(Math.abs(dy)).fill(dy > 0 ? 'down' : 'up')];
 }
 
+/** 道を探すときに試す向きの順。 */
+const ROUTE_ORDER: readonly Facing[] = ['up', 'left', 'right', 'down'];
+const ROUTE_DELTA: Record<Facing, [number, number]> = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
+
+/**
+ * from から to のマスへ、open なマスだけをたどる一番短い道（walk の route）。
+ * to に入れなければ（人が立っているなど）、たどり着けるマスのうち to にいちばん近い（縦横の歩数で）マスまでの一番短い道にする
+ * （人を to にすれば、その人の隣で止まる）。to のすぐ下（手前）のマスは 3 マス目と同じ近さとみなす（手前に立つと、人の画像が to の人に重なって隠すため）。
+ * 手前のマスへの道は必ず 2 マス離れたマスを通るので、手前で止まるのはそこから歩き出すときだけになる。近さが同じなら、to より下でないマスを選ぶ。
+ * from のマスは open でなくてよい。どこへも行けなければ空。
+ */
+export function routeTo(from: { x: number; y: number }, to: { x: number; y: number }, open: (x: number, y: number) => boolean): Facing[] {
+  const key = (x: number, y: number) => `${x},${y}`;
+  const prev = new Map<string, { from: string; dir: Facing } | null>([[key(from.x, from.y), null]]);
+  const queue: { x: number; y: number }[] = [{ ...from }];
+  /** 近さ（歩数。すぐ手前は 3）、下か（1）、の順に小さいほど良い。queue は道の短い順なので、同じなら先に見つけたほうが道が短い。 */
+  const score = (p: { x: number; y: number }) => {
+    const front = p.x === to.x && p.y === to.y + 1;
+    return [front ? 3 : Math.abs(to.x - p.x) + Math.abs(to.y - p.y), p.y > to.y ? 1 : 0] as const;
+  };
+  const better = (a: readonly [number, number], b: readonly [number, number]) => a[0] < b[0] || (a[0] === b[0] && a[1] < b[1]);
+  let best = { ...from };
+  let bestScore = score(from);
+  for (let i = 0; i < queue.length && bestScore[0] > 0; i++) {
+    const cur = queue[i]!;
+    for (const dir of ROUTE_ORDER) {
+      const nx = cur.x + ROUTE_DELTA[dir][0];
+      const ny = cur.y + ROUTE_DELTA[dir][1];
+      const k = key(nx, ny);
+      if (prev.has(k) || !open(nx, ny)) continue;
+      prev.set(k, { from: key(cur.x, cur.y), dir });
+      queue.push({ x: nx, y: ny });
+      const sc = score({ x: nx, y: ny });
+      if (better(sc, bestScore)) {
+        best = { x: nx, y: ny };
+        bestScore = sc;
+      }
+    }
+  }
+  const dirs: Facing[] = [];
+  for (let step = prev.get(key(best.x, best.y)); step; step = prev.get(step.from)) dirs.unshift(step.dir);
+  return dirs;
+}
+
 interface Frame {
   steps: readonly EventStep[];
   index: number;
