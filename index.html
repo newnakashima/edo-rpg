@@ -19,6 +19,7 @@
         @media (orientation: landscape) {
           #pad { position: fixed; inset: auto 0 0 0; background: none; pointer-events: none; }
           #pad > * { pointer-events: auto; opacity: 0.3; transition: opacity 0.1s; }
+          /* :has() のない古いブラウザ（iOS 15.4 未満など）では押している間も 0.3 のまま。押した腕・ボタン自体は .active で光るので操作には困らない */
           #pad > :has(.active) { opacity: 0.6; }
         }
       }
