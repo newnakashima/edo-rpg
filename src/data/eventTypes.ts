@@ -62,9 +62,12 @@ export type EventStep =
    * 通れないマスの手前で止まる（eventStage.test.ts が、位置の分かる人の道が通れるかを確かめる）。
    * 歩き終えてから次の手順へ進む（wait: false なら歩き出したらすぐ次へ進み、二人を一緒に歩かせられる。
    * そのあとは、その人が歩き終える前にイベントが終わったり戦闘に入ったりしないよう、もっと長い歩きか wait を挟む）。
+   * route を書くと、to へまっすぐではなく、通れて人のいないマスをたどる一番短い道を歩く（屋内の形が町ごとに違う頼まれごとで、
+   * 戸口から入ってきた相手が主人公の隣まで来るとき・戸口へ去るとき）。to に入れなければ（人なら、そのマスに人が立っているので）、
+   * to にいちばん近いマス（人ならその隣）で止まる。
    * 動かしたマップの NPC は、イベントが終わると元の位置に戻る（残さない人は hideFlag で消す）。
    */
-  | { type: 'walk'; who: string; path?: string; to?: string | { x: number; y: number }; wait?: false }
+  | { type: 'walk'; who: string; path?: string; to?: string | { x: number; y: number }; route?: true; wait?: false }
   /** 演出: 向きを変える。dir か、toward（その人のほうを向く。'hero' も書ける）のどちらかを書く。 */
   | { type: 'face'; who: string; dir?: Facing; toward?: string }
   /** 演出: 人を見えなくする（イベントの間。マップの NPC を後まで消すときは hideFlag も立てる）。主人公には使えない。 */

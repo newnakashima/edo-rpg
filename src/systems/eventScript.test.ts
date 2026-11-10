@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { EventStep } from '../data/eventTypes';
-import { EventRunner, joinParty, leaveParty, MAX_PARTY, rejoinParty } from './eventScript';
+import { EventRunner, joinParty, leaveParty, MAX_PARTY, rejoinParty, routeTo } from './eventScript';
 import { newGame, type GameState } from './gameState';
 import { createMember, memberLevel, memberStats } from './party';
 
@@ -262,5 +262,40 @@ describe('エンディング（終章）', () => {
     expect(runner.done).toBe(true);
     // 終わったあとに進めても何も起きない
     expect(runner.next(state).request.kind).toBe('done');
+  });
+});
+
+describe('通れるマスをたどる道（walk の route）', () => {
+  // . は通れる、# は通れない
+  const grid = (rows: string[]) => (x: number, y: number) => rows[y]?.[x] === '.';
+
+  it('壁を回りこむ一番短い道を歩く', () => {
+    const open = grid(['.....', '.###.', '.....']);
+    const dirs = routeTo({ x: 2, y: 2 }, { x: 2, y: 0 }, open);
+    expect(dirs.length).toBe(6);
+    const end = dirs.reduce((p, d) => ({ x: p.x + { up: 0, down: 0, left: -1, right: 1 }[d], y: p.y + { up: -1, down: 1, left: 0, right: 0 }[d] }), { x: 2, y: 2 });
+    expect(end).toEqual({ x: 2, y: 0 });
+  });
+
+  it('行き先に入れなければ（人が立っている）、その隣で止まる', () => {
+    const open = (x: number, y: number) => grid(['.....', '.....'])(x, y) && !(x === 4 && y === 0);
+    const dirs = routeTo({ x: 0, y: 0 }, { x: 4, y: 0 }, open);
+    expect(dirs).toEqual(['right', 'right', 'right']);
+  });
+
+  it('どこへも行けなければ空、もう着いていても空', () => {
+    expect(routeTo({ x: 1, y: 1 }, { x: 3, y: 1 }, grid(['###', '#.#', '###']))).toEqual([]);
+    expect(routeTo({ x: 1, y: 1 }, { x: 1, y: 1 }, grid(['...', '...']))).toEqual([]);
+  });
+});
+
+describe('route の止まる場所', () => {
+  it('人の隣が同じ近さなら、その人より手前（下）でないマスに止まる（手前に立って画像で隠さない）', () => {
+    const rows = ['.....', '.....', '.....', '.....'];
+    const open = (x: number, y: number) => rows[y]?.[x] === '.' && !(x === 2 && y === 1);
+    const dirs = routeTo({ x: 2, y: 3 }, { x: 2, y: 1 }, open);
+    const end = dirs.reduce((p, d) => ({ x: p.x + { up: 0, down: 0, left: -1, right: 1 }[d], y: p.y + { up: -1, down: 1, left: 0, right: 0 }[d] }), { x: 2, y: 3 });
+    expect(end.y).toBeLessThanOrEqual(1);
+    expect(Math.abs(end.x - 2) + Math.abs(end.y - 1)).toBe(1);
   });
 });

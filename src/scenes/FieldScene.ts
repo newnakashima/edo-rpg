@@ -41,7 +41,7 @@ import { pendingOyabunGift } from '../data/oyabunGifts';
 import { pendingOyabunRequest } from '../data/oyabunRequests';
 import { oyabunStayCost, stayAtOyabun } from '../systems/jingi';
 import { CHAR_DISPLAY_ORIGIN, heroSprite, idleFrame, objectDepth, objectDisplayOrigin, objectKey, oppositeFacing, personDepth, shouldStandStill, spriteKey, walkAnimKey, walkDepthRow, type CharacterSpriteId } from '../data/sprites';
-import { EventRunner, pathFacings, pathTo, type EventInput, type StageActor, type StageStep } from '../systems/eventScript';
+import { EventRunner, pathFacings, pathTo, routeTo, type EventInput, type StageActor, type StageStep } from '../systems/eventScript';
 import { fieldCancelLabel } from '../ui/cancelLabel';
 import { Controls, setCancelLabel } from '../ui/input';
 import { FieldMenu } from '../ui/FieldMenu';
@@ -353,14 +353,26 @@ export class FieldScene extends Phaser.Scene {
       case 'walk': {
         const target = typeof step.to === 'string' ? this.stagePosition(runner, step.to) : step.to;
         const from = this.stagePosition(runner, step.who);
-        const dirs = target && from ? pathTo(from, target) : pathFacings(step.path ?? '');
+        const dirs = target && from ? (step.route ? routeTo(from, target, (x, y) => this.openForRoute(runner, step.who, x, y)) : pathTo(from, target)) : pathFacings(step.path ?? '');
+        // route の道は人のいないマスだけを通るので、行き先の人のマスに入れる goal はいらない
+        const goal = step.route ? undefined : target;
         if (step.wait === false) {
-          this.walkStage(runner, step.who, dirs, () => {}, () => {}, target);
+          this.walkStage(runner, step.who, dirs, () => {}, () => {}, goal);
           done();
-        } else this.walkStage(runner, step.who, dirs, () => {}, done, target);
+        } else this.walkStage(runner, step.who, dirs, () => {}, done, goal);
         return;
       }
     }
+  }
+
+  /** route の道が通れるマス（通れて、主人公・見えている NPC・歩く本人のほかの演出の人がいない）。 */
+  private openForRoute(runner: EventRunner, who: string, x: number, y: number): boolean {
+    const state = getState();
+    if (!canStep(this.map, x, y) || (state.x === x && state.y === y)) return false;
+    // 演出で動かした NPC は、マップに書いた位置ではなく演出の位置で見る
+    const npc = this.npcAt(x, y);
+    if (npc && !runner.stage.has(npc.id)) return false;
+    return ![...runner.stage.entries()].some(([id, a]) => id !== who && a.visible && a.x === x && a.y === y);
   }
 
   /** 主人公の隣の空いたマスの向き（主人公の向きの横、後ろ、前の順）。人や物のいるマスと通れないマスは避ける。 */
