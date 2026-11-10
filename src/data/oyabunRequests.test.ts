@@ -102,7 +102,7 @@ describe('親分の頼み', () => {
   it('親分は画面に出ないので、親分本人には喋らせない（若い衆が伝える）', () => {
     for (const [town, def] of Object.entries(OYABUN_REQUESTS)) {
       const name = OYABUN[town]!.welcome.split('「')[0]!;
-      for (const line of [...def.ask, ...def.confront, ...def.thanks]) expect(line.startsWith(`${name}「`), `${town}: ${line}`).toBe(false);
+      for (const line of [...def.ask, ...def.confront, ...def.flee, ...def.thanks, ...def.taunt]) expect(line.startsWith(`${name}「`), `${town}: ${line}`).toBe(false);
     }
   });
 });

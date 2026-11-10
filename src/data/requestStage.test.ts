@@ -97,3 +97,14 @@ describe('頼まれごと・親分の頼みの相手を画面に出す', () => {
     }
   });
 });
+
+describe('親分の頼みの相手の台詞', () => {
+  it('勝ったときの捨て台詞（flee）と負けたときの捨て台詞（taunt）は、どの町にも 1 行以上あり、相手が話す', () => {
+    for (const [town, def] of Object.entries(OYABUN_REQUESTS)) {
+      expect(def.flee.length, town).toBeGreaterThan(0);
+      expect(def.taunt.length, town).toBeGreaterThan(0);
+      const rival = speakerOf(def.confront[0]!);
+      for (const line of [...def.flee, ...def.taunt]) expect(speakerOf(line), `${town}: ${line}`).toBe(rival);
+    }
+  });
+});
