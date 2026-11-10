@@ -1671,6 +1671,110 @@ describe('終章の流れ', () => {
     expect(pagesOf({ ...ch8, gender: 'f' })).toEqual(['お志乃「……ふふ。勝手におし」']);
   });
 
+  it('エンディングの後日の場面は将軍の間で流さず、江戸の日本橋と東海道の浜松の茶屋の前へ移って、人を出して見せる', () => {
+    const list = requests('shogunNoMa', ch8);
+    const daigongenBattle = list.flatMap((q, i) => (q.kind === 'battle' ? [i] : []))[1]!;
+    const warps = list.flatMap((q, i) => (q.kind === 'warp' ? [{ i, mapId: q.mapId, x: q.x, y: q.y }] : []));
+    expect(warps.map((w) => [w.mapId, w.x, w.y])).toEqual([
+      ['edo', 32, 26],
+      ['hamamatsu', 20, 19],
+    ]);
+    const [toEdo, toHamamatsu] = warps;
+    expect(toEdo!.i).toBeGreaterThan(daigongenBattle);
+    expect(list.findIndex((q) => q.kind === 'ending')).toBeGreaterThan(toHamamatsu!.i);
+    const pageAt = (text: string) => list.findIndex((q) => q.kind === 'say' && q.pages.some((p) => p.includes(text)));
+    // 本物の上様は将軍の間で救い出され、上座の奥から主人公（18, 6）の前まで下りてくる
+    const shogunAt = list.findIndex((q) => q.kind === 'stage' && q.step.type === 'actor' && q.step.id === 'shogunHonmono');
+    expect(shogunAt).toBeGreaterThan(daigongenBattle);
+    expect(shogunAt).toBeLessThan(toEdo!.i);
+    const matsuHero = { x: 18, y: 6 };
+    expect(walkEnd(list, 'shogunHonmono', { x: 18, y: 1 }, 'matsuNoRoka', matsuHero)).toEqual({ x: 18, y: 5 });
+    // 霞は主人公の隣から上座の奥（座敷牢の前）へ駆け上がり、上様と一緒に下りてくる
+    const matsuList = list.slice(daigongenBattle, toEdo!.i);
+    expect(stages(matsuList).find((st) => st.type === 'actor' && st.id === 'kasumi')).toMatchObject({ x: 17, y: 6 });
+    const kasumiUp = walkEnd(matsuList, 'kasumi', { x: 17, y: 6 }, 'matsuNoRoka', matsuHero);
+    expect(kasumiUp.y).toBeLessThanOrEqual(2);
+    walkEnd(matsuList, 'kasumi', kasumiUp, 'matsuNoRoka', matsuHero, 1);
+    expect(pageAt('余を救ってくれたのか')).toBeLessThan(toEdo!.i);
+    // 榊兵庫の赦免は、上様の台詞で見せる
+    expect(pageAt('その者の罪は、余が許そう')).toBeLessThan(toEdo!.i);
+    // 仲間たちの行く末は江戸で（地の文で語らず、本人や瓦版売りの台詞で）
+    for (const text of ['お縄', '榊兵庫さま', 'ひと足先に江戸を発った', '公儀隠密の務めに戻る', '小さな寺を建てる', '新しい凧', '小判を投げ込んで', '火消しのお通り', '行くとするか']) {
+      expect(pageAt(text), text).toBeGreaterThan(toEdo!.i);
+      expect(pageAt(text), text).toBeLessThan(toHamamatsu!.i);
+    }
+    // お凛とは浜松の茶屋の前で会う
+    for (const text of ['遅かったじゃないか', '勝手にしな']) expect(pageAt(text), text).toBeGreaterThan(toHamamatsu!.i);
+    // 前のエンディングの、居場所や動きを語る地の文は使わない
+    for (const text of ['救い出された。', '縁台に、旅支度のお凛が座っていた。', '街道を西へ歩き出した。', '東海道の、とある茶屋。', '江戸を去った。']) {
+      expect(pageAt(text), text).toBe(-1);
+    }
+
+    // 江戸: 主人公（32, 26）の隣や近くに出た人が、通れるマスを主人公のマスを通らずに去り、出た位置は主人公のカメラに入る
+    const edo = MAPS.edo!;
+    const edoHero = { x: 32, y: 26 };
+    const edoList = list.slice(toEdo!.i, toHamamatsu!.i);
+    const scrollX = cameraScroll(edoHero.x * 16 + 8, Math.max(...edo.rows.map((r) => r.length)) * 16, GAME_WIDTH);
+    const scrollY = cameraScroll(edoHero.y * 16 + 8, edo.rows.length * 16, GAME_HEIGHT);
+    // 着地点と出す人のマスは、通れて、出口でも町の人のいるマスでもない
+    const freeSpot = (mapId: string, p: { x: number; y: number }) =>
+      canStep(MAPS[mapId]!, p.x, p.y) &&
+      !MAPS[mapId]!.exits.some((e) => e.x === p.x && e.y === p.y) &&
+      !MAPS[mapId]!.npcs.some((n) => n.x === p.x && n.y === p.y);
+    expect(freeSpot('edo', edoHero)).toBe(true);
+    expect(freeSpot('hamamatsu', { x: 20, y: 19 })).toBe(true);
+    const edoActors = stages(edoList).flatMap((st) => (st.type === 'actor' ? [st] : []));
+    for (const st of edoActors) {
+      const from = { x: st.x!, y: st.y! };
+      expect(freeSpot('edo', from), st.id).toBe(true);
+      expect(from.x === edoHero.x && from.y === edoHero.y, st.id).toBe(false);
+      expect(from.x * 16 >= scrollX && (from.x + 1) * 16 <= scrollX + GAME_WIDTH, st.id).toBe(true);
+      expect((from.y - 1) * 16 >= scrollY && (from.y + 1) * 16 <= scrollY + GAME_HEIGHT - 66, st.id).toBe(true);
+      // 出た人はみな歩いて去り、消える（江戸に残って warp で急に消える人はいない）
+      const walks = stages(edoList).filter((w) => w.type === 'walk' && w.who === st.id);
+      expect(walks.length, st.id).toBeGreaterThan(0);
+      let at = from;
+      walks.forEach((_, n) => (at = walkEnd(edoList, st.id, at, 'edo', edoHero, n)));
+      expect(vanished(edoList), st.id).toContain(st.id);
+    }
+    // 同時に立っている人どうしが同じマスに出ない（出たときに、まだ消えていない人の出たマスと重ならない）
+    for (let a = 0; a < edoActors.length; a++) {
+      for (let b = a + 1; b < edoActors.length; b++) {
+        const [p, q] = [edoActors[a]!, edoActors[b]!];
+        if (p.x === q.x && p.y === q.y) {
+          const outA = edoList.findIndex((r) => r.kind === 'stage' && r.step.type === 'vanish' && r.step.who === p.id);
+          const inB = edoList.findIndex((r) => r.kind === 'stage' && r.step.type === 'actor' && r.step.id === q.id);
+          expect(outA, `${p.id} と ${q.id}`).toBeLessThan(inB);
+        }
+      }
+    }
+    // 主人公は日本橋の通りを南へ下る（出口のマスには乗らない）
+    const leave = walkEnd(edoList, 'hero', edoHero, 'edo');
+    expect(leave.y).toBeGreaterThan(edoHero.y);
+    expect(edo.exits.some((e) => e.x === leave.x && e.y === leave.y)).toBe(false);
+
+    // 浜松: 東から茶屋の前まで歩いてお凛の隣に立ち、話したあと二人で西へ歩く
+    const hamaList = list.slice(toHamamatsu!.i);
+    const orin = stages(hamaList).find((st) => st.type === 'actor' && st.id === 'orin');
+    expect(orin).toMatchObject({ x: 12, y: 19 });
+    expect(freeSpot('hamamatsu', { x: 12, y: 19 })).toBe(true);
+    const door = MAPS.hamamatsu!.exits.find((e) => e.to === 'hamamatsuChaya');
+    expect(door, '茶屋の戸口').toBeDefined();
+    expect(Math.abs(door!.x - 12) + Math.abs(door!.y - 19)).toBe(1);
+    const met = walkEnd(hamaList, 'hero', { x: 20, y: 19 }, 'hamamatsu');
+    expect(Math.abs(met.x - 12) + Math.abs(met.y - 19)).toBe(1);
+    const orinEnd = walkEnd(hamaList, 'orin', { x: 12, y: 19 }, 'hamamatsu');
+    const heroEnd = walkEnd(hamaList, 'hero', met, 'hamamatsu', undefined, 1);
+    expect(orinEnd.x).toBeLessThan(12);
+    expect(heroEnd).toEqual({ x: orinEnd.x + 1, y: orinEnd.y });
+    for (const p of [met, orinEnd, heroEnd]) expect(freeSpot('hamamatsu', p), `${p.x},${p.y}`).toBe(true);
+    // gameCleared はエンディングの直前に立つ
+    const runner = new EventRunner(EVENTS.shogunNoMa!.steps);
+    let r = runner.next(ch8);
+    while (r.request.kind !== 'ending') r = runner.next(r.state, r.request.kind === 'battle' ? { kind: 'battle', outcome: 'victory' } : undefined);
+    expect(r.state.flags.gameCleared).toBe(true);
+  });
+
   it('大手門の門番は otemon のイベントで話す', () => {
     expect(MAPS.edo!.npcs.find((n) => n.id === 'edoMonban')).toMatchObject({ event: 'otemon', hideFlag: 'otemonOpen' });
   });
