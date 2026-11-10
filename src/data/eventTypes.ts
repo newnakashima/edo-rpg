@@ -71,7 +71,7 @@ export type EventStep =
   | { type: 'vanish'; who: string }
   /** 演出: 少し待つ（ミリ秒）。 */
   | { type: 'wait'; ms: number }
-  /** イベントを終え、エンディング（スタッフロールと「完」）を出してタイトルへ戻る（終章のからくり大権現を倒したあと）。 */
+  /** イベントを終え、エンディング（黒い画面に「終劇」）を出してタイトルへ戻る（終章のからくり大権現を倒したあと）。 */
   | { type: 'ending' };
 
 export interface EventDef {
