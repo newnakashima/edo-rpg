@@ -1529,7 +1529,11 @@ describe('終章の流れ', () => {
     const slash = walkEnd(list, 'hyogo', near, 'matsuNoRoka', hero, 1);
     const kinju = stages(list).filter((st) => st.type === 'actor' && st.id.startsWith('matsuKinju'));
     expect(kinju).toHaveLength(2);
-    for (const k of kinju) if (k.type === 'actor') expect(Math.abs(k.x! - slash.x) + Math.abs(k.y! + 1 - slash.y), k.id).toBeLessThanOrEqual(2);
+    for (const k of kinju) {
+      if (k.type !== 'actor') continue;
+      const at = walkEnd(list, k.id, { x: k.x!, y: k.y! }, 'matsuNoRoka', hero);
+      expect(Math.abs(at.x - slash.x) + Math.abs(at.y - slash.y), k.id).toBe(1);
+    }
     expect(walkEnd(list, 'hyogo', slash, 'matsuNoRoka', hero, 2)).toEqual({ x: npc.x, y: npc.y });
   });
 

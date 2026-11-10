@@ -4062,7 +4062,8 @@ export const EVENTS: Record<string, EventDef> = {
   },
   /**
    * 将軍の間へ向かう東の廊下（24, 11）か（24, 12）に乗ると始まる（主人公は西を向く。典膳の先で、将軍の間の口の手前）。
-   * 北の口からからくりの手下が下りてきてふさぎ（旗本・近習 2・御庭番の 4 体、Lv28。典膳の直後でも勝てる強さ。docs/balance.md）、勝つと前と後ろからさらに手下が押し寄せる。第 5 章で死んだと思われていた榊兵庫が
+   * 北の口からからくりの手下が下りてきてふさぐ（旗本・近習 2・御庭番の 4 体、Lv28。典膳の直後でも勝てる強さ。docs/balance.md）。
+   * 勝つと前と後ろからさらに手下が押し寄せる。第 5 章で死んだと思われていた榊兵庫が
    * 後ろから斬り込み、前の手下を斬り払って道を開け、追っ手を引き受ける（hyogoReturned。兵庫は廊下の 20, 12 に残る）。
    * 負けて出直すと、口上を短くする（hyogoReturnMet）。
    */
@@ -4098,7 +4099,7 @@ export const EVENTS: Record<string, EventDef> = {
       { type: 'say', lines: ['ガシャン、ガシャン、ガシャン……'] },
       enemyActor('matsuKinjuA', 'karakuriKinju', 17, 10),
       enemyActor('matsuKinjuB', 'karakuriKinju', 18, 10),
-      { type: 'walk', who: 'matsuKinjuA', path: 'd', wait: false },
+      { type: 'walk', who: 'matsuKinjuA', path: 'dd', wait: false },
       walk('matsuKinjuB', 'd'),
       enemyActor('matsuOniwabanA', 'karakuriOniwaban', 32, 11),
       enemyActor('matsuOniwabanB', 'karakuriOniwaban', 32, 12),
@@ -4135,14 +4136,14 @@ export const EVENTS: Record<string, EventDef> = {
           '兵庫「その経は、もうしばらく取っておいてくれ。……傷が癒えてから、鷲尾を追って江戸へ下った。火消しの頭に頼んで、ここまで紛れ込んできたのだ」',
         ],
       },
-      // 兵庫は（24, 12）の側を西へ進み、北の口から下りてきた手下（17, 11）（18, 11）の隣（19, 11）で斬り払う
-      walk('hyogo', 'lllllllu'),
+      // 兵庫は（24, 12）の側を西へ進み、北の口から下りてきた手下（17, 12）（18, 11）の両方の隣（18, 12）で斬り払う
+      walk('hyogo', 'llllllll'),
       face('hyogo', 'left'),
       { type: 'say', lines: ['ザンッ！'] },
       vanish('matsuKinjuA'),
       vanish('matsuKinjuB'),
       // 廊下の南の側（20, 12）へ下がり、後ろから来る追っ手に向き直る（北の側は将軍の間への道として空ける）
-      walk('hyogo', 'dr'),
+      walk('hyogo', 'rr'),
       face('hero', 'left'),
       { type: 'say', lines: ['ガシャン、ガシャン……'] },
       // 後ろから、追っ手がさらに押し寄せる
