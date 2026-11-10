@@ -1603,6 +1603,15 @@ describe('終章の流れ', () => {
     const again = requests('shogunNoMa', { ...ch8, flags: { ...ch8.flags, washioMet: true } });
     expect(stages(again)[0]).toEqual(first);
     expect(walkEnd(again, 'washioZa', washio, 'matsuNoRoka', hero)).toEqual(front);
+    // 歯車に呑まれた鷲尾は、大権現の戦いの前に消える（戦いから戻ると演出の位置に置き直されるため）
+    const vanishAt = list.findIndex((q) => q.kind === 'stage' && q.step.type === 'vanish' && q.step.who === 'washioZa');
+    const battles2 = list.flatMap((q, i) => (q.kind === 'battle' ? [i] : []));
+    expect(vanishAt).toBeGreaterThan(battles2[0]!);
+    expect(vanishAt).toBeLessThan(battles2[1]!);
+    // 大権現に負けて出直したときも主人公は間の中まで進み、消えた鷲尾は歩かせない
+    const afterWashio = requests('shogunNoMa', { ...ch8, flags: { ...ch8.flags, washioMet: true, washioDefeated: true } });
+    expect(stages(afterWashio)[0]).toEqual(first);
+    expect(stages(afterWashio).some((st) => 'who' in st && st.who === 'washioZa')).toBe(false);
     // 将軍の間の地の文で、二人の居場所を語らない（画面で見せる）
     expect(pagesIn(list).some((p) => p.includes('上座に、上様が端然と'))).toBe(false);
   });

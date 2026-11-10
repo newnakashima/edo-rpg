@@ -4281,6 +4281,8 @@ export const EVENTS: Record<string, EventDef> = {
               '歯車は鷲尾の体を呑み込み、金色の腕を何本も生やして、天井まで膨れ上がっていく……！',
             ],
           },
+          // 歯車に呑まれて消える（演出で動かした鷲尾は、大権現の戦いから戻ると演出の位置に置き直されるので、ここで消しておく）
+          vanish('washioZa'),
           partyOut('kasumi'),
           { type: 'say', lines: ['霞「なんだ、あれは……！」'] },
           ...partyIn('kasumi'),
