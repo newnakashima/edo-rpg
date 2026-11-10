@@ -99,6 +99,7 @@ const CASES: Case[] = [
   { name: '火鼠 ×3', enemies: ['hinezumi', 'hinezumi', 'hinezumi'], party: four, level: 25 },
   { name: 'からくり旗本 ×2＋御庭番（江戸城のイベント）', enemies: ['karakuriHatamoto', 'karakuriOniwaban', 'karakuriHatamoto'], party: four, level: 28, event: true },
   { name: '化け猫 ×2＋御庭番＋怨霊（江戸城のイベント）', enemies: ['ookuBakeneko', 'karakuriOniwaban', 'ookuBakeneko', 'onryo'], party: four, level: 28, event: true },
+  { name: 'からくり旗本＋近習 ×2＋御庭番（松の廊下のイベント）', enemies: ['karakuriHatamoto', 'karakuriKinju', 'karakuriOniwaban', 'karakuriKinju'], party: four, level: 28, event: true },
   { name: 'からくり旗本＋御庭番＋近習', enemies: ['karakuriHatamoto', 'karakuriOniwaban', 'karakuriKinju'], party: four, level: 28 },
 ];
 

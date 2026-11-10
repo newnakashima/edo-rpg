@@ -618,7 +618,7 @@ export const OSAKA_BUILDINGS: BuildingDef[] = [
         sprite: 'npc_ronin',
         lines: ['門弟「先生のお話では、米の値を吊り上げとる黒幕は、江戸のお城の中におるそうや。……わしらは、黙って飢えるつもりはあらへん」'],
         after: { flag: 'hyogoJoined', lines: ['門弟「先生が、あんたらと蔵へ向かわれた。……わしらは、先生の帰りをここで待つ」'] },
-        later: { flag: 'chapter5Cleared', lines: ['門弟「先生は、わしらの咎まで背負うて、奉行所へ行かれた。……わしらは、先生の教えを守って、この塾を続けていく」'] },
+        later: { flag: 'chapter5Cleared', lines: ['門弟「先生は、わしらの咎まで背負うて奉行所へ向かう途中で、鷲尾の手先に撃たれた。……先生の刀は、形見として塾でお守りしとる。わしらは、先生の教えを守って、この塾を続けていく」'] },
       },
       {
         id: 'osakaJukuMontei2',
@@ -628,7 +628,7 @@ export const OSAKA_BUILDINGS: BuildingDef[] = [
         color: 0xb08a5a,
         sprite: 'npc_kodomo',
         lines: ['子ども「先生は、読み書きのできん者は、だまされても気づかへんて言うてはった。せやから、おいらは字をいっぱい覚えるんや」'],
-        after: { flag: 'chapter5Cleared', lines: ['子ども「先生、いつ帰ってきはるんやろ。……先生が戻らはるまでに、論語をぜんぶ書けるようになっとくんや」'] },
+        after: { flag: 'chapter5Cleared', lines: ['子ども「先生の亡骸は、まだ上がらへんのやて。……せやから、おいらは先生が戻らはるまでに、論語をぜんぶ書けるようになっとくんや」'] },
       },
       {
         id: 'osakaJukuMontei3',

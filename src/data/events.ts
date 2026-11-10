@@ -638,7 +638,8 @@ const OSAKA_ARRIVE: EventStep[] = [
 ];
 
 /**
- * 百俵からくりを倒して大坂に戻ったとき（第 5 章の終わり）。蜂起は止められず、兵庫は町を焼かぬよう自ら奉行所へ名乗り出る。
+ * 百俵からくりを倒して大坂に戻ったとき（第 5 章の終わり）。蜂起は止められず、兵庫は町を焼かぬよう刀を置いて奉行所へ向かうが、
+ * 橋の上で鷲尾の手先の鉄砲に撃たれ、堂島川へ落ちる。亡骸は上がらず、一行も門弟も兵庫は死んだと思う（終章の松の廊下で再び現れる）。
  * 米蔵から出た北岸（26, 4）で始まる（百俵からくりの場面がここへ移す）。門弟たちが堂島川の橋の南から押し寄せ、兵庫が橋の上で止める。
  */
 const OSAKA_CHAPTER_END: EventStep[] = [
@@ -662,7 +663,7 @@ const OSAKA_CHAPTER_END: EventStep[] = [
       '門弟「蔵に火を放ちましょう！ 鷲尾の手先どもを焼き払うんです！」',
     ],
   },
-  // 兵庫は橋の上へ下りて、門弟たちの前に立ちふさがる
+  // 兵庫は橋の上（26, 6）へ下りて、門弟たちの前に立ちふさがる
   walk('hyogo', 'dld'),
   {
     type: 'say',
@@ -678,12 +679,41 @@ const OSAKA_CHAPTER_END: EventStep[] = [
     type: 'say',
     lines: ['兵庫「{hero}殿。短い間だったが、ともに戦えてうれしかった。……鷲尾を、頼む」', '兵庫「わしは奉行所へ参る。……達者でな」'],
   },
-  // 兵庫は橋を渡り、ひとりで奉行所へ向かっていく
-  walk('hyogo', 'dddddddd'),
+  // 兵庫が橋を渡りかけたところで、蔵の東の路地（30, 4）から鷲尾の手先が鉄砲を撃つ
+  walk('hyogo', 'd'),
+  { type: 'say', lines: ['ダーン！'] },
+  enemyActor('osakaTeppo', 'teppoAshigaru', 30, 4),
+  { type: 'say', lines: ['兵庫「ぐ……っ！」'] },
+  // 兵庫はよろめいて橋の端（25, 7）から川へ落ちる
+  walk('hyogo', 'l'),
   vanish('hyogo'),
+  { type: 'say', lines: ['ザブン……！'] },
+  { type: 'say', lines: ['門弟「先生ーっ！」'] },
+  faceTo('hero', 'osakaTeppo'),
+  { type: 'say', lines: ['鉄砲足軽「お白州で蔵の話をされては困る、とのお達しでな。……榊兵庫、口は封じたぞ」'] },
+  // 手先は路地を北へ逃げていく
+  walk('osakaTeppo', 'uuu'),
+  vanish('osakaTeppo'),
+  { type: 'say', lines: ['{hero}「待ちやがれ！ ……くそっ、鷲尾の手先か」'], linesF: ['{hero}「待ちな！ ……くっ、鷲尾の手先だね」'] },
+  face('hero', 'down'),
+  { type: 'say', lines: ['門弟「先生！ 先生ーっ！」', '門弟「流れが速すぎる……どこにも見えへん！」'] },
+  partyOut('gendo'),
+  { type: 'say', lines: ['玄道「舟を出せ！ 川下を探すのだ！」'] },
+  // 門弟の一人が舟を出しに南へ駆けていき、しばらくして戻ってくる
+  walk('osakaMonteiC', 'ddd'),
+  vanish('osakaMonteiC'),
+  wait(800),
+  actor('osakaMonteiC', 'npc_merchant', 25, 12, 'up'),
+  walk('osakaMonteiC', 'uuu'),
+  {
+    type: 'say',
+    lines: ['門弟「淀川の口まで探しました……。上がったのは、先生の羽織だけです」', '門弟「この寒の流れに、鉄砲の傷では……」'],
+  },
+  { type: 'say', lines: ['玄道〈悲〉「……世の中の理不尽を、一人で背負って逝きおった。わしら坊主より、よほど仏に近い。……南無阿弥陀仏」'] },
+  ...partyIn('gendo'),
   { type: 'leave', member: 'hyogo' },
   { type: 'say', lines: ['榊兵庫が一行を離れた。'] },
-  { type: 'say', lines: ['門弟「……蔵を開けて、米を配るんや。先生の言いつけや」'] },
+  { type: 'say', lines: ['門弟「……先生の刀は、塾でお守りします。蔵を開けて、米を配るんや。先生の言いつけや」'] },
   { type: 'walk', who: 'osakaMonteiA', path: 'dddd', wait: false },
   { type: 'walk', who: 'osakaMonteiB', path: 'dddd', wait: false },
   walk('osakaMonteiC', 'ddd'),
@@ -692,9 +722,8 @@ const OSAKA_CHAPTER_END: EventStep[] = [
   vanish('osakaMonteiB'),
   vanish('osakaMonteiC'),
   partyOut('orin'),
-  { type: 'say', lines: ['お凛〈悲〉「……あんな立派なお侍が、どうして咎めを受けなきゃならないんだい」'] },
-  partyOut('gendo'),
-  { type: 'say', lines: ['玄道〈悲〉「……世の中の理不尽を、一人で背負って行きおった。わしら坊主より、よほど仏に近い」'] },
+  { type: 'say', lines: ['お凛〈悲〉「……あんな立派なお侍が、どうしてこんな死に方をしなきゃならないんだい」'] },
+  { type: 'say', lines: ['お凛〈怒〉「鷲尾……。おとっつぁんだけじゃ、足りないってのかい」'] },
   // 入れ違いに、飛脚が橋を渡って駆けてくる
   actor('osakaHikyaku', 'npc_hikyaku', 26, 13, 'up'),
   // 主人公の 2 マス手前（26, 6）で止まる
@@ -706,14 +735,13 @@ const OSAKA_CHAPTER_END: EventStep[] = [
     type: 'say',
     lines: [
       '{hero}「霞からだ。……『江戸への知らせは済んだ。広島で待つ。南蛮のからくりの出どころを、長崎まで追う』」',
-      '{hero}「西国街道を西へ、広島で霞と落ち合おう」',
+      '{hero}「……兵庫さんの仇は、鷲尾を討って返す。西国街道を西へ、広島で霞と落ち合おう」',
     ],
     linesF: [
       '{hero}「霞からだよ。……『江戸への知らせは済んだ。広島で待つ。南蛮のからくりの出どころを、長崎まで追う』」',
-      '{hero}「西国街道を西へ、広島で霞と落ち合おう」',
+      '{hero}「……兵庫さんの仇は、鷲尾を討って返すよ。西国街道を西へ、広島で霞と落ち合おう」',
     ],
   },
-  ...partyIn('gendo'),
   ...partyIn('orin'),
   { type: 'setFlag', flag: 'chapter5Cleared' },
 ];
@@ -1694,7 +1722,7 @@ const EPILOGUE: EventStep[] = [
       'ゼンマイから解き放たれた人々は、それぞれの町へ帰っていった。',
       '霞は、公儀隠密の務めに戻っていった。「またどこかの町で会うかもね」と言い残して。',
       '玄道は、お鈴を連れて、焼けた神田に小さな寺を建てるという。',
-      '榊兵庫は、上様の御沙汰で罪を許され、大坂の町の立て直しを任された。',
+      '榊兵庫は、上様の御沙汰で罪を許され、門弟たちの待つ大坂へ帰っていった。町の立て直しを任されたという。',
       '金太は空に凧を揚げ、小吉は長屋に小判を投げ込み、火消したちは今日も江戸の町を走る。',
       '……そして、ひとりの渡世人が、誰にも名乗らずに江戸を去った。',
     ],
@@ -3997,33 +4025,155 @@ export const EVENTS: Record<string, EventDef> = {
       { type: 'setFlag', flag: 'ookuCleared' },
     ],
   },
-  /** 松の廊下に初めて入ったとき。伝馬町の牢から抜けてきた榊兵庫が待っている（matsuEntered。休息の間に兵庫が現れる）。 */
+  /**
+   * 松の廊下に初めて入ったとき（matsuEntered）。入口の階段の上（2, 21）に着くと、休息の間（2, 11）で待っていた火消しの若い衆が下りてきて、
+   * 手当ての支度があると知らせ、休息の間へ戻る（以後、話しかけると全回復する）。
+   */
   matsuEnter: {
     id: 'matsuEnter',
     steps: [
+      face('hero', 'up'),
+      partyOut('gendo'),
+      { type: 'say', lines: ['玄道「松の廊下……。この廊下で刀を抜けば、身分を問わず切腹と聞く」'] },
+      ...partyIn('gendo'),
+      // 休息の間から廊下を通って、主人公の前（2, 20）まで下りてきてから話す
+      walk('hikeshiRoka', 'dddrddddddl'),
       {
         type: 'say',
         lines: [
-          '大奥を抜けた先に、長い廊下が続いていた。襖には、見事な松の絵が描かれている。',
-          '玄道「松の廊下……。この廊下で刀を抜けば、身分を問わず切腹と聞く」',
-          '……廊下の手前の小部屋から、聞き覚えのある声がした。',
-          '兵庫「待っていたぞ、{hero}殿」',
-          'お凛「兵庫さま！ 奉行所に名乗り出たって……」',
-          '兵庫「大坂の一件の裁きのため、江戸の伝馬町の牢に移されていた。昨夜、小吉という男が牢の錠を開けてな」',
-          '兵庫「鷲尾を討つまでの間だけ、牢を抜ける。……裁きは、そのあとで受ける」',
-          '兵庫「傷を負ったら、この休息の間へ戻れ。手当ては、わしが引き受けよう」',
+          '若い衆「銀次の頭の言いつけで、ひと足先に回り込んでおりやした」',
+          '若い衆「この上の休息の間に、水と握り飯を支度してありやす。傷を負ったら、いつでも戻ってきなせえ」',
         ],
       },
+      partyOut('kasumi'),
+      { type: 'say', lines: ['霞「助かるよ。……頭に、よろしく伝えておくれ」'] },
+      ...partyIn('kasumi'),
+      walk('hikeshiRoka', 'ruuuuuuluuu'),
       { type: 'setFlag', flag: 'matsuEntered' },
     ],
   },
-  /** 松の廊下の休息の間の榊兵庫。話しかけると全回復する。 */
+  /** 松の廊下の休息の間の、火消しの若い衆。話しかけると全回復する。 */
+  hikeshiRoka: {
+    id: 'hikeshiRoka',
+    steps: [
+      { type: 'say', lines: ['若い衆「さ、握り飯と水を。……傷の手当ても、火消しの心得のうちでさあ」'] },
+      { type: 'heal' },
+    ],
+  },
+  /**
+   * 将軍の間へ向かう東の廊下（24, 11）か（24, 12）に乗ると始まる（主人公は西を向く。典膳の先で、将軍の間の口の手前）。
+   * 北の口からからくりの手下が下りてきてふさぐ（旗本・近習 2・御庭番の 4 体、Lv28。典膳の直後でも勝てる強さ。docs/balance.md）。
+   * 勝つと前と後ろからさらに手下が押し寄せる。第 5 章で死んだと思われていた榊兵庫が
+   * 後ろから斬り込み、前の手下を斬り払って道を開け、追っ手を引き受ける（hyogoReturned。兵庫は廊下の 20, 12 に残る）。
+   * 負けて出直すと、口上を短くする（hyogoReturnMet）。
+   */
+  hyogoReturn: {
+    id: 'hyogoReturn',
+    steps: [
+      // 主人公を（24, 11）に立たせる（兵庫が（24, 12）の側を通るため）
+      { type: 'walk', who: 'hero', to: { x: 24, y: 11 } },
+      face('hero', 'left'),
+      { type: 'say', lines: ['ガシャン、ガシャン……'] },
+      enemyActor('matsuHatamotoA', 'karakuriHatamoto', 17, 10),
+      enemyActor('matsuHatamotoB', 'karakuriHatamoto', 18, 10),
+      { type: 'walk', who: 'matsuHatamotoA', path: 'ddrr', wait: false },
+      walk('matsuHatamotoB', 'drr'),
+      wait(200),
+      {
+        type: 'if',
+        flag: 'hyogoReturnMet',
+        then: [{ type: 'say', lines: ['からくり旗本「ギギ……通サヌ」'] }],
+        else: [
+          { type: 'say', lines: ['からくり旗本「ギギ……コノ先ハ、上様ノ御座所。通サヌ」'] },
+          partyOut('orin'),
+          { type: 'say', lines: ['お凛〈怒〉「鷲尾はこの奥だね。……どいてもらうよ！」'] },
+          ...partyIn('orin'),
+          { type: 'setFlag', flag: 'hyogoReturnMet' },
+        ],
+      },
+      { type: 'battle', enemies: ['karakuriHatamoto', 'karakuriKinju', 'karakuriOniwaban', 'karakuriKinju'], level: 28 },
+      { type: 'say', lines: ['ガシャン……'] },
+      vanish('matsuHatamotoA'),
+      vanish('matsuHatamotoB'),
+      // 北の口から、さらに手下が下りてくる。後ろ（東の廊下）からも追っ手が来る
+      { type: 'say', lines: ['ガシャン、ガシャン、ガシャン……'] },
+      enemyActor('matsuKinjuA', 'karakuriKinju', 17, 10),
+      enemyActor('matsuKinjuB', 'karakuriKinju', 18, 10),
+      { type: 'walk', who: 'matsuKinjuA', path: 'dd', wait: false },
+      walk('matsuKinjuB', 'd'),
+      enemyActor('matsuOniwabanA', 'karakuriOniwaban', 32, 11),
+      enemyActor('matsuOniwabanB', 'karakuriOniwaban', 32, 12),
+      { type: 'walk', who: 'matsuOniwabanA', path: 'll', wait: false },
+      walk('matsuOniwabanB', 'll'),
+      face('hero', 'right'),
+      partyOut('kasumi'),
+      { type: 'say', lines: ['霞〈怒〉「後ろからもかい……！ きりがないよ！」'] },
+      ...partyIn('kasumi'),
+      // 後ろの手下の陰から、兵庫が斬り込む
+      { type: 'say', lines: ['ザンッ！ザンッ！'] },
+      vanish('matsuOniwabanA'),
+      vanish('matsuOniwabanB'),
+      actor('hyogo', 'hyogo', 31, 13, 'up'),
+      walk('hyogo', 'ulllll'),
+      faceTo('hyogo', 'hero'),
+      { type: 'say', lines: ['兵庫「……待たせたな、{hero}殿」'] },
+      partyOut('orin'),
+      { type: 'say', lines: ['お凛「兵庫さま……！？ 生きて……生きてたのかい……！」'] },
+      {
+        type: 'say',
+        lines: [
+          '兵庫「鷲尾の手先の弾は、肩を抜けただけだった。川下で、網打ちの舟に拾われてな」',
+          '兵庫「わしが生きておると知れれば、鷲尾はまた手を回す。門弟たちにも、死んだと思わせておいた。……すまなかった」',
+        ],
+      },
+      ...partyIn('orin'),
+      partyOut('gendo'),
+      { type: 'say', lines: ['玄道〈悲〉「わしは、おぬしのために経まで上げたのだぞ」'] },
+      ...partyIn('gendo'),
+      {
+        type: 'say',
+        lines: [
+          '兵庫「その経は、もうしばらく取っておいてくれ。……傷が癒えてから、鷲尾を追って江戸へ下った。火消しの頭に頼んで、ここまで紛れ込んできたのだ」',
+        ],
+      },
+      // 兵庫は（24, 12）の側を西へ進み、北の口から下りてきた手下（17, 12）（18, 11）の両方の隣（18, 12）で斬り払う
+      walk('hyogo', 'llllllll'),
+      face('hyogo', 'left'),
+      { type: 'say', lines: ['ザンッ！'] },
+      vanish('matsuKinjuA'),
+      vanish('matsuKinjuB'),
+      // 廊下の南の側（20, 12）へ下がり、後ろから来る追っ手に向き直る（北の側は将軍の間への道として空ける）
+      walk('hyogo', 'rr'),
+      face('hero', 'left'),
+      { type: 'say', lines: ['ガシャン、ガシャン……'] },
+      // 後ろから、追っ手がさらに押し寄せる
+      enemyActor('matsuOniwabanC', 'karakuriOniwaban', 32, 11),
+      enemyActor('matsuOniwabanD', 'karakuriOniwaban', 32, 12),
+      { type: 'walk', who: 'matsuOniwabanC', path: 'lll', wait: false },
+      walk('matsuOniwabanD', 'lll'),
+      face('hyogo', 'right'),
+      {
+        type: 'say',
+        lines: [
+          '兵庫「道は開いた。後から来る手下どもは、ここでわしが引き受ける」',
+          '兵庫「{hero}殿、鷲尾を討て！ ……傷を負ったら、わしのところへ戻れ。手当てくらいはしてやる」',
+        ],
+      },
+      {
+        type: 'say',
+        lines: ['{hero}「兵庫さん……。今度こそ、死ぬんじゃねえぞ」'],
+        linesF: ['{hero}「兵庫さん……。今度こそ、死ぬんじゃないよ」'],
+      },
+      { type: 'say', lines: ['兵庫「二度は死なん。……さあ、行け！」'] },
+      { type: 'setFlag', flag: 'hyogoReturned' },
+    ],
+  },
+  /** 将軍の間の口の手前で追っ手を引き受ける榊兵庫（hyogoReturned で現れる）。話しかけると全回復する。 */
   hyogoRoka: {
     id: 'hyogoRoka',
     steps: [
-      { type: 'say', lines: ['兵庫「傷を見せろ。……これでいい。鷲尾のところまで、あとひと息だ」'] },
+      { type: 'say', lines: ['兵庫「傷を見せろ。……これでいい。後ろは振り向くな。鷲尾のところまで、あとひと息だ」'] },
       { type: 'heal' },
-      { type: 'say', lines: ['一行の傷が癒えた。'] },
     ],
   },
   /**
