@@ -295,6 +295,11 @@ export class Menu {
   /** 上に別のメニューが重なっている間は false（クリックも受け付けない）。 */
   private active = true;
 
+  /** 取消で閉じる・戻る（onCancel がある）か。ないメニューでは、取消ボタンを薄く出す。 */
+  get cancelable(): boolean {
+    return this.onCancel !== undefined;
+  }
+
   constructor(
     scene: Phaser.Scene,
     x: number,

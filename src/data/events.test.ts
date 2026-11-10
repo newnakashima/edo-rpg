@@ -597,8 +597,7 @@ describe('第 4 章の流れ', () => {
 });
 
 describe('第 5 章の流れ', () => {
-  // 見送り: 「台詞を言う人（霞・玄道・お凛・兵庫など）が、その前に画面に出ていて消えていない」を、分岐ごとに機械的に確かめるテストはまだない。
-  // 話者名と画面の人の ID の対応表が要るので、全章の書き換えが終わったあとに eventStage.test.ts へ足す（speakerOf で話者を取り、actor・vanish をたどる）
+  // 「台詞を言う仲間（霞・玄道・お凛・兵庫）が、その前に画面に出ていて消えていない」は、eventStage.test.ts の「台詞を言う仲間が画面にいる」が分岐ごとに確かめる
   const base = newGame('m', MAPS.world!.towns!.find((t) => t.name === '大坂')!.to!);
   const party = [base.party[0]!, createMember('kasumi', 17), createMember('gendo', 17), createMember('orin', 17)];
   const ch4 = { ...base, party, flags: { intro: true, chapter3Cleared: true, orinJoined: true, chapter4Cleared: true } };

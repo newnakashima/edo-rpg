@@ -76,6 +76,8 @@ const WALKING_SPRITES: ReadonlySet<CharacterSpriteId> = new Set(['hero_m', 'hero
 interface Overlay {
   update(c: Controls): void;
   destroy(): void;
+  /** 取消で戻れるか（Menu の cancelable。書かないものは戻れる）。 */
+  readonly cancelable?: boolean;
 }
 
 export class FieldScene extends Phaser.Scene {
@@ -582,6 +584,7 @@ export class FieldScene extends Phaser.Scene {
         pageHasTerms: this.message.hasTerms,
         tipsOpen: this.message.tipsOpen,
         overlay: this.overlays.length > 0,
+        overlayCancels: this.overlays[this.overlays.length - 1]?.cancelable !== false,
         eventRunning: !!this.runner,
       }),
     );

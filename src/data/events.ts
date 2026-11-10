@@ -1698,15 +1698,21 @@ const DAIGONGEN_BATTLE: EventStep[] = [
     lines: [
       '大権現の胸の奥で、閉じ込められた魂のゼンマイが、青く光っている。',
       '……その光が、ふっと一行を包んだ。体の傷が、すっと癒えていく。',
-      '玄道「さらわれた者たちの魂が、力を貸してくれておる。……蘭斎どのの祝詞を唱える。それまで、あやつを弱らせてくれ！」',
     ],
   },
   { type: 'heal' },
+  // 台詞を言う玄道を画面に出す（テストプレイの指摘「その場に表示されていない人物が喋っている」）。戦闘の前に一度戻す
+  partyOut('gendo'),
+  faceTo('gendo', DAIGONGEN_ACTOR),
+  { type: 'say', lines: ['玄道「さらわれた者たちの魂が、力を貸してくれておる。……蘭斎どのの祝詞を唱える。それまで、あやつを弱らせてくれ！」'] },
+  ...partyIn('gendo'),
   { type: 'battle', enemies: ['karakuriDaigongen'], level: 32 },
+  partyOut('gendo'),
+  faceTo('gendo', DAIGONGEN_ACTOR),
   {
     type: 'say',
     lines: [
-      '玄道が、蘭斎の祝詞を朗々と唱えた。',
+      '玄道「掛けまくも畏き……さらわれし御魂よ、ゼンマイの縛めを解き、天へ還りたまえ！」',
       '大権現の胸のゼンマイが、ひとつ、またひとつとほどけ、青い光が天井へ昇っていく。',
       '鷲尾「やめろ……わしの……わしの泰平が……」',
     ],
@@ -1721,6 +1727,7 @@ const DAIGONGEN_BATTLE: EventStep[] = [
       '玄道〈悲〉「夜叉丸よ。お鈴は、確かに守った。……安心して行け」',
     ],
   },
+  ...partyIn('gendo'),
   { type: 'setFlag', flag: 'daigongenDefeated' },
 ];
 

@@ -3,9 +3,9 @@ import events from './events.ts?raw';
 import maps from './maps.ts?raw';
 import { findTerms, GLOSSARY, termsIn } from './glossary';
 
-// 町の人の台詞は maps.ts のほか、建物の屋内・民家・湯屋などの施設・親分の屋敷のファイルにもある
+// 町の人の台詞は maps.ts のほか、建物の屋内・民家・湯屋などの施設・親分の屋敷・頼まれごとのファイルにもある
 const npcSources = Object.values(
-  import.meta.glob<string>(['./buildings*.ts', './minka.ts', './townFacilities.ts', './oyabun.ts', '!./*.test.ts'], { eager: true, query: '?raw', import: 'default' }),
+  import.meta.glob<string>(['./buildings*.ts', './minka.ts', './townFacilities.ts', './oyabun.ts', './jingiRequests.ts', './oyabunRequests.ts', '!./*.test.ts'], { eager: true, query: '?raw', import: 'default' }),
 ).join('\n');
 
 describe('TIPS（用語の解説）', () => {
