@@ -1492,10 +1492,10 @@ describe('終章の流れ', () => {
     expect(MAPS.edojo!.npcs.find((n) => n.id === 'kokichiJo')?.action).toBe('hikyaku');
   });
 
-  it('将軍の間の手前で手下（Lv29、4 体）に勝つと兵庫が現れて引き受け（hyogoReturned）、以後は話しかけるたびに全回復する。負けたら立たず、出直すと口上を短くする', () => {
+  it('将軍の間の手前で手下（Lv28、4 体）に勝つと兵庫が現れて引き受け（hyogoReturned）、以後は話しかけるたびに全回復する。負けたら立たず、出直すと口上を短くする', () => {
     const entered = run('tenzen', run('matsuEnter', ch8));
     const b = battles('hyogoReturn', entered)[0];
-    expect(b).toMatchObject({ kind: 'battle', level: 29, canEscape: false, loseOk: false });
+    expect(b).toMatchObject({ kind: 'battle', level: 28, canEscape: false, loseOk: false });
     expect(b?.kind === 'battle' && b.enemies.length).toBe(4);
     const won = run('hyogoReturn', entered);
     expect(won.flags.hyogoReturned).toBe(true);

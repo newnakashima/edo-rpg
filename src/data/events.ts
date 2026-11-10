@@ -4062,7 +4062,7 @@ export const EVENTS: Record<string, EventDef> = {
   },
   /**
    * 将軍の間へ向かう東の廊下（24, 11）か（24, 12）に乗ると始まる（主人公は西を向く。典膳の先で、将軍の間の口の手前）。
-   * 北の口からからくりの手下が下りてきてふさぎ、勝つと前と後ろからさらに手下が押し寄せる。第 5 章で死んだと思われていた榊兵庫が
+   * 北の口からからくりの手下が下りてきてふさぎ（旗本・近習 2・御庭番の 4 体、Lv28。典膳の直後でも勝てる強さ。docs/balance.md）、勝つと前と後ろからさらに手下が押し寄せる。第 5 章で死んだと思われていた榊兵庫が
    * 後ろから斬り込み、前の手下を斬り払って道を開け、追っ手を引き受ける（hyogoReturned。兵庫は廊下の 20, 12 に残る）。
    * 負けて出直すと、口上を短くする（hyogoReturnMet）。
    */
@@ -4090,7 +4090,7 @@ export const EVENTS: Record<string, EventDef> = {
           { type: 'setFlag', flag: 'hyogoReturnMet' },
         ],
       },
-      { type: 'battle', enemies: ['karakuriHatamoto', 'karakuriKinju', 'karakuriOniwaban', 'karakuriHatamoto'], level: 29 },
+      { type: 'battle', enemies: ['karakuriHatamoto', 'karakuriKinju', 'karakuriOniwaban', 'karakuriKinju'], level: 28 },
       { type: 'say', lines: ['ガシャン……'] },
       vanish('matsuHatamotoA'),
       vanish('matsuHatamotoB'),

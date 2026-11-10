@@ -193,6 +193,7 @@ const STAGES: Stage[] = [
     events: [
       { name: 'からくり旗本 ×2＋御庭番（江戸城）', enemies: ['karakuriHatamoto', 'karakuriOniwaban', 'karakuriHatamoto'], level: 28 },
       { name: '化け猫 ×2＋御庭番＋怨霊（江戸城）', enemies: ['ookuBakeneko', 'karakuriOniwaban', 'ookuBakeneko', 'onryo'], level: 28 },
+      { name: 'からくり旗本＋近習 ×2＋御庭番（松の廊下）', enemies: ['karakuriHatamoto', 'karakuriKinju', 'karakuriOniwaban', 'karakuriKinju'], level: 28 },
     ],
     bosses: [
       { name: '鬼塚典膳（中ボス）', enemies: ['onizukaTenzen'], level: 30 },
