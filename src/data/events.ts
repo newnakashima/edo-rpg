@@ -3500,8 +3500,8 @@ export const EVENTS: Record<string, EventDef> = {
     ],
   },
   /**
-   * 飯盛山の洞門の前の平太 (45, 2)。新之助の頼みを聞いたあとなら、送り狼の群れ（Lv25）を退けて連れ帰る（heitaFound）。
-   * 主人公は平太の西・東・南のどれかに立っている。送り狼と雪女は山道の南の木の陰 (42〜46, 4〜5) から出てきて、主人公の立てるマスに重ならない。
+   * 飯盛山（MAPS.aizuIimoriyama）の頂の洞門の前の平太 (19, 2)。新之助の頼みを聞いたあとなら、送り狼の群れ（Lv25）を退けて連れ帰る（heitaFound）。
+   * 主人公は平太の西・東・南のどれかに立っている。送り狼と雪女は山道の南の木の陰 (16〜20, 4〜5) から出てきて、主人公の立てるマスに重ならない。
    * 勝つと平太は主人公のところへ歩いて一行に加わる（日新館の庭の平太 heitaHome が現れる）。
    */
   heita: {
@@ -3519,11 +3519,11 @@ export const EVENTS: Record<string, EventDef> = {
           partyOut('kasumi'),
           { type: 'say', lines: ['霞「平太だね。什の仲間が心配してたよ」', 'グルルル……。'] },
           ...partyIn('kasumi'),
-          enemyActor('iimoriOkamiA', 'okuriOkami', 46, 5),
+          enemyActor('iimoriOkamiA', 'okuriOkami', 20, 5),
           walk('iimoriOkamiA', 'u'),
-          enemyActor('iimoriOkamiB', 'okuriOkami', 44, 5),
-          enemyActor('iimoriOkamiC', 'okuriOkami', 43, 5),
-          enemyActor('iimoriYukiOnna', 'yukiOnna', 42, 5),
+          enemyActor('iimoriOkamiB', 'okuriOkami', 18, 5),
+          enemyActor('iimoriOkamiC', 'okuriOkami', 17, 5),
+          enemyActor('iimoriYukiOnna', 'yukiOnna', 16, 5),
           partyOut('gendo'),
           { type: 'say', lines: ['玄道「わしらの後ろへ下がっておれ、小僧！」'] },
           ...partyIn('gendo'),
@@ -4147,6 +4147,8 @@ export const EVENTS: Record<string, EventDef> = {
   sendaiChest2: chest('sendaiChest2', 'kitsukegusuri', '気付け薬'),
   aizuChest1: chest('aizuChest1', 'ninjin', '朝鮮人参'),
   aizuChest2: chest('aizuChest2', 'mishirazuGaki', '身不知柿'),
+  aizuChest3: chest('aizuChest3', 'bocha', '加賀棒茶'),
+  aizuChest4: chest('aizuChest4', 'michishirube', '道しるべの札'),
   edoChest1: chest('edoChest1', 'sakuraMochi', '桜餅'),
   edoChest2: chest('edoChest2', 'hangontan', '反魂丹'),
   taikaChest1: chest('taikaChest1', 'kitsukegusuri', '気付け薬'),

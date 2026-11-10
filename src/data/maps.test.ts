@@ -38,7 +38,7 @@ describe('タイルの画像', () => {
 
   it('タイルセットの割り当ては決めたとおり（ダンジョン・屋内・船は地域の見た目、町は建物を町ごとの見た目に。雪国の金沢・会津若松は雪の見た目）', () => {
     const expected: Record<string, string> = {
-      kanazawa: 'snow', kenrokuen: 'snow', aizu: 'snow', kitsunebiCave: 'cave',
+      kanazawa: 'snow', kenrokuen: 'snow', aizu: 'snow', aizuIimoriyama: 'snow', kitsunebiCave: 'cave',
       karakuriYashiki: 'karakuri', komeKura: 'karakuri', kenkyujo: 'karakuri', karakuriGura: 'karakuri',
       kobo: 'interior', takoya: 'interior', tenshu: 'castle', rashomon: 'ruins', oninosu: 'ruins', nanbanji: 'ruins',
       kitamaebune: 'ship', horikawaKura: 'kura', edoTaika: 'fire', edojo: 'castle', matsuNoRoka: 'castle',
@@ -1565,6 +1565,7 @@ describe('終章の江戸城', () => {
 describe('寄り道の会津若松', () => {
   const world = MAPS.world!;
   const aizu = MAPS.aizu!;
+  const iimori = MAPS.aizuIimoriyama!;
   // 町と、町の建物の中の人
   const everyone = [aizu, ...Object.values(MAPS).filter((m) => buildingTown(m.id) === 'aizu')].flatMap((m) => m.npcs);
   const town = world.towns!.find((t) => t.name === '会津若松')!;
@@ -1601,14 +1602,51 @@ describe('寄り道の会津若松', () => {
     expect(aizu.areaLevel).toBe(25);
   });
 
-  it('入口から飯盛山の洞門の前の平太・祠・葛籠まで歩いて行け、日新館の新之助に話しかけられる', () => {
+  it('入口から日新館の新之助や町の人に話しかけられ、町の東の外れの飯盛山の登り口まで歩いて行ける', () => {
     const area = reachable(aizu, town.to!, {}, true);
-    for (const id of ['heita', 'iimoriHokora', 'aizuChest1', 'shinnosuke', 'aizuChest2']) {
+    for (const id of ['shinnosuke', 'aizuChest2', 'iimoriJizo', 'aizuOkami', 'aizuKodomo', 'oyakuenBannin']) {
       const npc = aizu.npcs.find((n) => n.id === id)!;
       expect(near(area, npc.x, npc.y), id).toBe(true);
     }
+    const mouths = aizu.exits.filter((e) => e.to === 'aizuIimoriyama');
+    expect(mouths.length).toBeGreaterThan(0);
+    for (const out of mouths) expect(area.has(`${out.x},${out.y}`)).toBe(true);
     // 鶴ヶ城の中へは、門番がふさいで入れない
     expect(area.has('24,7')).toBe(false);
+  });
+
+  it('飯盛山は奥州街道の敵が出るダンジョン（寄り道イベントのボリュームが小さいという指摘）。南の口から町の東の外れへ戻り、全滅したら会津若松へ', () => {
+    expect(iimori.encounter).toBe('oshu');
+    expect(iimori.areaLevel).toBe(aizu.areaLevel);
+    expect(isDungeon(iimori)).toBe(true);
+    expect(respawnPoint('aizuIimoriyama')).toEqual({ mapId: 'aizu', ...aizu.respawn });
+    // 町の口と飯盛山の口が、互いの隣に着く（出口のマスに着いてすぐ戻らない）
+    for (const into of aizu.exits.filter((e) => e.to === 'aizuIimoriyama')) {
+      expect(tileAt(iimori, into.toX, into.toY)?.blocked).toBe(false);
+      expect(iimori.exits.some((e) => e.x === into.toX && e.y === into.toY)).toBe(false);
+      expect(iimori.exits.some((e) => Math.abs(e.x - into.toX) + Math.abs(e.y - into.toY) === 1)).toBe(true);
+    }
+    for (const back of iimori.exits) {
+      expect(back.to).toBe('aizu');
+      expect(tileAt(aizu, back.toX, back.toY)?.blocked).toBe(false);
+      expect(aizu.exits.some((e) => e.x === back.toX && e.y === back.toY)).toBe(false);
+      expect(aizu.exits.some((e) => e.to === 'aizuIimoriyama' && Math.abs(e.x - back.toX) + Math.abs(e.y - back.toY) === 1)).toBe(true);
+    }
+    expect(escapePoint('aizuIimoriyama')).toEqual({ mapId: 'aizu', x: 41, y: 11 });
+    // 口から頂の平太・祠・石碑・葛籠まで歩いて行ける
+    const entry = iimori.exits[0]!;
+    const area = reachable(iimori, { x: entry.x, y: entry.y }, {}, true);
+    for (const id of ['heita', 'iimoriHokora', 'tonokuchiSekihi', 'aizuChest1', 'aizuChest3', 'aizuChest4']) {
+      const npc = iimori.npcs.find((n) => n.id === id)!;
+      expect(near(area, npc.x, npc.y), id).toBe(true);
+    }
+    // 平太は口から離れた頂にいる（戦い 1 回で終わらない）。人を避けて歩いた歩数を数える
+    const steps = walkSteps(iimori, { x: entry.x, y: entry.y }, {}, true);
+    const heita = iimori.npcs.find((n) => n.id === 'heita')!;
+    expect(steps.get(`${heita.x},${heita.y + 1}`)).toBeGreaterThanOrEqual(40);
+    // 送り狼と雪女の出てくる山道の南 (16〜20, 5) は通れるマスで、洞門の前へは (20, 4) からしか上がれない（heita の立ち位置の前提）
+    for (let x = 16; x <= 20; x++) expect(tileAt(iimori, x, 5)?.blocked, `${x},5`).toBe(false);
+    for (let x = 15; x <= 23; x++) expect(tileAt(iimori, x, 4)?.blocked, `${x},4`).toBe(x !== 20);
   });
 
   it('町の人の台詞は、平太が戻る（heitaFound）・什の一件が済む（aizuJuuDone）と変わる', () => {

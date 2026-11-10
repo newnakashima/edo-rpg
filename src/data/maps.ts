@@ -4134,7 +4134,7 @@ MAPS.kiyomasaIdo = {
 
 /**
  * 寄り道の会津若松（第 8 章、仙台で重臣の話を聞いたあと。奥州街道から西へ折れた先）。
- * 北の中央に堀と石垣を巡らせた鶴ヶ城、北西に藩校の日新館（什の少年たちが集まる庭）、北東に飯盛山（洞門の前に平太）。
+ * 北の中央に堀と石垣を巡らせた鶴ヶ城、北西に藩校の日新館（什の少年たちが集まる庭）、北東に飯盛山の登り口。登り口から、飯盛山（MAPS.aizuIimoriyama。ダンジョン）へ入る。
  * 大町通りの南に店並び（旅籠・茶屋・飛脚・よろず屋・刀鍛冶・造り酒屋）、七日町通りの南に寺・長屋・武家屋敷・塗師、南東に御薬園の池。
  * サブイベント: 什の掟を守る少年たち（aizuJuuAsked → 飯盛山で送り狼から平太を助ける heitaFound → 什長の新之助に報告して aizuJuuDone）。
  */
@@ -4145,18 +4145,18 @@ MAPS.aizu = {
   tileset: 'snow',
   rows: [
     'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
-    'T,............~~~~~~~~~~~~~~~~~~~~~~,,,TTTT^^^^^TTTT',
-    'T,WWWWWWWWWW..~~^^^^^^^^^^^^^^^^^^~~,,,TTT^^...^^TTT',
-    'T,WRRRRRRRRW..~~^^WRRRRRRRRRRRRW^^~~,,,TTT^.....^TTT',
-    'T,WRRRRRRRRW..~~^^WRRRRRRRRRRRRW^^~~,,,TTTTTTT.TTTTT',
-    'T,WRRRRRRRRW..~~^^WRRRRRRRRRRRRW^^~~,,,TT......TTTTT',
-    'T,WWWWDWWWWW..~~^^WWWWWWDWWWWWWW^^~~,,,TT.TTTTTTTTTT',
-    'T,............~~^^..............^^~~,,,TT........TTT',
-    'T,............~~^^^^^^^^..^^^^^^^^~~,,,TTTTTTTTT.TTT',
-    'T,......,,,,,,~~~~~~~~~~==~~~~~~~~~~,,,TT........TTT',
+    'T,............~~~~~~~~~~~~~~~~~~~~~~,,,TTTTTTTTTTTTT',
+    'T,WWWWWWWWWW..~~^^^^^^^^^^^^^^^^^^~~,,,TTTTTTTTTTTTT',
+    'T,WRRRRRRRRW..~~^^WRRRRRRRRRRRRW^^~~,,,TTTTTTTTTTTTT',
+    'T,WRRRRRRRRW..~~^^WRRRRRRRRRRRRW^^~~,,,TTTTTTTTTTTTT',
+    'T,WRRRRRRRRW..~~^^WRRRRRRRRRRRRW^^~~,,,TTTTTTTTTTTTT',
+    'T,WWWWDWWWWW..~~^^WWWWWWDWWWWWWW^^~~,,,TTTTTTTTTTTTT',
+    'T,............~~^^..............^^~~,,,TTTTTTTTTTTTT',
+    'T,............~~^^^^^^^^..^^^^^^^^~~,,,TTTTTTTTTTTTT',
+    'T,......,,,,,,~~~~~~~~~~==~~~~~~~~~~,,,TTTTTTTTTTTTT',
     'T,......,,,,,,~~~~~~~~~~==~~~~~~~~~~,,,TT.TTTTTTTTTT',
-    'T,......,,,,,,.............,,,,,,,,,,,,TT.TTTTTTTTTT',
-    'T,......,,,,,,.............,,,,,,,,,,,,TT.TTTTTTTTTT',
+    'T,......,,,,,,.............,,,,,,,,,,,,TT.,TTTTTTTTT',
+    'T,......,,,,,,.............,,,,,,,,,,,,TT.,TTTTTTTTT',
     'T===================================================',
     'T==================================================T',
     'T.......................=................RRRRRRRRR.T',
@@ -4234,18 +4234,16 @@ MAPS.aizu = {
       sprite: 'npc_monban',
       lines: ['門番「先日、江戸の御老中の使いと名乗る者が来て、殿の御姿を細かく写させよと申した。……もちろん、追い返してやったわ」'],
     },
-    // 飯盛山の洞門の前
-    { id: 'heita', name: '平太', x: 45, y: 2, color: 0x8a9a6a, sprite: 'npc_kodomo', event: 'heita', hideFlag: 'heitaFound' },
+    // 町の東の外れ、飯盛山の登り口の目印
     {
-      id: 'iimoriHokora',
-      name: '祠',
-      x: 47,
-      y: 3,
-      color: 0x8a7a5a,
-      object: 'hokora',
-      lines: ['山の神を祀る小さな祠。供えられた握り飯が、雪をかぶっている。'],
+      id: 'iimoriJizo',
+      name: '地蔵',
+      x: 42,
+      y: 11,
+      color: 0x8a8a8a,
+      object: 'jizo',
+      lines: ['登り口に、雪をかぶった地蔵が立っている。この先の山道を登れば、飯盛山だ。'],
     },
-    { id: 'aizuChest1', name: '葛籠', x: 43, y: 3, color: 0x8a6a3a, object: 'tsuzura', event: 'aizuChest1' },
     // 大町通りの店並びの旅籠・茶屋・飛脚・よろず屋・刀鍛冶の人と造り酒屋の番頭、七日町通りの南の寺の僧・藩士・塗師は、建物の中（src/data/buildingsAizu.ts）
     // 七日町通りの南（長屋の戸 15, 28 の前に立っていたおかみは、民家に入れるよう 1 マス左へずらした）
     {
@@ -4285,9 +4283,89 @@ MAPS.aizu = {
   exits: [
     // 東の大町通りから、奥州街道の脇道へ
     { x: 51, y: 13, to: 'world', toX: 124, toY: 17 },
+    // 町の東の外れ、飯盛山の登り口から、飯盛山の山道へ
+    { x: 41, y: 10, to: 'aizuIimoriyama', toX: 18, toY: 26 },
   ],
   respawn: { x: 5, y: 21 },
   onEnter: { event: 'aizuEnter', unless: 'aizuIntro' },
+};
+
+/**
+ * 飯盛山（寄り道の会津若松）。猪苗代の湖の水を城下へ引く堰の洞門がある雪の山。
+ * 南の登り口（会津若松の町の東の外れ）から入り、麓の雪原で西の凍った池・北の山道に分かれる。山道を東へつづら折りに北東の尾根まで登り、
+ * 尾根から西へ回りこんで、頂の洞門の前へ上がる。洞門の前に、黄連の根を採りに来た平太がいる。西の見晴らしに戸ノ口堰の石碑。
+ * 奥州街道と同じ敵が出る（会津若松のまわりの脇道と同じ）。
+ */
+MAPS.aizuIimoriyama = {
+  id: 'aizuIimoriyama',
+  name: '飯盛山',
+  areaLevel: 25,
+  tileset: 'snow',
+  rows: [
+    'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
+    'TTTTTTTTTTTTTTTTT^^^^^TTTTTTTTTTTTTTTT',
+    'TTTTTTTTTTTTTTTT^^...^^TTTTTTTTTTTTTTT',
+    'TTTTTTTTTTTTTTTT^.....^TTTTTTTTTTTTTTT',
+    'TTTTTTTTTTTTTTTTTTTT.TTTTTT,,,,,,,,TTT',
+    'TTTTTTTTTTTTTT,......,,TTTT,..^^..,TTT',
+    'TTTTTTTTTT,....,TTTTT,..,,,,......,TTT',
+    'TTTTTTTTTT,....,TTTTTTTT,..,.....^,TTT',
+    'TTTTTTTTTT,,,,,,TTTTTTTTTTT,^.....,TTT',
+    'TTTTTTTTTTTTTTTTTTTTTTTTTTT,,,,,.,,TTT',
+    'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT.,TTTT',
+    'TTTTTTTTTTTTTTTTTTTTTTTTTT,,,,,,.,TTTT',
+    'TTTTTTTTTTTTTTTTTTTTTTTTT........TTTTT',
+    'TTTTTTTTTTTTTTTTTTTTTTTT,.,,,,,,TTTTTT',
+    'TTTTTTTTTTTTTTTTTTTTTTTT,.,T,,,,,TTTTT',
+    'TTTTTTTTTTTTTTTTTTTTTTTTT........TTTTT',
+    'TTTTTTTTTTTTTTTTTTTTTTTTTTT,,,,,.,TTTT',
+    'TTT,,,,,TTTTTTTTTTTTTTTTTTTTTTTT.,TTTT',
+    'TTT,,.,,TTTTTTTTTTTTTTT,,,,,,,T,.TTTTT',
+    'TTT,,,,,TTTTTTTTTTTTTT...........TTTTT',
+    'TTTT,,,,,,,TTTTTTTTTT,.,,,,,,,,TTTTTTT',
+    'TTTT,~~~~,,TTTTTTTTTT,.TTTTTTTTTTTTTTT',
+    'TTTT,~~~~,,TT,,,^,,,,,,,,,,TTTTTTTTTTT',
+    'TTTT,~~~~,,..............^,TTTTTTTTTTT',
+    'TTTT,,.,,.,TT,,..........,,TTTTTTTTTTT',
+    'TTTT,,,,,,,TT,,,,,..,,,,,,,TTTTTTTTTTT',
+    'TTTTTTTTTTTTTTTTT,..,TTTTTTTTTTTTTTTTT',
+    'TTTTTTTTTTTTTTTTTT..TTTTTTTTTTTTTTTTTT',
+  ],
+  npcs: [
+    // 頂の洞門の前
+    { id: 'heita', name: '平太', x: 19, y: 2, color: 0x8a9a6a, sprite: 'npc_kodomo', event: 'heita', hideFlag: 'heitaFound' },
+    {
+      id: 'iimoriHokora',
+      name: '祠',
+      x: 21,
+      y: 3,
+      color: 0x8a7a5a,
+      object: 'hokora',
+      lines: ['山の神を祀る小さな祠。供えられた握り飯が、雪をかぶっている。'],
+    },
+    { id: 'aizuChest1', name: '葛籠', x: 17, y: 3, color: 0x8a6a3a, object: 'tsuzura', event: 'aizuChest1' },
+    // 西の見晴らし
+    {
+      id: 'tonokuchiSekihi',
+      name: '石碑',
+      x: 11,
+      y: 6,
+      color: 0x8a8a8a,
+      object: 'sekihi',
+      lines: ['「戸ノ口堰」と刻まれた石碑。猪苗代の湖の水を、山の洞門をくぐらせて城下へ引いたと記されている。'],
+    },
+    // 麓の西の、凍った池の北
+    { id: 'aizuChest3', name: '葛籠', x: 5, y: 18, color: 0x8a6a3a, object: 'tsuzura', event: 'aizuChest3' },
+    // 北東の尾根の、岩の陰
+    { id: 'aizuChest4', name: '葛籠', x: 33, y: 8, color: 0x8a6a3a, object: 'tsuzura', event: 'aizuChest4' },
+  ],
+  exits: [
+    // 南の登り口から、会津若松の町の東の外れへ戻る
+    { x: 18, y: 27, to: 'aizu', toX: 41, toY: 11 },
+    { x: 19, y: 27, to: 'aizu', toX: 41, toY: 11 },
+  ],
+  encounter: 'oshu',
+  respawnMap: 'aizu',
 };
 
 /**
