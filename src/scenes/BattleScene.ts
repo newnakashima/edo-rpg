@@ -28,7 +28,7 @@ import { gainExp } from '../systems/party';
 import { playBgm } from '../systems/audio';
 import { defaultRng } from '../systems/random';
 import { getState, reportBattleOutcome, setState } from '../state';
-import { CANCEL, menuCancelLabel } from '../ui/cancelLabel';
+import { CANCEL_DISABLED, menuCancelLabel } from '../ui/cancelLabel';
 import { Controls, setCancelLabel } from '../ui/input';
 import { COLORS, GAME_HEIGHT, GAME_WIDTH, setupCamera, textStyle } from '../ui/theme';
 import { itemIcon, SKILL_ICON } from '../ui/icons';
@@ -645,7 +645,8 @@ export class BattleScene extends Phaser.Scene {
 
   update(): void {
     if (this.message.isOpen) {
-      setCancelLabel(CANCEL);
+      // 戦闘のメッセージは用語を出さず、取消では何も起きないので薄く出す
+      setCancelLabel(CANCEL_DISABLED);
       this.message.update(this.controls);
       return;
     }
