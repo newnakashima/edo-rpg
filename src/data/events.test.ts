@@ -1636,7 +1636,7 @@ describe('終章の流れ', () => {
       expect(vanished(list, who), who).toBeLessThan(giantAt);
     }
     expect(vanished(list, 'daigongenZa')).toBeGreaterThan(daigongenBattle!);
-    expect(list.findIndex((q) => q.kind === 'say' && q.pages.some((p) => p.includes('崩れ落ち')))).toBeGreaterThan(vanished(list, 'daigongenZa'));
+    expect(list.findIndex((q) => q.kind === 'say' && q.pages.some((p) => p.includes('崩れ去り')))).toBeGreaterThan(vanished(list, 'daigongenZa'));
 
     // 大権現に負けて出直したとき: 巨大な姿は初めから上座にいて（ふくらまない）、戦いの前に出る
     const again = requests('shogunNoMa', { ...ch8, flags: { ...ch8.flags, washioMet: true, washioDefeated: true } });

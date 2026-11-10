@@ -439,6 +439,8 @@ export class FieldScene extends Phaser.Scene {
       obj = created;
     }
     if (!obj || obj === this.player) return;
+    // 同じ ID・同じ敵の画像で大きさだけ変えたときも、その大きさにする
+    if (actor.enemy && this.stageSprites.has(id) && !(obj instanceof Phaser.GameObjects.Sprite)) setEnemyStageScale(obj, actor.scale ?? ENEMY_STAGE_SCALE);
     obj.setPosition(actor.x * TILE, actor.y * TILE).setDepth(personDepth(actor.y)).setVisible(actor.visible);
     if (obj instanceof Phaser.GameObjects.Sprite) obj.setFrame(idleFrame(actor.facing));
   }

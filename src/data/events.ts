@@ -14,8 +14,8 @@ function actor(id: string, sprite: CharacterSpriteId, x?: number, y?: number, fa
   return x === undefined || y === undefined ? { type: 'actor', id, sprite } : { type: 'actor', id, sprite, x, y, ...(facing ? { facing } : {}) };
 }
 /** 戦闘にしか出ない敵を、戦闘の画像でイベントの間だけ出す。 */
-function enemyActor(id: string, enemy: string, x: number, y: number): EventStep {
-  return { type: 'actor', id, enemy, x, y };
+function enemyActor(id: string, enemy: string, x: number, y: number, size?: { scale: number; grow?: true }): EventStep {
+  return { type: 'actor', id, enemy, ...size, x, y };
 }
 function walk(who: string, path: string): EventStep {
   return { type: 'walk', who, path };
@@ -1688,7 +1688,7 @@ const OHARU_FIRE: EventStep[] = [
  */
 const DAIGONGEN_ACTOR = 'daigongenZa';
 function daigongenActor(grow?: true): EventStep {
-  return { type: 'actor', id: DAIGONGEN_ACTOR, enemy: 'karakuriDaigongen', scale: 1, ...(grow ? { grow } : {}), x: 18, y: 5 };
+  return enemyActor(DAIGONGEN_ACTOR, 'karakuriDaigongen', 18, 5, grow ? { scale: 1, grow } : { scale: 1 });
 }
 
 /** 鷲尾を倒したあと（からくり大権現との戦いの前）。閉じ込められた魂の光が一行を癒やす。 */
@@ -1711,12 +1711,12 @@ const DAIGONGEN_BATTLE: EventStep[] = [
       '鷲尾「やめろ……わしの……わしの泰平が……」',
     ],
   },
-  // 巨大な姿が崩れ落ちて消える
+  // 巨大な姿が崩れ去って消える（消えた画面に合わせて、地の文は短く）
   vanish(DAIGONGEN_ACTOR),
   {
     type: 'say',
     lines: [
-      '金色の腕が崩れ落ち、歯車の山の中に、鷲尾の姿は消えた。',
+      '金色の巨体は崩れ去り、鷲尾の姿も、どこにもなかった。',
       '昇っていく光の中に、寄り添うふたつの影が見えた。夜叉丸と、その妻らしい女の影だった。',
       '玄道〈悲〉「夜叉丸よ。お鈴は、確かに守った。……安心して行け」',
     ],
