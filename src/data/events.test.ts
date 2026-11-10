@@ -12,6 +12,8 @@ import { SKILLS } from './skills';
 import { canStep, MAPS, npcLines, npcVisible, respawnPoint, tileAt } from './maps';
 import { EventRunner, pathFacings, pathTo } from '../systems/eventScript';
 import { newGame, type GameState } from '../systems/gameState';
+import { cameraScroll } from '../ui/cameraScroll';
+import { GAME_HEIGHT, GAME_WIDTH } from '../ui/theme';
 import { createMember, memberLevel } from '../systems/party';
 
 /** イベントの手順を、分岐の中まで含めてすべてたどる。 */
@@ -1575,6 +1577,34 @@ describe('終章の流れ', () => {
     const triggers = MAPS.matsuNoRoka!.triggers!.filter((t) => t.event === 'shogunNoMa');
     expect(triggers.length).toBeGreaterThan(0);
     for (const t of triggers) expect(t.unless).toBe('daigongenDefeated');
+  });
+
+  it('将軍の間では、主人公が間の中まで進み、上座の上様（影武者）と鷲尾の二人が画面に入る。鷲尾は前へ出て話し、負けると上様の脇へ上がる', () => {
+    const map = MAPS.matsuNoRoka!;
+    const list = requests('shogunNoMa', ch8);
+    const first = stages(list)[0];
+    expect(first).toEqual({ type: 'walk', who: 'hero', to: { x: 18, y: 6 } });
+    const hero = { x: 18, y: 6 };
+    const washio = map.npcs.find((n) => n.id === 'washioZa')!;
+    const shogun = map.npcs.find((n) => n.id === 'kagemushaShogun')!;
+    // 前へ出た鷲尾は主人公の前に立ち、負けると上様の隣へ上がる
+    const front = walkEnd(list, 'washioZa', washio, 'matsuNoRoka', hero);
+    expect(front).toEqual({ x: hero.x, y: hero.y - 2 });
+    const side = walkEnd(list, 'washioZa', front, 'matsuNoRoka', hero, 1);
+    expect(Math.abs(side.x - shogun.x) + Math.abs(side.y - shogun.y)).toBe(1);
+    // 主人公の位置でのカメラ（FieldScene と同じ計算）に、二人の頭（1 マス上）から足元までと、鷲尾の歩く道が入る（下の台詞の窓 66 px にもかからない）
+    const scrollX = cameraScroll(hero.x * 16 + 8, Math.max(...map.rows.map((r) => r.length)) * 16, GAME_WIDTH);
+    const scrollY = cameraScroll(hero.y * 16 + 8, map.rows.length * 16, GAME_HEIGHT);
+    for (const p of [washio, shogun, front, side]) {
+      expect(p.x * 16 >= scrollX && (p.x + 1) * 16 <= scrollX + GAME_WIDTH, `${p.x},${p.y}`).toBe(true);
+      expect((p.y - 1) * 16 >= scrollY && (p.y + 1) * 16 <= scrollY + GAME_HEIGHT - 66, `${p.x},${p.y}`).toBe(true);
+    }
+    // 出直したときも、主人公は間の中まで進み、鷲尾が前へ出る
+    const again = requests('shogunNoMa', { ...ch8, flags: { ...ch8.flags, washioMet: true } });
+    expect(stages(again)[0]).toEqual(first);
+    expect(walkEnd(again, 'washioZa', washio, 'matsuNoRoka', hero)).toEqual(front);
+    // 将軍の間の地の文で、二人の居場所を語らない（画面で見せる）
+    expect(pagesIn(list).some((p) => p.includes('上座に、上様が端然と'))).toBe(false);
   });
 
   it('エンディングの茶屋の場面は、主人公が女なら台詞を変える', () => {
