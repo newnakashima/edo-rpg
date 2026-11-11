@@ -2,7 +2,9 @@
 
 架空の江戸時代を舞台にした和風 RPG です。ブラウザとスマートフォンで遊べる 2D の JRPG を目指しています。
 
-**遊ぶ: https://newnakashima.github.io/edo-rpg/**
+**遊ぶ: [https://newnakashima.github.io/edo-rpg/](https://newnakashima.github.io/edo-rpg/)**
+
+このゲームは、コードのほぼすべてを [Claude Code](https://claude.com/claude-code) が書き、ドット絵の画像を [PixelLab](https://www.pixellab.ai/) で作った実験的なゲームです。人間が関わったのは、ほぼ企画とテストプレイのフィードバックだけです。
 
 | タイトル | 町を歩く（京） | 戦闘（酒呑の大鬼） |
 | --- | --- | --- |
