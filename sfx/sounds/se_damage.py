@@ -21,8 +21,9 @@ high_body = modal([620, 1050, 1730], decays=[0.03, 0.02, 0.012], amps=[1.0, 0.6,
 high_hit = fade(mix(high_crack, high_body * 0.6), fade_out=0.02)
 
 LAG = 0.055  # 2 打目までの間（立て続けに聞こえる長さ）
-hit = mix(clip(low_hit, 1.8) * 1.0, (clip(high_hit, 2.5) * 0.75, LAG))
-sound = Sound("se_damage", fade(clip(hit, 1.4), fade_out=0.04), title="傷を受ける", level=3,
+hit = mix(clip(low_hit, 4.0) * 1.0, (clip(high_hit, 5.0) * 0.75, LAG))
+sound = Sound("se_damage", fade(clip(hit, 2.5), fade_out=0.04), title="傷を受ける", level=3,
               notes=["旧版（50〜95 Hz の sine と 900 Hz 以下のノイズ）はプレイ中に聞こえなかった",
                      "3 版目（ひずみ・ビット落とし・矩形波の「グワッ」）は「非常にチープで打撃に聞こえない」と言われた",
-                     "要望: 低い打撃と高い打撃を立て続けに鳴らし、波形をクリップして少し歪ませる"])
+                     "要望: 低い打撃と高い打撃を立て続けに鳴らし、波形をクリップして少し歪ませる",
+                     "5 版目は「もっと歪ませて」。クリップの倍率を 低 1.8→4.0・高 2.5→5.0・全体 1.4→2.5 に上げた"])
