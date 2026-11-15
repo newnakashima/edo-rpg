@@ -17,7 +17,15 @@ import process from 'node:process';
 const { chromium } = createRequire(import.meta.url)('playwright');
 
 const args = process.argv.slice(2);
-const url = args.includes('--url') ? args[args.indexOf('--url') + 1] : 'http://localhost:5173/';
+const urlArg = args.includes('--url') ? args[args.indexOf('--url') + 1] : 'http://localhost:5173/';
+if (!urlArg || urlArg.startsWith('--')) {
+  console.error('使い方: node scripts/sfx/game_check.mjs [--url http://localhost:5173/]');
+  process.exit(1);
+}
+const url = new URL(urlArg);
+url.searchParams.set('debug', '');
+/** 開発サーバーを取り違えたときの手がかり（5173 番が埋まっていると、vite は別の番号で起動する）。 */
+const WRONG_SERVER = `${url.origin} が、このリポジトリの npm run dev か（起動時に表示された URL を --url で渡しているか）を確かめる`;
 const SILENT_DB = -60;
 
 const browser = await chromium.launch();
@@ -49,10 +57,11 @@ const fail = async (message) => {
   process.exit(1);
 };
 
-await page.goto(`${url}?debug`).catch((e) => fail(`${url} を開けない（npm run dev の開発サーバーが起動しているかを確かめる）: ${e.message.split('\n')[0]}`));
-await page.waitForFunction(() => window.__game, null, { timeout: 15000 }).catch(() => fail(`${url} に ?debug の公開がない（npm run dev の開発サーバーに向ける）`));
+await page.goto(url.href).catch((e) => fail(`${url.origin} を開けない（npm run dev の開発サーバーが起動しているかを確かめる）: ${e.message.split('\n')[0]}`));
+await page.waitForFunction(() => window.__game, null, { timeout: 15000 }).catch(() => fail(`${url.origin} に ?debug の公開がない。${WRONG_SERVER}`));
 await page.waitForFunction(() => window.__game.scene.isActive('Title'), null, { timeout: 30000 }).catch(() => fail('タイトル画面が 30 秒たっても始まらない'));
-if (!(await page.evaluate(() => !!window.__se))) await fail('再生処理（window.__se）がない。このブラウザでは AudioContext を作れなかった');
+if (!(await page.evaluate(() => !!window.__se))) await fail(`再生処理（window.__se）がない。このブラウザでは AudioContext を作れなかったか、${WRONG_SERVER}`);
+console.log(`開いた URL: ${url.href}`);
 
 await page.evaluate(async () => {
   // 開発サーバーではゲームと同じモジュールが返る
@@ -93,6 +102,11 @@ await page.evaluate(async () => {
   window.__startedCount = () => started;
   /** これまでに測った大きさを捨てる（1 つずつ鳴らすときに、前の音の残りを数えないため）。 */
   window.__clearLevels = () => levels.splice(0);
+  /** 鳴らし始めた音の記録を、測り終えていないものも含めて捨てる。 */
+  window.__clearHeard = () => {
+    heard.splice(0);
+    levels.splice(0);
+  };
   /** 鳴らし始めてから測り終えた（0.3 秒たった）効果音を取り出し、その間の最大の大きさ（dB）を付ける。 */
   window.__takeHeard = () => {
     const done = [];
@@ -181,8 +195,9 @@ else if (!quietBefore) problems.push('最初の操作の前に効果音を鳴ら
 // 最初の操作で AudioContext が動き出す
 await page.mouse.click(480, 270);
 await page.waitForFunction(() => window.__se.ctx.state === 'running', null, { timeout: 5000 }).catch(() => fail('最初の操作の後も AudioContext が動かない'));
-await page.waitForTimeout(300);
-await take();
+// 操作で鳴らし始めた音（測り終えていないものも）を捨て、1 つずつ鳴らす音だけを測る
+await page.waitForTimeout(400);
+await page.evaluate(() => window.__clearHeard());
 
 // 1 つずつ鳴らす: どの効果音も音が出る
 const each = [];
