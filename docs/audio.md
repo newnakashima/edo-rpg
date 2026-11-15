@@ -291,10 +291,10 @@
 
 - `src/systems/audio.ts` の `SE_IDS`・`SeId` は上の表と同じ順の 52 個（`src/data/seTracks.test.ts` が表と突き合わせる）。`playSe(id)` は書き出した効果音（`public/assets/audio/se/` にある `.ogg`）だけを鳴らし、まだないものは代わり（se_cannon → se_gun、se_thunder → se_magic）を、代わりもなければ無音にする。
 - 再生は `src/ui/sePlayer.ts`（Web Audio）。曲と 1 つの AudioContext を共に使い、起動時に書き出したすべての効果音を読み込んでおく。同じ音・別の音を重ねて鳴らせる（同じ音を 30 ms 以内に続けて頼まれたら 1 つにまとめ、一度に 8 つまで）。最初の操作の前と、画面が隠れている間は鳴らさない。読み込めなかった効果音は、ファイルを取れなかったものは 5 秒おいて読み直し、音に伸ばせなかったもの（Ogg Opus を読めないブラウザ）は読み直さない。始める処理は `src/ui/audioSetup.ts`。
-- メニューの音は `src/ui/widgets.ts` の `Menu`（移動・決定・取消・選べない）と `MessageWindow.advance` でまとめて鳴らす。
-- 戦闘の音は `BattleScene` で 1 つの出来事を進めるところ（`describe(e)` の隣）で、出来事から音を選ぶ。
+- メニューの音は `src/ui/widgets.ts` の `Menu`（移動・決定・取消・選べない）と `MessageWindow.advance` でまとめて鳴らす。決定は `withDefaultSe('se_ok', …)` で選んだ先を実行し、そこで別の音（支払いの se_coin、できないときの se_buzzer、セーブの se_save、出入りの se_door など）を頼んだら、決定の音は鳴らさずにそちらに譲る。
+- 戦闘の音は `BattleScene` で 1 つの出来事を進めるところ（`describe(e)` の隣）で鳴らす。音は `src/systems/battleSe.ts` の `battleSounds` が 1 ターンの出来事から選ぶ（`miss` には攻撃した側の `actor` があり、何度も当たる技の当たり外れと、別の人の通常攻撃の外れを見分ける）。回復・状態の出来事は、同じ音の技に続くときは鳴らさない（技の音で済んでいる）。戦闘の後のページは、お金の行に se_coin、落とし物に se_item、段が上がるページに se_levelup を、ページを出すときに鳴らす（`MessageWindow.show` の `onPage`）。
   - 通常攻撃は、攻撃した仲間の武器で選ぶ（刀・槍は se_slash、玄道の杖は se_hit、お凛の鉄砲は se_gun）。敵の通常攻撃（`attack`）は、味方が受けたときの se_damage だけにする。表の「敵の斬る技」「敵の撃つ技」は、敵の技（`skill`）のこと。
   - 技は、`src/data/skills.ts` の定義に `se` を足して書く。書いていなければ、`physical` は se_slash、属性 `fire` は se_fire、`thunder` は se_thunder、そのほかの `magic` は se_magic、`heal` は se_heal、`status` は効く状態で、強くなる状態（`atkUp`・`defUp`・`evade`・`critUp`）は se_buff、弱くなる状態（`atkDown`・`accDown`）と酒の酔い（`drunk`）は se_debuff、状態異常（`Ailment` の 5 つ）は se_ailment にする。
   - 既定で合わない技には `se` を書く。お凛の鉄砲の技（`magic`）は、雷管弾（属性 `thunder`、既定の se_thunder のまま）を除いて se_gun（属性 `fire` の火薬弾も se_gun）、`physical` のうち殴る・投げる・噛む技は se_hit、手裏剣の技は se_shuriken、敵の鉄砲の技（鉄砲・ぶどう弾）は se_gun、大筒・権現砲は se_cannon。
-- フィールドの出口（`src/data/maps.ts` の `ExitDef`）に `se` を足し、書いていなければ se_door にする（石段・洞窟は se_stairs）。
-- イベントの手順に `{ type: 'se'; id: SeId }` を足す（`src/data/eventTypes.ts`・`src/systems/eventScript.ts`）。`giveItem`・`giveMoney`・`addJingi`・`heal` の手順は、手順そのものが音を鳴らす。
+- フィールドの出口（`src/data/maps.ts` の `ExitDef`）に `se` を足し、書いていなければ se_door にする（石段・洞窟は se_stairs。`se` はまだで、いまはすべて se_door）。
+- イベントの手順に `{ type: 'se'; id: SeId }` を足す（`src/data/eventTypes.ts`・`src/systems/eventScript.ts`。まだ）。`giveItem`・`giveMoney`・`addJingi`・`heal` の手順は、手順そのものが音を鳴らす（`EventRunner.takeSounds` で次に画面に頼むことと一緒に受け取り、`FieldScene` が鳴らす）。

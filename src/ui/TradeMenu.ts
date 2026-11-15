@@ -4,6 +4,7 @@ import { characterName } from '../data/characters';
 import { EQUIPMENT } from '../data/equipment';
 import { ITEMS, itemCount, itemName } from '../data/items';
 import { buy, buyPrice, deposit, sell, sellPrice, withdraw, type TradeResult } from '../systems/shop';
+import { playSe } from '../systems/audio';
 import { getState, setState } from '../state';
 import type { Controls } from './input';
 import { COLORS, GAME_HEIGHT, GAME_WIDTH, textStyle } from './theme';
@@ -128,9 +129,12 @@ export class TradeMenu {
         if (!id) return;
         const r = spec.act(id);
         if (!r.ok) {
+          playSe('se_buzzer');
           this.setInfo(FAIL[r.reason]);
           return;
         }
+        // お金が動く（買う・売る）ときは銭の音。預ける・引き出すは決定の音のまま
+        if (r.state.money !== getState().money) playSe('se_coin');
         setState(r.state);
         this.refreshMoney();
         // 個数や値段が変わるので開き直す（同じ品にカーソルを置く）

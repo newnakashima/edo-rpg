@@ -71,7 +71,8 @@ export type BattleEvent =
   | { type: 'item'; actor: string; item: string }
   /** 技によるダメージ。 */
   | { type: 'damage'; target: string; damage: number; critical: boolean; weak: boolean; resisted: boolean }
-  | { type: 'miss'; target: string }
+  /** 外れた（通常攻撃・技の 1 回の当たり）。actor は攻撃した側。 */
+  | { type: 'miss'; actor: string; target: string }
   | { type: 'heal'; target: string; amount: number }
   | { type: 'healMp'; target: string; amount: number }
   | { type: 'revive'; target: string; hp: number }
@@ -362,7 +363,7 @@ class TurnContext {
   attack(actor: Combatant, target: Combatant): void {
     const hit = this.physicalHit(actor, target);
     if (!hit) {
-      this.events.push({ type: 'miss', target: target.key });
+      this.events.push({ type: 'miss', actor: actor.key, target: target.key });
       return;
     }
     this.events.push({ type: 'attack', actor: actor.key, target: target.key, damage: hit.damage, critical: hit.critical });
@@ -483,7 +484,7 @@ class TurnContext {
       switch (effect.kind) {
         case 'physical': {
           if (effect.gamble && this.rng() < 0.5) {
-            this.events.push({ type: 'miss', target: target.key });
+            this.events.push({ type: 'miss', actor: actor.key, target: target.key });
             break;
           }
           const hits = effect.hits ?? 1;
@@ -589,7 +590,7 @@ class TurnContext {
       elements,
     });
     if (!hit) {
-      this.events.push({ type: 'miss', target: target.key });
+      this.events.push({ type: 'miss', actor: actor.key, target: target.key });
       return;
     }
     this.events.push({ type: 'damage', target: target.key, ...hit });

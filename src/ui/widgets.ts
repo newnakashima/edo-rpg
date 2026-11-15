@@ -6,6 +6,7 @@ import { nextTipIndex, termSegments } from './termLayout';
 import { COLORS, textStyle } from './theme';
 import { CURSOR_SCALE, CURSOR_TEXTURE, ICON_SCALE, ICON_TEXTURE, iconFrame, WINDOW_SLICES, WINDOW_TEXTURE, windowSliceRects, type IconName } from './uiImages';
 import type { Controls } from './input';
+import { playSe, withDefaultSe } from '../systems/audio';
 
 /**
  * 藍の地に生成りの縁と金の角金具のウィンドウ（public/assets/ui/window.png を 9 分割して並べる）。
@@ -64,6 +65,8 @@ export class MessageWindow {
   private pages: string[] = [];
   private index = 0;
   private onDone: (() => void) | null = null;
+  /** ページを出すたびに呼ぶ（ページの番号を渡す）。 */
+  private onPage: ((index: number) => void) | null = null;
   /** 今のページに出てくる用語（出てきた順）。 */
   private terms: GlossaryEntry[] = [];
   /** 解説の窓で見せている用語の番号。閉じていれば null。 */
@@ -129,13 +132,16 @@ export class MessageWindow {
     return this.tipsIndex !== null;
   }
 
-  show(pages: string[], onDone?: () => void): void {
+  /** pages を 1 ページずつ出す。読み終えたら onDone、各ページを出したときに onPage（ページの番号）を呼ぶ。 */
+  show(pages: string[], onDone?: () => void, onPage?: (index: number) => void): void {
     this.closeTips();
     this.pages = pages.length > 0 ? pages : [''];
     this.index = 0;
     this.onDone = onDone ?? null;
+    this.onPage = onPage ?? null;
     this.showPage(this.pages[0] ?? '');
     this.container.setVisible(true);
+    this.onPage?.(0);
   }
 
   /** 決定ボタンが押されたら呼ぶ。最後のページなら閉じて onDone を呼ぶ。 */
@@ -145,12 +151,14 @@ export class MessageWindow {
     this.index++;
     if (this.index < this.pages.length) {
       this.showPage(this.pages[this.index] ?? '');
+      this.onPage?.(this.index);
       return;
     }
     this.container.setVisible(false);
     this.terms = [];
     const done = this.onDone;
     this.onDone = null;
+    this.onPage = null;
     done?.();
   }
 
@@ -388,17 +396,28 @@ export class Menu {
   }
 
   private confirm(): void {
-    if (this.items[this.cursorIndex]?.enabled === false) return;
-    this.onSelect(this.cursorIndex);
+    if (this.items[this.cursorIndex]?.enabled === false) {
+      playSe('se_buzzer');
+      return;
+    }
+    // 選んだ先で別の音（支払い・できない・セーブなど）を鳴らすなら、決定の音はそちらに譲る
+    const index = this.cursorIndex;
+    withDefaultSe('se_ok', () => this.onSelect(index));
   }
 
   update(controls: Controls): void {
     if (!this.active) return;
     const dir = controls.pressedDirection();
-    if (dir === 'up') this.moveTo(this.cursorIndex - 1);
-    if (dir === 'down') this.moveTo(this.cursorIndex + 1);
+    // 鳴らすのは上下の操作だけ（moveTo は開いたときや指で選んだときにも呼ばれる）
+    if (dir === 'up' || dir === 'down') {
+      playSe('se_cursor');
+      this.moveTo(this.cursorIndex + (dir === 'up' ? -1 : 1));
+    }
     if (controls.okPressed()) this.confirm();
-    else if (controls.cancelPressed()) this.onCancel?.();
+    else if (controls.cancelPressed() && this.onCancel) {
+      playSe('se_cancel');
+      this.onCancel();
+    }
   }
 
   destroy(): void {

@@ -1,5 +1,6 @@
 // docs/characters.md の「技の一覧」と、敵が使う技。
 import type { CharacterId } from './characters';
+import type { SeId } from '../systems/audio';
 
 /** 魔除け（結界の真言・魔除けの香）が効く歩数。道具と技で同じにする。 */
 export const WARD_STEPS = 150;
@@ -113,6 +114,11 @@ export interface SkillDef {
   field?: boolean;
   /** 戦闘の外だけで使い、戦闘の技の一覧に出さない（抜け道・結界の真言）。field を付けなくてもメニューで使える。 */
   fieldOnly?: boolean;
+  /**
+   * 技を使ったときに鳴らす効果音。書いていなければ効き目と属性から決める（src/systems/battleSe.ts の skillSe）。
+   * 鉄砲・大筒・手裏剣の技や、physical のうち殴る・投げる・噛む技に書く（docs/audio.md の「コードでの鳴らし方（効果音）」）。
+   */
+  se?: SeId;
   /** 説明（メニューに出す）。 */
   description: string;
 }
@@ -132,7 +138,7 @@ export const SKILLS: Record<string, SkillDef> = {
   chohan: { id: 'chohan', name: '丁半博打', mp: 4, target: 'enemy', effect: { kind: 'physical', multiplier: 3, gamble: true }, description: '半々で大当たりか空振り' },
   toseinoiji: { id: 'toseinoiji', name: '渡世の意地', mp: 10, target: 'allEnemies', effect: { kind: 'physical', multiplier: 1.4 }, description: '敵全体を斬る' },
   // 霞（忍者）
-  shuriken: { id: 'shuriken', name: '手裏剣', mp: 2, target: 'randomEnemies', effect: { kind: 'physical', multiplier: 0.6, hits: 2, maxHits: 3 }, description: '敵に 2〜3 回投げる' },
+  shuriken: { id: 'shuriken', name: '手裏剣', se: 'se_shuriken', mp: 2, target: 'randomEnemies', effect: { kind: 'physical', multiplier: 0.6, hits: 2, maxHits: 3 }, description: '敵に 2〜3 回投げる' },
   kemuridama: { id: 'kemuridama', name: '煙玉', mp: 3, target: 'allEnemies', effect: { kind: 'status', status: 'accDown', turns: 3 }, description: '敵全体の命中を下げる' },
   shibire: { id: 'shibire', name: '痺れ薬', mp: 4, target: 'enemy', effect: { kind: 'status', status: 'paralysis', turns: 3 }, description: '敵を麻痺させる' },
   kagenui: { id: 'kagenui', name: '影縫い', mp: 5, target: 'enemy', effect: { kind: 'status', status: 'bind', turns: 1, chance: 0.9 }, description: '敵の次の行動を止める' },
@@ -149,12 +155,12 @@ export const SKILLS: Record<string, SkillDef> = {
   fudo: { id: 'fudo', name: '不動明王の火炎', mp: 12, target: 'allEnemies', effect: { kind: 'magic', power: 16 }, elements: ['fire', 'holy'], description: '敵全体に火・祓の炎' },
   // お凛（鉄砲打ち）
   // お凛の弾はからくりの仕掛けで撃つので、威力は術力で決まる（術のダメージ。術は外れない）
-  neraiuchi: { id: 'neraiuchi', name: '狙い撃ち', mp: 3, target: 'enemy', effect: { kind: 'magic', power: 8 }, description: '必ず当たる強い一発' },
-  sandan: { id: 'sandan', name: '散弾', mp: 5, target: 'allEnemies', effect: { kind: 'magic', power: 5 }, description: '敵全体を撃つ' },
-  kayakudan: { id: 'kayakudan', name: '火薬弾', mp: 4, target: 'enemy', effect: { kind: 'magic', power: 9 }, elements: ['fire'], description: '火の弾' },
+  neraiuchi: { id: 'neraiuchi', name: '狙い撃ち', se: 'se_gun', mp: 3, target: 'enemy', effect: { kind: 'magic', power: 8 }, description: '必ず当たる強い一発' },
+  sandan: { id: 'sandan', name: '散弾', se: 'se_gun', mp: 5, target: 'allEnemies', effect: { kind: 'magic', power: 5 }, description: '敵全体を撃つ' },
+  kayakudan: { id: 'kayakudan', name: '火薬弾', se: 'se_gun', mp: 4, target: 'enemy', effect: { kind: 'magic', power: 9 }, elements: ['fire'], description: '火の弾' },
   raikandan: { id: 'raikandan', name: '雷管弾', mp: 5, target: 'enemy', effect: { kind: 'magic', power: 10 }, elements: ['thunder'], description: 'からくりに効く雷の弾' },
-  hayago: { id: 'hayago', name: '早合', mp: 6, target: 'enemy', effect: { kind: 'magic', power: 6, hits: 2 }, description: '2 回撃つ' },
-  katami: { id: 'katami', name: '父の形見', mp: 12, target: 'enemy', effect: { kind: 'magic', power: 24, ignoreDefense: true }, description: '防御を無視する一撃' },
+  hayago: { id: 'hayago', name: '早合', se: 'se_gun', mp: 6, target: 'enemy', effect: { kind: 'magic', power: 6, hits: 2 }, description: '2 回撃つ' },
+  katami: { id: 'katami', name: '父の形見', se: 'se_gun', mp: 12, target: 'enemy', effect: { kind: 'magic', power: 24, ignoreDefense: true }, description: '防御を無視する一撃' },
   // 榊兵庫（侍、第 5 章のゲスト）
   hyogoKesagiri: { id: 'hyogoKesagiri', name: '袈裟斬り', mp: 3, target: 'enemy', effect: { kind: 'physical', multiplier: 1.5 }, description: '肩から斬り下ろす' },
   tsubamegaeshi: { id: 'tsubamegaeshi', name: '燕返し', mp: 6, target: 'enemy', effect: { kind: 'physical', multiplier: 1.0, hits: 2 }, description: '2 回斬る' },
@@ -165,7 +171,7 @@ export const SKILLS: Record<string, SkillDef> = {
   dokueki: { id: 'dokueki', name: '毒液', mp: 0, target: 'enemy', effect: { kind: 'status', status: 'poison', turns: 99, chance: 0.6 }, description: '' },
   kitsunebiUzu: { id: 'kitsunebiUzu', name: '狐火の渦', mp: 0, target: 'allEnemies', effect: { kind: 'magic', power: 5 }, elements: ['fire'], description: '' },
   bakashi: { id: 'bakashi', name: '化かし', mp: 0, target: 'enemy', effect: { kind: 'status', status: 'confusion', turns: 2, chance: 0.35 }, description: '' },
-  tekken: { id: 'tekken', name: '鉄拳', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.2 }, description: '' },
+  tekken: { id: 'tekken', name: '鉄拳', se: 'se_hit', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.2 }, description: '' },
   joki: { id: 'joki', name: '蒸気', mp: 0, target: 'allEnemies', effect: { kind: 'magic', power: 4 }, description: '' },
   karakuriYobi: { id: 'karakuriYobi', name: 'からくり兵を呼ぶ', mp: 0, target: 'self', effect: { kind: 'summon', enemy: 'karakuriNingyo', max: 2, level: 4 }, description: '' },
   aikuchi: { id: 'aikuchi', name: '匕首', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.2 }, description: '' },
@@ -174,57 +180,57 @@ export const SKILLS: Record<string, SkillDef> = {
   toboe: { id: 'toboe', name: '遠吠え', mp: 0, target: 'self', effect: { kind: 'status', status: 'atkUp', turns: 3 }, description: '' },
   // 東海道・名古屋（第 2 章）
   kesagiri: { id: 'kesagiri', name: '袈裟斬り', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.3 }, description: '' },
-  kamitsuki: { id: 'kamitsuki', name: '噛みつき', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.2 }, description: '' },
-  ikizue: { id: 'ikizue', name: '息杖', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.25 }, description: '' },
-  obire: { id: 'obire', name: '尾びれ', mp: 0, target: 'allEnemies', effect: { kind: 'physical', multiplier: 0.8 }, description: '' },
+  kamitsuki: { id: 'kamitsuki', name: '噛みつき', se: 'se_hit', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.2 }, description: '' },
+  ikizue: { id: 'ikizue', name: '息杖', se: 'se_hit', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.25 }, description: '' },
+  obire: { id: 'obire', name: '尾びれ', se: 'se_hit', mp: 0, target: 'allEnemies', effect: { kind: 'physical', multiplier: 0.8 }, description: '' },
   // 京（第 3 章）
-  kanabo: { id: 'kanabo', name: '金棒', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.3 }, description: '' },
+  kanabo: { id: 'kanabo', name: '金棒', se: 'se_hit', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.3 }, description: '' },
   makitsuki: { id: 'makitsuki', name: '巻きつき', mp: 0, target: 'enemy', effect: { kind: 'status', status: 'paralysis', turns: 2, chance: 0.45 }, description: '' },
   jaho: { id: 'jaho', name: '邪法', mp: 0, target: 'enemy', effect: { kind: 'magic', power: 8 }, description: '' },
-  totsugeki: { id: 'totsugeki', name: '突進', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.4 }, description: '' },
+  totsugeki: { id: 'totsugeki', name: '突進', se: 'se_hit', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.4 }, description: '' },
   sakeNoIki: { id: 'sakeNoIki', name: '酒の息', mp: 0, target: 'allEnemies', effect: { kind: 'status', status: 'sleep', turns: 2, chance: 0.4 }, description: '' },
   ikari: { id: 'ikari', name: '怒り', mp: 0, target: 'self', effect: { kind: 'status', status: 'atkUp', turns: 3 }, description: '' },
   // 伊賀（第 4 章）
-  igaShuriken: { id: 'igaShuriken', name: '手裏剣', mp: 0, target: 'randomEnemies', effect: { kind: 'physical', multiplier: 0.6, hits: 2 }, description: '' },
+  igaShuriken: { id: 'igaShuriken', name: '手裏剣', se: 'se_shuriken', mp: 0, target: 'randomEnemies', effect: { kind: 'physical', multiplier: 0.6, hits: 2 }, description: '' },
   kumoNoIto: { id: 'kumoNoIto', name: '蜘蛛の糸', mp: 0, target: 'enemy', effect: { kind: 'status', status: 'paralysis', turns: 2, chance: 0.4 }, description: '' },
-  kyukoka: { id: 'kyukoka', name: '急降下', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.3 }, description: '' },
-  shurikenAme: { id: 'shurikenAme', name: '手裏剣の雨', mp: 0, target: 'randomEnemies', effect: { kind: 'physical', multiplier: 0.6, hits: 3, maxHits: 4 }, description: '' },
+  kyukoka: { id: 'kyukoka', name: '急降下', se: 'se_hit', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.3 }, description: '' },
+  shurikenAme: { id: 'shurikenAme', name: '手裏剣の雨', se: 'se_shuriken', mp: 0, target: 'randomEnemies', effect: { kind: 'physical', multiplier: 0.6, hits: 3, maxHits: 4 }, description: '' },
   utsusemi: { id: 'utsusemi', name: '空蝉', mp: 0, target: 'self', effect: { kind: 'status', status: 'evade', turns: 3 }, description: '' },
   nirengeki: { id: 'nirengeki', name: '二連撃', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 0.75, hits: 2 }, description: '' },
   shikomibari: { id: 'shikomibari', name: '毒の仕込み針', mp: 0, target: 'enemy', effect: { kind: 'status', status: 'poison', turns: 99, chance: 0.6 }, description: '' },
-  gishu: { id: 'gishu', name: 'からくり義手', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.0, ignoreDefense: true }, description: '' },
+  gishu: { id: 'gishu', name: 'からくり義手', se: 'se_hit', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.0, ignoreDefense: true }, description: '' },
   // 大坂（第 5 章）
-  teppo: { id: 'teppo', name: '鉄砲', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.4, sureHit: true }, description: '' },
-  tawaraGoroshi: { id: 'tawaraGoroshi', name: '体当たり', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.3 }, description: '' },
-  tawaraOtoshi: { id: 'tawaraOtoshi', name: '俵落とし', mp: 0, target: 'allEnemies', effect: { kind: 'physical', multiplier: 0.8 }, description: '' },
+  teppo: { id: 'teppo', name: '鉄砲', se: 'se_gun', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.4, sureHit: true }, description: '' },
+  tawaraGoroshi: { id: 'tawaraGoroshi', name: '体当たり', se: 'se_hit', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.3 }, description: '' },
+  tawaraOtoshi: { id: 'tawaraOtoshi', name: '俵落とし', se: 'se_hit', mp: 0, target: 'allEnemies', effect: { kind: 'physical', multiplier: 0.8 }, description: '' },
   komenuka: { id: 'komenuka', name: '米ぬかの煙', mp: 0, target: 'allEnemies', effect: { kind: 'status', status: 'accDown', turns: 3, chance: 0.6 }, description: '' },
   // 西国街道・長崎・島原（第 6 章）
   nanbanKen: { id: 'nanbanKen', name: '南蛮剣', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.3 }, description: '' },
-  onami: { id: 'onami', name: '大波', mp: 0, target: 'allEnemies', effect: { kind: 'physical', multiplier: 0.7 }, description: '' },
+  onami: { id: 'onami', name: '大波', se: 'se_hit', mp: 0, target: 'allEnemies', effect: { kind: 'physical', multiplier: 0.7 }, description: '' },
   monoTachi: { id: 'monoTachi', name: '亡者の太刀', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.0, ignoreDefense: true }, description: '' },
   gehoHomura: { id: 'gehoHomura', name: '外法の炎', mp: 0, target: 'enemy', effect: { kind: 'magic', power: 12 }, elements: ['fire'], description: '' },
   madowashi: { id: 'madowashi', name: '惑わしの香', mp: 0, target: 'enemy', effect: { kind: 'status', status: 'confusion', turns: 2, chance: 0.4 }, description: '' },
   hasami: { id: 'hasami', name: '大ばさみ', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.3 }, description: '' },
   awa: { id: 'awa', name: '泡', mp: 0, target: 'enemy', effect: { kind: 'status', status: 'accDown', turns: 3, chance: 0.6 }, description: '' },
   soten: { id: 'soten', name: '装填', mp: 0, target: 'self', effect: { kind: 'charge', next: 'ozutsu' }, description: '' },
-  ozutsu: { id: 'ozutsu', name: '大筒', mp: 0, target: 'allEnemies', effect: { kind: 'physical', multiplier: 1.3 }, description: '' },
-  budodan: { id: 'budodan', name: 'ぶどう弾', mp: 0, target: 'randomEnemies', effect: { kind: 'physical', multiplier: 0.6, hits: 2, maxHits: 3 }, description: '' },
+  ozutsu: { id: 'ozutsu', name: '大筒', se: 'se_cannon', mp: 0, target: 'allEnemies', effect: { kind: 'physical', multiplier: 1.3 }, description: '' },
+  budodan: { id: 'budodan', name: 'ぶどう弾', se: 'se_gun', mp: 0, target: 'randomEnemies', effect: { kind: 'physical', multiplier: 0.6, hits: 2, maxHits: 3 }, description: '' },
   // テストプレイのフィードバックで足した雑魚敵の技
   kamakaze: { id: 'kamakaze', name: '鎌風', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.2 }, description: '' },
   atsuiCha: { id: 'atsuiCha', name: '熱い茶', mp: 0, target: 'enemy', effect: { kind: 'magic', power: 4 }, elements: ['fire'], description: '' },
-  kappaZumo: { id: 'kappaZumo', name: '河童相撲', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.3 }, description: '' },
+  kappaZumo: { id: 'kappaZumo', name: '河童相撲', se: 'se_hit', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.3 }, description: '' },
   hinowa: { id: 'hinowa', name: '火の輪', mp: 0, target: 'enemy', effect: { kind: 'magic', power: 6 }, elements: ['fire'], description: '' },
   kaibyoBi: { id: 'kaibyoBi', name: '化け猫火', mp: 0, target: 'enemy', effect: { kind: 'magic', power: 10 }, elements: ['fire'], description: '' },
   saikoro: { id: 'saikoro', name: '賽の目勝負', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 2.0, gamble: true }, description: '' },
-  nigiritsubushi: { id: 'nigiritsubushi', name: '握り潰し', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.4 }, description: '' },
+  nigiritsubushi: { id: 'nigiritsubushi', name: '握り潰し', se: 'se_hit', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.4 }, description: '' },
   urami: { id: 'urami', name: '怨み', mp: 0, target: 'enemy', effect: { kind: 'magic', power: 11 }, description: '' },
   kinUroko: { id: 'kinUroko', name: '金の鱗', mp: 0, target: 'self', effect: { kind: 'status', status: 'defUp', turns: 3 }, description: '' },
   // 北前船・金沢（第 7 章）
-  hishaku: { id: 'hishaku', name: '柄杓沈め', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.2 }, description: '' },
+  hishaku: { id: 'hishaku', name: '柄杓沈め', se: 'se_hit', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.2 }, description: '' },
   yariTsuki: { id: 'yariTsuki', name: '槍突き', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.3 }, description: '' },
   fubuki: { id: 'fubuki', name: '吹雪', mp: 0, target: 'allEnemies', effect: { kind: 'magic', power: 8 }, description: '' },
   kogoe: { id: 'kogoe', name: '凍える息', mp: 0, target: 'enemy', effect: { kind: 'status', status: 'paralysis', turns: 2, chance: 0.35 }, description: '' },
-  nadare: { id: 'nadare', name: '雪崩', mp: 0, target: 'allEnemies', effect: { kind: 'physical', multiplier: 0.7 }, description: '' },
+  nadare: { id: 'nadare', name: '雪崩', se: 'se_hit', mp: 0, target: 'allEnemies', effect: { kind: 'physical', multiplier: 0.7 }, description: '' },
   kinpakuMai: { id: 'kinpakuMai', name: '金箔の舞', mp: 0, target: 'allEnemies', effect: { kind: 'status', status: 'accDown', turns: 3, chance: 0.5 }, description: '' },
   kageTachi: { id: 'kageTachi', name: '影の太刀', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.3 }, description: '' },
   goji: { id: 'goji', name: '御下知', mp: 0, target: 'self', effect: { kind: 'summon', enemy: 'karakuriHanshi', max: 2, level: 22 }, description: '' },
@@ -235,9 +241,9 @@ export const SKILLS: Record<string, SkillDef> = {
   taimatsu: { id: 'taimatsu', name: '松明', mp: 0, target: 'enemy', effect: { kind: 'magic', power: 12 }, elements: ['fire'], description: '' },
   jigokuBi: { id: 'jigokuBi', name: '地獄の炎', mp: 0, target: 'allEnemies', effect: { kind: 'magic', power: 9 }, elements: ['fire'], description: '' },
   jutte: { id: 'jutte', name: '十手捕り', mp: 0, target: 'enemy', effect: { kind: 'status', status: 'paralysis', turns: 2, chance: 0.35 }, description: '' },
-  kenkaZappo: { id: 'kenkaZappo', name: '喧嘩殺法', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.3 }, description: '' },
+  kenkaZappo: { id: 'kenkaZappo', name: '喧嘩殺法', se: 'se_hit', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.3 }, description: '' },
   hinoko: { id: 'hinoko', name: '火の粉', mp: 0, target: 'randomEnemies', effect: { kind: 'physical', multiplier: 0.5, hits: 2, maxHits: 3 }, elements: ['fire'], description: '' },
-  okuriKiba: { id: 'okuriKiba', name: '送り牙', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.3 }, description: '' },
+  okuriKiba: { id: 'okuriKiba', name: '送り牙', se: 'se_hit', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 1.3 }, description: '' },
   kaenGuruma: { id: 'kaenGuruma', name: '火炎車', mp: 0, target: 'allEnemies', effect: { kind: 'physical', multiplier: 0.7 }, elements: ['fire'], description: '' },
   mojaNoTe: { id: 'mojaNoTe', name: '亡者の手', mp: 0, target: 'enemy', effect: { kind: 'status', status: 'paralysis', turns: 2, chance: 0.5 }, description: '' },
   // 江戸城（終章）
@@ -249,7 +255,7 @@ export const SKILLS: Record<string, SkillDef> = {
   tenzenTsubame: { id: 'tenzenTsubame', name: '燕返し', mp: 0, target: 'enemy', effect: { kind: 'physical', multiplier: 0.8, hits: 2 }, description: '' },
   roju: { id: 'roju', name: '老中の威光', mp: 0, target: 'allEnemies', effect: { kind: 'status', status: 'atkDown', turns: 3, chance: 0.6 }, description: '' },
   kinjuYobi: { id: 'kinjuYobi', name: '近習を呼ぶ', mp: 0, target: 'self', effect: { kind: 'summon', enemy: 'karakuriKinju', max: 2, level: 26 }, description: '' },
-  gongenHo: { id: 'gongenHo', name: '権現砲', mp: 0, target: 'allEnemies', effect: { kind: 'physical', multiplier: 0.7 }, description: '' },
+  gongenHo: { id: 'gongenHo', name: '権現砲', se: 'se_cannon', mp: 0, target: 'allEnemies', effect: { kind: 'physical', multiplier: 0.7 }, description: '' },
   // 雑魚敵の個性（テストプレイのフィードバック。docs/balance.md の「雑魚敵の個性」）
   akubi: { id: 'akubi', name: '大あくび', mp: 0, target: 'self', effect: { kind: 'idle', message: '大あくびをしている。' }, description: '' },
   kanaboFurimawashi: { id: 'kanaboFurimawashi', name: '金棒振り回し', mp: 0, target: 'self', effect: { kind: 'idle', message: '金棒を振り回して、自分の足を打った。' }, description: '' },

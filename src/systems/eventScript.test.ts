@@ -318,3 +318,33 @@ describe('route のすぐ手前の扱い', () => {
     expect(walkEnd({ x: 1, y: 3 }, routeTo({ x: 1, y: 3 }, { x: 1, y: 0 }, open))).toEqual({ x: 1, y: 2 });
   });
 });
+
+describe('手順が鳴らす効果音', () => {
+  it('道具・お金・仁義・回復の手順は、次に画面に頼むことと一緒に効果音を渡す（同じ音は 1 つ）', () => {
+    const runner = new EventRunner([
+      { type: 'giveItem', item: 'kizugusuri' },
+      { type: 'giveItem', item: 'kizugusuri' },
+      { type: 'giveMoney', amount: 100 },
+      { type: 'say', lines: ['受け取った。'] },
+      { type: 'addJingi', amount: 1 },
+      { type: 'heal' },
+      { type: 'giveMoney', amount: 0 },
+      { type: 'say', lines: ['休んだ。'] },
+    ]);
+    const first = runner.next(game());
+    expect(runner.takeSounds()).toEqual(['se_item', 'se_coin']);
+    expect(runner.takeSounds()).toEqual([]);
+    runner.next(first.state);
+    expect(runner.takeSounds()).toEqual(['se_jingi', 'se_heal']);
+  });
+
+  it('持ちきれず受け取れなかった道具は鳴らさない', () => {
+    const runner = new EventRunner([
+      { type: 'giveItem', item: 'kizugusuri', count: 1000 },
+      { type: 'giveItem', item: 'no-such-item' },
+      { type: 'say', lines: ['……'] },
+    ]);
+    runner.next(game());
+    expect(runner.takeSounds()).toEqual([]);
+  });
+});

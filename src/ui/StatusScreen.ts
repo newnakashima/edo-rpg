@@ -4,6 +4,7 @@ import Phaser from 'phaser';
 import { PORTRAIT_HEIGHT, PORTRAIT_WIDTH, portraitFor, portraitKey } from '../data/portraits';
 import { statusSheet, type StatusEntry } from '../systems/fieldMenu';
 import { getState } from '../state';
+import { playSe } from '../systems/audio';
 import { SKILL_ICON, slotIcon } from './icons';
 import type { Controls } from './input';
 import { COLORS, GAME_WIDTH, textStyle } from './theme';
@@ -137,6 +138,7 @@ export class StatusScreen {
   private switchMember(delta: number): void {
     const count = getState().party.length;
     if (count <= 1) return;
+    playSe('se_cursor');
     this.index = (this.index + delta + count) % count;
     this.render();
   }
@@ -145,11 +147,16 @@ export class StatusScreen {
     const dir = controls.pressedDirection();
     if (dir === 'left') this.switchMember(-1);
     else if (dir === 'right') this.switchMember(1);
-    else if (dir === 'up') this.moveTo(this.row - 1);
-    else if (dir === 'down') this.moveTo(this.row + 1);
+    else if ((dir === 'up' || dir === 'down') && this.rows.length > 1) {
+      playSe('se_cursor');
+      this.moveTo(this.row + (dir === 'up' ? -1 : 1));
+    }
     // 決定では何もしない（取消で戻る）。押された決定を捨てておき、閉じた後のメニューで選択されないようにする
     controls.okPressed();
-    if (controls.cancelPressed()) this.onClose();
+    if (controls.cancelPressed()) {
+      playSe('se_cancel');
+      this.onClose();
+    }
   }
 
   destroy(): void {
