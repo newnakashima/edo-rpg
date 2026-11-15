@@ -192,7 +192,7 @@
 | --- | --- | --- |
 | 流れ者の主題（main） | 旅立ちの寂しさと広がり。主人公の旅そのもの | bgm_title、bgm_road、bgm_rally、bgm_epilogue、bgm_ending、bgm_shugeki |
 | お凛の主題 | 気の強さの奥の、父を慕う優しさ | bgm_home、bgm_sad（弔い）、bgm_duel（仇討ち）、bgm_ending |
-| 一家の主題 | 辰五郎一家の義理と温かさ | bgm_home、bgm_oyabun、bgm_inn |
+| 一家の主題 | 世間からはみ出た辰五郎一家の、陰を帯びた義理と温かさ。短調 | bgm_home、bgm_oyabun、bgm_inn |
 | 子守唄 | ゼンマイに封じられた母のからくりの子守唄。さらわれた人々の魂 | bgm_inn、bgm_sad（第 1 章）、bgm_last_boss（魂の解放） |
 | からくりの主題 | 歯車とゼンマイの、冷たく規則正しい動き。鷲尾の企み | bgm_karakuri、bgm_tension、bgm_washio、bgm_last_boss |
 | 夜叉丸の主題 | 妖しさの奥の、家族を奪われた悲しみ | bgm_tension（夜叉丸の登場）、bgm_duel（夜叉丸）、bgm_sad（第 7 章） |
