@@ -43,11 +43,11 @@
 | bgm_boss | ボス戦 | あり | 新しく書いた旋律だけ | motif:karakuri.zenmai |
 | bgm_dungeon | 洞窟・廃墟 | あり | 新しく書いた旋律だけ | 新しく書いた旋律だけ |
 | bgm_edojo | 江戸城 | あり | 新しく書いた旋律だけ | motif:karakuri.haguruma, motif:karakuri.tomaru |
-| bgm_ending | ふたたび街道へ | あり | theme:heroine, theme:main | motif:heroine.kiai, motif:heroine.omoi |
+| bgm_ending | ふたたび街道へ | あり | theme:heroine, theme:main | motif:heroine.omoi |
 | bgm_home | 清水湊 | あり | motif:ikka.ashidori, motif:ikka.irori, theme:ikka | motif:heroine.kiai |
 | bgm_inn | 一泊 | なし | motif:komoriuta.nemure, theme:komoriuta | 新しく書いた旋律だけ |
 | bgm_karakuri | からくり屋敷 | あり | motif:karakuri.haguruma, theme:karakuri | motif:karakuri.zenmai |
-| bgm_last_boss | からくり大権現 | あり | motif:karakuri.zenmai, motif:komoriuta.yurikago, motif:main.call, motif:main.sigh, theme:karakuri | motif:karakuri.haguruma, motif:komoriuta.nemure, motif:main.wide |
+| bgm_last_boss | からくり大権現 | あり | motif:karakuri.tomaru, motif:karakuri.zenmai, motif:main.call, motif:main.wide, motif:yashamaru.kage, theme:heroine, theme:karakuri, theme:komoriuta, theme:main | motif:karakuri.haguruma, theme:komoriuta |
 | bgm_road | 街道 | あり | theme:main | 新しく書いた旋律だけ |
 | bgm_sad | 別れ | あり | motif:heroine.shitau | motif:komoriuta.nemure |
 | bgm_tension | 陰謀 | あり | motif:yashamaru.kage | motif:karakuri.zenmai |

@@ -1,7 +1,7 @@
 {
   "id": "bgm_boss",
   "title": "ボス戦",
-  "about": "激しい和太鼓、緊張感。からくりの企みの影",
+  "about": "激しい和太鼓、緊張感。追い詰められ、溜めて、全員でぶつかる",
   "meter": "4/4",
   "tempos": [
     [
@@ -10,9 +10,9 @@
     ]
   ],
   "loop": true,
-  "loop_start_seconds": 3.4782608695652173,
-  "length_seconds": 31.304347826086957,
-  "length_beats": 72.0,
+  "loop_start_seconds": 6.956521739130435,
+  "length_seconds": 62.608695652173914,
+  "length_beats": 144.0,
   "tracks": [
     {
       "name": "尺八",
@@ -36,15 +36,22 @@
       "uses": [
         {
           "source": "motif:karakuri.zenmai（2倍の長さ）",
-          "at": 40.0,
+          "at": 48.0,
           "length": 8.0
         },
         {
           "source": "motif:karakuri.zenmai（2倍の長さ）",
-          "at": 56.0,
+          "at": 64.0,
           "length": 8.0
         }
       ]
+    },
+    {
+      "name": "声",
+      "program": 52,
+      "role": "other",
+      "drum": false,
+      "uses": []
     },
     {
       "name": "弦",
@@ -72,6 +79,13 @@
       "program": 43,
       "role": "other",
       "drum": false,
+      "uses": []
+    },
+    {
+      "name": "シンバル",
+      "program": 0,
+      "role": "other",
+      "drum": true,
       "uses": []
     }
   ]

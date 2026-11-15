@@ -7,5 +7,5 @@ box = song.track("オルゴール", program=10, role="main", volume=100, reverb=
 koto = song.track("琴", program=107, role="other", volume=60, pan=50, reverb=70)
 
 box.add(theme("komoriuta").bars(1, 2) + motif("komoriuta.nemure"))
-koto.put(0, parse("| A3+E4:3 | D4+A4:3 | A3+E4:3 | A3+E4:3@50 |", meter="3/4"))
+koto.put(0, parse("| A3+C4:3 | D4+A4:3 | A3+E4:3 | A3+E4:3@50 |", meter="3/4"))
 song.end(song.bar(5))

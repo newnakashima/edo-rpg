@@ -1,18 +1,18 @@
 {
   "id": "bgm_last_boss",
   "title": "からくり大権現",
-  "about": "和楽器とオーケストラ、からくりの音。鷲尾の企みと旅の主題がぶつかり、最後に魂が光る",
+  "about": "和楽器とオーケストラ、からくりの音。企みと旅の主題がぶつかり、仲間がそろい、静まり、魂の解放で最高潮に達する",
   "meter": "4/4",
   "tempos": [
     [
       0.0,
-      132.0
+      144.0
     ]
   ],
   "loop": true,
-  "loop_start_seconds": 3.6363636363636362,
-  "length_seconds": 47.27272727272727,
-  "length_beats": 104.0,
+  "loop_start_seconds": 6.666666666666667,
+  "length_seconds": 93.33333333333333,
+  "length_beats": 224.0,
   "tracks": [
     {
       "name": "金管",
@@ -22,12 +22,42 @@
       "uses": [
         {
           "source": "theme:karakuri",
-          "at": 8.0,
+          "at": 16.0,
           "length": 32.0
         },
         {
+          "source": "motif:karakuri.zenmai（2倍の長さ）",
+          "at": 56.0,
+          "length": 8.0
+        },
+        {
+          "source": "motif:karakuri.zenmai（2倍の長さ）",
+          "at": 72.0,
+          "length": 8.0
+        },
+        {
+          "source": "motif:main.wide",
+          "at": 184.0,
+          "length": 8.0
+        },
+        {
+          "source": "theme:komoriuta 5-8（4/3倍の長さ）",
+          "at": 192.0,
+          "length": 16.0
+        },
+        {
           "source": "motif:karakuri.zenmai",
-          "at": 64.0,
+          "at": 208.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.zenmai",
+          "at": 212.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.tomaru",
+          "at": 216.0,
           "length": 4.0
         }
       ]
@@ -39,19 +69,22 @@
       "drum": false,
       "uses": [
         {
-          "source": "motif:main.call",
-          "at": 40.0,
-          "length": 8.0
-        },
+          "source": "theme:main 1-8",
+          "at": 80.0,
+          "length": 32.0
+        }
+      ]
+    },
+    {
+      "name": "篠笛",
+      "program": 73,
+      "role": "main",
+      "drum": false,
+      "uses": [
         {
-          "source": "motif:main.call",
-          "at": 48.0,
-          "length": 8.0
-        },
-        {
-          "source": "motif:main.sigh",
-          "at": 88.0,
-          "length": 8.0
+          "source": "theme:heroine 1-8",
+          "at": 112.0,
+          "length": 32.0
         }
       ]
     },
@@ -62,26 +95,54 @@
       "drum": false,
       "uses": [
         {
-          "source": "motif:komoriuta.yurikago（4/3倍の長さ）",
-          "at": 72.0,
-          "length": 8.0
-        },
-        {
-          "source": "motif:komoriuta.yurikago（4/3倍の長さ）",
-          "at": 80.0,
-          "length": 8.0
+          "source": "theme:komoriuta（4/3倍の長さ）",
+          "at": 176.0,
+          "length": 32.0
         }
       ]
     },
     {
       "name": "弦",
       "program": 48,
-      "role": "sub",
+      "role": "main",
       "drum": false,
       "uses": [
         {
-          "source": "motif:main.wide",
-          "at": 56.0,
+          "source": "theme:karakuri",
+          "at": 48.0,
+          "length": 32.0
+        },
+        {
+          "source": "theme:main 1-8",
+          "at": 80.0,
+          "length": 32.0
+        },
+        {
+          "source": "theme:heroine 1-8",
+          "at": 112.0,
+          "length": 32.0
+        },
+        {
+          "source": "motif:main.call",
+          "at": 176.0,
+          "length": 8.0
+        },
+        {
+          "source": "theme:komoriuta 5-8（4/3倍の長さ）",
+          "at": 192.0,
+          "length": 16.0
+        }
+      ]
+    },
+    {
+      "name": "胡弓",
+      "program": 110,
+      "role": "main",
+      "drum": false,
+      "uses": [
+        {
+          "source": "motif:yashamaru.kage",
+          "at": 148.0,
           "length": 8.0
         }
       ]
@@ -93,9 +154,39 @@
       "drum": false,
       "uses": [
         {
-          "source": "motif:komoriuta.nemure（4/3倍の長さ）",
-          "at": 88.0,
-          "length": 8.0
+          "source": "motif:karakuri.haguruma",
+          "at": 0.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 4.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 144.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 152.0,
+          "length": 4.0
+        },
+        {
+          "source": "theme:komoriuta 5-8（4/3倍の長さ）",
+          "at": 192.0,
+          "length": 16.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 208.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 212.0,
+          "length": 4.0
         }
       ]
     },
@@ -105,16 +196,6 @@
       "role": "sub",
       "drum": false,
       "uses": [
-        {
-          "source": "motif:karakuri.haguruma",
-          "at": 8.0,
-          "length": 4.0
-        },
-        {
-          "source": "motif:karakuri.haguruma",
-          "at": 12.0,
-          "length": 4.0
-        },
         {
           "source": "motif:karakuri.haguruma",
           "at": 16.0,
@@ -144,8 +225,72 @@
           "source": "motif:karakuri.haguruma",
           "at": 36.0,
           "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 40.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 44.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 48.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 52.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 56.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 60.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 64.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 68.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 72.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 76.0,
+          "length": 4.0
         }
       ]
+    },
+    {
+      "name": "ホルン",
+      "program": 60,
+      "role": "sub",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "和音の弦",
+      "program": 49,
+      "role": "other",
+      "drum": false,
+      "uses": []
     },
     {
       "name": "ティンパニ",
@@ -173,6 +318,13 @@
       "program": 43,
       "role": "other",
       "drum": false,
+      "uses": []
+    },
+    {
+      "name": "シンバル",
+      "program": 0,
+      "role": "other",
+      "drum": true,
       "uses": []
     }
   ]

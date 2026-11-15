@@ -74,13 +74,8 @@
       "uses": [
         {
           "source": "motif:heroine.omoi",
-          "at": 80.0,
+          "at": 88.0,
           "length": 8.0
-        },
-        {
-          "source": "motif:heroine.kiai",
-          "at": 96.0,
-          "length": 4.0
         }
       ]
     }

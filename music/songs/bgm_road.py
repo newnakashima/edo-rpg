@@ -18,9 +18,9 @@ def low(chords):
     names = {"D": "D2", "Bb": "Bb1", "F": "F2", "C": "C2", "G": "G1", "A": "A1"}
     return parse("".join(f"| {names[c]}:1 r:1/2 {names[c]}:1/2 {names[c]}:2 " for c in chords) + "|")
 
-A = ["D", "Bb", "F", "C", "D", "G", "A", "D"]
-B = ["Bb", "F", "Bb", "A", "Bb", "G", "A", "D"]
-N = ["D", "D", "Bb", "C", "D", "D", "G", "A"]
+A = ["D", "A", "F", "C", "D", "G", "F", "D"]
+B = ["F", "C", "D", "A", "D", "G", "A", "D"]
+N = ["D", "D", "G", "C", "D", "D", "G", "A"]
 
 # A（1〜8）: 篠笛が主題の前半
 fue.put(0, theme("main").bars(1, 8).map(lambda n: Note(n.start, n.dur, n.pitches, 92)))
