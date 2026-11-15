@@ -125,6 +125,11 @@ describe('イベントスクリプト', () => {
     expect(r.state).toMatchObject({ mapId: 'urayama', x: 3, y: 4 });
   });
 
+  it('移るときの効果音を書いた warp は、それを画面に渡す', () => {
+    const r = play([{ type: 'warp', mapId: 'kiyomasaIdo', x: 3, y: 2, se: 'se_stairs' }], game());
+    expect(r.requests[0]).toEqual({ kind: 'warp', mapId: 'kiyomasaIdo', x: 3, y: 2, se: 'se_stairs' });
+  });
+
   it('全回復する', () => {
     const r = play([{ type: 'heal' }], game({ party: [{ ...createMember('hero', 1), hp: 1, mp: 0 }] }));
     expect(r.state.party[0]?.hp).toBe(memberStats(r.state.party[0]!).maxHp);
@@ -336,6 +341,20 @@ describe('手順が鳴らす効果音', () => {
     expect(runner.takeSounds()).toEqual([]);
     runner.next(first.state);
     expect(runner.takeSounds()).toEqual(['se_jingi', 'se_heal']);
+  });
+
+  it('手順 se は、次の台詞と一緒に効果音を渡す', () => {
+    const runner = new EventRunner([
+      { type: 'se', id: 'se_gun' },
+      { type: 'say', lines: ['ダーン！'] },
+      { type: 'se', id: 'se_karakuri' },
+      { type: 'say', lines: ['ギギ……'] },
+    ]);
+    const first = runner.next(game());
+    expect(first.request).toEqual({ kind: 'say', pages: ['ダーン！'] });
+    expect(runner.takeSounds()).toEqual(['se_gun']);
+    runner.next(first.state);
+    expect(runner.takeSounds()).toEqual(['se_karakuri']);
   });
 
   it('持ちきれず受け取れなかった道具は鳴らさない', () => {

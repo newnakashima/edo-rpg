@@ -82,13 +82,17 @@ export interface SeActor {
 /** いま進めている行動（技なら、その音と、何度目の当たりか）。 */
 interface Action {
   actor: string;
-  skill?: { se: SeId | null; multi: boolean; hits: number };
+  /**
+   * covers は、技の音が効き目の音を兼ねる技（効き目が status・summon）か。その技に続く状態・呼び出しの出来事は、
+   * 技の音で済んでいるので鳴らさない（煙玉の se_smoke、からくりを呼ぶ se_karakuri など）。
+   */
+  skill?: { se: SeId | null; multi: boolean; hits: number; covers: boolean };
 }
 
 /**
  * 1 ターンの出来事ごとに鳴らす効果音（鳴らさない出来事は空の配列）。
  * 技の音は技を使った出来事で鳴らし、何度も当たる技は 2 つ目からの当たり外れでも鳴らす。
- * 回復・状態の出来事は、同じ音の技に続くときは鳴らさない（技の音で済んでいる）。道具を使った出来事は鳴らさず、続く出来事で鳴らす。
+ * 回復・状態の出来事は、同じ音の技に続くときは鳴らさない（技の音で済んでいる）。状態をつける技・呼び出す技に続く状態・呼び出しの出来事は、技の音が違っても（煙玉の se_smoke、からくりを呼ぶ se_karakuri）鳴らさない。道具を使った出来事は鳴らさず、続く出来事で鳴らす。
  */
 export function battleSounds(events: readonly BattleEvent[], actors: ReadonlyMap<string, SeActor>): SeId[][] {
   const sideOf = (key: string): Side => actors.get(key)?.side ?? (key.startsWith('p') ? 'party' : 'enemy');
@@ -116,7 +120,7 @@ export function battleSounds(events: readonly BattleEvent[], actors: ReadonlyMap
       case 'skill': {
         const def = SKILLS[e.skill];
         const se = def ? skillSe(def) : null;
-        action = { actor: e.actor, skill: { se, multi: def ? isMultiHit(def) : false, hits: 0 } };
+        action = { actor: e.actor, skill: { se, multi: def ? isMultiHit(def) : false, hits: 0, covers: def?.effect.kind === 'status' || def?.effect.kind === 'summon' } };
         return se ? [se] : [];
       }
       case 'item':
@@ -142,7 +146,7 @@ export function battleSounds(events: readonly BattleEvent[], actors: ReadonlyMap
       case 'revive':
         return effect('se_revive');
       case 'status':
-        return effect(statusSe(e.status));
+        return action?.skill?.covers ? [] : effect(statusSe(e.status));
       case 'statusFailed':
       case 'noEffect':
       case 'noMp':
@@ -158,7 +162,7 @@ export function battleSounds(events: readonly BattleEvent[], actors: ReadonlyMap
       case 'defeated':
         return [sideOf(e.target) === 'party' ? 'se_ko' : 'se_enemy_down'];
       case 'summon':
-        return effect('se_summon');
+        return action?.skill?.covers ? [] : effect('se_summon');
       case 'charge':
         return effect('se_charge');
       case 'again': {

@@ -1,5 +1,5 @@
 // イベントのデータ。シナリオ（フェーズ 4）はここに足していく。形は eventTypes.ts を参照。
-import type { LoopBgmId } from '../systems/audio';
+import type { LoopBgmId, SeId } from '../systems/audio';
 import type { Facing } from '../systems/gameState';
 import type { EventDef, EventStep } from './eventTypes';
 import type { CharacterSpriteId } from './sprites';
@@ -36,6 +36,10 @@ function wait(ms: number): EventStep {
 /** 場面の曲に替える（イベントが終わるとマップの曲に戻る。docs/audio.md の「イベントの場面」）。 */
 function bgm(id: LoopBgmId | null): EventStep {
   return { type: 'bgm', id };
+}
+/** 効果音を鳴らす（次の台詞と一緒に鳴る。docs/audio.md の「場面（イベントの手順で鳴らす）」）。 */
+function se(id: SeId): EventStep {
+  return { type: 'se', id };
 }
 /** フィールドで姿を見せる一行の仲間（兵庫は第 5 章のゲスト）。 */
 type PartySprite = 'kasumi' | 'gendo' | 'orin' | 'hyogo';
@@ -136,6 +140,7 @@ function chest(id: string, item: string, itemName: string): EventDef {
         flag: id,
         then: [{ type: 'say', lines: ['葛籠は空だ。'] }],
         else: [
+          se('se_chest'),
           { type: 'giveItem', item, ifFull: [{ type: 'say', lines: [`葛籠の中に${itemName}がある。……これ以上は持てない。`] }, { type: 'end' }] },
           { type: 'say', lines: [`葛籠の中に${itemName}があった。`] },
           { type: 'setFlag', flag: id },
@@ -368,7 +373,7 @@ const KINTA_FLIGHT: EventStep[] = [
           { type: 'say', lines: ['金太「しっかりつかまってな！ 夜風に乗って、一気に天守まで行くぜ！」'] },
           { type: 'setFlag', flag: 'kintaFlew' },
           // 天守の南西の欄干に降りる。金太は凧をつないで、そこで待つ（tenshuKinta）
-          { type: 'warp', mapId: 'tenshu', x: 1, y: 23 },
+          { type: 'warp', mapId: 'tenshu', x: 1, y: 23, se: 'se_warp' },
           faceTo('hero', 'tenshuKinta'),
           { type: 'say', lines: ['金太「着いた……天守の五重目の欄干だ。鯱は、この上の大棟にいるはずだ」', '金太「おれは凧をつないでから、すぐ後を追う。先に行ってくれ！」'] },
         ],
@@ -382,6 +387,7 @@ const KINTA_FLIGHT: EventStep[] = [
 const KYO_ARRIVE: EventStep[] = [
   actor('kyoMachibitoA', 'npc_merchant', 47, 12, 'right'),
   actor('kyoMachibitoB', 'npc_musume', 46, 13, 'right'),
+  se('se_bell'),
   { type: 'say', lines: ['ゴーン……ゴーン……'] },
   partyOut('kasumi'),
   { type: 'say', lines: ['霞「ここが京か。大火の焼け跡から、よくここまで立ち直ったもんだね」'] },
@@ -490,6 +496,7 @@ const INTRO: EventStep[] = [
 const SHIMIZU_FUNERAL: EventStep[] = [
   bgm('bgm_sad'),
   // 湊は静まり返り、辰五郎一家の屋敷のほうから、弔いの鉦の音だけが聞こえてくる
+  se('se_bell'),
   { type: 'say', lines: ['カーン……カーン……'] },
   partyOut('kasumi'),
   { type: 'say', lines: ['霞「町じゅう、静まり返ってる……。鉦の音は、一家の屋敷のほうからだ」'] },
@@ -673,10 +680,11 @@ const OSAKA_CHAPTER_END: EventStep[] = [
   },
   // 兵庫は橋の上（26, 6）へ下りて、門弟たちの前に立ちふさがる
   walk('hyogo', 'dld'),
+  { type: 'say', lines: ['兵庫「ならん！ 火を放てば、町じゅうが焼ける。飢えた者が、今度は家まで失うのだ」'] },
+  se('se_sheathe'),
   {
     type: 'say',
     lines: [
-      '兵庫「ならん！ 火を放てば、町じゅうが焼ける。飢えた者が、今度は家まで失うのだ」',
       'カチャリ……',
       '兵庫「この刀は、ここに置く。……蔵の米は、町の者に配れ。騒ぎの咎は、すべてこの榊兵庫が負う」',
     ],
@@ -689,12 +697,14 @@ const OSAKA_CHAPTER_END: EventStep[] = [
   },
   // 兵庫が橋を渡りかけたところで、蔵の東の路地（30, 4）から鷲尾の手先が鉄砲を撃つ
   walk('hyogo', 'd'),
+  se('se_gun'),
   { type: 'say', lines: ['ダーン！'] },
   enemyActor('osakaTeppo', 'teppoAshigaru', 30, 4),
   { type: 'say', lines: ['兵庫「ぐ……っ！」'] },
   // 兵庫はよろめいて橋の端（25, 7）から川へ落ちる
   walk('hyogo', 'l'),
   vanish('hyogo'),
+  se('se_splash'),
   { type: 'say', lines: ['ザブン……！'] },
   bgm('bgm_sad'),
   { type: 'say', lines: ['門弟「先生ーっ！」'] },
@@ -1668,9 +1678,11 @@ const OHARU_FIRE: EventStep[] = [
   // 火付け盗賊は倒れ、からくり同心は崩れる
   vanish('oharuTozokuA'),
   vanish('oharuTozokuB'),
+  se('se_crash'),
   { type: 'say', lines: ['ガシャン……。'] },
   vanish('oharuDoshin'),
   bgm('bgm_taika'),
+  se('se_hansho'),
   { type: 'say', lines: ['ジャン、ジャン、ジャン！'] },
   partyOut('kasumi'),
   { type: 'say', lines: ['霞「半鐘だ！ 北の火の見櫓が鳴ってる！」'] },
@@ -1897,6 +1909,7 @@ export const EVENTS: Record<string, EventDef> = {
         linesF: ['野狐「……ヒトノ子ヨ。ココカラ先ヘハ、通サヌ」', '{hero}「額に何か光ってる……。化け狐の正体、見せてもらうよ」'],
       },
       { type: 'battle', enemies: ['yako'], level: 4, canEscape: false, bgm: 'bgm_boss' },
+      se('se_karakuri'),
       { type: 'say', lines: ['カタ、カタカタ……。'] },
       wait(300),
       vanish('yako'),
@@ -1972,6 +1985,7 @@ export const EVENTS: Record<string, EventDef> = {
         ],
       },
       // 奥の棚（17, 2）の陰から、見張りのからくり人形が二体、歩き出してくる
+      se('se_karakuri'),
       { type: 'say', lines: ['カタ、カタカタカタ……！'] },
       enemyActor('koboNingyoA', 'karakuriNingyo', 15, 3),
       enemyActor('koboNingyoB', 'karakuriNingyo', 19, 3),
@@ -2075,6 +2089,7 @@ export const EVENTS: Record<string, EventDef> = {
           vanish('yashamaru'),
           // 夜叉丸はここで姿を消す（戦闘から戻ったときも、奥の間の夜叉丸を消したままにする）
           { type: 'setFlag', flag: 'yashamaruFled' },
+          se('se_quake'),
           { type: 'say', lines: ['ズシン……ズシン……。'] },
           enemyActor('tetsubin', 'tetsubin', 25, 3),
           walk('tetsubin', 'lllll'),
@@ -2241,9 +2256,11 @@ export const EVENTS: Record<string, EventDef> = {
           { type: 'setFlag', flag: 'kinshachiMet' },
         ],
       },
+      se('se_karakuri'),
       { type: 'say', lines: ['ギギギ……！'] },
       walk('kinshachi', 'd'),
       { type: 'battle', enemies: ['kinshachi'], level: 10, bgm: 'bgm_boss' },
+      se('se_crash'),
       { type: 'say', lines: ['ガラガラ……！'] },
       // 金鯱からくりが崩れ、胸の歯車の中から銀次が転がり出る
       vanish('kinshachi'),
@@ -2339,6 +2356,7 @@ export const EVENTS: Record<string, EventDef> = {
         flag: 'gendoJoined',
         then: [
           // 門の跡の基壇の両脇の暗がりから、赤い鬼が二匹、のそりと現れる
+          se('se_quake'),
           { type: 'say', lines: ['ズシン……ズシン……'] },
           enemyActor('rashomonOniA', 'akaoni', 11, 9),
           enemyActor('rashomonOniB', 'akaoni', 24, 9),
@@ -2349,7 +2367,9 @@ export const EVENTS: Record<string, EventDef> = {
           { type: 'battle', enemies: ['akaoni', 'akaoni'], level: 10 },
           // 玄道が数珠を鳴らして経を唱えると、鬼の角が落ち、痩せた河原の男たちの姿に戻る
           faceTo('gendo', 'rashomonOniA'),
-          { type: 'say', lines: ['玄道「オン・アビラウンケン……。迷うな。人に戻れ」', 'シャラン……'] },
+          { type: 'say', lines: ['玄道「オン・アビラウンケン……。迷うな。人に戻れ」'] },
+          se('se_revive'),
+          { type: 'say', lines: ['シャラン……'] },
           vanish('rashomonOniA'),
           vanish('rashomonOniB'),
           actor('rashomonOtokoA', 'npc_ninsoku', 17, 9, 'down'),
@@ -2430,10 +2450,12 @@ export const EVENTS: Record<string, EventDef> = {
             ],
           },
           // 夜叉丸が印を結ぶと、本堂の床が裂け、巨大な鬼が這い出してくる
+          se('se_quake'),
           { type: 'say', lines: ['ゴゴゴゴ……！'] },
           enemyActor('shuten', 'shuten', 20, 5),
           { type: 'say', lines: ['夜叉丸「酒呑の大鬼。都の鬼どもの親玉だ。遊んでやれ」'] },
           // 護摩の煙とともに、夜叉丸の姿がかき消える
+          se('se_smoke'),
           { type: 'say', lines: ['ボウッ……'] },
           vanish('kyoYashamaru'),
           { type: 'say', lines: ['霞〈怒〉「待ちな！ ……ちっ、また煙に巻かれた」'] },
@@ -2444,6 +2466,7 @@ export const EVENTS: Record<string, EventDef> = {
       walk('shuten', 'd'),
       { type: 'say', lines: ['ウオォォォ……！'] },
       { type: 'battle', enemies: ['shuten'], level: 13, bgm: 'bgm_boss' },
+      se('se_quake'),
       { type: 'say', lines: ['ズシン……！'] },
       partyOut('gendo'),
       faceTo('gendo', 'shuten'),
@@ -2460,14 +2483,11 @@ export const EVENTS: Record<string, EventDef> = {
       actor('oninosuToraware2', 'npc_musume', 23, 4, 'down'),
       actor('oninosuToraware3', 'npc_rojin', 25, 5, 'down'),
       { type: 'say', lines: ['霞「……待って、本堂の奥の牢に、人が囚われてる！」'] },
+      { type: 'say', lines: ['玄道「じっとしておれ。今、祓ってやる。……オン・アビラウンケン」'] },
+      se('se_revive'),
       {
         type: 'say',
-        lines: [
-          '玄道「じっとしておれ。今、祓ってやる。……オン・アビラウンケン」',
-          'シャラン……',
-          '娘「角が……消えた。人の手に戻っとる……！」',
-          '老人「お坊さま、皆さま……ありがとうございます……」',
-        ],
+        lines: ['シャラン……', '娘「角が……消えた。人の手に戻っとる……！」', '老人「お坊さま、皆さま……ありがとうございます……」'],
       },
       faceTo('gendo', 'hero'),
       {
@@ -2545,6 +2565,7 @@ export const EVENTS: Record<string, EventDef> = {
         ],
       },
       // 朧は、煙玉の煙とともに姿を消す
+      se('se_smoke'),
       { type: 'say', lines: ['ボウッ……'] },
       vanish('igaOboro'),
       partyOut('orin'),
@@ -2585,7 +2606,10 @@ export const EVENTS: Record<string, EventDef> = {
       },
       { type: 'battle', enemies: ['gonroku'], level: 16, bgm: 'bgm_duel' },
       // お凛の放った一発が、権六の胸を撃ち抜く。からくりの腕が、きしんで止まる
-      { type: 'say', lines: ['ダーン……！', 'ギ……ギギ……'] },
+      se('se_gun'),
+      { type: 'say', lines: ['ダーン……！'] },
+      se('se_karakuri'),
+      { type: 'say', lines: ['ギ……ギギ……'] },
       bgm('bgm_sad'),
       {
         type: 'say',
@@ -2596,6 +2620,7 @@ export const EVENTS: Record<string, EventDef> = {
         ],
       },
       // 権六は、それきり動かなくなり、辻に崩れ落ちる
+      se('se_fall'),
       { type: 'say', lines: ['ドサッ……'] },
       vanish('kagiyaGonroku'),
       wait(600),
@@ -2687,6 +2712,7 @@ export const EVENTS: Record<string, EventDef> = {
     steps: [
       face('hero', 'right'),
       // 歯車のうなりとともに、天井まで積まれた俵の山がきしみながら立ち上がる
+      se('se_karakuri'),
       { type: 'say', lines: ['ギリ……ギリギリ……'] },
       enemyActor('komeKuraHyakuhyo', 'hyakuhyo', 40, 13),
       walk('komeKuraHyakuhyo', 'll'),
@@ -2706,6 +2732,7 @@ export const EVENTS: Record<string, EventDef> = {
       },
       { type: 'battle', enemies: ['hyakuhyo'], level: 19, bgm: 'bgm_boss' },
       // 百俵からくりは俵をまき散らして崩れ落ち、歯車が止まる
+      se('se_crash'),
       { type: 'say', lines: ['ガラガラガラ……！'] },
       vanish('komeKuraHyakuhyo'),
       { type: 'say', lines: ['シュウゥ……'] },
@@ -2790,10 +2817,13 @@ export const EVENTS: Record<string, EventDef> = {
       },
       { type: 'battle', enemies: ['nanbanHei', 'gehoTsukai', 'nanbanHei'], level: 19 },
       // からくり兵は崩れ、外法使いは煙を残して消える
+      se('se_crash'),
       { type: 'say', lines: ['ガシャン……！'] },
       vanish('nanbanjiHeiA'),
       vanish('nanbanjiHeiB'),
-      { type: 'say', lines: ['外法使い「ぐっ……蘭斎先生……！」', 'ボンッ！'] },
+      { type: 'say', lines: ['外法使い「ぐっ……蘭斎先生……！」'] },
+      se('se_smoke'),
+      { type: 'say', lines: ['ボンッ！'] },
       vanish('nanbanjiGeho'),
       // 霞が、外法使いの立っていた所（18, 7）の前（18, 8）まで行き、書き付けの束を拾う
       partyOut('kasumi'),
@@ -2825,6 +2855,7 @@ export const EVENTS: Record<string, EventDef> = {
     steps: [
       face('hero', 'down'),
       actor('kenkyujoRansai', 'npc_rojin', 14, 21, 'up'),
+      se('se_karakuri'),
       { type: 'say', lines: ['ギギ……ギギギギ……'] },
       enemyActor('kenkyujoOzutsu', 'nanbanOzutsu', 17, 21),
       walk('kenkyujoOzutsu', 'lu'),
@@ -2845,6 +2876,7 @@ export const EVENTS: Record<string, EventDef> = {
       },
       { type: 'battle', enemies: ['nanbanOzutsu'], level: 22, bgm: 'bgm_boss' },
       // 胸のゼンマイがはじけ、大筒からくりが崩れ落ちる
+      se('se_crash'),
       { type: 'say', lines: ['バチンッ……！ ガラガラガラ……！'] },
       vanish('kenkyujoOzutsu'),
       // 主人公は研究室に入り、机の脇の蘭斎の前（14, 20）へ。玄道は主人公の左（13, 20）に出る
@@ -2869,6 +2901,7 @@ export const EVENTS: Record<string, EventDef> = {
       { type: 'say', lines: ['玄道「……確かに預かった。おぬしの学問は、わしらが正しく使おう」'] },
       { type: 'say', lines: ['蘭斎「出島の、あの書は……美しかった。わしは、ただ……」'] },
       wait(600),
+      se('se_fall'),
       { type: 'say', lines: ['ドサッ……'] },
       vanish('kenkyujoRansai'),
       partyOut('orin'),
@@ -3043,6 +3076,7 @@ export const EVENTS: Record<string, EventDef> = {
             lines: ['霞「……見な。片方の足のまわりだけ、雪が踏み固められてる。足もとの石を押してみな」'],
           },
           // 主人公が足もとの石を押すと、北の木立の奥で重い音がする
+          se('se_karakuri'),
           { type: 'say', lines: ['ゴトリ……'] },
           face('kasumi', 'up'),
           { type: 'say', lines: ['霞「北の木立の奥で、何か動いたね」'] },
@@ -3056,6 +3090,7 @@ export const EVENTS: Record<string, EventDef> = {
           { type: 'say', lines: ['加賀の忍び「そこまでだ。ご家老の秘密を知った者は、生かして帰さぬ」'] },
           { type: 'battle', enemies: ['kagaShinobi', 'karakuriHanshi', 'kagaShinobi'], level: 22 },
           // 忍びは煙玉で逃げ、からくり藩士は崩れ落ちる
+          se('se_smoke'),
           { type: 'say', lines: ['ボウッ……'] },
           vanish('toroShinobiA'),
           vanish('toroShinobiB'),
@@ -3099,6 +3134,7 @@ export const EVENTS: Record<string, EventDef> = {
           { type: 'say', lines: ['霞「上座に、殿様の装束を着た人が座ってる……」', '影武者「……何者じゃ。余は加賀の主であるぞ。控えよ」'] },
           walk('guraKagemusha', 'llll'),
           // 胸の奥から、ゼンマイの巻ける音がする
+          se('se_karakuri'),
           { type: 'say', lines: ['ギリ……ギリ……'] },
           partyOut('orin'),
           faceTo('orin', 'guraKagemusha'),
@@ -3123,6 +3159,7 @@ export const EVENTS: Record<string, EventDef> = {
         ],
       },
       // ゼンマイがほどけ、青い光が天井へ昇っていく。影武者は抜け殻になって崩れる
+      se('se_crash'),
       { type: 'say', lines: ['ガシャン……'] },
       vanish('guraKagemusha'),
       { type: 'say', lines: ['玄道「囚われておった魂は、これで行くべきところへ行ける」'] },
@@ -3183,6 +3220,7 @@ export const EVENTS: Record<string, EventDef> = {
         ],
       },
       // 夜叉丸は静かに目を閉じ、崩れ落ちる
+      se('se_fall'),
       { type: 'say', lines: ['ドサッ……'] },
       vanish('yashamaruGura'),
       ...partyIn('gendo'),
@@ -3255,9 +3293,11 @@ export const EVENTS: Record<string, EventDef> = {
           { type: 'say', lines: ['加賀の忍び「片平帯刀、その口を閉じてもらう」'] },
           { type: 'battle', enemies: ['kagaShinobi', 'karakuriDoshin', 'kagaShinobi'], level: 25 },
           // 忍びは煙玉で逃げ、からくり同心は崩れ落ちる
+          se('se_smoke'),
           { type: 'say', lines: ['ボンッ！'] },
           vanish('tatewakiShinobiA'),
           vanish('tatewakiShinobiB'),
+          se('se_crash'),
           { type: 'say', lines: ['ガシャン……。'] },
           vanish('tatewakiDoshin'),
           faceTo('tatewaki', 'hero'),
@@ -3514,7 +3554,7 @@ export const EVENTS: Record<string, EventDef> = {
             options: [
               {
                 label: '下りる',
-                steps: [{ type: 'warp', mapId: 'kiyomasaIdo', x: 3, y: 2 }],
+                steps: [{ type: 'warp', mapId: 'kiyomasaIdo', x: 3, y: 2, se: 'se_stairs' }],
               },
               { label: 'やめておく', steps: [] },
             ],
@@ -3560,18 +3600,24 @@ export const EVENTS: Record<string, EventDef> = {
       wait(300),
       { type: 'battle', enemies: ['gehoTsukai', 'nanbanHei', 'nanbanHei', 'nanbanHei'], level: 21 },
       // 外法使いは煙とともに消え、南蛮兵は崩れる
+      se('se_smoke'),
       { type: 'say', lines: ['ボンッ！'] },
       vanish('mizuGeho'),
+      se('se_crash'),
       { type: 'say', lines: ['ガシャン、ガシャン……。'] },
       vanish('mizuHeiA'),
       vanish('mizuHeiB'),
       vanish('mizuHeiC'),
       // 仲間が一人ずつ出て、からくりを止める
       partyOut('kasumi'),
-      { type: 'say', lines: ['霞「歯車の間に、鎖を噛ませてやる！」', 'ギギ……ギギギ……。'] },
+      { type: 'say', lines: ['霞「歯車の間に、鎖を噛ませてやる！」'] },
+      se('se_karakuri'),
+      { type: 'say', lines: ['ギギ……ギギギ……。'] },
       ...partyIn('kasumi'),
       partyOut('orin'),
-      { type: 'say', lines: ['お凛「鉄の筒は、あたしが撃ち抜くよ！」', 'ダーン！'] },
+      { type: 'say', lines: ['お凛「鉄の筒は、あたしが撃ち抜くよ！」'] },
+      se('se_gun'),
+      { type: 'say', lines: ['ダーン！'] },
       ...partyIn('orin'),
       partyOut('gendo'),
       { type: 'say', lines: ['玄道「とどめじゃ！」', 'ガシャーン！', 'ごぼ、ごぼごぼ……。'] },
@@ -3788,6 +3834,7 @@ export const EVENTS: Record<string, EventDef> = {
           { type: 'say', lines: ['旗本奴「鼠め、どこへ逃げた！ ……なんだ、てめえらは」'] },
           { type: 'battle', enemies: ['karakuriDoshin', 'hatamotoYakko', 'karakuriDoshin'], level: 25 },
           // からくり同心は崩れ、旗本奴は路地の東へ逃げていく
+          se('se_crash'),
           { type: 'say', lines: ['ガシャン、ガシャン……。'] },
           vanish('kokichiDoshinA'),
           vanish('kokichiDoshinB'),
@@ -3907,6 +3954,7 @@ export const EVENTS: Record<string, EventDef> = {
     id: 'taikaEnter',
     steps: [
       walk('hero', 'r'),
+      se('se_crash'),
       { type: 'say', lines: ['ガラガラ……ドドーン！'] },
       faceTo('taikaHikeshi1', 'hero'),
       { type: 'say', lines: ['火消し「梁が落ちたぞ、下がってな！ 鳶口で風下の長屋を引き倒して、火の通り道をふさぐんだ！」'] },
@@ -3930,7 +3978,7 @@ export const EVENTS: Record<string, EventDef> = {
       {
         type: 'if',
         flag: 'kashaMet',
-        then: [{ type: 'say', lines: ['ギリ、ギリギリ……ゴウッ！'] }],
+        then: [se('se_karakuri'), se('se_fire'), { type: 'say', lines: ['ギリ、ギリギリ……ゴウッ！'] }],
         else: [
           partyOut('kasumi'),
           {
@@ -3952,6 +4000,7 @@ export const EVENTS: Record<string, EventDef> = {
       },
       { type: 'battle', enemies: ['kashaKarakuri'], level: 28, bgm: 'bgm_boss' },
       // 車輪が止まり、燃える油の樽が地に落ちて砕ける
+      se('se_crash'),
       { type: 'say', lines: ['ギギ……ガシャーン！'] },
       vanish('kasha'),
       actor('kashaGashira', 'npc_hikeshi', 38, 25, 'right'),
@@ -3988,7 +4037,9 @@ export const EVENTS: Record<string, EventDef> = {
             ],
           },
           face('edoMonban', 'up'),
-          { type: 'say', lines: ['門番「開門ーっ！」', 'ギギギ……ゴゴン……！'] },
+          { type: 'say', lines: ['門番「開門ーっ！」'] },
+          se('se_gate'),
+          { type: 'say', lines: ['ギギギ……ゴゴン……！'] },
           walk('edoMonban', 'uu'),
           vanish('edoMonban'),
           { type: 'setFlag', flag: 'otemonOpen' },
@@ -4032,6 +4083,7 @@ export const EVENTS: Record<string, EventDef> = {
   jouguchi: {
     id: 'jouguchi',
     steps: [
+      se('se_karakuri'),
       { type: 'say', lines: ['ガシャン！', 'からくりの番兵「ギギ……御錠口ヨリ先ハ、何人モ通サヌ」'] },
       { type: 'warp', mapId: 'edojo', x: 20, y: 17 },
       face('hero', 'up'),
@@ -4066,6 +4118,7 @@ export const EVENTS: Record<string, EventDef> = {
         ],
       },
       { type: 'battle', enemies: ['karakuriHatamoto', 'karakuriOniwaban', 'karakuriHatamoto'], level: 28 },
+      se('se_crash'),
       { type: 'say', lines: ['ギギ……ガシャーン！'] },
       vanish('hatamoto'),
       vanish('oniwaban'),
@@ -4080,6 +4133,12 @@ export const EVENTS: Record<string, EventDef> = {
           '金太「よっと！ 間に合った！ 久しぶりだな、{hero}！」',
           '金太「江戸の空で凧を揚げてたら、御城の騒ぎが見えてさ。名古屋の恩を返しに来たぜ」',
           '金太「からくりの番兵の鍵ってのは、これだろ？ 天窓の上の梁に隠してあった。……こいつを、こう回すと」',
+        ],
+      },
+      se('se_karakuri'),
+      {
+        type: 'say',
+        lines: [
           'カチリ。……ジジジ、シュルルル……',
           '金太「ほら、遠くでゼンマイのほどける音がしたろ。これで御錠口の番兵は止まったはずだ」',
           '金太「それから、ほら、傷の手当てくらいはさせてくれよ。名古屋の薬屋で分けてもらった薬だ」',
@@ -4125,7 +4184,9 @@ export const EVENTS: Record<string, EventDef> = {
         ],
       },
       { type: 'battle', enemies: ['ookuBakeneko', 'karakuriOniwaban', 'ookuBakeneko', 'onryo'], level: 28 },
-      { type: 'say', lines: ['化け猫「ふぎゃあ……！」', 'ボンッ！'] },
+      { type: 'say', lines: ['化け猫「ふぎゃあ……！」'] },
+      se('se_smoke'),
+      { type: 'say', lines: ['ボンッ！'] },
       vanish('bakeneko'),
       bgm('bgm_rally'),
       { type: 'say', lines: ['……えいさー、えいさー！'] },
@@ -4198,6 +4259,7 @@ export const EVENTS: Record<string, EventDef> = {
       // 主人公を（24, 11）に立たせる（兵庫が（24, 12）の側を通るため）
       { type: 'walk', who: 'hero', to: { x: 24, y: 11 } },
       face('hero', 'left'),
+      se('se_karakuri'),
       { type: 'say', lines: ['ガシャン、ガシャン……'] },
       enemyActor('matsuHatamotoA', 'karakuriHatamoto', 17, 10),
       enemyActor('matsuHatamotoB', 'karakuriHatamoto', 18, 10),
@@ -4217,10 +4279,12 @@ export const EVENTS: Record<string, EventDef> = {
         ],
       },
       { type: 'battle', enemies: ['karakuriHatamoto', 'karakuriKinju', 'karakuriOniwaban', 'karakuriKinju'], level: 28 },
+      se('se_crash'),
       { type: 'say', lines: ['ガシャン……'] },
       vanish('matsuHatamotoA'),
       vanish('matsuHatamotoB'),
       // 北の口から、さらに手下が下りてくる。後ろ（東の廊下）からも追っ手が来る
+      se('se_karakuri'),
       { type: 'say', lines: ['ガシャン、ガシャン、ガシャン……'] },
       enemyActor('matsuKinjuA', 'karakuriKinju', 17, 10),
       enemyActor('matsuKinjuB', 'karakuriKinju', 18, 10),
@@ -4236,6 +4300,7 @@ export const EVENTS: Record<string, EventDef> = {
       ...partyIn('kasumi'),
       // 後ろの手下の陰から、兵庫が斬り込む
       bgm('bgm_rally'),
+      se('se_slash'),
       { type: 'say', lines: ['ザンッ！ザンッ！'] },
       vanish('matsuOniwabanA'),
       vanish('matsuOniwabanB'),
@@ -4265,12 +4330,14 @@ export const EVENTS: Record<string, EventDef> = {
       // 兵庫は（24, 12）の側を西へ進み、北の口から下りてきた手下（17, 12）（18, 11）の両方の隣（18, 12）で斬り払う
       walk('hyogo', 'llllllll'),
       face('hyogo', 'left'),
+      se('se_slash'),
       { type: 'say', lines: ['ザンッ！'] },
       vanish('matsuKinjuA'),
       vanish('matsuKinjuB'),
       // 廊下の南の側（20, 12）へ下がり、後ろから来る追っ手に向き直る（北の側は将軍の間への道として空ける）
       walk('hyogo', 'rr'),
       face('hero', 'left'),
+      se('se_karakuri'),
       { type: 'say', lines: ['ガシャン、ガシャン……'] },
       // 後ろから、追っ手がさらに押し寄せる
       enemyActor('matsuOniwabanC', 'karakuriOniwaban', 32, 11),
@@ -4337,10 +4404,12 @@ export const EVENTS: Record<string, EventDef> = {
         lines: [
           '典膳「……見事。わしの居合が、届かぬとは……」',
           '典膳「鷲尾さまは、上様の影武者と己の体を、つなぐおつもりだ……。止められるものなら……止めてみよ……」',
-          'チン……。',
-          'ドサッ……',
         ],
       },
+      se('se_sheathe'),
+      { type: 'say', lines: ['チン……。'] },
+      se('se_fall'),
+      { type: 'say', lines: ['ドサッ……'] },
       vanish('tenzenRoka'),
       { type: 'setFlag', flag: 'tenzenDefeated' },
     ],

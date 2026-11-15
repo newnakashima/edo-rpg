@@ -142,7 +142,7 @@ export class TitleScene extends Phaser.Scene {
     this.controls.flush();
     this.message.show(['どの記録に読み込みますか？'], () => undefined);
     this.active = new SaveSlotMenu(this, storage, 'import', (result) => {
-      this.message.advance();
+      this.message.advance(false);
       if (result.kind !== 'picked') {
         this.openFileMenu(1);
         return;
@@ -157,7 +157,7 @@ export class TitleScene extends Phaser.Scene {
     this.controls.flush();
     this.message.show([`記録 ${slot + 1} を上書きします。よろしいですか？`], () => undefined);
     const back = () => {
-      this.message.advance();
+      this.message.advance(false);
       this.openImportSlots(data);
     };
     this.active = new Menu(
@@ -171,7 +171,7 @@ export class TitleScene extends Phaser.Scene {
           back();
           return;
         }
-        this.message.advance();
+        this.message.advance(false);
         this.importInto(slot, data);
       },
       back,

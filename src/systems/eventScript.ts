@@ -16,7 +16,7 @@ export type EventRequest =
   | { kind: 'say'; pages: string[] }
   | { kind: 'choice'; prompt?: string; labels: string[] }
   | { kind: 'battle'; enemies: string[]; level: number; canEscape: boolean; loseOk: boolean; bgm: LoopBgmId }
-  | { kind: 'warp'; mapId: string; x: number; y: number }
+  | { kind: 'warp'; mapId: string; x: number; y: number; se?: SeId }
   /** 演出（人を出す・歩かせる・向きを変える・消す・待つ）。画面が行い終えたら next を呼ぶ。 */
   | { kind: 'stage'; step: StageStep }
   /** エンディングを出す（イベントはここで終わる）。 */
@@ -304,7 +304,13 @@ export class EventRunner {
           return { state: s, request: { kind: 'stage', step } };
         case 'warp':
           this.stage.clear();
-          return { state: { ...s, mapId: step.mapId, x: step.x, y: step.y }, request: { kind: 'warp', mapId: step.mapId, x: step.x, y: step.y } };
+          return {
+            state: { ...s, mapId: step.mapId, x: step.x, y: step.y },
+            request: { kind: 'warp', mapId: step.mapId, x: step.x, y: step.y, ...(step.se ? { se: step.se } : {}) },
+          };
+        case 'se':
+          this.sounds.push(step.id);
+          break;
         case 'end':
           return this.finish(s);
         case 'ending':

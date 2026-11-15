@@ -1,5 +1,5 @@
 // イベントスクリプトの形。シナリオはこの形のデータ（events.ts）として書き、systems/eventScript.ts が実行する。
-import type { LoopBgmId } from '../systems/audio';
+import type { LoopBgmId, SeId } from '../systems/audio';
 import type { Facing } from '../systems/gameState';
 import type { CharacterId } from './characters';
 import type { CharacterSpriteId } from './sprites';
@@ -49,7 +49,13 @@ export type EventStep =
    * イベントが終わるまで、戦闘から戻っても、warp で別のマップへ移っても、この曲を続ける。イベントが終わればマップの曲に戻す。
    */
   | { type: 'bgm'; id: LoopBgmId | null }
-  | { type: 'warp'; mapId: string; x: number; y: number }
+  /** 別のマップへ移る。se は移るときの効果音（省くと se_door。石段・井戸は se_stairs、凧で飛ぶのは se_warp）。 */
+  | { type: 'warp'; mapId: string; x: number; y: number; se?: SeId }
+  /**
+   * 効果音を鳴らす（docs/audio.md の「場面（イベントの手順で鳴らす）」）。次の台詞・演出と一緒に鳴る。
+   * 擬音の台詞（「ダーン！」など）の直前に置く。台詞の途中のページで鳴らしたいときは、台詞をそこで分ける。
+   */
+  | { type: 'se'; id: SeId }
   /** イベントをここで終える。 */
   | { type: 'end' }
   /**
