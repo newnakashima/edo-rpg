@@ -115,6 +115,14 @@ export function setAvailableBgm(ids: Iterable<BgmId>): void {
 let requested: BgmId | null = null;
 let playing: BgmId | null = null;
 
+/** 曲を鳴らし始める（null なら止める）処理。鳴らす曲が替わったときだけ呼ぶ。再生処理を入れるまでは何もしない。 */
+let startTrack: (id: BgmId | null) => void = () => {};
+
+/** 曲を鳴らし始める処理を差し替える（再生処理を入れるとき・テスト）。 */
+export function setBgmPlayer(player: (id: BgmId | null) => void): void {
+  startTrack = player;
+}
+
 /**
  * ループする曲を鳴らす。いま鳴らしている曲と同じなら、頭から鳴らし直さずに続ける。
  * fallback は、その曲も代わりもまだないときに鳴らす曲（親分の屋敷・寺社・賭場の町の曲）。
@@ -125,7 +133,7 @@ export function playBgm(id: LoopBgmId | null, fallback?: LoopBgmId): void {
   requested = id;
   if (next === playing) return;
   playing = next;
-  // ここで next を鳴らす（再生処理は後のフェーズ）
+  startTrack(next);
 }
 
 /** ジングル（勝利・全滅・一泊・仲間の加入）を 1 度鳴らす。鳴り終えたら、いま鳴らすことになっている曲に戻る。 */

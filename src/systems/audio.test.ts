@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { EventStep } from '../data/eventTypes';
-import { BGM_FALLBACK, BGM_IDS, currentBgm, JINGLES, playBgm, playingBgm, resolveBgm, setAvailableBgm, type BgmId } from './audio';
+import { BGM_FALLBACK, BGM_IDS, currentBgm, JINGLES, playBgm, playingBgm, resolveBgm, setAvailableBgm, setBgmPlayer, type BgmId } from './audio';
 import { EventRunner, MAX_PARTY } from './eventScript';
 import { newGame } from './gameState';
 import { createMember } from './party';
@@ -74,7 +74,10 @@ describe('曲の代わり', () => {
   });
 
   it('いま鳴らしている曲と同じ曲（代わりをたどって同じになる曲も）なら続け、違えば替え、止めたあとは鳴らし直す', () => {
+    const started: (BgmId | null)[] = [];
+    setBgmPlayer((id) => started.push(id));
     setAvailableBgm(['bgm_town', 'bgm_road']);
+    playBgm('bgm_town');
     playBgm('bgm_town');
     expect(playingBgm()).toBe('bgm_town');
     // 京・大坂の曲がまだなければ、どちらも町の曲に解決されるので続く
@@ -91,8 +94,11 @@ describe('曲の代わり', () => {
     // 親分の屋敷の曲がまだなければ、fallback の町の曲
     playBgm('bgm_oyabun', 'bgm_town');
     expect(playingBgm()).toBe('bgm_town');
+    // 鳴らし始めたのは、曲が替わったときと、止めたあとだけ
+    expect(started).toEqual(['bgm_town', 'bgm_road', null, 'bgm_road', 'bgm_town']);
     playBgm(null);
     setAvailableBgm([]);
+    setBgmPlayer(() => {});
   });
 });
 

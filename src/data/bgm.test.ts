@@ -99,7 +99,7 @@ describe('マップの曲', () => {
     expect(ids('bgm_tobaku').every((id) => /Tobaku/.test(id))).toBe(true);
     expect(ids('bgm_shrine')).toEqual(
       [
-        // docs/audio.md の「寺社の屋内」の `*Tera`（お寺のある 11 の町）
+        // docs/audio.md の「寺社の屋内」の `*Tera`（お祓いの人のいない寺も含む 10 の町）
         ...['shimizu', 'kyo', 'hiroshima', 'nagasaki', 'kanazawa', 'hamamatsu', 'hikone', 'kumamoto', 'aizu', 'edo'].map((t) => `${t}Tera`),
         'kanazawaZendera',
         'kanazawaShikakeDera',
