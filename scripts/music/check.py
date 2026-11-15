@@ -3,8 +3,12 @@
   python3 scripts/music/check.py bgm_sad        # 1 曲
   python3 scripts/music/check.py --all          # music/midi/ のすべての曲
 
-次の 2 つを挙げる。どちらも「聞いて濁るかもしれない場所」の手がかりで、直すかどうかは曲の意図で決める
-（からくりの主題の半音の動きのように、冷たさや妖しさのために残すものもある）。
+次の 2 つを、警告（Warning）として挙げる。誤りの判定ではない。
+
+- 挙がった箇所は「聞いて濁るかもしれない場所」の手がかりで、必ず直すものではない。
+- 意図した不協和音（からくりの主題の半音の動き、妖しさや緊張を出すためのぶつかりなど）なら、そのまま残してよい。
+- 直すのは、意図していないずれ（短調の和音に長調の主題が乗る、違う調の主題を重ねる、など）だけである。
+- 警告が何件あっても、終了コードは 0 で、書き出しも止めない。
 
 1. 半音のぶつかり: 主旋律・副旋律（role が main・sub）の 1 拍以上の音が、同時に鳴っている別のトラックの音と
    半音（または長 7 度）離れている箇所。和音が旋律の音と合っていないときに出る。
@@ -96,10 +100,10 @@ def check(song_id: str, min_beats: float = 1.0) -> int:
                     continue
                 for s2, e2, p2 in ons:
                     if s2 <= mid_tick < e2 and (pitch - p2) % 12 in (1, 11):
-                        clashes.append((start, f"  {where(start)}  {name} {name_of(pitch)}  と  {other} {name_of(p2)}"))
+                        clashes.append((start, f"  [警告] {where(start)}  {name} {name_of(pitch)}  と  {other} {name_of(p2)}"))
     for _, line in sorted(clashes):
         print(line)
-    print(f"  半音のぶつかり: {len(clashes)} 件")
+    print(f"  半音のぶつかり（警告）: {len(clashes)} 件")
 
     # 2. 音階に収まらない小節
     bars: dict[int, set[int]] = {}
@@ -109,8 +113,10 @@ def check(song_id: str, min_beats: float = 1.0) -> int:
                 bars.setdefault(start // bar_ticks + 1, set()).add(pitch % 12)
     outside = [b for b in sorted(bars) if not any(bars[b] <= sc for _, sc in SCALES)]
     for b in outside:
-        print(f"  {b} 小節: {' '.join(NAMES[p] for p in sorted(bars[b]))}")
-    print(f"  音階に収まらない小節: {len(outside)} / {len(bars)}")
+        print(f"  [警告] {b} 小節: {' '.join(NAMES[p] for p in sorted(bars[b]))}")
+    print(f"  音階に収まらない小節（警告）: {len(outside)} / {len(bars)}")
+    if clashes or outside:
+        print("  警告は濁るかもしれない場所の手がかりです。意図した不協和音なら残してかまいません。")
     return len(clashes) + len(outside)
 
 
