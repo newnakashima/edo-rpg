@@ -225,10 +225,10 @@
 | ID | 場面 | 聞こえ方 | 長さ | 優先 | 鳴らす所 |
 | --- | --- | --- | --- | --- | --- |
 | se_door | 戸・襖・町やマップの出入り | 引き戸を滑らせる「スッ」 | 0.4 秒 | A | `FieldScene.moveTo`、手順 `warp` |
-| se_stairs | 石段・洞窟・地下への出入り | 足音 2〜3 歩 | 0.4 秒 | B | 出口ごとに音を選べるようにする（下の「コードでの鳴らし方」） |
+| se_stairs | 石段・洞窟・地下への出入り | 足音 2〜3 歩 | 0.4 秒 | B | 出口の `se`（狐火の洞の口、名古屋城の天守の階段、米蔵の地下、地下の研究所、清正の古井戸）、手順 `warp` の `se` |
 | se_chest | 葛籠を開ける（約 77 か所） | 蓋がきしむ短い「ギッ」。続けて se_item | 0.3 秒 | B | `src/data/events.ts` の `chest()` |
 | se_encounter | 戦闘が始まる（出会い・イベントの戦闘） | 鋭い一打に、上ずって張り詰める響き | 0.6 秒 | A | `FieldScene` の出会いとイベントの `battle`（画面が光るところ） |
-| se_warp | 道しるべの札・抜け道で戻る | 風が巻いて遠ざかる | 0.6 秒 | B | `FieldMenu` の札・抜け道 |
+| se_warp | 道しるべの札・抜け道で戻る、凧で飛ぶ | 風が巻いて遠ざかる | 0.6 秒 | B | `FieldMenu` の札・抜け道（使ったときに鳴らし、移るときは鳴らさない）、金太の凧で天守へ飛ぶ `warp` |
 | se_ward | 魔除けを使う・切れる | 鈴を 1 つ振る。切れるときは同じ音を低く短く | 0.4 秒 | C | `FieldMenu` の魔除け、`FieldScene.afterStep` |
 | se_dice | 丁半で壺を振って伏せる | 賽が壺の中で転がり、ぽんと伏せる | 0.6 秒 | B | `FieldScene.openChohanCall`（負けは se_buzzer） |
 | se_jingi | 仁義（渡世人の名）が上がる・戦闘で仁義を切る | 拍子木を 2 つ打つ | 0.5 秒 | B | 手順 `addJingi`、戦闘の `taunt` |
@@ -252,7 +252,7 @@
 | se_miss | 外れる・かわされる | 空を切る軽い「ヒュッ」 | 0.2 秒 | A | `miss` |
 | se_guard | 防御・かばう | 刀で受ける「キン」 | 0.25 秒 | B | `guard`・`cover`・`covered` |
 | se_buff | 強くなる（攻め・守り・回避・会心が上がる） | 下から上へ駆け上がる | 0.4 秒 | B | 分身の術・金剛力・無念無想・遠吠え・空蝉など |
-| se_debuff | 弱くなる（攻め・命中が下がる、酒に酔う） | 上から下へずり落ちる | 0.4 秒 | B | 煙玉・すごむ・米ぬかの煙・呪い・金箔の舞など |
+| se_debuff | 弱くなる（攻め・命中が下がる、酒に酔う） | 上から下へずり落ちる | 0.4 秒 | B | すごむ・米ぬかの煙・呪い・金箔の舞など（煙玉は se_smoke） |
 | se_ailment | 状態異常にかかる（毒・痺れ・眠り・混乱・縛り） | 揺らいで濁る音（5 つで 1 つの音） | 0.4 秒 | B | `status` で状態異常がついたとき |
 | se_heal | 回復・気力の回復・状態異常が治る | 柔らかく上がる澄んだ和音 | 0.5 秒 | A | `heal`・`healMp`・`cure`、回復の道具と技（フィールドでも鳴らす） |
 | se_revive | 生き返る・寺のお祓い | se_heal より大きく、鈴が重なる | 0.6 秒 | B | `revive`、寺のお祓い、玄道の錫杖の祓い |
@@ -291,10 +291,10 @@
 
 - `src/systems/audio.ts` の `SE_IDS`・`SeId` は上の表と同じ順の 52 個（`src/data/seTracks.test.ts` が表と突き合わせる）。`playSe(id)` は書き出した効果音（`public/assets/audio/se/` にある `.ogg`）だけを鳴らし、まだないものは代わり（se_cannon → se_gun、se_thunder → se_magic）を、代わりもなければ無音にする。
 - 再生は `src/ui/sePlayer.ts`（Web Audio）。曲と 1 つの AudioContext を共に使い、起動時に書き出したすべての効果音を読み込んでおく。同じ音・別の音を重ねて鳴らせる（同じ音を 30 ms 以内に続けて頼まれたら 1 つにまとめ、一度に 8 つまで）。最初の操作の前と、画面が隠れている間は鳴らさない。読み込めなかった効果音は、ファイルを取れなかったものは 5 秒おいて読み直し、音に伸ばせなかったもの（Ogg Opus を読めないブラウザ）は読み直さない。始める処理は `src/ui/audioSetup.ts`。
-- メニューの音は `src/ui/widgets.ts` の `Menu`（移動・決定・取消・選べない）と `MessageWindow.advance`（se_message。まだ）でまとめて鳴らす。性別の選択（`CharacterSelectScene`）は `Menu` を使わないので、その画面で移動・決定・取消の音を鳴らす。決定は `withDefaultSe('se_ok', …)` で選んだ先を実行し、そこで別の音（支払いの se_coin、できないときの se_buzzer、セーブの se_save、出入りの se_door など）を頼んだら、決定の音は鳴らさずにそちらに譲る。
+- メニューの音は `src/ui/widgets.ts` の `Menu`（移動・決定・取消・選べない）と `MessageWindow.advance`（se_message）でまとめて鳴らす。送る音は、次のページ（`onPage`）や閉じた先（`onDone`）が別の音を鳴らしたら、そちらに譲る（`withDefaultSe`）。タイトルの問いかけのように、ほかの操作に合わせて閉じるときは `advance(false)` で鳴らさない。性別の選択（`CharacterSelectScene`）は `Menu` を使わないので、その画面で移動・決定・取消の音を鳴らす。決定は `withDefaultSe('se_ok', …)` で選んだ先を実行し、そこで別の音（支払いの se_coin、できないときの se_buzzer、セーブの se_save、出入りの se_door など）を頼んだら、決定の音は鳴らさずにそちらに譲る。
 - 戦闘の音は `BattleScene` で 1 つの出来事を進めるところ（`describe(e)` の隣）で鳴らす。音は `src/systems/battleSe.ts` の `battleSounds` が 1 ターンの出来事から選ぶ（`miss` には攻撃した側の `actor` があり、何度も当たる技の当たり外れと、別の人の通常攻撃の外れを見分ける）。回復・状態の出来事は、同じ音の技に続くときは鳴らさない（技の音で済んでいる）。装備で 2 度目が出たとき（`again`）は、術がもう一度なら 2 度目も技の音を鳴らし、もう一度斬るなら続く通常攻撃の音だけにする。戦闘の後のページは、お金の行に se_coin、落とし物に se_item（持ちきれなかっただけのページは鳴らさない）、段が上がるページに se_levelup を、ページを出すときに鳴らす（`MessageWindow.show` の `onPage`）。
   - 通常攻撃は、攻撃した仲間の武器で選ぶ（刀・槍は se_slash、玄道の杖は se_hit、お凛の鉄砲は se_gun）。敵の通常攻撃（`attack`）は、味方が受けたときの se_damage だけにする。表の「敵の斬る技」「敵の撃つ技」は、敵の技（`skill`）のこと。
   - 技は、`src/data/skills.ts` の定義に `se` を足して書く。書いていなければ、`physical` は se_slash、属性 `fire` は se_fire、`thunder` は se_thunder、そのほかの `magic` は se_magic、`heal` は se_heal、`status` は効く状態で、強くなる状態（`atkUp`・`defUp`・`evade`・`critUp`）は se_buff、弱くなる状態（`atkDown`・`accDown`）と酒の酔い（`drunk`）は se_debuff、状態異常（`Ailment` の 5 つ）は se_ailment にする。
-  - 既定で合わない技には `se` を書く。お凛の鉄砲の技（`magic`）は、雷管弾（属性 `thunder`、既定の se_thunder のまま）を除いて se_gun（属性 `fire` の火薬弾も se_gun）、`physical` のうち殴る・投げる・噛む技は se_hit、手裏剣の技は se_shuriken、敵の鉄砲の技（鉄砲・ぶどう弾）は se_gun、大筒・権現砲は se_cannon。
-- フィールドの出口（`src/data/maps.ts` の `ExitDef`）に `se` を足し、書いていなければ se_door にする（石段・洞窟は se_stairs。`se` はまだで、いまはすべて se_door）。
-- イベントの手順に `{ type: 'se'; id: SeId }` を足す（`src/data/eventTypes.ts`・`src/systems/eventScript.ts`。まだ）。`giveItem`・`giveMoney`・`addJingi`・`heal` の手順は、手順そのものが音を鳴らす（`EventRunner.takeSounds` で次に画面に頼むことと一緒に受け取り、`FieldScene` が鳴らす）。
+  - 既定で合わない技には `se` を書く。お凛の鉄砲の技（`magic`）は、雷管弾（属性 `thunder`、既定の se_thunder のまま）を除いて se_gun（属性 `fire` の火薬弾も se_gun）、`physical` のうち殴る・投げる・噛む技は se_hit、手裏剣の技は se_shuriken、敵の鉄砲の技（鉄砲・ぶどう弾）は se_gun、大筒・権現砲は se_cannon、霞の煙玉は se_smoke。
+- フィールドの出口（`src/data/maps.ts` の `ExitDef`）の `se` で鳴らす音を選び、書いていなければ se_door にする（石段・洞窟・地下は se_stairs）。手順 `warp` も同じく `se` を書け、省くと se_door。
+- イベントの手順 `{ type: 'se'; id: SeId }`（`src/data/events.ts` の `se()`）で鳴らす。音は次の台詞と一緒に鳴るので、擬音の台詞の直前に置く（台詞の途中のページの擬音は、台詞をそこで分ける）。`src/data/eventSe.test.ts` が、すぐ後に台詞が来ることを確かめる。葛籠（`chest()`）は se_chest を鳴らしてから道具を渡す（se_item と一緒に鳴る）。丁半は、張ったページで se_dice、勝ち負けのページで se_coin か se_buzzer を鳴らす。装備を替えたら se_equip。`giveItem`・`giveMoney`・`addJingi`・`heal` の手順は、手順そのものが音を鳴らす（`EventRunner.takeSounds` で次に画面に頼むことと一緒に受け取り、`FieldScene` が鳴らす）。

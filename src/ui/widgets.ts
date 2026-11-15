@@ -144,9 +144,18 @@ export class MessageWindow {
     this.onPage?.(0);
   }
 
-  /** 決定ボタンが押されたら呼ぶ。最後のページなら閉じて onDone を呼ぶ。 */
-  advance(): void {
+  /**
+   * 決定ボタンが押されたら呼ぶ。最後のページなら閉じて onDone を呼ぶ。
+   * 送る音（se_message）を鳴らす。ただし、次のページ（onPage）や閉じた先（onDone）が別の音を鳴らしたら、そちらに譲る。
+   * 決定ボタンではなく、ほかの操作に合わせて閉じるとき（タイトルの問いかけ）は sound を false にして鳴らさない。
+   */
+  advance(sound = true): void {
     if (!this.isOpen) return;
+    if (sound) withDefaultSe('se_message', () => this.turnPage());
+    else this.turnPage();
+  }
+
+  private turnPage(): void {
     this.closeTips();
     this.index++;
     if (this.index < this.pages.length) {

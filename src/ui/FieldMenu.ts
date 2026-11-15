@@ -339,6 +339,7 @@ export class FieldMenu {
       return;
     }
     setState(result.state);
+    playSe('se_warp');
     this.close();
     this.onEscape(result.to, message);
   }
@@ -394,6 +395,7 @@ export class FieldMenu {
           return;
         }
         setState(r.state);
+        playSe('se_equip');
         this.refreshStatus();
         // 装備の枠の一覧を新しい内容で開き直す（枠の一覧の下まで閉じる）
         this.popTo(depth - 1);

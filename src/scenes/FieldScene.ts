@@ -28,7 +28,7 @@ import { SHOPS } from '../data/shops';
 import type { Facing } from '../systems/gameState';
 import { memberLevel } from '../systems/party';
 import { defaultRng } from '../systems/random';
-import { playBgm, playJingle, playSe } from '../systems/audio';
+import { playBgm, playJingle, playSe, type SeId } from '../systems/audio';
 import { browserStorage } from '../systems/save';
 import { getState, holdEventWhileAway, setState, shouldRunEnterEvent, takePendingEvent } from '../state';
 import { EVENTS } from '../data/events';
@@ -284,7 +284,7 @@ export class FieldScene extends Phaser.Scene {
         this.runner = null;
         this.moving = true;
         this.standStill();
-        playSe('se_door');
+        playSe(request.se ?? 'se_door');
         this.cameras.main.fadeOut(200, 0, 0, 0);
         this.cameras.main.once('camerafadeoutcomplete', () => this.scene.restart({}));
         return;
@@ -718,7 +718,7 @@ export class FieldScene extends Phaser.Scene {
     const state = getState();
     const exit = this.map.exits.find((e) => e.x === state.x && e.y === state.y);
     if (exit) {
-      this.moveTo(exit.to, exit.toX, exit.toY);
+      this.moveTo(exit.to, exit.toX, exit.toY, exit.se);
       return;
     }
     // 町の印に乗ったら名前を出す（入るのは決定ボタン）
@@ -750,10 +750,10 @@ export class FieldScene extends Phaser.Scene {
     this.time.delayedCall(260, () => this.scene.start('Battle', { enemyIds: group, level: table.level }));
   }
 
-  /** 別のマップ（または同じマップの別の場所）へ移る。 */
-  private moveTo(mapId: string, x: number, y: number): void {
+  /** 別のマップ（または同じマップの別の場所）へ移る。se は移るときの効果音（出口の se。null なら鳴らさない）。 */
+  private moveTo(mapId: string, x: number, y: number, se: SeId | null = 'se_door'): void {
     setState({ ...getState(), mapId, x, y });
-    playSe('se_door');
+    if (se) playSe(se);
     this.cameras.main.fadeOut(200, 0, 0, 0);
     this.cameras.main.once('camerafadeoutcomplete', () => this.scene.restart({}));
     this.moving = true;
@@ -1125,13 +1125,20 @@ export class FieldScene extends Phaser.Scene {
           this.message.show(['中盆「張るだけの銭がねえようだな」']);
           return;
         }
-        playSe(result.win ? 'se_coin' : 'se_buzzer');
         setState(result.state);
-        this.message.show([
-          `${call === 'cho' ? '丁' : '半'}に ${bet} 文を張った。`,
-          `壺振り「${chohanRollText(result.dice)}！」`,
-          result.win ? `当たった！ 寺銭を引いて ${chohanWinnings(bet)} 文を得た。` : `外れた……。${bet} 文を失った。`,
-        ]);
+        // 張ったページで壺を振る音、勝ち負けのページでお金の音（負けは se_buzzer）
+        this.message.show(
+          [
+            `${call === 'cho' ? '丁' : '半'}に ${bet} 文を張った。`,
+            `壺振り「${chohanRollText(result.dice)}！」`,
+            result.win ? `当たった！ 寺銭を引いて ${chohanWinnings(bet)} 文を得た。` : `外れた……。${bet} 文を失った。`,
+          ],
+          undefined,
+          (page) => {
+            if (page === 0) playSe('se_dice');
+            else if (page === 2) playSe(result.win ? 'se_coin' : 'se_buzzer');
+          },
+        );
       },
       () => this.closeOverlay(menu),
     );
@@ -1182,7 +1189,8 @@ export class FieldScene extends Phaser.Scene {
       },
       () => this.scene.start('Title'),
       // 道しるべの札・抜け道: 使ったことを出してから、入口の外へ移る
-      (to, message) => this.message.show([message], () => this.moveTo(to.mapId, to.x, to.y)),
+      // （風の音 se_warp は使ったときに FieldMenu が鳴らすので、移るときは鳴らさない）
+      (to, message) => this.message.show([message], () => this.moveTo(to.mapId, to.x, to.y, null)),
     );
     this.pushOverlay(menu);
   }

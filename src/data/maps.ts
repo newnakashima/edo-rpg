@@ -1,6 +1,6 @@
 // フィールドのマップ。序章〜終章の町・ダンジョンと、ワールドマップを用意する。
 // タイルの文字の意味は TILES を参照。
-import type { LoopBgmId } from '../systems/audio';
+import type { LoopBgmId, SeId } from '../systems/audio';
 import type { Facing } from '../systems/gameState';
 import { OBJECT_DEFS, type CharacterSpriteId, type ObjectSpriteId } from './sprites';
 import { MOGURI_YADO, moguriYadoNpc } from './moguriYado';
@@ -209,6 +209,8 @@ export interface ExitDef {
   toY: number;
   /** 屋内に施設のある建物の戸口なら、その施設の看板（戸の隣の壁に掛ける。src/data/buildings.ts）。 */
   sign?: SignKind;
+  /** 通ったときに鳴らす効果音（石段・洞窟・地下は se_stairs）。省くと se_door。 */
+  se?: SeId;
 }
 
 /**
@@ -443,8 +445,8 @@ export const MAPS: Record<string, MapDef> = {
     ],
     exits: [
       // 上の口から狐火の洞へ
-      { x: 32, y: 0, to: 'kitsunebiCave', toX: 18, toY: 27 },
-      { x: 33, y: 0, to: 'kitsunebiCave', toX: 19, toY: 27 },
+      { x: 32, y: 0, to: 'kitsunebiCave', toX: 18, toY: 27, se: 'se_stairs' },
+      { x: 33, y: 0, to: 'kitsunebiCave', toX: 19, toY: 27, se: 'se_stairs' },
       // 麓の道から清水湊へ
       { x: 23, y: 33, to: 'shimizu', toX: 23, toY: 1 },
       { x: 24, y: 33, to: 'shimizu', toX: 24, toY: 1 },
@@ -520,8 +522,8 @@ export const MAPS: Record<string, MapDef> = {
       },
     ],
     exits: [
-      { x: 18, y: 29, to: 'urayama', toX: 32, toY: 1 },
-      { x: 19, y: 29, to: 'urayama', toX: 33, toY: 1 },
+      { x: 18, y: 29, to: 'urayama', toX: 32, toY: 1, se: 'se_stairs' },
+      { x: 19, y: 29, to: 'urayama', toX: 33, toY: 1, se: 'se_stairs' },
     ],
     encounter: 'urayama',
     // 奥の間へ続く細い道で野狐が待ち構える
@@ -1492,8 +1494,8 @@ MAPS.tenshu = {
   ],
   exits: [
     // 階段を下りて城の外（堀の橋の手前）へ
-    { x: 17, y: 24, to: 'nagoya', toX: 24, toY: 11 },
-    { x: 18, y: 24, to: 'nagoya', toX: 24, toY: 11 },
+    { x: 17, y: 24, to: 'nagoya', toX: 24, toY: 11, se: 'se_stairs' },
+    { x: 18, y: 24, to: 'nagoya', toX: 24, toY: 11, se: 'se_stairs' },
   ],
   encounter: 'nagoya',
   respawnMap: 'nagoya',
@@ -2312,7 +2314,7 @@ MAPS.osaka = {
   ],
   exits: [
     // 堂島川の北岸の大黒屋の米蔵へ（兵庫が加わるまでは用心棒がふさぐ）
-    { x: 26, y: 3, to: 'komeKura', toX: 3, toY: 2 },
+    { x: 26, y: 3, to: 'komeKura', toX: 3, toY: 2, se: 'se_stairs' },
     // 西の通りからワールドマップへ（大坂の印の西の街道）
     { x: 0, y: 14, to: 'world', toX: 61, toY: 34 },
     { x: 0, y: 15, to: 'world', toX: 61, toY: 34 },
@@ -2413,8 +2415,8 @@ MAPS.komeKura = {
       },
   ],
   exits: [
-    { x: 3, y: 0, to: 'osaka', toX: 26, toY: 4 },
-    { x: 4, y: 0, to: 'osaka', toX: 26, toY: 4 },
+    { x: 3, y: 0, to: 'osaka', toX: 26, toY: 4, se: 'se_stairs' },
+    { x: 4, y: 0, to: 'osaka', toX: 26, toY: 4, se: 'se_stairs' },
   ],
   encounter: 'komeKura',
   respawnMap: 'osaka',
@@ -2860,8 +2862,8 @@ MAPS.harajo = {
     { x: 3, y: 1, to: 'world', toX: 15, toY: 53 },
     { x: 4, y: 1, to: 'world', toX: 15, toY: 53 },
     // 本丸の奥の、木の枠を組んだ石段から地下の研究所へ
-    { x: 34, y: 3, to: 'kenkyujo', toX: 15, toY: 1 },
-    { x: 35, y: 3, to: 'kenkyujo', toX: 16, toY: 1 },
+    { x: 34, y: 3, to: 'kenkyujo', toX: 15, toY: 1, se: 'se_stairs' },
+    { x: 35, y: 3, to: 'kenkyujo', toX: 16, toY: 1, se: 'se_stairs' },
   ],
   marks: [{ x: 34.5, y: 3, object: 'chikaKaidan' }],
   encounter: 'harajo',
@@ -2934,8 +2936,8 @@ MAPS.kenkyujo = {
     },
   ],
   exits: [
-    { x: 15, y: 0, to: 'harajo', toX: 34, toY: 4 },
-    { x: 16, y: 0, to: 'harajo', toX: 35, toY: 4 },
+    { x: 15, y: 0, to: 'harajo', toX: 34, toY: 4, se: 'se_stairs' },
+    { x: 16, y: 0, to: 'harajo', toX: 35, toY: 4, se: 'se_stairs' },
   ],
   encounter: 'harajo',
   respawnMap: 'nagasaki',
@@ -4172,7 +4174,7 @@ MAPS.kiyomasaIdo = {
   ],
   exits: [
     // 北西の隅の石段から、古井戸の前へ戻る
-    { x: 3, y: 1, to: 'kumamoto', toX: 38, toY: 7 },
+    { x: 3, y: 1, to: 'kumamoto', toX: 38, toY: 7, se: 'se_stairs' },
   ],
   encounter: 'nagasaki',
   respawnMap: 'kumamoto',

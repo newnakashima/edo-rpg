@@ -139,7 +139,7 @@ export const SKILLS: Record<string, SkillDef> = {
   toseinoiji: { id: 'toseinoiji', name: '渡世の意地', mp: 10, target: 'allEnemies', effect: { kind: 'physical', multiplier: 1.4 }, description: '敵全体を斬る' },
   // 霞（忍者）
   shuriken: { id: 'shuriken', name: '手裏剣', se: 'se_shuriken', mp: 2, target: 'randomEnemies', effect: { kind: 'physical', multiplier: 0.6, hits: 2, maxHits: 3 }, description: '敵に 2〜3 回投げる' },
-  kemuridama: { id: 'kemuridama', name: '煙玉', mp: 3, target: 'allEnemies', effect: { kind: 'status', status: 'accDown', turns: 3 }, description: '敵全体の命中を下げる' },
+  kemuridama: { id: 'kemuridama', name: '煙玉', se: 'se_smoke', mp: 3, target: 'allEnemies', effect: { kind: 'status', status: 'accDown', turns: 3 }, description: '敵全体の命中を下げる' },
   shibire: { id: 'shibire', name: '痺れ薬', mp: 4, target: 'enemy', effect: { kind: 'status', status: 'paralysis', turns: 3 }, description: '敵を麻痺させる' },
   kagenui: { id: 'kagenui', name: '影縫い', mp: 5, target: 'enemy', effect: { kind: 'status', status: 'bind', turns: 1, chance: 0.9 }, description: '敵の次の行動を止める' },
   bunshin: { id: 'bunshin', name: '分身の術', mp: 6, target: 'self', effect: { kind: 'status', status: 'evade', turns: 3 }, description: '3 ターン回避を上げる' },
