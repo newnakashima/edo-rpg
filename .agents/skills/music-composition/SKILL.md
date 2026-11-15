@@ -1,6 +1,6 @@
 ---
 name: music-composition
-description: ゲームの BGM を MIDI で作曲し、Ogg Opus に書き出す手順。ゲーム全体の主題（core-theme）とその断片（motiv）を素材として作っておき、場面ごとの曲をそれらを組み合わせて（または新しい旋律で）組み立てる。曲・BGM・ジングルを作る、作り直す、アレンジする、主題やキャラクターのテーマを作るとき、「音楽」「曲」「BGM」「作曲」「core-theme」「motiv」「モチーフ」と言われたときに使う。効果音（SE）は対象外。
+description: ゲームの BGM を MIDI で作曲し、Ogg Opus に書き出す手順。ゲーム全体の主題（core-theme）とその断片（motiv）を素材として作っておき、場面ごとの曲をそれらを組み合わせて（または新しい旋律で）組み立てる。曲・BGM・ジングルを作る、作り直す、アレンジする、主題やキャラクターのテーマを作るとき、「音楽」「曲」「BGM」「作曲」「core-theme」「motiv」「モチーフ」と言われたときに使う。効果音（SE）は対象外（sfx-synthesis スキルを使う）。
 ---
 
 # core-theme と motiv から曲を作る
