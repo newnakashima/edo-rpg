@@ -53,20 +53,26 @@
 | bgm_join | 仲間 | なし | motif:main.wide | 新しく書いた旋律だけ |
 | bgm_karakuri | からくり屋敷 | あり | motif:karakuri.haguruma, theme:karakuri | motif:karakuri.zenmai |
 | bgm_last_boss | からくり大権現 | あり | motif:karakuri.tomaru, motif:karakuri.zenmai, motif:main.call, motif:main.wide, motif:yashamaru.kage, theme:heroine, theme:karakuri, theme:komoriuta, theme:main | motif:karakuri.haguruma, theme:komoriuta |
+| bgm_matsuri | 凧揚げ合戦 | あり | motif:main.wide | motif:main.wide |
+| bgm_ninja | 伊賀者の里 | あり | 新しく書いた旋律だけ | 新しく書いた旋律だけ |
 | bgm_oyabun | 親分の屋敷 | あり | motif:ikka.irori, theme:ikka | 新しく書いた旋律だけ |
 | bgm_rally | 反撃 | あり | theme:main | 新しく書いた旋律だけ |
 | bgm_road | 街道 | あり | theme:main | 新しく書いた旋律だけ |
 | bgm_sad | 別れ | あり | motif:heroine.shitau | motif:komoriuta.nemure |
 | bgm_sea | 北前船 | あり | 新しく書いた旋律だけ | motif:main.call |
+| bgm_shrine | 寺社 | あり | 新しく書いた旋律だけ | 新しく書いた旋律だけ |
+| bgm_shugeki | 終劇 | なし | motif:main.sigh | 新しく書いた旋律だけ |
 | bgm_sneak | 潜入 | あり | 新しく書いた旋律だけ | motif:karakuri.haguruma |
 | bgm_taika | 大火 | あり | 新しく書いた旋律だけ | 新しく書いた旋律だけ |
 | bgm_tension | 陰謀 | あり | motif:yashamaru.kage | motif:karakuri.zenmai |
 | bgm_title | タイトル | あり | theme:main | motif:main.call |
+| bgm_tobaku | 賭場 | あり | 新しく書いた旋律だけ | motif:ikka.kakegoe |
 | bgm_town | 城下町 | あり | 新しく書いた旋律だけ | 新しく書いた旋律だけ |
 | bgm_town_edo | 江戸 | あり | 新しく書いた旋律だけ | 新しく書いた旋律だけ |
 | bgm_town_kyo | 京 | あり | 新しく書いた旋律だけ | 新しく書いた旋律だけ |
 | bgm_town_nanban | 長崎 | あり | 新しく書いた旋律だけ | 新しく書いた旋律だけ |
 | bgm_town_night | 夜 | あり | 新しく書いた旋律だけ | 新しく書いた旋律だけ |
+| bgm_town_osaka | 大坂 | あり | 新しく書いた旋律だけ | 新しく書いた旋律だけ |
 | bgm_town_snow | 雪の町 | あり | 新しく書いた旋律だけ | 新しく書いた旋律だけ |
 | bgm_victory | 勝利 | なし | motif:main.call | 新しく書いた旋律だけ |
 | bgm_washio | 鷲尾 | あり | motif:karakuri.zenmai, theme:karakuri | motif:karakuri.haguruma, motif:main.wide, theme:karakuri |

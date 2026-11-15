@@ -1,0 +1,60 @@
+{
+  "id": "bgm_shrine",
+  "title": "寺社",
+  "about": "鈴と笙、遠い読経。静かで清らか",
+  "meter": "4/4",
+  "tempos": [
+    [
+      0.0,
+      60.0
+    ]
+  ],
+  "loop": true,
+  "loop_start_seconds": 0.0,
+  "length_seconds": 64.0,
+  "length_beats": 64.0,
+  "tracks": [
+    {
+      "name": "龍笛",
+      "program": 73,
+      "role": "main",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "笙",
+      "program": 109,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "読経",
+      "program": 53,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "木魚",
+      "program": 115,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "鈴",
+      "program": 112,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "低弦",
+      "program": 43,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    }
+  ]
+}
