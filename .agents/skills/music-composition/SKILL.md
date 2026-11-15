@@ -48,7 +48,7 @@ ffmpeg -hide_banner -encoders | grep -q libopus && echo ok
 | `music/catalog.md` | core-theme・motiv の一覧と、どの曲がどの素材を使ったか（自動で作る） | する |
 | `music/.preview/` | ピアノロールの画像、書き出し前の WAV、core-theme の試聴用の音 | しない |
 
-道具は `scripts/music/` にある（`musiclib.py` が記法と曲の組み立て、`build.py` が書き出し、`pianoroll.py` が確認用の画像、`check.py` が調と和音のずれの検査）。
+道具は `scripts/music/` にある（`musiclib.py` が記法と曲の組み立て、`build.py` が書き出し、`pianoroll.py` が確認用の画像、`check.py` が調と和音のずれの検査、`game_check.mjs` がゲームの中で鳴る曲の確認）。
 
 ## 記法
 
@@ -203,4 +203,5 @@ MIDI・Ogg Opus・ピアノロールができ、`music/catalog.md` が作り直�
 ## ゲームで鳴らすとき
 
 - 曲は `public/assets/audio/bgm/<曲の ID>.ogg` に置く。再生は `src/systems/audio.ts` の `playBgm(id)` から行い、`src/ui/bgmPlayer.ts` が鳴らす。ループの位置は `music/midi/<曲の ID>.json` から読むので、書き出せばゲームで鳴る。
+- 曲を足したら、ゲームの中で場面どおりに鳴るかを `node scripts/music/game_check.mjs` で確かめる（先に `npm run dev` を起動しておく）。すべてのマップ・戦闘・ジングル・イベントの曲の移り変わりを調べ、まだない曲の代わりも含めて、鳴るはずの曲が音を出しているかを見る。問題があれば終了コード 1。
 - ループする曲はファイル全体がちょうど 1 周の長さになっているので、頭から繰り返せばつながる。`song.loop_from` で前奏を付けた曲は、ファイルに `LOOPSTART`・`LOOPLENGTH`（サンプル数、48 kHz）の印が入る。前奏の後から繰り返すには、再生側でこの位置を使う。
