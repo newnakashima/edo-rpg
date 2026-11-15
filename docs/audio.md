@@ -235,7 +235,7 @@
 
 ### 戦闘
 
-技の音は、技の定義に書いた音を鳴らし、書いていなければ効き目（`effect.kind`）と属性（`elements`）から決めます（下の「コードでの鳴らし方」）。
+技の音は、技を使った出来事（`skill`）で 1 度鳴らします（何度も当たる技は当たるごとに）。技の定義に書いた音を鳴らし、書いていなければ効き目（`effect.kind`）と属性（`elements`）から決めます（下の「コードでの鳴らし方」）。道具を使った出来事（`item`）は無音にし、続く回復などの出来事で鳴らします。
 
 | ID | 場面 | 聞こえ方 | 長さ | 優先 | 主な技・出来事 |
 | --- | --- | --- | --- | --- | --- |
@@ -294,6 +294,6 @@
 - 戦闘の音は `BattleScene` で 1 つの出来事を進めるところ（`describe(e)` の隣）で、出来事から音を選ぶ。
   - 通常攻撃は、攻撃した仲間の武器で選ぶ（刀・槍は se_slash、玄道の杖は se_hit、お凛の鉄砲は se_gun）。敵の通常攻撃（`attack`）は、味方が受けたときの se_damage だけにする。表の「敵の斬る技」「敵の撃つ技」は、敵の技（`skill`）のこと。
   - 技は、`src/data/skills.ts` の定義に `se` を足して書く。書いていなければ、`physical` は se_slash、属性 `fire` は se_fire、`thunder` は se_thunder、そのほかの `magic` は se_magic、`heal` は se_heal、`status` は効く状態で、強くなる状態（`atkUp`・`defUp`・`evade`・`critUp`）は se_buff、弱くなる状態（`atkDown`・`accDown`）と酒の酔い（`drunk`）は se_debuff、状態異常（`Ailment` の 5 つ）は se_ailment にする。
-  - 既定で合わない技には `se` を書く。お凛の鉄砲の技（`magic`）は se_gun、`physical` のうち殴る・投げる・噛む技は se_hit、手裏剣の技は se_shuriken、敵の鉄砲の技（鉄砲・ぶどう弾）は se_gun、大筒・権現砲は se_cannon。
+  - 既定で合わない技には `se` を書く。お凛の鉄砲の技（`magic`）は、雷管弾（属性 `thunder`、既定の se_thunder のまま）を除いて se_gun（属性 `fire` の火薬弾も se_gun）、`physical` のうち殴る・投げる・噛む技は se_hit、手裏剣の技は se_shuriken、敵の鉄砲の技（鉄砲・ぶどう弾）は se_gun、大筒・権現砲は se_cannon。
 - フィールドの出口（`src/data/maps.ts` の `ExitDef`）に `se` を足し、書いていなければ se_door にする（石段・洞窟は se_stairs）。
 - イベントの手順に `{ type: 'se'; id: SeId }` を足す（`src/data/eventTypes.ts`・`src/systems/eventScript.ts`）。`giveItem`・`giveMoney`・`addJingi`・`heal` の手順は、手順そのものが音を鳴らす。
