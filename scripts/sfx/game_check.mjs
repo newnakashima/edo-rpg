@@ -17,12 +17,27 @@ import process from 'node:process';
 const { chromium } = createRequire(import.meta.url)('playwright');
 
 const args = process.argv.slice(2);
-const urlArg = args.includes('--url') ? args[args.indexOf('--url') + 1] : 'http://localhost:5173/';
-if (!urlArg || urlArg.startsWith('--')) {
-  console.error('使い方: node scripts/sfx/game_check.mjs [--url http://localhost:5173/]');
+const USAGE = '使い方: node scripts/sfx/game_check.mjs [--url http://localhost:5173/]';
+/** 引数は --url <URL> か --url=<URL> だけを受け付ける（ほかの引数は、書き間違いで別のサーバーを調べないよう使い方を出して止める）。 */
+function parseUrl(argv) {
+  let value = 'http://localhost:5173/';
+  for (let i = 0; i < argv.length; i++) {
+    if (argv[i] === '--url' && argv[i + 1] && !argv[i + 1].startsWith('--')) value = argv[++i];
+    else if (argv[i].startsWith('--url=')) value = argv[i].slice('--url='.length);
+    else return null;
+  }
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+const url = parseUrl(args);
+if (!url) {
+  console.error(USAGE);
   process.exit(1);
 }
-const url = new URL(urlArg);
 url.searchParams.set('debug', '');
 /** 開発サーバーを取り違えたときの手がかり（5173 番が埋まっていると、vite は別の番号で起動する）。 */
 const WRONG_SERVER = `${url.origin} が、このリポジトリの npm run dev か（起動時に表示された URL を --url で渡しているか）を確かめる`;
