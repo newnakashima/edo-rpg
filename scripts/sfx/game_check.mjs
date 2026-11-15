@@ -4,10 +4,12 @@
 // 確かめること:
 //   - 書き出した効果音がすべて読み込めて、1 つずつ鳴らすと音が出る（Ogg Opus を音に伸ばせる）
 //   - 最初の操作の前は鳴らさない
-//   - 場面で鳴る: タイトルのカーソル・決定、フィールドのメニュー（開く・カーソル・取消）、出入り、
-//     出会いの戦闘（出会い・攻撃・敵を倒す・段が上がる）、イベント（野狐: 出会い・ボス戦・場面の手順 se）
+//   - 場面で鳴る: タイトルのカーソル・決定、フィールドのメニュー（カーソル・取消）、出口を通る（石段の se_stairs）、
+//     歩いて出会う戦闘（出会い・斬る・敵を倒す・段が上がる）、イベント（野狐: 出会い・ボス戦・手順 se の se_karakuri）
 // 鳴ったかは、再生処理（window.__se）が実際に鳴らし始めた音を記録し、効果音の出口の後ろに AudioWorklet をつないで測る
-// （鳴らし始めてから 0.3 秒のうちに最大が -60 dBFS より大きくなれば鳴っている）。問題があれば終了コード 1。
+// （鳴らし始めてから 0.3 秒のうちに最大が -60 dBFS より大きくなれば鳴っている）。測るのは効果音の出口全体なので、
+// 音そのものが無音でないかは「1 つずつ鳴らす」で（ほかの音を止めてから）確かめ、場面の検査では鳴らし始めたかを主に見る。
+// 開発サーバーが 5173 番以外で起動したとき（5173 番が埋まっていたとき）は、表示された URL を --url で渡す。問題があれば終了コード 1。
 import { createRequire } from 'node:module';
 import process from 'node:process';
 
@@ -20,6 +22,24 @@ const SILENT_DB = -60;
 
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 960, height: 540 } });
+// 普通のブラウザと同じく、最初の操作の前は AudioContext を動かせないようにする
+// （Playwright の Chromium は --autoplay-policy を付けても、操作なしに動かせてしまう）
+await page.addInitScript(() => {
+  let activated = false;
+  for (const e of ['pointerdown', 'mousedown', 'keydown', 'touchend']) {
+    window.addEventListener(e, (ev) => { if (ev.isTrusted) activated = true; }, true);
+  }
+  const Base = window.AudioContext;
+  window.AudioContext = class extends Base {
+    constructor(...a) {
+      super(...a);
+      void super.suspend();
+    }
+    resume() {
+      return activated ? super.resume() : Promise.resolve();
+    }
+  };
+});
 const errors = [];
 page.on('pageerror', (e) => errors.push(String(e)));
 const problems = [];
@@ -66,7 +86,13 @@ await page.evaluate(async () => {
     // 同じ音を続けて頼まれて鳴らさなかったときは数えない
     if (se.voices.at(-1) === last) return;
     heard.push({ id, at: ctx.currentTime });
+    started++;
   };
+  /** 鳴らし始めた効果音の数（測り終えるのを待たずに数える。AudioContext が止まっていて時刻が進まないときも数えられる）。 */
+  let started = 0;
+  window.__startedCount = () => started;
+  /** これまでに測った大きさを捨てる（1 つずつ鳴らすときに、前の音の残りを数えないため）。 */
+  window.__clearLevels = () => levels.splice(0);
   /** 鳴らし始めてから測り終えた（0.3 秒たった）効果音を取り出し、その間の最大の大きさ（dB）を付ける。 */
   window.__takeHeard = () => {
     const done = [];
@@ -122,9 +148,17 @@ const press = async (key, n = 1, wait = 150) => {
   }
 };
 const scenes = () => page.evaluate(() => window.__game.scene.getScenes(true).map((s) => s.scene.key).join(','));
+/** マップに立たせて、フィールドが始まるのを待つ。 */
+const enter = async (mapId, at, nearLevelUp = false) => {
+  await page.evaluate(([mapId, at, near]) => window.__enter(mapId, at ?? undefined, near), [mapId, at ?? null, nearLevelUp]);
+  await page.waitForFunction(() => window.__game.scene.isActive('Field'), null, { timeout: 10000 }).catch(() => fail(`${mapId} のフィールドが始まらない`));
+  await page.waitForTimeout(800);
+  await take();
+};
 
 // 読み込み: 書き出した効果音がすべて音に伸ばせる
 const available = await page.evaluate(() => window.__seTracks.availableSeIds());
+if (available.length === 0) await fail('書き出した効果音が 1 つもない（public/assets/audio/se/*.ogg）');
 await page.waitForFunction((n) => window.__se.status().loaded.length >= n, available.length, { timeout: 15000 }).catch(() => {});
 const loaded = await page.evaluate(() => window.__se.status().loaded);
 const notLoaded = available.filter((id) => !loaded.includes(id));
@@ -132,11 +166,17 @@ console.log(`${notLoaded.length ? 'NG' : 'ok'} 読み込み             ${loaded
 if (notLoaded.length) problems.push(`読み込めない効果音: ${notLoaded.join('・')}`);
 
 // 最初の操作の前は鳴らさない（AudioContext が動いていない）
-await page.evaluate(() => window.__audio.playSe('se_ok'));
-await page.waitForTimeout(100);
-const beforeInput = await take();
-console.log(`${beforeInput.length ? 'NG' : 'ok'} 操作の前              ${fmt(beforeInput)}`);
-if (beforeInput.length) problems.push('最初の操作の前に効果音が鳴った');
+const beforeInput = await page.evaluate(async () => {
+  const state = window.__se.ctx.state;
+  const before = window.__startedCount();
+  window.__audio.playSe('se_ok');
+  await new Promise((r) => setTimeout(r, 200));
+  return { state, started: window.__startedCount() - before, voices: window.__se.voices.length };
+});
+const quietBefore = beforeInput.state !== 'running' && beforeInput.started === 0 && beforeInput.voices === 0;
+console.log(`${quietBefore ? 'ok' : 'NG'} 操作の前              AudioContext=${beforeInput.state} 鳴らし始めた音=${beforeInput.started}`);
+if (beforeInput.state === 'running') problems.push('最初の操作の前から AudioContext が動いている（操作の前の検査ができない）');
+else if (!quietBefore) problems.push('最初の操作の前に効果音を鳴らし始めた');
 
 // 最初の操作で AudioContext が動き出す
 await page.mouse.click(480, 270);
@@ -147,7 +187,14 @@ await take();
 // 1 つずつ鳴らす: どの効果音も音が出る
 const each = [];
 for (const id of available) {
-  await page.evaluate((id) => window.__audio.playSe(id), id);
+  // 前の音（鐘などの長い音）の残りを測らないよう、鳴っている音を止めてから鳴らす
+  await page.evaluate(async (id) => {
+    for (const v of window.__se.voices) v.source.stop();
+    for (let t = 0; t < 2000 && window.__se.voices.length; t += 10) await new Promise((r) => setTimeout(r, 10));
+    await new Promise((r) => setTimeout(r, 60));
+    window.__clearLevels();
+    window.__audio.playSe(id);
+  }, id);
   const h = await settle();
   const rec = h.find((x) => x.id === id);
   each.push({ id, dB: rec ? rec.dB : null });
@@ -166,57 +213,56 @@ expect('タイトルのカーソル', await settle(), ['se_cursor']);
 await press('Space', 1, 600);
 expect('タイトルの決定', await settle(), ['se_ok']);
 
-// フィールドのメニュー: 開く（決定の音）・カーソル・取消で閉じる
-await page.evaluate(() => window.__enter('world'));
-await page.waitForFunction(() => window.__game.scene.isActive('Field'), null, { timeout: 10000 });
-await page.waitForTimeout(800);
-await take();
+// フィールドのメニュー: 取消で開き、カーソルを動かし、取消で閉じる
+await enter('world');
 await press('Escape', 1, 400);
 await press('ArrowDown');
 await press('Escape', 1, 400);
 expect('フィールドのメニュー', await settle(), ['se_cursor', 'se_cancel']);
 
-// 出入り: 移るときの効果音（戸）
-await page.evaluate(() => window.__game.scene.getScene('Field').moveTo('world', window.__getState().x, window.__getState().y));
-await page.waitForTimeout(800);
-expect('出入り', await settle(), ['se_door']);
+// 出口を通る: 裏山の上の、狐火の洞の口（出口の se が se_stairs）へ 1 歩進む
+await enter('urayama', { x: 32, y: 1 });
+await page.keyboard.down('ArrowUp');
+await page.waitForFunction(() => window.__getState().mapId === 'kitsunebiCave', null, { timeout: 5000 }).catch(() => {});
+await page.keyboard.up('ArrowUp');
+if ((await page.evaluate(() => window.__getState().mapId)) !== 'kitsunebiCave') problems.push('出口を通る: 裏山から狐火の洞へ移れない');
+expect('出口を通る', await settle(), ['se_stairs']);
 
-// 出会いの戦闘: 出会い → 攻撃 → 敵を倒す → 段が上がる（段が上がる手前の主人公で戦う）
-await page.evaluate(() => window.__enter('world', undefined, true));
-await page.waitForFunction(() => window.__game.scene.isActive('Field'), null, { timeout: 10000 });
-await page.waitForTimeout(800);
-await take();
+// 歩いて出会う戦闘: 出会い → 斬る → 敵を倒す → 段が上がる（次の 1 歩で出会い、段が上がる手前の主人公で戦う）
+await enter('kitsunebiCave', { x: 24, y: 7 }, true);
 await page.evaluate(() => {
-  const field = window.__game.scene.getScene('Field');
-  window.__audio.playSe('se_encounter');
-  field.scene.start('Battle', { enemyIds: ['onibi'], level: 1 });
+  window.__setState({ ...window.__getState(), stepsToEncounter: 1, wardSteps: 0 });
+  window.__game.scene.getScene('Field').afterStep();
 });
+await page.waitForFunction(() => window.__game.scene.isActive('Battle'), null, { timeout: 5000 }).catch(() => problems.push('歩いて出会う戦闘: 出会いが起きない'));
 const battle = [];
 for (let i = 0; i < 200; i++) {
   await press('Space', 1, 200);
   battle.push(...(await take()));
   if ((await scenes()) === 'Field' && i > 3) break;
 }
+if ((await scenes()) !== 'Field') problems.push('歩いて出会う戦闘: 戦闘が終わってフィールドに戻らない');
 battle.push(...(await settle()));
-expect('戦闘', battle, ['se_encounter', 'se_enemy_down', 'se_levelup']);
-const attacks = ['se_slash', 'se_hit', 'se_miss', 'se_critical'];
-if (!battle.some((h) => attacks.includes(h.id))) problems.push('戦闘: 攻撃の音（se_slash・se_hit・se_miss）が鳴らない');
+// 主人公だけの一行なので、通常攻撃は刀の se_slash
+expect('歩いて出会う戦闘', battle, ['se_encounter', 'se_slash', 'se_enemy_down', 'se_levelup']);
 
-// イベント（狐火の洞の野狐）: 場面の手順の効果音・イベントの戦闘
-await page.evaluate(() => window.__enter('kitsunebiCave', { x: 24, y: 7 }));
-await page.waitForFunction(() => window.__game.scene.isActive('Field'), null, { timeout: 10000 });
-await page.waitForTimeout(800);
-await take();
-await page.evaluate(() => window.__game.scene.getScene('Field').startEvent('yako'));
+// イベント（狐火の洞の野狐）: イベントの戦闘と、戦闘の後の手順 se（se_karakuri）
+await enter('kitsunebiCave', { x: 24, y: 7 });
+if (!(await page.evaluate(() => window.__game.scene.getScene('Field').startEvent('yako')))) await fail('野狐のイベントが始まらない');
 const event = [];
+let eventDone = false;
 for (let i = 0; i < 400; i++) {
   await press('Space', 1, 250);
   event.push(...(await take()));
   const done = await page.evaluate(() => window.__getState().flags.yakoDefeated && !window.__game.scene.getScene('Field')?.runner);
-  if (done && (await scenes()) === 'Field') break;
+  if (done && (await scenes()) === 'Field') {
+    eventDone = true;
+    break;
+  }
 }
+if (!eventDone) problems.push('イベント（野狐）: イベントが終わらない');
 event.push(...(await settle()));
-expect('イベント（野狐）', event, ['se_encounter', 'se_message', 'se_enemy_down']);
+expect('イベント（野狐）', event, ['se_encounter', 'se_message', 'se_enemy_down', 'se_karakuri']);
 
 await browser.close();
 if (errors.length) problems.push(...errors.map((e) => `ページのエラー: ${e}`));
