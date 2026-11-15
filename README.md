@@ -4,7 +4,7 @@
 
 **遊ぶ: [https://newnakashima.github.io/edo-rpg/](https://newnakashima.github.io/edo-rpg/)**
 
-このゲームは、コードのほぼすべてを [Claude Code](https://claude.com/claude-code) が書き、ドット絵の画像を [PixelLab](https://www.pixellab.ai/) で作った実験的なゲームです。人間が関わったのは、ほぼ企画とテストプレイのフィードバックだけです。
+このゲームは、コードのほぼすべてを [Claude Code](https://claude.com/claude-code) が書き、ドット絵の画像の多くを [PixelLab](https://www.pixellab.ai/) で作った実験的なゲームです（一部の画像は Claude Code が書いたスクリプトで描いたり手直ししたりしています）。人間が関わったのは、ほぼ企画とテストプレイのフィードバックだけです。
 
 | タイトル | 町を歩く（京） | 戦闘（酒呑の大鬼） |
 | --- | --- | --- |
