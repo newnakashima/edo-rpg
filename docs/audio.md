@@ -1,7 +1,7 @@
 # 音楽・効果音の一覧
 
-音はまだ鳴らしません（曲を書き出し、再生処理を入れるのは後のフェーズ）。必要な曲と効果音をまとめ、どの場面でどの曲を鳴らすかは、もうコードに書いてあります。
-シーンは、ここに挙げたキー（ID）で `src/systems/audio.ts` の呼び出し口（`playBgm`・`playJingle`・`playSe`）を呼びます。呼び出し口は、鳴らすことになっている曲を覚えるだけで、まだ音を出しません。
+必要な曲と効果音、どの場面でどの曲を鳴らすかをまとめます。
+シーンは、ここに挙げたキー（ID）で `src/systems/audio.ts` の呼び出し口（`playBgm`・`playJingle`・`playSe`）を呼びます。曲は書き出したものから鳴ります。まだない曲は代わりの曲を鳴らします。効果音はまだ鳴らしません。
 
 曲は MIDI で作曲し、Ogg Opus に書き出します。作り方は `.claude/skills/music-composition/SKILL.md`、曲の素材（core-theme・motiv）とその使い方の一覧は `music/catalog.md` にあります。
 
@@ -178,6 +178,8 @@
 ### コードでの鳴らし方
 
 - `src/systems/audio.ts` の `BGM_IDS` に上の ID をすべて並べ、`BGM_FALLBACK` に代わりの曲の表を置く。`resolveBgm` が、まだ書き出していない曲の代わりをたどる（書き出した曲は `setAvailableBgm` で教える。どれもなければ無音）。
+- 書き出した曲は `src/data/bgmTracks.ts` が `music/midi/<id>.json` から拾い、起動時（`src/main.ts`）に `setAvailableBgm` で教える。音は `public/assets/audio/bgm/<id>.ogg`。
+- 再生は `src/ui/bgmPlayer.ts`（Web Audio）。ループする曲は前奏の後（`loop_start_seconds`）から曲の終わりまでを繰り返す。ジングルの間は曲を止め、鳴り終えたら止めた位置から戻す。ジングルの途中で別の曲に替われば、ジングルを切る。最初の操作（タップ・キー）で音を出し始め、画面が隠れている間は止める。
 - `playBgm(id, fallback)` はループする曲を鳴らす。いま鳴らしている曲と同じなら、頭から鳴らし直さずに続ける。`null` で止める。`playJingle(id)` はループしない曲（勝利・全滅・一泊・加入・終劇）を 1 度鳴らし、終われば前の曲に戻す。
 - マップの曲はマップの `bgm` に書く（`src/data/maps.ts`）。建物・民家の屋内は、作るときに町の `bgm` を入れる。親分の屋敷・寺社・賭場は、屋内の施設の人（`action` が `oyabun`・`temple`・`tobaku`）で決め、`bgmFallback` に町の曲を入れる（`src/data/buildings.ts` の `buildingBgm`）。お祓いをしない寺（京の五重塔の寺、金沢の寺町の寺・禅寺・仕掛け寺）は、建物の定義に `bgm` を書く。
 - イベントの手順 `bgm` で場面の曲に替える（`src/data/events.ts` の `bgm()`）。`FieldScene` は、イベントの途中ならその曲を、終わったか替えていなければマップの曲を鳴らす（`syncBgm`）。戦闘や `warp` をはさんでも、場面の曲は `EventRunner` が持っているので続く。終章は `ending` の手順で終わるので、浜松の bgm_ending のまま「終劇」へ移る（案にあった `keep` は要らなかった）。

@@ -1,5 +1,5 @@
-// 音楽・効果音の呼び出し口。まだ音を鳴らさず、どの曲を鳴らすことになっているかだけを持つ。
-// 曲と効果音の一覧、場面への当てはめは docs/audio.md を参照。後のフェーズでここに再生処理を入れる。
+// 音楽・効果音の呼び出し口。どの曲を鳴らすことになっているかを持ち、曲が替わったときだけ再生処理（src/ui/bgmPlayer.ts）を呼ぶ。
+// 曲と効果音の一覧、場面への当てはめは docs/audio.md を参照。
 
 /** 曲の ID（docs/audio.md の「曲（BGM）」の一覧と同じ順）。 */
 export const BGM_IDS = [
@@ -104,7 +104,7 @@ export function resolveBgm(id: BgmId, available: ReadonlySet<BgmId>, fallback?: 
   return candidates.find((c) => available.has(c)) ?? null;
 }
 
-/** 書き出してある曲（public に Ogg Opus のある曲）。再生処理を入れるときに埋める。 */
+/** 書き出してある曲（public に Ogg Opus のある曲）。起動時に src/data/bgmTracks.ts の一覧で埋める。 */
 let available: ReadonlySet<BgmId> = new Set();
 
 export function setAvailableBgm(ids: Iterable<BgmId>): void {
@@ -115,12 +115,20 @@ export function setAvailableBgm(ids: Iterable<BgmId>): void {
 let requested: BgmId | null = null;
 let playing: BgmId | null = null;
 
-/** 曲を鳴らし始める（null なら止める）処理。鳴らす曲が替わったときだけ呼ぶ。再生処理を入れるまでは何もしない。 */
+/** 曲を鳴らし始める（null なら止める）処理。鳴らす曲が替わったときだけ呼ぶ。起動時に再生処理を入れる（テストでは何もしない）。 */
 let startTrack: (id: BgmId | null) => void = () => {};
 
-/** 曲を鳴らし始める処理を差し替える（再生処理を入れるとき・テスト）。 */
+/** ジングルを 1 度鳴らす処理。鳴り終えたら、そのとき鳴らしている曲に戻すのは再生処理の役目。 */
+let startJingle: (id: BgmId) => void = () => {};
+
+/** 曲を鳴らし始める処理を差し替える（起動時・テスト）。 */
 export function setBgmPlayer(player: (id: BgmId | null) => void): void {
   startTrack = player;
+}
+
+/** ジングルを鳴らす処理を差し替える（起動時・テスト）。 */
+export function setJinglePlayer(player: (id: BgmId) => void): void {
+  startJingle = player;
 }
 
 /**
@@ -138,8 +146,8 @@ export function playBgm(id: LoopBgmId | null, fallback?: LoopBgmId): void {
 
 /** ジングル（勝利・全滅・一泊・仲間の加入）を 1 度鳴らす。鳴り終えたら、いま鳴らすことになっている曲に戻る。 */
 export function playJingle(id: JingleId): void {
-  void id;
-  // ここで resolveBgm(id, available) を 1 度鳴らし、終わったら playing に戻す（再生処理は後のフェーズ）
+  const track = resolveBgm(id, available);
+  if (track) startJingle(track);
 }
 
 /** 鳴らすことになっている曲の ID（止めていれば null）。 */

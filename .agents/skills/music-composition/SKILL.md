@@ -202,5 +202,5 @@ MIDI・Ogg Opus・ピアノロールができ、`music/catalog.md` が作り直�
 
 ## ゲームで鳴らすとき
 
-- 曲は `public/assets/audio/bgm/<曲の ID>.ogg` に置く。再生は `src/systems/audio.ts` の `playBgm(id)` から行う（呼び出し口だけで、まだ音を鳴らす処理はない。鳴らす処理を入れるのは別の作業）。
+- 曲は `public/assets/audio/bgm/<曲の ID>.ogg` に置く。再生は `src/systems/audio.ts` の `playBgm(id)` から行い、`src/ui/bgmPlayer.ts` が鳴らす。ループの位置は `music/midi/<曲の ID>.json` から読むので、書き出せばゲームで鳴る。
 - ループする曲はファイル全体がちょうど 1 周の長さになっているので、頭から繰り返せばつながる。`song.loop_from` で前奏を付けた曲は、ファイルに `LOOPSTART`・`LOOPLENGTH`（サンプル数、48 kHz）の印が入る。前奏の後から繰り返すには、再生側でこの位置を使う。

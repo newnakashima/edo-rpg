@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { EventStep } from '../data/eventTypes';
-import { BGM_FALLBACK, BGM_IDS, currentBgm, JINGLES, playBgm, playingBgm, resolveBgm, setAvailableBgm, setBgmPlayer, type BgmId } from './audio';
+import { BGM_FALLBACK, BGM_IDS, currentBgm, JINGLES, playBgm, playingBgm, playJingle, resolveBgm, setAvailableBgm, setBgmPlayer, setJinglePlayer, type BgmId } from './audio';
 import { EventRunner, MAX_PARTY } from './eventScript';
 import { newGame } from './gameState';
 import { createMember } from './party';
@@ -99,6 +99,24 @@ describe('曲の代わり', () => {
     playBgm(null);
     setAvailableBgm([]);
     setBgmPlayer(() => {});
+  });
+
+  it('playJingle は書き出してあるジングルだけを鳴らし、鳴らすことになっている曲は変えない', () => {
+    const jingles: BgmId[] = [];
+    const started: (BgmId | null)[] = [];
+    setJinglePlayer((id) => jingles.push(id));
+    setBgmPlayer((id) => started.push(id));
+    setAvailableBgm(['bgm_town', 'bgm_inn']);
+    playBgm('bgm_town');
+    playJingle('bgm_inn');
+    playJingle('bgm_join');
+    expect(jingles).toEqual(['bgm_inn']);
+    expect(started).toEqual(['bgm_town']);
+    expect(playingBgm()).toBe('bgm_town');
+    playBgm(null);
+    setAvailableBgm([]);
+    setBgmPlayer(() => {});
+    setJinglePlayer(() => {});
   });
 });
 

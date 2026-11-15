@@ -8,6 +8,9 @@ import { TitleScene } from './scenes/TitleScene';
 import { getState, setState } from './state';
 import { MAPS, TILES } from './data/maps';
 import { newGame } from './systems/gameState';
+import { setAvailableBgm, setBgmPlayer, setJinglePlayer } from './systems/audio';
+import { availableBgmIds } from './data/bgmTracks';
+import { WebBgmPlayer } from './ui/bgmPlayer';
 import { bindVirtualPad } from './ui/input';
 import { preventZoomGestures, resetZoomWhenScaled } from './ui/preventZoom';
 import { GAME_HEIGHT, GAME_WIDTH, RENDER_SCALE } from './ui/theme';
@@ -18,6 +21,21 @@ resetZoomWhenScaled();
 
 const padRoot = document.getElementById('pad');
 if (padRoot) bindVirtualPad(padRoot);
+
+// 曲の再生（docs/audio.md）。書き出した曲を教え、まだない曲は代わりの曲を鳴らす
+// Web Audio を使えない環境では、音を鳴らさずにゲームを進める
+let bgmPlayer: WebBgmPlayer | null = null;
+try {
+  bgmPlayer = new WebBgmPlayer();
+} catch (error) {
+  console.warn('音を鳴らせない', error);
+}
+if (bgmPlayer) {
+  const player = bgmPlayer;
+  setAvailableBgm(availableBgmIds());
+  setBgmPlayer((id) => player.play(id));
+  setJinglePlayer((id) => player.playJingle(id));
+}
 
 const game = new Phaser.Game({
   type: Phaser.AUTO,
@@ -37,5 +55,5 @@ const game = new Phaser.Game({
 // 動作確認用: 開発サーバーで ?debug を付けて開いたときだけ、コンソールからゲームを触れるようにする
 if (import.meta.env.DEV && new URLSearchParams(window.location.search).has('debug')) {
   // __setState・__newGame・__MAPS・__TILES は scripts/mapkit/map_shot.mjs（マップ全体の撮影）が使う
-  Object.assign(window, { __game: game, __getState: getState, __setState: setState, __newGame: newGame, __MAPS: MAPS, __TILES: TILES });
+  Object.assign(window, { __game: game, __getState: getState, __setState: setState, __newGame: newGame, __MAPS: MAPS, __TILES: TILES, __bgm: bgmPlayer });
 }
