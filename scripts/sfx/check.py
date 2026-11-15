@@ -17,7 +17,7 @@
 from __future__ import annotations
 
 import argparse
-import re
+import ast
 import sys
 from pathlib import Path
 
@@ -29,12 +29,20 @@ import sfxcheck as chk  # noqa: E402
 
 
 def level_of(se_id: str) -> float:
-    """スクリプトの Sound(level=...) を読む（スクリプトは実行しない）。"""
+    """スクリプトの Sound(..., level=数) を読む（スクリプトは実行しない）。"""
     p = bd.SOUND_DIR / f"{se_id}.py"
     if not p.exists():
         return 0.0
-    m = re.search(r"level\s*=\s*(-?[\d.]+)", p.read_text(encoding="utf-8"))
-    return float(m.group(1)) if m else 0.0
+    tree = ast.parse(p.read_text(encoding="utf-8"))
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call) and getattr(node.func, "id", None) == "Sound":
+            for kw in node.keywords:
+                if kw.arg == "level":
+                    try:
+                        return float(ast.literal_eval(kw.value))
+                    except ValueError:
+                        return 0.0  # 数で書いていない level は読めない（そろい具合の判定では 0 として扱う）
+    return 0.0
 
 
 def main() -> None:
@@ -78,7 +86,9 @@ def main() -> None:
         tl = chk.tail_level(a)
         if tl is not None and tl > -40:
             warn.append(f"終わりが急に切れている（最後の 3 ms が {tl:.0f} dB）")
-        if peak is not None and peak > -0.3:
+        if peak is None:
+            warn.append("無音")
+        elif peak > -0.3:
             warn.append(f"音割れのおそれ（ピーク {peak:.1f} dBFS）")
         rows.append((se_id, secs, lufs, peak, warn))
 
@@ -94,6 +104,8 @@ def main() -> None:
         tgt = f"目安 {spec.length:g} 秒" if spec and spec.length else "目安なし"
         if secs is None:
             print(f"■ {se_id}")
+        elif peak is None:
+            print(f"■ {se_id}  {secs:.3f} 秒（{tgt}）  無音")
         else:
             lu = f"{lufs:.1f} LUFS" if lufs is not None else "無音"
             print(f"■ {se_id}  {secs:.3f} 秒（{tgt}）  {lu}  ピーク {peak:.1f} dBFS  level {level_of(se_id):+g}")

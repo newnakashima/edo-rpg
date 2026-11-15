@@ -2,13 +2,16 @@
 
   python3 scripts/sfx/build.py se_cursor se_ok      # sfx/sounds/<ID>.py → WAV → Ogg Opus → 確認用の画像
   python3 scripts/sfx/build.py --all                # sfx/sounds/ のすべて
-  python3 scripts/sfx/build.py --sheet se_cursor se_ok   # 試聴用に、並べて 1 つの音にする（--all と組み合わせてもよい）
+  python3 scripts/sfx/build.py --sheet se_cursor se_ok   # 書き出したうえで、試聴用に並べて 1 つの音にする（--all と組み合わせてもよい）
+
+[注意] があった、または書き出せなかった効果音があれば、終了コードは 1 になる（ほかの効果音は最後まで書き出す）。
+同じスクリプトからは、何度書き出しても同じバイト列の .ogg ができる（音を変えていなければ git の差分に出ない）。
 
 書き出しでは次を行う。
   1. 直流分を除き、終わりの無音（ピークから -60 dB 未満）を削って、終わりを 5 ms で消す
   2. 効果音の間で聞こえる大きさをそろえる（100 ms ごとの大きさの最大を TARGET_LUFS に。Sound の level で上下できる）。
      ピークは PEAK_DBFS を超えないようにする
-  3. Ogg Opus（48 kHz）にする。モノラルの音はモノラルのまま書く
+  3. Ogg Opus（48 kHz）にする。モノラルの音はモノラルのまま書く。ストリームの番号などを固定して、同じ音なら同じバイト列にする
 
 出力:
   public/assets/audio/se/<ID>.ogg          ゲームで鳴らす音（コミットする）
@@ -49,22 +52,29 @@ def need(cmd: str) -> None:
         sys.exit(f"{cmd} がありません。SKILL.md の「準備」を見て入れてください。")
 
 
+class BuildError(Exception):
+    """1 つの効果音を書き出せなかった（ほかの効果音の書き出しは続ける）。"""
+
+
 def load_sound(se_id: str) -> sl.Sound:
     script = SOUND_DIR / f"{se_id}.py"
     if not script.exists():
-        sys.exit(f"{script.relative_to(ROOT)} がありません")
+        raise BuildError(f"{script.relative_to(ROOT)} がありません")
     sl.reseed(se_id)
-    env = runpy.run_path(str(script), run_name="__sfx__")
+    try:
+        env = runpy.run_path(str(script), run_name="__sfx__")
+    except Exception as e:  # noqa: BLE001  スクリプトの誤りは、その効果音だけの失敗として知らせる
+        raise BuildError(f"{script.name} の実行で {type(e).__name__}: {e}") from e
     sound = env.get("sound")
     if not isinstance(sound, sl.Sound):
-        sys.exit(f"{script.name} に sound = Sound(...) がありません")
+        raise BuildError(f"{script.name} に sound = Sound(...) がありません")
     if sound.id != se_id:
-        sys.exit(f"{script.name} の Sound の id（{sound.id}）がファイル名と違います")
+        raise BuildError(f"{script.name} の Sound の id（{sound.id}）がファイル名と違います")
     audio = np.asarray(sound.audio, dtype=np.float64)
     if audio.ndim not in (1, 2) or (audio.ndim == 2 and audio.shape[1] != 2):
-        sys.exit(f"{se_id}: 音の配列の形が {audio.shape} です（1 次元か、(サンプル数, 2)）")
+        raise BuildError(f"{se_id}: 音の配列の形が {audio.shape} です（1 次元か、(サンプル数, 2)）")
     if not np.isfinite(audio).all():
-        sys.exit(f"{se_id}: 音に NaN か無限大が入っています（0 で割る・大きすぎる値など）")
+        raise BuildError(f"{se_id}: 音に NaN か無限大が入っています（0 で割る・大きすぎる値など）")
     sound.audio = audio
     return sound
 
@@ -111,7 +121,8 @@ def encode_opus(wav: Path, out: Path, title: str, channels: int) -> None:
     need("ffmpeg")
     out.parent.mkdir(parents=True, exist_ok=True)
     subprocess.run(
-        ["ffmpeg", "-y", "-loglevel", "error", "-i", str(wav), "-c:a", "libopus", "-b:a", OPUS_BITRATE[channels],
+        ["ffmpeg", "-y", "-loglevel", "error", "-i", str(wav), "-map_metadata", "-1",
+         "-fflags", "+bitexact", "-flags:a", "+bitexact", "-c:a", "libopus", "-b:a", OPUS_BITRATE[channels],
          "-vbr", "on", "-application", "audio", "-metadata", f"title={title}", str(out)],
         check=True,
     )
@@ -128,8 +139,7 @@ def build(se_id: str, specs: dict[str, chk.Spec]) -> bool:
         ok = False
     audio = shape(sound.audio)
     if not audio.size or chk.peak_db(audio) is None:
-        print("  [注意] 無音です")
-        return False
+        raise BuildError("無音です（音を書き出していない）")
     audio, info = normalize(audio, sound.level)
     PREVIEW_DIR.mkdir(parents=True, exist_ok=True)
     wav = PREVIEW_DIR / f"{se_id}.wav"
@@ -173,7 +183,7 @@ def sheet(ids: list[str]) -> Path:
     parts = []
     for se_id in ids:
         a = chk.decode(OUT_DIR / f"{se_id}.ogg")
-        parts.append(sl.stereo(a) / np.sqrt(2) if a.ndim == 1 else a)
+        parts.append(np.stack([a, a], axis=1) if a.ndim == 1 else a)  # モノラルは左右に同じ音（大きさを変えない）
         parts.append(np.zeros((sl.n_of(SHEET_GAP), 2)))
     audio = np.vstack(parts)
     wav = PREVIEW_DIR / "sheet.wav"
@@ -195,16 +205,30 @@ def main() -> None:
     ap.add_argument("--all", action="store_true")
     ap.add_argument("--sheet", action="store_true", help="書き出した音を並べた試聴用の音を作る")
     args = ap.parse_args()
+    if args.all and args.ids:
+        ap.error("--all と ID は一緒に指定できません")
     ids = sorted(p.stem for p in SOUND_DIR.glob("se_*.py")) if args.all else args.ids
     if not ids:
         ap.print_help()
         sys.exit(2)
     specs = chk.load_specs()
-    bad = [i for i in ids if not build(i, specs)]
+    bad, failed = [], []
+    for se_id in ids:
+        try:
+            if not build(se_id, specs):
+                bad.append(se_id)
+        except BuildError as e:
+            print(f"  [失敗] {e}")
+            failed.append(se_id)
     if args.sheet:
-        sheet(ids)
+        built = [i for i in ids if i not in failed and (OUT_DIR / f"{i}.ogg").exists()]
+        if built:
+            sheet(built)
     if bad:
         print(f"[注意] があった: {', '.join(bad)}")
+    if failed:
+        print(f"[失敗] 書き出せなかった（試聴用の音にも入れていない）: {', '.join(failed)}")
+    sys.exit(1 if bad or failed else 0)
 
 
 if __name__ == "__main__":

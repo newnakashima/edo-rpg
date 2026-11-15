@@ -41,8 +41,8 @@ def n_of(seconds: float) -> int:
     return max(0, int(round(seconds * RATE)))
 
 
-def time(seconds: float) -> np.ndarray:
-    """0 秒から seconds 秒までの時刻の配列。"""
+def times(seconds: float) -> np.ndarray:
+    """0 秒から seconds 秒までの時刻の配列（標準ライブラリの time と重ならない名前にしてある）。"""
     return np.arange(n_of(seconds)) / RATE
 
 
@@ -76,7 +76,7 @@ def sweep(f0: float, f1: float, seconds: float, curve: str = "exp") -> np.ndarra
 def glide(points: list[tuple[float, float]], seconds: float) -> np.ndarray:
     """(秒, Hz) の点を指数的に結んだ高さの配列。点の外側は端の値のまま。"""
     ts, fs = zip(*points)
-    return np.exp(np.interp(time(seconds), ts, np.log(fs)))
+    return np.exp(np.interp(times(seconds), ts, np.log(fs)))
 
 
 def vibrato(freq, seconds: float | None = None, rate: float = 6.0, depth: float = 0.01) -> np.ndarray:
@@ -124,7 +124,8 @@ def fm(carrier, ratio: float, index, seconds: float | None = None) -> np.ndarray
 def partials(freq, ratios: list[float], amps: list[float] | None = None, seconds: float | None = None) -> np.ndarray:
     """倍音を足した音。ratios は基音に対する倍率（整数でなくてよい。鐘や金物は非整数）。"""
     f = _freq_array(freq, seconds)
-    amps = amps or [1.0 / (i + 1) for i in range(len(ratios))]
+    amps = [1.0 / (i + 1) for i in range(len(ratios))] if amps is None else list(amps)
+    _same_length(ratios=ratios, amps=amps)
     out = np.zeros(len(f))
     for r, a in zip(ratios, amps):
         if np.max(f) * r < RATE / 2:
@@ -138,6 +139,8 @@ def partials(freq, ratios: list[float], amps: list[float] | None = None, seconds
 def noise(seconds: float, color: str = "white") -> np.ndarray:
     """ノイズ。color は "white"（シャー）・"pink"（ザー）・"brown"（ゴー、低く丸い）。"""
     n = n_of(seconds)
+    if n == 0:
+        return np.zeros(0)
     w = rng.standard_normal(n)
     if color == "white":
         out = w
@@ -177,9 +180,10 @@ def modal(freqs: list[float], decays: list[float], amps: list[float] | None = No
 
     strike を渡すと、その音（短いノイズなど）で共鳴させる（打った瞬間の手ざわりが出る）。渡さなければ打った瞬間から鳴る。
     """
-    amps = amps or [1.0] * len(freqs)
+    amps = [1.0] * len(freqs) if amps is None else list(amps)
+    _same_length(freqs=freqs, decays=decays, amps=amps)
     seconds = seconds or max(decays) * 5
-    t = time(seconds)
+    t = times(seconds)
     if strike is None:
         out = np.zeros(len(t))
         for f, d, a in zip(freqs, decays, amps):
@@ -205,7 +209,10 @@ def resonator(x: np.ndarray, freq: float, decay: float = 0.05) -> np.ndarray:
 
 
 def pluck(freq: float, seconds: float, brightness: float = 0.5, decay: float = 0.996) -> np.ndarray:
-    """はじいた弦（Karplus-Strong）。brightness は 0〜1（大きいほど硬い）、decay は 1 周ごとの減衰（1 に近いほど長く鳴る）。"""
+    """はじいた弦（Karplus-Strong）。brightness は 0〜1（大きいほど硬い）、decay は 1 周ごとの減衰（1 に近いほど長く鳴る）。
+
+    1 周の長さを整数のサンプル数に丸めるので、高い音ほど音程が少しずれる（3500 Hz で約 -35 セント）。高い音には modal を使う。
+    """
     period = max(2, int(round(RATE / freq)))
     buf = rng.uniform(-1, 1, period)
     buf = lowpass(buf, 500 + brightness * 12000) if period > 12 else buf
@@ -226,7 +233,7 @@ def pluck(freq: float, seconds: float, brightness: float = 0.5, decay: float = 0
 
 def env_exp(seconds: float, decay: float, attack: float = 0.0005) -> np.ndarray:
     """すぐ立ち上がって指数的に消える形（打つ・はじく）。decay は 1/e になるまでの秒。"""
-    t = time(seconds)
+    t = times(seconds)
     e = np.exp(-t / decay)
     if attack > 0:
         e *= np.clip(t / attack, 0, 1)
@@ -235,17 +242,24 @@ def env_exp(seconds: float, decay: float, attack: float = 0.0005) -> np.ndarray:
 
 def env_adsr(seconds: float, attack: float = 0.005, decay: float = 0.05, sustain: float = 0.6,
              release: float = 0.1) -> np.ndarray:
-    """立ち上がり・減衰・保持・余韻の形。保持の長さは seconds から残りを引いたもの。"""
-    n = n_of(seconds)
-    pts = [(0, 0), (attack, 1), (attack + decay, sustain), (max(seconds - release, attack + decay), sustain),
-           (seconds, 0)]
-    return env_points(pts, seconds)[:n]
+    """立ち上がり・減衰・保持・余韻の形。保持の長さは seconds から残りを引いたもの。
+
+    attack + decay + release が seconds より長いときは、3 つを同じ割合で縮めて seconds に収める（最後は必ず 0 になる）。
+    """
+    total = attack + decay + release
+    if total > seconds:
+        k = seconds / total
+        attack, decay, release = attack * k, decay * k, release * k
+    pts = [(0, 0), (attack, 1), (attack + decay, sustain), (seconds - release, sustain), (seconds, 0)]
+    return env_points(pts, seconds)
 
 
 def env_points(points: list[tuple[float, float]], seconds: float, curve: str = "lin") -> np.ndarray:
     """(秒, 音量) の点を結んだ形。curve="db" で音量を dB で結ぶ（消え際が自然になる）。"""
     ts, vs = zip(*points)
-    t = time(seconds)
+    if any(b < a for a, b in zip(ts, ts[1:])):
+        raise ValueError(f"env_points の点の時刻が増えていく順になっていない: {ts}")
+    t = times(seconds)
     if curve == "db":
         db = np.interp(t, ts, [20 * np.log10(max(v, 1e-5)) for v in vs])
         return 10 ** (db / 20) * (np.interp(t, ts, vs) > 0)
@@ -265,6 +279,8 @@ def tremolo(x: np.ndarray, rate: float, depth: float = 0.5) -> np.ndarray:
 def _sos(kind: str, freq, order: int):
     nyq = RATE / 2
     f = np.clip(np.asarray(freq, dtype=float), 10, nyq * 0.99) / nyq
+    if kind == "bandpass" and not f[0] < f[1]:
+        raise ValueError(f"bandpass の帯域が空になる（{freq} Hz。low < high で、どちらも 10〜{nyq * 0.99:.0f} Hz に収める）")
     return _sig.butter(order, f, btype=kind, output="sos")
 
 
@@ -311,7 +327,9 @@ def sweep_filter(x: np.ndarray, freqs, kind: str = "lowpass", q: float = 0.9, bl
 
 
 def drive(x: np.ndarray, amount: float = 2.0) -> np.ndarray:
-    """やわらかくひずませる（tanh）。amount が大きいほど荒く、太く聞こえる。"""
+    """やわらかくひずませる（tanh）。amount（0 より大きい）が大きいほど荒く、太く聞こえる。"""
+    if amount <= 0:
+        raise ValueError("drive の amount は 0 より大きくする")
     return np.tanh(x * amount) / np.tanh(amount)
 
 
@@ -395,6 +413,12 @@ def concat(*parts: np.ndarray) -> np.ndarray:
     return out
 
 
+def _same_length(**lists) -> None:
+    sizes = {k: len(v) for k, v in lists.items()}
+    if len(set(sizes.values())) > 1:
+        raise ValueError(f"数をそろえる: {sizes}")
+
+
 def _match(a: np.ndarray, b: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     if a.ndim == b.ndim:
         return a, b
@@ -465,7 +489,8 @@ class Sound:
 
     - level: 音量の目安からの差（dB）。build.py は効果音の間で聞こえる大きさをそろえる。そろえた上で、小さく鳴らしたい音
       （se_cursor・se_message など何度も鳴る音）は -6 のように下げ、大きく鳴らしたい音（se_cannon・se_explode）は上げる。
-    - title: 何の音か（試聴の一覧に出る）。
+    - title: 何の音か（Ogg のタイトルと画像に出る）。
+    - notes: 書き出しのたびに表示しておきたいメモ（ユーザーの感想で直した点など）。
     """
 
     id: str
@@ -475,5 +500,6 @@ class Sound:
     notes: list[str] = field(default_factory=list)
 
 
-__all__ = [n for n in dir() if not n.startswith("_") and n not in {"annotations", "hashlib", "dataclass", "field", "Path"}]
+__all__ = [n for n in dir() if not n.startswith("_")
+           and n not in {"annotations", "hashlib", "dataclass", "field", "Path", "ROOT", "SFX_DIR", "reseed"}]
 __all__ += ["np"]
