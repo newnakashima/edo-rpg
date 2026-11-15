@@ -1,0 +1,98 @@
+{
+  "id": "bgm_rally",
+  "title": "反撃",
+  "about": "太鼓が高まり、主題が力強く鳴る。仲間が駆けつける頼もしさ",
+  "meter": "4/4",
+  "tempos": [
+    [
+      0.0,
+      116.0
+    ]
+  ],
+  "loop": true,
+  "loop_start_seconds": 4.137931034482759,
+  "length_seconds": 37.241379310344826,
+  "length_beats": 72.0,
+  "tracks": [
+    {
+      "name": "尺八",
+      "program": 77,
+      "role": "main",
+      "drum": false,
+      "uses": [
+        {
+          "source": "theme:main 1-8",
+          "at": 8.0,
+          "length": 32.0
+        },
+        {
+          "source": "theme:main 9-16",
+          "at": 40.0,
+          "length": 32.0
+        }
+      ]
+    },
+    {
+      "name": "金管",
+      "program": 61,
+      "role": "main",
+      "drum": false,
+      "uses": [
+        {
+          "source": "theme:main 9-16",
+          "at": 40.0,
+          "length": 32.0
+        }
+      ]
+    },
+    {
+      "name": "三味線",
+      "program": 106,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "声",
+      "program": 52,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "弦",
+      "program": 48,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "低弦",
+      "program": 43,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "大太鼓",
+      "program": 116,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "締太鼓",
+      "program": 117,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "シンバル",
+      "program": 0,
+      "role": "other",
+      "drum": true,
+      "uses": []
+    }
+  ]
+}

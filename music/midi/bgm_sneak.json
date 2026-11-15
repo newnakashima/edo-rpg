@@ -1,0 +1,71 @@
+{
+  "id": "bgm_sneak",
+  "title": "潜入",
+  "about": "抜き足の小刻みな拍。見つかれば終わりの緊張",
+  "meter": "4/4",
+  "tempos": [
+    [
+      0.0,
+      100.0
+    ]
+  ],
+  "loop": true,
+  "loop_start_seconds": 0.0,
+  "length_seconds": 38.4,
+  "length_beats": 64.0,
+  "tracks": [
+    {
+      "name": "はじく弦",
+      "program": 45,
+      "role": "main",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "琴",
+      "program": 107,
+      "role": "sub",
+      "drum": false,
+      "uses": [
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 32.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 40.0,
+          "length": 4.0
+        }
+      ]
+    },
+    {
+      "name": "尺八",
+      "program": 77,
+      "role": "main",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "弦",
+      "program": 49,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "最低弦",
+      "program": 43,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "足音",
+      "program": 115,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    }
+  ]
+}

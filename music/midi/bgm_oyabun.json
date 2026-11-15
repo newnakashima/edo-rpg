@@ -1,0 +1,77 @@
+{
+  "id": "bgm_oyabun",
+  "title": "親分の屋敷",
+  "about": "低い三味線。任侠の義理と、腰を据えた重み",
+  "meter": "4/4",
+  "tempos": [
+    [
+      0.0,
+      76.0
+    ]
+  ],
+  "loop": true,
+  "loop_start_seconds": 6.315789473684211,
+  "length_seconds": 63.1578947368421,
+  "length_beats": 80.0,
+  "tracks": [
+    {
+      "name": "三味線",
+      "program": 106,
+      "role": "main",
+      "drum": false,
+      "uses": [
+        {
+          "source": "theme:ikka",
+          "at": 8.0,
+          "length": 32.0
+        },
+        {
+          "source": "motif:ikka.irori",
+          "at": 72.0,
+          "length": 8.0
+        }
+      ]
+    },
+    {
+      "name": "尺八",
+      "program": 77,
+      "role": "main",
+      "drum": false,
+      "uses": [
+        {
+          "source": "theme:ikka",
+          "at": 40.0,
+          "length": 32.0
+        }
+      ]
+    },
+    {
+      "name": "弦",
+      "program": 49,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "低弦",
+      "program": 43,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "大太鼓",
+      "program": 116,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "拍子木",
+      "program": 115,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    }
+  ]
+}

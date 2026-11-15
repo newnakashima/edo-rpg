@@ -1,0 +1,59 @@
+{
+  "id": "bgm_join",
+  "title": "仲間",
+  "about": "短く明るい合奏。旅の道連れが増える頼もしさ",
+  "meter": "4/4",
+  "tempos": [
+    [
+      0.0,
+      120.0
+    ]
+  ],
+  "loop": false,
+  "loop_start_seconds": 0.0,
+  "length_seconds": 8.0,
+  "length_beats": 16.0,
+  "tracks": [
+    {
+      "name": "篠笛",
+      "program": 73,
+      "role": "main",
+      "drum": false,
+      "uses": [
+        {
+          "source": "motif:main.wide",
+          "at": 0.0,
+          "length": 8.0
+        }
+      ]
+    },
+    {
+      "name": "三味線",
+      "program": 106,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "琴",
+      "program": 107,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "弦",
+      "program": 48,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "太鼓",
+      "program": 116,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    }
+  ]
+}

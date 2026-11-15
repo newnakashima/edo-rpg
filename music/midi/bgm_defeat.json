@@ -1,0 +1,46 @@
+{
+  "id": "bgm_defeat",
+  "title": "全滅",
+  "about": "尺八の短い下降。力尽きて重く沈む",
+  "meter": "4/4",
+  "tempos": [
+    [
+      0.0,
+      60.0
+    ]
+  ],
+  "loop": false,
+  "loop_start_seconds": 0.0,
+  "length_seconds": 16.0,
+  "length_beats": 16.0,
+  "tracks": [
+    {
+      "name": "尺八",
+      "program": 77,
+      "role": "main",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "弦",
+      "program": 49,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "低弦",
+      "program": 43,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "大太鼓",
+      "program": 116,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    }
+  ]
+}
