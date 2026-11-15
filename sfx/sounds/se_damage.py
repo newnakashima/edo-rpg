@@ -1,21 +1,28 @@
 # 味方が傷を受ける（画面が揺れるところ）・毒で減る: 低く詰まった衝撃（0.3 秒）
+import numpy as np
 from sfxlib import *
 
-# 当たり: 広い帯域の破裂「バキッ」。強くひずませて、耳に刺さる立ち上がりにする
-crack = drive(highpass(noise(0.015), 800) * env_exp(0.015, 0.004), 6.0)
-# 体1: 中域のノイズを強くひずませた「ドガッ」（叩きつけられる荒さ）
-smash = drive(bandpass(noise(0.12, "pink"), 180, 5000) * env_exp(0.12, 0.03), 5.0)
-# 体2: 低い sine を大きく落として強くひずませる。倍音が増えて小さなスピーカーでも重さが出る
-f = sweep(220, 55, 0.28)
-thud = drive(sine(f), 4.0) * env_exp(0.28, 0.05)
-# 崩れ: 骨や鎧が軋む、粗いざらつき
-crunch = lowpass(bitcrush(crackle(0.12, density=900) + noise(0.12, "brown") * 0.5, bits=4, hold=4), 4000) \
-    * env_exp(0.12, 0.035)
-# 痛み: 矩形波を 900 Hz から 120 Hz へ急に落とす「グワッ」（受けた側のしるし）
-g = sweep(900, 120, 0.22)
-sting = drive(lowpass(square(g), 3000), 2.0) * env_points([(0, 0), (0.003, 1), (0.08, 0.6), (0.22, 0)], 0.22)
 
-hit = mix(thud * 0.7, smash * 1.0, crack * 1.2, crunch * 0.6, sting * 0.6)
-sound = Sound("se_damage", fade(hit, fade_out=0.05), title="傷を受ける", level=4,
-              notes=["旧版（50〜95 Hz の sine と 900 Hz 以下のノイズ）はプレイ中に聞こえなかった。主な成分を 200 Hz〜6 kHz に置く",
-                     "2 版目は「全くダメージを受けた感じがしない」。強いひずみと崩れる音を足し、長さと大きさを増やした"])
+def clip(x, gain):
+    """振幅を上げて ±1 で切る（ハードクリップ）。少し歪ませて潰れた打撃にする。"""
+    x = x / (np.max(np.abs(x)) + 1e-9)
+    return np.clip(x * gain, -1.0, 1.0)
+
+
+# 1 打目: 低い打撃「ドッ」。体に重く響く
+low_click = lowpass(noise(0.006), 3000) * env_exp(0.006, 0.0015)
+low_body = sine(sweep(160, 55, 0.18)) * env_exp(0.18, 0.045)
+low_thump = lowpass(noise(0.08, "pink"), 500) * env_exp(0.08, 0.02)
+low_hit = mix(low_body, low_thump * 0.7, low_click * 0.5)
+
+# 2 打目: 高い打撃「バシッ」。乾いた破裂に、短い中高域の鳴り
+high_crack = bandpass(noise(0.03), 1500, 8000) * env_exp(0.03, 0.006)
+high_body = modal([620, 1050, 1730], decays=[0.03, 0.02, 0.012], amps=[1.0, 0.6, 0.35], seconds=0.08)
+high_hit = fade(mix(high_crack, high_body * 0.6), fade_out=0.02)
+
+LAG = 0.055  # 2 打目までの間（立て続けに聞こえる長さ）
+hit = mix(clip(low_hit, 1.8) * 1.0, (clip(high_hit, 2.5) * 0.75, LAG))
+sound = Sound("se_damage", fade(clip(hit, 1.4), fade_out=0.04), title="傷を受ける", level=3,
+              notes=["旧版（50〜95 Hz の sine と 900 Hz 以下のノイズ）はプレイ中に聞こえなかった",
+                     "3 版目（ひずみ・ビット落とし・矩形波の「グワッ」）は「非常にチープで打撃に聞こえない」と言われた",
+                     "要望: 低い打撃と高い打撃を立て続けに鳴らし、波形をクリップして少し歪ませる"])
