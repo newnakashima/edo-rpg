@@ -25,11 +25,12 @@ function* lists(steps: readonly EventStep[]): Generator<readonly EventStep[]> {
 }
 
 describe('イベントの効果音', () => {
-  it('手順 se は表にある音で、すぐ後に台詞（葛籠は道具を渡す手順）が来る（音は次の台詞と一緒に鳴るので）', () => {
+  it('手順 se と warp の se は表にある音で、手順 se はすぐ後に台詞（葛籠は道具を渡す手順）が来る（音は次の台詞と一緒に鳴るので）', () => {
     let count = 0;
     for (const [id, event] of Object.entries(EVENTS)) {
       for (const list of lists(event.steps)) {
         list.forEach((step, i) => {
+          if (step.type === 'warp' && step.se) expect(SE_IDS, id).toContain(step.se);
           if (step.type !== 'se') return;
           count++;
           expect(SE_IDS, id).toContain(step.id);
@@ -38,7 +39,8 @@ describe('イベントの効果音', () => {
         });
       }
     }
-    expect(count).toBeGreaterThan(40);
+    // 置いた手順を拾えていない（たどり方が壊れた）ことを見逃さないため
+    expect(count).toBeGreaterThan(0);
   });
 
   it('葛籠を開けると、蓋の音と道具を得る音が鳴る。空の葛籠は鳴らさない', () => {

@@ -117,6 +117,17 @@ describe('1 ターンの出来事の音', () => {
     expect(battleSounds(events, actors)).toEqual([['se_heal'], [], [], [], ['se_heal'], ['se_buzzer'], ['se_buzzer'], ['se_escape']]);
   });
 
+  it('状態をつける技は技の音だけ（煙玉は se_smoke だけで、続く弱くなる音は鳴らさない）', () => {
+    const events: BattleEvent[] = [
+      { type: 'skill', actor: 'p0', skill: 'kemuridama' },
+      { type: 'status', target: 'e0', status: 'accDown' },
+      { type: 'status', target: 'e1', status: 'accDown' },
+      { type: 'skill', actor: 'p0', skill: 'bunshin' },
+      { type: 'status', target: 'p0', status: 'evade' },
+    ];
+    expect(battleSounds(events, actors)).toEqual([['se_smoke'], [], [], ['se_buff'], []]);
+  });
+
   it('動けない・何もしない・状態が切れるのは無音、毒は味方だけ se_damage', () => {
     const events: BattleEvent[] = [
       { type: 'cannotAct', actor: 'p0', reason: 'sleep' },
