@@ -3,6 +3,8 @@
 今回は音楽・音声を実装しません。後のフェーズで追加するときのために、必要な曲と効果音をまとめます。
 実装時は、ここに挙げたキー（ID）でシーンから再生できるよう、`src/systems/audio.ts` に空の呼び出し口だけ用意しておきます。
 
+曲は MIDI で作曲し、Ogg Opus に書き出します。作り方は `.claude/skills/music-composition/SKILL.md`、曲の素材（core-theme・motiv）とその使い方の一覧は `music/catalog.md` にあります。
+
 ## 曲（BGM）
 
 | ID | 場面 | 雰囲気 | ループ |

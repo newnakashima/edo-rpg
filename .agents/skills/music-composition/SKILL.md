@@ -1,0 +1,195 @@
+---
+name: music-composition
+description: ゲームの BGM を MIDI で作曲し、Ogg Opus に書き出す手順。ゲーム全体の主題（core-theme）とその断片（motiv）を素材として作っておき、場面ごとの曲をそれらを組み合わせて（または新しい旋律で）組み立てる。曲・BGM・ジングルを作る、作り直す、アレンジする、主題やキャラクターのテーマを作るとき、「音楽」「曲」「BGM」「作曲」「core-theme」「motiv」「モチーフ」と言われたときに使う。効果音（SE）は対象外。
+---
+
+# core-theme と motiv から曲を作る
+
+このゲームの曲は、MIDI で作曲して Ogg Opus に書き出す。
+曲を 1 曲ずつ無関係に作るのではなく、ゲーム全体で共有する旋律の素材を先に作り、それを場面ごとの曲に織り込む。
+
+- **core-theme**: 8〜16 小節ほどの、ひとまとまりの旋律（主題）。「メインテーマ」（タイトルや重要な場面を思わせる旋律）や、特定のキャラクターに結び付いた旋律など、いくつか作る。
+  core-theme は、それだけで BGM として流すことはない。曲を組み立てる素材である。
+- **motiv**: core-theme をさらに細かく分けた、旋律の断片。1〜2 小節ほどの、聞けばその core-theme を思い出せる部分。
+  たとえばラストバトルやエンディングでは、いくつもの core-theme の motiv を組み合わせて旋律を作り、ゲーム全体を振り返るような曲にできる。
+- **曲**: 実際に場面で流す BGM。core-theme と motiv を組み合わせて作る。どちらにも含まれない新しい旋律を混ぜてよいし、曲の用途に合わなければ、素材を使わずに全部新しく書いてもよい。
+
+## 守ること
+
+- **音楽理論で自分を縛らない。** このスキルと道具は、音階・和声・形式などの決まりを一切持たない。頭に浮かんだ旋律や響きを、理論の決まりに合わせて直したり、「理論的に正しいか」で良し悪しを判定したりしない。要件も、理論の用語ではなく、場面と聞こえ方の言葉で書く（ユーザーが理論の言葉で指定したときは従う）。使うモデルが持っている作曲の傾向を、そのまま生かすためである。
+- **core-theme をそのまま BGM にしない。** core-theme の全体を 1 曲の中で使うのはよいが、core-theme だけを曲として書き出さない。
+- **core-theme と motiv は、主旋律か副旋律で使う。** 伴奏・低音・和音・リズムなど、そのほかの部分は自由に書く。道具では、トラックの `role` を `main`（主旋律）・`sub`（副旋律）・`other`（それ以外）で分けて記録する。
+- **素材を使うかどうかは、曲の用途で決める。** 使うなら、motiv より先に core-theme を使えないか考える（core-theme の一部の小節を使うことも含む）。どの素材も用途に合わない曲は、全部新しく書いてよい。
+- **素材は曲に合わせて変えてよい。** 高さ、速さ、リズム、一部の音、下に付ける和音を、曲ごとの要件に合わせて変える。素材のファイル（`music/themes/`）を書き換えるのではなく、曲のスクリプトの中で加工する。
+- **音を聞けないことを踏まえて確かめる。** エージェントが判定できるのは、書き出せたか、長さ、ループの継ぎ目、音割れ、素材をどこに置いたか、要件の言葉に照らした自分の見立てまでである。音楽としての良し悪しは、書き出した音をユーザーに送り、聞いて決めてもらう。
+
+## 準備
+
+一度だけ入れる（クラウドのセッションでは、新しいセッションごとに要る）。
+
+```bash
+command -v fluidsynth || (apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq fluidsynth fluid-soundfont-gm)
+python3 -c "import mido" 2>/dev/null || pip install -q mido
+python3 -c "import numpy, PIL" 2>/dev/null || pip install -q numpy pillow
+ffmpeg -hide_banner -encoders | grep -q libopus && echo ok
+```
+
+音色は General MIDI の FluidR3_GM を使う。音色の番号は [instruments.md](instruments.md) にある。
+
+## ファイルの置き場所
+
+| 置き場所 | 中身 | コミット |
+| --- | --- | --- |
+| `music/themes/<ID>.txt` | core-theme 1 つと、その motiv | する |
+| `music/songs/<曲の ID>.py` | 曲を組み立てるスクリプト。曲の ID は `docs/audio.md` の ID（`bgm_title` など） | する |
+| `music/midi/<曲の ID>.mid`・`.json` | 書き出した MIDI と、素材の使い方・長さ・ループの記録 | する |
+| `public/assets/audio/bgm/<曲の ID>.ogg` | ゲームで鳴らす音（Ogg Opus、48 kHz） | する |
+| `music/catalog.md` | core-theme・motiv の一覧と、どの曲がどの素材を使ったか（自動で作る） | する |
+| `music/.preview/` | ピアノロールの画像、書き出し前の WAV、core-theme の試聴用の音 | しない |
+
+道具は `scripts/music/` にある（`musiclib.py` が記法と曲の組み立て、`build.py` が書き出し、`pianoroll.py` が確認用の画像）。
+
+## 記法
+
+音は `高さ:長さ` で書き、小節を `|` で区切る。長さは 4 分音符を 1 とする（`1/2`、`1/3`、`1.5` も書ける）。
+
+| 書き方 | 意味 |
+| --- | --- |
+| `C5:1` | C5 を 1 拍（C4 が中央のド = MIDI 60） |
+| `F#4:1/2`・`Bb3:3/2` | シャープ・フラット |
+| `72:1` | MIDI の番号で書く |
+| `r:1` | 休み |
+| `C4+E4+G4:2` | 同時に鳴らす |
+| `C5:1@110` | 強さ（1〜127、省略時は 90） |
+| `A5:1~ A5:1` | 次の同じ高さの音とつなげる（小節をまたいで伸ばす） |
+
+小節の長さが拍子と合わないと注意が出る（最初の小節を弱起で短くするのはよい）。注意は記法の書き間違いを見つけるためのもので、合わせないと書き出せないわけではない。
+
+### core-theme のファイル
+
+```text
+# 行頭の # は注釈（行の途中には書けない。# はシャープに使うため）
+@id main
+@title メインテーマ
+@meter 4/4
+@tempo 76
+@about 旅立ちの寂しさと、まだ見ぬ江戸への期待。タイトルと物語の節目に響かせる
+melody | ...1〜4 小節... |
+melody | ...5〜8 小節... |
+harmony | ...参考の和音（なくてよい。曲ごとに変えてよい）... |
+@motif call bars=1-2 冒頭の呼びかけ。上へ伸びる
+@motif sigh bars=7 結びのため息
+@motif turn notes=| E5:1/2 D5:1/2 B4:1 | // 4 小節目の回し。リズムを詰めて切り出したもの
+```
+
+- `melody` の行は何行に分けてもよく、上から順につながる。
+- `@motif <名前>` は、`bars=` で core-theme の小節を指すか、`notes=` で断片を書く（core-theme の中の音を少し変えて切り出したいとき）。motiv の ID は `<core-theme の ID>.<名前>`（`main.call`）になる。
+- `@about` には、どんな主題か、どこで響かせたいかを場面と聞こえ方の言葉で書く。
+
+### 曲のスクリプト
+
+`from musiclib import *` で道具を読み込み、`song = Song(...)` を作る。書き出しは `build.py` が行う。
+
+```python
+from musiclib import *
+
+song = Song("bgm_title", tempo=76, meter="4/4", loop=True, title="タイトル")
+flute = song.track("尺八", program=77, role="main", volume=105, reverb=70)
+koto = song.track("琴", program=107, role="sub", pan=44)
+pad = song.track("弦", program=49, role="other", volume=70)
+
+flute.add(theme("main").bars(1, 4))                     # core-theme の 1〜4 小節
+flute.add(parse("| E5:2 D5:1 B4:1 | A4:4 |"))          # 新しく書いた旋律
+flute.add(motif("main.call").transpose(-2).stretch(2))  # motiv を 2 度下げ、倍の長さで
+koto.put(song.bar(5), motif("heroine.wish").octave(-1))  # 5 小節目から副旋律
+pad.put(0, parse("| A3+C4+E4:4 | F3+A3+C4:4 |").repeat(4))
+song.end(song.bar(9))                                    # ループの継ぎ目（省略すると最後の小節の終わり）
+```
+
+| 道具 | すること |
+| --- | --- |
+| `theme(id)` / `motif(id)` / `theme_harmony(id)` | 素材を取り出す（`Phrase`） |
+| `parse(記法, meter)` | 新しい旋律・伴奏を書く |
+| `.bars(a, b)` / `.slice(拍, 拍)` | 一部を切り出す |
+| `.transpose(半音)` / `.octave(n)` / `.stretch(倍率)` / `.velocity(value=, scale=)` | 高さ・長さ・強さを変える |
+| `.with_pitches([...])` | リズムを残して音の高さを置き換える |
+| `.map(fn)` | 音ごとに自由に加工する（`Note` の `start`・`dur`・`pitches`・`vel` を変える、`None` で消す） |
+| `a + b` / `a \| b` / `.repeat(n)` / `.rest_after(拍)` | つなげる・重ねる・繰り返す・後ろに休みを足す |
+| `song.track(名前, program, role, drum=False, volume, pan, reverb, chorus)` | トラックを作る。打楽器は `drum=True`（音の番号で楽器を選ぶ）。打楽器のトラックはすべて 1 つのチャンネルを共有するので、`volume` は音の強さに掛けて効かせ、`pan`・`reverb`・`chorus` は最初の打楽器のトラックの値だけが効く |
+| `track.add(p)` / `track.put(拍, p)` / `track.rest(拍)` | 置く |
+| `track.message(拍, mido.Message(...))` | ピッチベンドなど、任意の MIDI メッセージを置く |
+| `song.bar(n)` / `song.tempo_at(拍, bpm)` / `song.end(拍)` / `song.loop_from(拍)` | 位置・速さの変化・曲の終わり・前奏の後からのループ |
+
+素材を加工しても、どの素材のどこを使ったかは自動で記録され、ピアノロールと `music/catalog.md` に出る。
+
+## 手順
+
+### 1. 曲の要件を書く
+
+作業のメモに、次を書き出してから作り始める。
+
+- 曲の ID と場面（`docs/audio.md` の行。なければ先に足す）。流れる場面の様子を `docs/story.md`・`docs/events.md` で確かめる
+- ループするか。ループするなら 1 周の長さの目安、前奏の後からループさせるか
+- 聞こえ方（場面と雰囲気の言葉で。楽器の希望があれば楽器も）
+- 使う素材と、その理由。core-theme から考え、合わなければ motiv、どれも合わなければ「新しく書く」とその理由
+  - 素材の一覧は `music/catalog.md`、中身は `music/themes/` にある
+
+### 2. core-theme がなければ作る
+
+曲に要る core-theme（メインテーマ、キャラクターのテーマなど）がまだなければ、先に `music/themes/<ID>.txt` に書く。
+core-theme は多くの曲の元になるので、1 曲の都合ではなく、そのテーマが表すもの（ゲーム全体、その人物）を思い浮かべて書く。
+
+```bash
+python3 scripts/music/build.py --theme main
+```
+
+試聴用の音（`music/.preview/theme_main.ogg`）とピアノロールができる。ピアノロールを見て、書いたとおりに並んでいるかを確かめる。
+新しく作った core-theme は、試聴用の音をユーザーに送って感想を聞く。多くの曲に使う前に、ユーザーの耳で確かめてもらうためである。
+
+### 3. motiv を切り出す
+
+core-theme ごとに、聞けばその core-theme を思い出せる断片を `@motif` で書く。
+後でほかの core-theme の motiv と組み合わせることがあるので、短く、それだけで形が分かるものを選ぶ。名前は、断片の印象（`call`・`sigh` など）で付ける。
+
+### 4. 曲を書く
+
+`music/songs/<曲の ID>.py` に、手順 1 の要件に沿って曲を組み立てる。
+素材は主旋律（`role="main"`）か副旋律（`role="sub"`）のトラックに置く。`role="other"` のトラックに素材を置くと注意が出る。
+
+ループする曲は、継ぎ目（`song.end`）で最初に戻って自然につながるように書く。継ぎ目をまたいで伸びる音は継ぎ目で切れ、継ぎ目より後で始まる音は書き出されない（どちらも注意が出る）。残響は道具がループの頭に重ねるので、気にしなくてよい。
+
+### 5. 書き出す
+
+```bash
+python3 scripts/music/build.py bgm_title
+```
+
+MIDI・Ogg Opus・ピアノロールができ、`music/catalog.md` が作り直される。出力には、長さ、音量、ループの継ぎ目の様子、トラックごとの素材が出る。
+曲の間で聞こえる音量がそろうよう、音量はラウドネス -16 LUFS にそろえる（ピークは -1 dBFS を超えないようにする）。静かな曲を静かに聞かせたいときは、そろえた後で再生側の音量で下げる。
+
+### 6. 確かめる
+
+ピアノロール（`music/.preview/<曲の ID>.png`）を Read で開いて見る。上の帯に、どのトラックのどこにどの素材を置いたかが出る。赤い縦線はループの継ぎ目である。
+次の項目を ○ か × で判定し、× があれば直して手順 5 からやり直す。
+
+1. 書き出しが [注意] なしで終わった（[注意] が出たら、意図したものか確かめ、意図していなければ直す）
+2. 長さとループの有無が、手順 1 の要件どおり
+3. ループする曲で、継ぎ目の段差の注意が出ていない
+4. 無音・音割れ・「目標より小さくした」の注意が出ていない
+5. 手順 1 で決めた素材が、決めたトラック（主旋律・副旋律）に、決めた場所に置かれている
+6. core-theme を、加工も組み合わせもせず、それだけで 1 曲にしていない
+7. ピアノロールを見て、書いたつもりのもの（音の並び、トラックの重なり方、曲の流れ）と食い違いがない
+8. 手順 1 に書いた聞こえ方に照らして、自分の見立てで違和感がない（理論の決まりで判定しない）
+
+最後に、`public/assets/audio/bgm/<曲の ID>.ogg` をユーザーに送り、聞いてもらう。ユーザーの感想で直すときは、その点を手順 1 の要件に足してやり直す。
+
+### 7. 記録してコミットする
+
+- 新しい曲を足したら、`docs/audio.md` の一覧にあるか確かめる（なければ足す）。
+- core-theme を書き換えたら、それを使う曲がすべて変わる。`music/catalog.md` で使っている曲を確かめ、`python3 scripts/music/build.py --all` で書き出し直して、手順 6 で確かめる。
+- コミットするのは `music/themes/`・`music/songs/`・`music/midi/`・`music/catalog.md`・`public/assets/audio/bgm/`。`music/.preview/` はコミットしない。
+
+## ゲームで鳴らすとき
+
+- 曲は `public/assets/audio/bgm/<曲の ID>.ogg` に置く。再生は `src/systems/audio.ts` の `playBgm(id)` から行う（呼び出し口だけで、まだ音を鳴らす処理はない。鳴らす処理を入れるのは別の作業）。
+- ループする曲はファイル全体がちょうど 1 周の長さになっているので、頭から繰り返せばつながる。`song.loop_from` で前奏を付けた曲は、ファイルに `LOOPSTART`・`LOOPLENGTH`（サンプル数、48 kHz）の印が入る。前奏の後から繰り返すには、再生側でこの位置を使う。
