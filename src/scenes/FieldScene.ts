@@ -733,6 +733,7 @@ export class FieldScene extends Phaser.Scene {
     setState({ ...state, stepsToEncounter: result.stepsToEncounter, wardSteps: result.wardSteps });
     if (!table) return;
     if (result.wardEnded) {
+      playSe('se_ward');
       this.message.show(['魔除けの効き目が切れた。']);
       return;
     }

@@ -187,6 +187,7 @@ const SUNPU_ARRIVE: EventStep[] = [
 /** 鉄瓶を倒して駿府に戻ったとき（第 1 章の終わり）。第 2 章（名古屋）への導線。 */
 const SUNPU_CHAPTER_END: EventStep[] = [
   partyOut('kasumi'),
+  se('se_hyoshigi'),
   {
     type: 'say',
     lines: [
@@ -310,6 +311,7 @@ const NAGOYA_CHAPTER_END: EventStep[] = [
   face('hero', 'right'),
   { type: 'say', lines: ['金太「兄貴は、凧の糸を少しでも長くするんだって、毎晩遅くまで働いてた。……おれ、兄貴の分まで高く揚げるよ」'] },
   partyOut('kasumi'),
+  se('se_hyoshigi'),
   {
     type: 'say',
     lines: [
@@ -449,6 +451,7 @@ const KYO_CHAPTER_END: EventStep[] = [
       '玄道「清水湊か。わしも行こう。仏の弔いなら、本職だ」',
     ],
   },
+  se('se_hyoshigi'),
   { type: 'say', lines: ['{hero}「清水湊へ急ぐぜ」'], linesF: ['{hero}「清水湊へ急ごう」'] },
   // 飛脚は、来た道を南へ戻っていく
   walk('kyoHikyaku', 'ddddddd'),
@@ -750,6 +753,7 @@ const OSAKA_CHAPTER_END: EventStep[] = [
   { type: 'say', lines: ['飛脚「旅の衆！ 霞というお人から、文をお預かりしてまいりやした！」'] },
   walk('osakaHikyaku', 'ddddddd'),
   vanish('osakaHikyaku'),
+  se('se_hyoshigi'),
   {
     type: 'say',
     lines: [
@@ -863,6 +867,7 @@ const NAGASAKI_CHAPTER_END: EventStep[] = [
     type: 'say',
     lines: ['霞「ちょうど湊に、加賀へ回る北前船が入ってるって話だよ。日本海をぐるりと回って、加賀の湊まで運んでくれるはずさ」'],
   },
+  se('se_hyoshigi'),
   {
     type: 'say',
     lines: ['{hero}「蘭斎さんから預かった祝詞もある。湊の船頭に頼んで、北の海を渡って金沢へ乗りこもうじゃねえか」'],
@@ -1041,6 +1046,7 @@ const KANAZAWA_CHAPTER_END: EventStep[] = [
   walk('kanazawaSakon', 'rrrr'),
   vanish('kanazawaSakon'),
   partyOut('kasumi'),
+  se('se_hyoshigi'),
   {
     type: 'say',
     lines: [
@@ -1581,6 +1587,7 @@ const EDO_CHAPTER_END: EventStep[] = [
   { type: 'say', lines: ['玄道「いよいよ、鷲尾と決着をつけるときか」'] },
   ...partyIn('gendo'),
   partyOut('orin'),
+  se('se_hyoshigi'),
   { type: 'say', lines: ['お凛「おとっつぁんの仇の、そのまた親玉だ。……行こう、江戸城へ」'] },
   ...partyIn('orin'),
   face('hero', 'left'),
@@ -2634,6 +2641,7 @@ export const EVENTS: Record<string, EventDef> = {
         ],
       },
       partyOut('kasumi'),
+      se('se_hyoshigi'),
       { type: 'say', lines: ['霞「権六は大坂へ向かう手はずだった、と師匠は言ってた。……次は、天下の台所だね」'] },
       ...partyIn('kasumi'),
       ...partyIn('orin'),

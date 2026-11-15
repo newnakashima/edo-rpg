@@ -44,6 +44,23 @@ describe('イベントの効果音', () => {
     expect(count).toBeGreaterThan(40);
   });
 
+  it('第 1〜8 章の終わり（chapterNCleared を立てる並び）に、締めくくりの台詞と一緒に鳴る拍子木（se_hyoshigi）が 1 つずつある', () => {
+    const chapters = new Set<string>();
+    for (const event of Object.values(EVENTS)) {
+      for (const list of lists(event.steps)) {
+        const flag = list.find((s) => s.type === 'setFlag' && /^chapter\dCleared$/.test(s.flag));
+        if (!flag || flag.type !== 'setFlag') continue;
+        const at = list.flatMap((s, i) => (s.type === 'se' && s.id === 'se_hyoshigi' ? [i] : []));
+        expect(at, flag.flag).toHaveLength(1);
+        // 拍子木の後に、章の締めくくりの台詞があり、その後に章を終える印を立てる
+        expect(list[at[0]! + 1]?.type, flag.flag).toBe('say');
+        expect(at[0]!, flag.flag).toBeLessThan(list.indexOf(flag));
+        chapters.add(flag.flag);
+      }
+    }
+    expect([...chapters].sort()).toEqual([1, 2, 3, 4, 5, 6, 7, 8].map((n) => `chapter${n}Cleared`));
+  });
+
   it('葛籠を開けると、蓋の音と道具を得る音が鳴る。空の葛籠は鳴らさない', () => {
     expect(CHEST_EVENTS.size).toBeGreaterThan(70);
     for (const id of CHEST_EVENTS) {
