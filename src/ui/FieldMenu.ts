@@ -328,6 +328,7 @@ export class FieldMenu {
       return FAIL_MESSAGES[result.reason];
     }
     setState(result.state);
+    playSe('se_ward');
     return `${used}${result.steps} 歩のあいだ、敵が寄ってこない。`;
   }
 
