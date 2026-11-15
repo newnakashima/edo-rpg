@@ -5,7 +5,8 @@
 // - 屋内の出口（下の壁の切れ目）からは、その戸口の 1 マス下（front があればそのマス）へ戻る
 // - 町でないマップ（与力・黒田の屋敷、出島、北前船）の建物も、同じ仕組みでつなぐ（src/data/buildingsOuter.ts）
 // - 施設の人（店の主人・住職など）は屋内に立つ。看板は、屋内の施設の人の種類で、町の戸口の隣の壁に掛ける（src/data/signs.ts）
-import type { ExitDef, MapDef, NpcDef, TilesetId } from './maps';
+import type { LoopBgmId } from '../systems/audio';
+import type { ExitDef, MapDef, NpcAction, NpcDef, TilesetId } from './maps';
 import { signKind } from './signs';
 import { townRespawnMap } from './minka';
 
@@ -26,6 +27,8 @@ export interface BuildingDef {
   npcs: NpcDef[];
   /** 省くと interior。 */
   tileset?: TilesetId;
+  /** 屋内で鳴らす曲。省くと、施設の人で決める（buildingBgm）。お祓いをしない寺（京の五重塔の寺、金沢の寺町の 3 寺）に書く。 */
+  bgm?: LoopBgmId;
 }
 
 export const ANDON_LINES = ['行灯の紙ごしに、菜種油の火がやわらかく灯っている。'];
@@ -53,11 +56,24 @@ export function buildingFront(b: Pick<BuildingDef, 'door' | 'front'>): { x: numb
   return b.front ?? { x: b.door.x, y: b.door.y + 1 };
 }
 
+/** 屋内に施設の人がいれば、町の曲の代わりに鳴らす曲（docs/audio.md の「屋内・施設」）。 */
+const FACILITY_BGM: Partial<Record<NpcAction, LoopBgmId>> = { oyabun: 'bgm_oyabun', temple: 'bgm_shrine', tobaku: 'bgm_tobaku' };
+
+/** 建物の屋内で鳴らす曲。親分の屋敷・寺社・賭場は施設の曲、ほかは町の曲。 */
+export function buildingBgm(town: Pick<MapDef, 'bgm'>, b: Pick<BuildingDef, 'npcs' | 'bgm'>): LoopBgmId {
+  if (b.bgm) return b.bgm;
+  return b.npcs.map((n) => (n.action ? FACILITY_BGM[n.action] : undefined)).find((id) => id !== undefined) ?? town.bgm;
+}
+
 /** 建物の屋内マップを作る。 */
 function buildingMap(town: MapDef, b: BuildingDef): MapDef {
+  const bgm = buildingBgm(town, b);
   return {
     id: b.id,
     name: `${town.name}の${b.name}`,
+    bgm,
+    // 施設の曲がまだなければ町の曲を鳴らす
+    ...(bgm !== town.bgm ? { bgmFallback: town.bgm } : {}),
     tileset: b.tileset ?? 'interior',
     areaLevel: town.areaLevel,
     rows: [...b.rows],

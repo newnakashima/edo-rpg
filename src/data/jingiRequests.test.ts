@@ -71,7 +71,7 @@ describe('仁義ポイントを得る頼まれごと', () => {
     const s = { ...newGame('m', start), jingi: 10 };
     expect(pendingJingiRequest('kyo', 'tobaku', s.flags)?.id).toBe(id);
     const { state, battles } = run(id, s, 0, 'victory');
-    expect(battles).toEqual([{ kind: 'battle', enemies: jingiRequestEnemies('tobaku', 10), level: 11, canEscape: false, loseOk: true }]);
+    expect(battles).toEqual([{ kind: 'battle', enemies: jingiRequestEnemies('tobaku', 10), level: 11, canEscape: false, loseOk: true, bgm: 'bgm_battle' }]);
     expect(state.jingi).toBe(14);
     expect(state.flags[id]).toBe(true);
     expect(pendingJingiRequest('kyo', 'tobaku', state.flags)).toBeNull();

@@ -1,6 +1,7 @@
 // イベントスクリプトの実行。画面に依存せず、手順を 1 つずつ進めて、画面に頼むこと（台詞・選択肢・戦闘・移動）を返す。
 import { CHARACTERS, characterName, isGuest } from '../data/characters';
 import type { EventStep } from '../data/eventTypes';
+import type { LoopBgmId } from './audio';
 import { addItem, isKnownItem, itemCount, MAX_ITEM_COUNT } from '../data/items';
 import type { CharacterSpriteId } from '../data/sprites';
 import type { Facing, GameState } from './gameState';
@@ -14,7 +15,7 @@ export const MAX_PARTY = 4;
 export type EventRequest =
   | { kind: 'say'; pages: string[] }
   | { kind: 'choice'; prompt?: string; labels: string[] }
-  | { kind: 'battle'; enemies: string[]; level: number; canEscape: boolean; loseOk: boolean }
+  | { kind: 'battle'; enemies: string[]; level: number; canEscape: boolean; loseOk: boolean; bgm: LoopBgmId }
   | { kind: 'warp'; mapId: string; x: number; y: number }
   /** 演出（人を出す・歩かせる・向きを変える・消す・待つ）。画面が行い終えたら next を呼ぶ。 */
   | { kind: 'stage'; step: StageStep }
@@ -166,6 +167,10 @@ export class EventRunner {
   private finished = false;
   /** 演出で出した・動かした人（ID ごと）。画面が書き込む。warp で別の場所に移ると空にする。 */
   readonly stage = new Map<string, StageActor>();
+  /** bgm の手順で替えた場面の曲（null は止めた）。まだ替えていなければ undefined で、マップの曲を鳴らす。 */
+  private sceneBgm: LoopBgmId | null | undefined;
+  /** 仲間が加わった・戻ったが、まだ知らせのジングル（bgm_join）を鳴らしていない。 */
+  private joined = false;
 
   constructor(steps: readonly EventStep[]) {
     this.stack = [{ steps, index: 0 }];
@@ -173,6 +178,18 @@ export class EventRunner {
 
   get done(): boolean {
     return this.finished;
+  }
+
+  /** 鳴らす場面の曲。イベントが終わったか、まだ替えていなければ undefined（マップの曲を鳴らす）。null は止める。 */
+  get bgm(): LoopBgmId | null | undefined {
+    return this.finished ? undefined : this.sceneBgm;
+  }
+
+  /** 前に呼んでから仲間が加わった・戻ったか（加わったときの知らせのジングルを鳴らすため。呼ぶと忘れる）。 */
+  takeJoined(): boolean {
+    const j = this.joined;
+    this.joined = false;
+    return j;
   }
 
   /**
@@ -232,15 +249,21 @@ export class EventRunner {
         case 'addJingi':
           s = addJingi(s, step.amount);
           break;
-        case 'join':
+        case 'join': {
+          const before = s;
           s = joinParty(s, step.member);
+          if (s !== before) this.joined = true;
           break;
+        }
         case 'leave':
           s = leaveParty(s, step.member);
           break;
-        case 'rejoin':
+        case 'rejoin': {
+          const before = s;
           s = rejoinParty(s, step.member);
+          if (s !== before) this.joined = true;
           break;
+        }
         case 'heal':
           s = { ...s, party: restoreAll(s.party) };
           break;
@@ -248,8 +271,18 @@ export class EventRunner {
           this.waiting = step;
           return {
             state: s,
-            request: { kind: 'battle', enemies: step.enemies, level: step.level, canEscape: step.canEscape ?? false, loseOk: step.ifLose !== undefined },
+            request: {
+              kind: 'battle',
+              enemies: step.enemies,
+              level: step.level,
+              canEscape: step.canEscape ?? false,
+              loseOk: step.ifLose !== undefined,
+              bgm: step.bgm ?? 'bgm_battle',
+            },
           };
+        case 'bgm':
+          this.sceneBgm = step.id;
+          break;
         case 'actor':
         case 'walk':
         case 'face':

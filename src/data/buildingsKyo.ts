@@ -572,6 +572,8 @@ export const KYO_BUILDINGS: BuildingDef[] = [
   {
     door: { x: 21, y: 28 },
     id: 'kyoTera',
+    // お祓いの人はいないが寺なので、寺社の曲
+    bgm: 'bgm_shrine',
     name: '五重塔の寺の本堂',
     rows: [
       'WWWWWWWWWWWWWWWWWWWWW',

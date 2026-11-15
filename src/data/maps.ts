@@ -1,5 +1,6 @@
 // フィールドのマップ。序章〜終章の町・ダンジョンと、ワールドマップを用意する。
 // タイルの文字の意味は TILES を参照。
+import type { LoopBgmId } from '../systems/audio';
 import type { Facing } from '../systems/gameState';
 import { OBJECT_DEFS, type CharacterSpriteId, type ObjectSpriteId } from './sprites';
 import { MOGURI_YADO, moguriYadoNpc } from './moguriYado';
@@ -231,6 +232,13 @@ export interface MapDef {
   marks?: MarkDef[];
   /** 地域ごとのタイルの見た目（TILESETS）。省くと共通の見た目。 */
   tileset?: TilesetId;
+  /**
+   * マップに入ったときに鳴らす曲（docs/audio.md の「場面への当てはめ」）。建物・民家の屋内は、作るときに町の曲を入れる
+   * （親分の屋敷・寺社・賭場は別の曲。src/data/buildings.ts の buildingBgm）。
+   */
+  bgm: LoopBgmId;
+  /** bgm も代わりの曲（src/systems/audio.ts の BGM_FALLBACK）もまだないときに鳴らす曲（親分の屋敷・寺社・賭場の、町の曲）。 */
+  bgmFallback?: LoopBgmId;
   /** エンカウントの出現表の ID。町など戦闘のない場所は省略する。 */
   encounter?: string;
   /** 地域の敵レベル。宿代・茶屋の値段にも使う（docs/balance.md の「経済」）。 */
@@ -258,6 +266,7 @@ export const MAPS: Record<string, MapDef> = {
   shimizu: {
     id: 'shimizu',
     name: '駿河・清水湊',
+    bgm: 'bgm_home',
     tileset: 'minato',
     areaLevel: 1,
     rows: [
@@ -363,6 +372,7 @@ export const MAPS: Record<string, MapDef> = {
   urayama: {
     id: 'urayama',
     name: '清水湊・裏山',
+    bgm: 'bgm_yama',
     tileset: 'yama',
     areaLevel: 1,
     rows: [
@@ -446,6 +456,7 @@ export const MAPS: Record<string, MapDef> = {
     id: 'kitsunebiCave',
     tileset: 'cave',
     name: '狐火の洞',
+    bgm: 'bgm_dungeon',
     areaLevel: 1,
     rows: [
       '^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
@@ -523,6 +534,7 @@ export const MAPS: Record<string, MapDef> = {
 MAPS.world = {
   id: 'world',
   name: '日本',
+  bgm: 'bgm_road',
   tileset: 'field',
   areaLevel: 1,
   // 西の九州（長崎・島原、島原の湊から渡し船で渡る熊本）から、関門の渡し、山陽道（広島・大坂）、京、脇道の先の彦根、東海道（伊賀・名古屋・脇道の先の浜松・大井川・駿府・清水湊・箱根）、江戸、奥州街道（仙台、脇道の先の会津若松）まで。
@@ -687,6 +699,7 @@ export const START_POSITION = { mapId: 'shimizu', x: 20, y: 9 };
 MAPS.sunpu = {
   id: 'sunpu',
   name: '駿府城下',
+  bgm: 'bgm_town',
   tileset: 'bushi',
   areaLevel: 4,
   rows: [
@@ -845,6 +858,7 @@ MAPS.kobo = {
   id: 'kobo',
   tileset: 'interior',
   name: '一座の工房',
+  bgm: 'bgm_sneak',
   areaLevel: 4,
   rows: [
     'WWWWWWWWWWWWWWWWWWWWWWWWWWWW',
@@ -923,6 +937,7 @@ MAPS.kobo = {
 MAPS.yoriki = {
   id: 'yoriki',
   name: '与力・黒田の屋敷',
+  bgm: 'bgm_sneak',
   tileset: 'bushi',
   areaLevel: 4,
   rows: [
@@ -979,6 +994,7 @@ MAPS.karakuriYashiki = {
   id: 'karakuriYashiki',
   tileset: 'karakuri',
   name: 'からくり屋敷',
+  bgm: 'bgm_karakuri',
   areaLevel: 4,
   rows: [
     'WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW',
@@ -1090,6 +1106,7 @@ MAPS.karakuriYashiki = {
 MAPS.nagoya = {
   id: 'nagoya',
   name: '尾張名古屋',
+  bgm: 'bgm_town',
   tileset: 'shoka',
   areaLevel: 7,
   rows: [
@@ -1230,6 +1247,7 @@ MAPS.takoya = {
   id: 'takoya',
   tileset: 'interior',
   name: '金太の凧屋',
+  bgm: 'bgm_town',
   areaLevel: 7,
   rows: [
     'WWWWWWWWWWWWWWWWWWWWWWWWWW',
@@ -1299,6 +1317,7 @@ MAPS.horikawaKura = {
   id: 'horikawaKura',
   tileset: 'kura',
   name: '堀川の荷蔵',
+  bgm: 'bgm_dungeon',
   areaLevel: 7,
   rows: [
     'WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW',
@@ -1398,6 +1417,7 @@ MAPS.tenshu = {
   id: 'tenshu',
   tileset: 'castle',
   name: '名古屋城 天守',
+  bgm: 'bgm_castle',
   areaLevel: 7,
   rows: [
     'RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR',
@@ -1489,6 +1509,7 @@ MAPS.tenshu = {
 MAPS.kyo = {
   id: 'kyo',
   name: '京',
+  bgm: 'bgm_town_kyo',
   tileset: 'miyako',
   areaLevel: 10,
   rows: [
@@ -1651,6 +1672,7 @@ MAPS.rashomon = {
   id: 'rashomon',
   tileset: 'ruins',
   name: '羅生門跡',
+  bgm: 'bgm_dungeon',
   areaLevel: 10,
   rows: [
     'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
@@ -1730,6 +1752,7 @@ MAPS.oninosu = {
   id: 'oninosu',
   tileset: 'ruins',
   name: '鬼の巣',
+  bgm: 'bgm_dungeon',
   areaLevel: 10,
   rows: [
     'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
@@ -1833,6 +1856,7 @@ MAPS.oninosu = {
 MAPS.iga = {
   id: 'iga',
   name: '伊賀上野',
+  bgm: 'bgm_town',
   tileset: 'sato',
   areaLevel: 13,
   rows: [
@@ -1941,6 +1965,7 @@ MAPS.iga = {
 MAPS.igaSato = {
   id: 'igaSato',
   name: '伊賀者の里',
+  bgm: 'bgm_ninja',
   tileset: 'sato',
   areaLevel: 13,
   rows: [
@@ -2053,6 +2078,7 @@ MAPS.igaSato = {
 MAPS.kagiya = {
   id: 'kagiya',
   name: '鍵屋の辻',
+  bgm: 'bgm_town_night',
   tileset: 'sato',
   areaLevel: 13,
   rows: [
@@ -2138,6 +2164,7 @@ MAPS.kagiya = {
 MAPS.osaka = {
   id: 'osaka',
   name: '大坂',
+  bgm: 'bgm_town_osaka',
   tileset: 'shoka',
   areaLevel: 16,
   rows: [
@@ -2304,6 +2331,7 @@ MAPS.komeKura = {
   id: 'komeKura',
   tileset: 'karakuri',
   name: '米蔵の地下',
+  bgm: 'bgm_karakuri',
   areaLevel: 16,
   rows: [
     'WWW..WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW',
@@ -2401,6 +2429,7 @@ MAPS.komeKura = {
 MAPS.hiroshima = {
   id: 'hiroshima',
   name: '安芸広島',
+  bgm: 'bgm_town',
   tileset: 'minato',
   areaLevel: 19,
   rows: [
@@ -2509,6 +2538,7 @@ MAPS.hiroshima = {
 MAPS.nagasaki = {
   id: 'nagasaki',
   name: '長崎',
+  bgm: 'bgm_town_nanban',
   tileset: 'nanban',
   areaLevel: 19,
   rows: [
@@ -2621,6 +2651,7 @@ MAPS.nagasaki = {
 MAPS.dejima = {
   id: 'dejima',
   name: '出島',
+  bgm: 'bgm_town_nanban',
   tileset: 'nanban',
   areaLevel: 19,
   rows: [
@@ -2677,6 +2708,7 @@ MAPS.nanbanji = {
   id: 'nanbanji',
   tileset: 'ruins',
   name: '南蛮寺跡',
+  bgm: 'bgm_dungeon',
   areaLevel: 19,
   rows: [
     '^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
@@ -2758,6 +2790,7 @@ MAPS.nanbanji = {
 MAPS.harajo = {
   id: 'harajo',
   name: '原城跡',
+  bgm: 'bgm_dungeon',
   tileset: 'yama',
   areaLevel: 19,
   rows: [
@@ -2840,6 +2873,7 @@ MAPS.kenkyujo = {
   id: 'kenkyujo',
   tileset: 'karakuri',
   name: '地下の研究所',
+  bgm: 'bgm_karakuri',
   areaLevel: 19,
   rows: [
     'WWWWWWWWWWWWWWW..WWWWWWWWWWWWWWW',
@@ -2917,6 +2951,7 @@ MAPS.kitamaebune = {
   id: 'kitamaebune',
   tileset: 'ship',
   name: '北前船',
+  bgm: 'bgm_sea',
   areaLevel: 22,
   rows: [
     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',
@@ -2983,6 +3018,7 @@ MAPS.kanazawa = {
   id: 'kanazawa',
   tileset: 'snow',
   name: '加賀金沢',
+  bgm: 'bgm_town_snow',
   areaLevel: 22,
   rows: [
     '~~~~TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
@@ -3126,6 +3162,7 @@ MAPS.kenrokuen = {
   id: 'kenrokuen',
   tileset: 'snow',
   name: '兼六園',
+  bgm: 'bgm_castle',
   areaLevel: 22,
   rows: [
     'WWWWWWWWWWWWWW__WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW',
@@ -3231,6 +3268,7 @@ MAPS.karakuriGura = {
   id: 'karakuriGura',
   tileset: 'karakuri',
   name: 'からくり蔵',
+  bgm: 'bgm_karakuri',
   areaLevel: 22,
   rows: [
     'WWW..WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW',
@@ -3341,6 +3379,7 @@ MAPS.karakuriGura = {
 MAPS.sendai = {
   id: 'sendai',
   name: '仙台城下',
+  bgm: 'bgm_town',
   tileset: 'bushi',
   areaLevel: 25,
   rows: [
@@ -3457,6 +3496,7 @@ MAPS.sendai = {
 MAPS.hamamatsu = {
   id: 'hamamatsu',
   name: '遠州・浜松',
+  bgm: 'bgm_town',
   areaLevel: 7,
   tileset: 'shoka',
   rows: [
@@ -3590,6 +3630,7 @@ MAPS.hamamatsu = {
 MAPS.hamamatsuMatsubayashi = {
   id: 'hamamatsuMatsubayashi',
   name: '中田島の松林',
+  bgm: 'bgm_yama',
   areaLevel: 7,
   tileset: 'yama',
   rows: [
@@ -3658,6 +3699,7 @@ MAPS.hamamatsuMatsubayashi = {
 MAPS.hikone = {
   id: 'hikone',
   name: '近江・彦根',
+  bgm: 'bgm_town',
   areaLevel: 10,
   tileset: 'bushi',
   rows: [
@@ -3830,6 +3872,7 @@ MAPS.hikone = {
 MAPS.hikoneSawayama = {
   id: 'hikoneSawayama',
   name: '佐和山',
+  bgm: 'bgm_yama',
   areaLevel: 10,
   tileset: 'yama',
   rows: [
@@ -3910,6 +3953,7 @@ MAPS.hikoneSawayama = {
 MAPS.kumamoto = {
   id: 'kumamoto',
   name: '肥後・熊本',
+  bgm: 'bgm_town',
   areaLevel: 19,
   tileset: 'bushi',
   rows: [
@@ -4090,6 +4134,7 @@ MAPS.kumamoto = {
 MAPS.kiyomasaIdo = {
   id: 'kiyomasaIdo',
   name: '清正の古井戸の底',
+  bgm: 'bgm_dungeon',
   areaLevel: 19,
   tileset: 'cave',
   rows: [
@@ -4142,6 +4187,7 @@ MAPS.kiyomasaIdo = {
 MAPS.aizu = {
   id: 'aizu',
   name: '会津若松',
+  bgm: 'bgm_town_snow',
   areaLevel: 25,
   tileset: 'snow',
   rows: [
@@ -4300,6 +4346,7 @@ MAPS.aizu = {
 MAPS.aizuIimoriyama = {
   id: 'aizuIimoriyama',
   name: '飯盛山',
+  bgm: 'bgm_yama',
   areaLevel: 25,
   tileset: 'snow',
   rows: [
@@ -4377,6 +4424,7 @@ MAPS.aizuIimoriyama = {
 MAPS.edo = {
   id: 'edo',
   name: '江戸',
+  bgm: 'bgm_town_edo',
   tileset: 'nagaya',
   areaLevel: 25,
   rows: [
@@ -4605,6 +4653,7 @@ MAPS.edoTaika = {
   id: 'edoTaika',
   tileset: 'fire',
   name: '神田の大火',
+  bgm: 'bgm_taika',
   areaLevel: 25,
   rows: [
     'WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW',
@@ -4697,6 +4746,7 @@ MAPS.edojo = {
   id: 'edojo',
   tileset: 'castle',
   name: '江戸城 本丸御殿',
+  bgm: 'bgm_edojo',
   areaLevel: 28,
   rows: [
     'WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW_WWWW',
@@ -4840,6 +4890,7 @@ MAPS.matsuNoRoka = {
   id: 'matsuNoRoka',
   tileset: 'castle',
   name: '松の廊下',
+  bgm: 'bgm_edojo',
   areaLevel: 28,
   rows: [
     'WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW',

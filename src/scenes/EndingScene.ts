@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { ENDING_FIN } from '../data/ending';
 import { setPendingEvent } from '../state';
+import { playBgm, playJingle } from '../systems/audio';
 import { Controls } from '../ui/input';
 import { COLORS, GAME_HEIGHT, GAME_WIDTH, setupCamera, textStyle } from '../ui/theme';
 
@@ -30,6 +31,9 @@ export class EndingScene extends Phaser.Scene {
     this.canLeave = false;
     this.leaving = false;
     this.cameras.main.setBackgroundColor('#000000');
+    // エンディングの曲を止めて、「終劇」の拍子木と主題の最後の一節
+    playBgm(null);
+    playJingle('bgm_shugeki');
     const fin = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2, ENDING_FIN, textStyle(24, COLORS.text)).setOrigin(0.5).setAlpha(0);
     this.tweens.add({ targets: fin, alpha: 1, duration: FIN_FADE });
     this.time.delayedCall(FIN_INPUT_DELAY, () => {

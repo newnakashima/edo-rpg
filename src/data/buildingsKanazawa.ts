@@ -1063,6 +1063,8 @@ export const KANAZAWA_BUILDINGS: BuildingDef[] = [
   {
     door: { x: 8, y: 35 },
     id: 'kanazawaShikakeDera',
+    // お祓いの人はいないが寺なので、寺社の曲
+    bgm: 'bgm_shrine',
     name: '寺町の仕掛け寺',
     rows: [
       'WWWWWWWWWWWWWWWWWWWWWW',
@@ -1127,6 +1129,8 @@ export const KANAZAWA_BUILDINGS: BuildingDef[] = [
   {
     door: { x: 20, y: 35 },
     id: 'kanazawaTera',
+    // お祓いの人はいないが寺なので、寺社の曲
+    bgm: 'bgm_shrine',
     name: '寺町の寺',
     rows: [
       'WWWWWWWWWWWWWWWWWWWWW',
@@ -1190,6 +1194,8 @@ export const KANAZAWA_BUILDINGS: BuildingDef[] = [
   {
     door: { x: 41, y: 35 },
     id: 'kanazawaZendera',
+    // お祓いの人はいないが寺なので、寺社の曲
+    bgm: 'bgm_shrine',
     name: '寺町の禅寺',
     rows: [
       'WWWWWWWWWWWWWWWWWWWWWWWWW',

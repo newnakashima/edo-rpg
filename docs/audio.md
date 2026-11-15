@@ -1,7 +1,7 @@
 # 音楽・効果音の一覧
 
-今回は音楽・音声を実装しません。後のフェーズで追加するときのために、必要な曲と効果音をまとめます。
-実装時は、ここに挙げたキー（ID）でシーンから再生できるよう、`src/systems/audio.ts` に空の呼び出し口だけ用意しておきます。
+音はまだ鳴らしません（曲を書き出し、再生処理を入れるのは後のフェーズ）。必要な曲と効果音をまとめ、どの場面でどの曲を鳴らすかは、もうコードに書いてあります。
+シーンは、ここに挙げたキー（ID）で `src/systems/audio.ts` の呼び出し口（`playBgm`・`playJingle`・`playSe`）を呼びます。呼び出し口は、鳴らすことになっている曲を覚えるだけで、まだ音を出しません。
 
 曲は MIDI で作曲し、Ogg Opus に書き出します。作り方は `.claude/skills/music-composition/SKILL.md`、曲の素材（core-theme・motiv）とその使い方の一覧は `music/catalog.md` にあります。
 
@@ -84,7 +84,7 @@
 
 ## 場面への当てはめ
 
-ここに書くのは、次の段階で実装する割り当てです。今のコードは `src/systems/audio.ts` の `BgmId` が 6 種だけで、`FieldScene` は出現表のあるマップで bgm_road、ないマップで bgm_town を呼ぶだけです（呼び出し口は空で、音は鳴らない）。
+ここに書いた割り当ては、コードに書いてあります（下の「コードでの鳴らし方」）。`src/data/bgm.test.ts` が、マップ・イベントの曲がこの表どおりかを確かめます。
 
 ### マップ
 
@@ -175,12 +175,14 @@
 仲間が加わる・戻る場面（霞・玄道・お凛・榊兵庫の加入、霞の復帰）では、`join`・`rejoin` の知らせに合わせて bgm_join を鳴らし、終わったらその場面の曲に戻します。
 一泊（bgm_inn）のあとは、泊まった場所の曲（親分の屋敷なら bgm_oyabun、もぐりの宿なら bgm_road）に戻します。
 
-### コードでの鳴らし方（案）
+### コードでの鳴らし方
 
-- `src/systems/audio.ts` の `BgmId` に上の ID をすべて並べ、代わりの曲の表を置く（まだ書き出していない曲は代わりをたどる）。
-- マップに `bgm`（曲の ID）を書けるようにする。書いていない屋内は、`respawnMap` の町の曲を鳴らす。親分の屋敷・寺社・賭場は ID の付け方が町ごとにそろっていない（`shimizuOyabun`・`osakaOyabunYashiki`、`osakaTobakuba` など）ので、上の表の `*Oyabun*` のような形で引かず、`src/data/buildings*.ts` の建物の定義に曲を書くか、マップに `bgm` を書く。
-- イベントの手順に `bgm`（曲を替える。`id: null` で止める）を足す。イベントが終わったらマップの曲に戻し、`keep: true` なら戻さない。
-- イベントの `battle` に `bgm` を書けるようにし、書いていなければ bgm_battle にする。勝ったら bgm_victory、全滅したら bgm_defeat を鳴らす。
+- `src/systems/audio.ts` の `BGM_IDS` に上の ID をすべて並べ、`BGM_FALLBACK` に代わりの曲の表を置く。`resolveBgm` が、まだ書き出していない曲の代わりをたどる（書き出した曲は `setAvailableBgm` で教える。どれもなければ無音）。
+- `playBgm(id, fallback)` はループする曲を鳴らす。いま鳴らしている曲と同じなら、頭から鳴らし直さずに続ける。`null` で止める。`playJingle(id)` はループしない曲（勝利・全滅・一泊・加入・終劇）を 1 度鳴らし、終われば前の曲に戻す。
+- マップの曲はマップの `bgm` に書く（`src/data/maps.ts`）。建物・民家の屋内は、作るときに町の `bgm` を入れる。親分の屋敷・寺社・賭場は、屋内の施設の人（`action` が `oyabun`・`temple`・`tobaku`）で決め、`bgmFallback` に町の曲を入れる（`src/data/buildings.ts` の `buildingBgm`）。お祓いをしない寺（京の五重塔の寺、金沢の寺町の寺・禅寺・仕掛け寺）は、建物の定義に `bgm` を書く。
+- イベントの手順 `bgm` で場面の曲に替える（`src/data/events.ts` の `bgm()`）。`FieldScene` は、イベントの途中ならその曲を、終わったか替えていなければマップの曲を鳴らす（`syncBgm`）。戦闘や `warp` をはさんでも、場面の曲は `EventRunner` が持っているので続く。終章は `ending` の手順で終わるので、浜松の bgm_ending のまま「終劇」へ移る（案にあった `keep` は要らなかった）。
+- イベントの `battle` の `bgm` を `BattleScene` に渡し、書いていなければ bgm_battle にする。勝てば曲を止めて bgm_victory、全滅すれば bgm_defeat（`ifLose` のある戦闘では鳴らさない）。
+- `join`・`rejoin` で仲間が実際に加わったら bgm_join、親分の屋敷・もぐりの宿で泊まったら bgm_inn を鳴らす。`EndingScene` は曲を止めて bgm_shugeki を鳴らす。
 
 ### core-theme の候補
 

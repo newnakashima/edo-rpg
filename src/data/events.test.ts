@@ -1539,7 +1539,7 @@ describe('終章の流れ', () => {
   });
 
   it('鬼塚典膳（Lv30）に勝つと tenzenDefeated。負けたら立たず、出直すと口上を短くする', () => {
-    expect(battles('tenzen', ch8)).toEqual([{ kind: 'battle', enemies: ['onizukaTenzen'], level: 30, canEscape: false, loseOk: false }]);
+    expect(battles('tenzen', ch8)).toEqual([{ kind: 'battle', enemies: ['onizukaTenzen'], level: 30, canEscape: false, loseOk: false, bgm: 'bgm_duel' }]);
     expect(run('tenzen', ch8).flags.tenzenDefeated).toBe(true);
     const lost = run('tenzen', ch8, 'defeat');
     expect(lost.flags.tenzenDefeated).toBeFalsy();
@@ -1548,8 +1548,8 @@ describe('終章の流れ', () => {
 
   it('将軍の間で鷲尾（Lv31）、続けて全回復してからくり大権現（Lv32）。倒すとエンディング（daigongenDefeated・gameCleared）', () => {
     expect(battles('shogunNoMa', ch8)).toEqual([
-      { kind: 'battle', enemies: ['washio'], level: 31, canEscape: false, loseOk: false },
-      { kind: 'battle', enemies: ['karakuriDaigongen'], level: 32, canEscape: false, loseOk: false },
+      { kind: 'battle', enemies: ['washio'], level: 31, canEscape: false, loseOk: false, bgm: 'bgm_washio' },
+      { kind: 'battle', enemies: ['karakuriDaigongen'], level: 32, canEscape: false, loseOk: false, bgm: 'bgm_last_boss' },
     ]);
     const list = requests('shogunNoMa', ch8);
     expect(list[list.length - 1]?.kind).toBe('done');
@@ -1564,7 +1564,7 @@ describe('終章の流れ', () => {
 
   it('大権現に負けて出直すと、鷲尾とは戦わず、全回復して大権現とだけ戦う', () => {
     const afterWashio = { ...ch8, flags: { ...ch8.flags, washioMet: true, washioDefeated: true } };
-    expect(battles('shogunNoMa', afterWashio)).toEqual([{ kind: 'battle', enemies: ['karakuriDaigongen'], level: 32, canEscape: false, loseOk: false }]);
+    expect(battles('shogunNoMa', afterWashio)).toEqual([{ kind: 'battle', enemies: ['karakuriDaigongen'], level: 32, canEscape: false, loseOk: false, bgm: 'bgm_last_boss' }]);
     const lost = run('shogunNoMa', hurt(afterWashio), 'defeat');
     expect(lost.flags.daigongenDefeated).toBeFalsy();
     expect(lost.flags.gameCleared).toBeFalsy();

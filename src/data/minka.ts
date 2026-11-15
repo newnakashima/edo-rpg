@@ -199,6 +199,8 @@ export function minkaMap(town: MapDef, door: MinkaDoor, residentIndex: number): 
   return {
     id,
     name: `${town.name}の${plan.name}`,
+    // 民家は町の曲のまま
+    bgm: town.bgm,
     tileset: 'interior',
     areaLevel: town.areaLevel,
     rows: [...plan.rows],

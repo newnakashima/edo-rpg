@@ -67,7 +67,7 @@ describe('イベントスクリプト', () => {
       { type: 'setFlag', flag: 'after' },
     ];
     const win = play(steps, game(), [], ['victory']);
-    expect(win.requests[0]).toEqual({ kind: 'battle', enemies: ['onibi'], level: 1, canEscape: false, loseOk: true });
+    expect(win.requests[0]).toEqual({ kind: 'battle', enemies: ['onibi'], level: 1, canEscape: false, loseOk: true, bgm: 'bgm_battle' });
     expect(win.state.flags).toMatchObject({ after: true });
     expect(win.state.flags.lost).toBeUndefined();
     const lose = play(steps, game(), [], ['defeat']);

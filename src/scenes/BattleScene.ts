@@ -25,7 +25,7 @@ import {
 } from '../systems/battle';
 import { reviveAfterDefeat } from '../systems/facilities';
 import { gainExp } from '../systems/party';
-import { playBgm } from '../systems/audio';
+import { playBgm, playJingle, type LoopBgmId } from '../systems/audio';
 import { defaultRng } from '../systems/random';
 import { getState, reportBattleOutcome, setState } from '../state';
 import { CANCEL_DISABLED, menuCancelLabel } from '../ui/cancelLabel';
@@ -40,6 +40,8 @@ export interface BattleData {
   canEscape?: boolean;
   /** 負けても全滅扱いにしない（イベントの負けてもよい戦闘）。HP 1 で起き上がり、フィールドに戻る。 */
   loseOk?: boolean;
+  /** 戦闘の曲（省くと bgm_battle。イベントの戦闘の bgm）。 */
+  bgm?: LoopBgmId;
 }
 
 const EVENT_MS = 650;
@@ -101,7 +103,7 @@ export class BattleScene extends Phaser.Scene {
       items: state.items,
     });
 
-    playBgm('bgm_battle');
+    playBgm(data.bgm ?? 'bgm_battle');
     this.cameras.main.setBackgroundColor('#20283a');
     const g = this.add.graphics();
     g.fillStyle(0x2f4a2e, 1);
@@ -590,6 +592,9 @@ export class BattleScene extends Phaser.Scene {
 
   private victory(): void {
     reportBattleOutcome('victory');
+    // 戦闘の曲を止めて勝利のジングル。フィールドに戻るとマップ（イベントの途中なら場面）の曲を鳴らす
+    playBgm(null);
+    playJingle('bgm_victory');
     const state = getState();
     const rewards = computeRewards(this.battle);
     const party = partyAfterBattle(state.party, this.battle);
@@ -623,6 +628,9 @@ export class BattleScene extends Phaser.Scene {
       });
       return;
     }
+    // 全滅のジングル（負けてもよい戦闘では鳴らさない）。戻り先の町に着くと、その町の曲を鳴らす
+    playBgm(null);
+    playJingle('bgm_defeat');
     // 全滅したら、その地域の町の旅籠の前に戻る（旅籠は泊めないが、町の人に介抱される場所として使う。ダンジョンでは近くの町、東海道では名古屋、序章では清水湊）
     // flags を渡さないと、フラグ付きの戻り先（伊賀のまわりはお凛が加わってから伊賀上野）が使われない。
     // シーンには単体テストがないので、ここで flags を渡していることはテストしていない（respawnPoint 自体は maps.test.ts で確かめる）
