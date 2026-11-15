@@ -1,0 +1,64 @@
+{
+  "id": "bgm_road",
+  "title": "街道",
+  "about": "軽快な三味線と篠笛。旅の歩み",
+  "meter": "4/4",
+  "tempos": [
+    [
+      0.0,
+      112.0
+    ]
+  ],
+  "loop": true,
+  "loop_start_seconds": 0.0,
+  "length_seconds": 51.42857142857143,
+  "length_beats": 96.0,
+  "tracks": [
+    {
+      "name": "篠笛",
+      "program": 73,
+      "role": "main",
+      "drum": false,
+      "uses": [
+        {
+          "source": "theme:main 1-8",
+          "at": 0.0,
+          "length": 32.0
+        },
+        {
+          "source": "theme:main 9-16",
+          "at": 64.0,
+          "length": 32.0
+        }
+      ]
+    },
+    {
+      "name": "三味線",
+      "program": 106,
+      "role": "main",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "琴",
+      "program": 107,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "低弦",
+      "program": 43,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "締太鼓",
+      "program": 117,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    }
+  ]
+}

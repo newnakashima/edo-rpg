@@ -1,0 +1,179 @@
+{
+  "id": "bgm_last_boss",
+  "title": "からくり大権現",
+  "about": "和楽器とオーケストラ、からくりの音。鷲尾の企みと旅の主題がぶつかり、最後に魂が光る",
+  "meter": "4/4",
+  "tempos": [
+    [
+      0.0,
+      132.0
+    ]
+  ],
+  "loop": true,
+  "loop_start_seconds": 3.6363636363636362,
+  "length_seconds": 47.27272727272727,
+  "length_beats": 104.0,
+  "tracks": [
+    {
+      "name": "金管",
+      "program": 61,
+      "role": "main",
+      "drum": false,
+      "uses": [
+        {
+          "source": "theme:karakuri",
+          "at": 8.0,
+          "length": 32.0
+        },
+        {
+          "source": "motif:karakuri.zenmai",
+          "at": 64.0,
+          "length": 4.0
+        }
+      ]
+    },
+    {
+      "name": "尺八",
+      "program": 77,
+      "role": "main",
+      "drum": false,
+      "uses": [
+        {
+          "source": "motif:main.call",
+          "at": 40.0,
+          "length": 8.0
+        },
+        {
+          "source": "motif:main.call",
+          "at": 48.0,
+          "length": 8.0
+        },
+        {
+          "source": "motif:main.sigh",
+          "at": 88.0,
+          "length": 8.0
+        }
+      ]
+    },
+    {
+      "name": "声",
+      "program": 52,
+      "role": "main",
+      "drum": false,
+      "uses": [
+        {
+          "source": "motif:komoriuta.yurikago（4/3倍の長さ）",
+          "at": 72.0,
+          "length": 8.0
+        },
+        {
+          "source": "motif:komoriuta.yurikago（4/3倍の長さ）",
+          "at": 80.0,
+          "length": 8.0
+        }
+      ]
+    },
+    {
+      "name": "弦",
+      "program": 48,
+      "role": "sub",
+      "drum": false,
+      "uses": [
+        {
+          "source": "motif:main.wide",
+          "at": 56.0,
+          "length": 8.0
+        }
+      ]
+    },
+    {
+      "name": "オルゴール",
+      "program": 10,
+      "role": "sub",
+      "drum": false,
+      "uses": [
+        {
+          "source": "motif:komoriuta.nemure（4/3倍の長さ）",
+          "at": 88.0,
+          "length": 8.0
+        }
+      ]
+    },
+    {
+      "name": "琴",
+      "program": 107,
+      "role": "sub",
+      "drum": false,
+      "uses": [
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 8.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 12.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 16.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 20.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 24.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 28.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 32.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 36.0,
+          "length": 4.0
+        }
+      ]
+    },
+    {
+      "name": "ティンパニ",
+      "program": 47,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "大太鼓",
+      "program": 116,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "拍子木",
+      "program": 115,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "低弦",
+      "program": 43,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    }
+  ]
+}

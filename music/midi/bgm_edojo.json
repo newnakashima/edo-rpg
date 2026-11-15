@@ -1,0 +1,91 @@
+{
+  "id": "bgm_edojo",
+  "title": "江戸城",
+  "about": "雅楽の重厚さに、からくりの音が忍び込む。最後の道のり",
+  "meter": "4/4",
+  "tempos": [
+    [
+      0.0,
+      60.0
+    ]
+  ],
+  "loop": true,
+  "loop_start_seconds": 0.0,
+  "length_seconds": 64.0,
+  "length_beats": 64.0,
+  "tracks": [
+    {
+      "name": "篳篥",
+      "program": 111,
+      "role": "main",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "笙",
+      "program": 109,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "琴",
+      "program": 107,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "からくりの刻み",
+      "program": 8,
+      "role": "sub",
+      "drum": false,
+      "uses": [
+        {
+          "source": "motif:karakuri.haguruma（1/2倍の長さ）",
+          "at": 32.0,
+          "length": 2.0
+        },
+        {
+          "source": "motif:karakuri.haguruma（1/2倍の長さ）",
+          "at": 36.0,
+          "length": 2.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 48.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 52.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 56.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.tomaru",
+          "at": 60.0,
+          "length": 4.0
+        }
+      ]
+    },
+    {
+      "name": "太鼓",
+      "program": 116,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "低弦",
+      "program": 43,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    }
+  ]
+}

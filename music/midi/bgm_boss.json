@@ -1,0 +1,78 @@
+{
+  "id": "bgm_boss",
+  "title": "ボス戦",
+  "about": "激しい和太鼓、緊張感。からくりの企みの影",
+  "meter": "4/4",
+  "tempos": [
+    [
+      0.0,
+      138.0
+    ]
+  ],
+  "loop": true,
+  "loop_start_seconds": 3.4782608695652173,
+  "length_seconds": 31.304347826086957,
+  "length_beats": 72.0,
+  "tracks": [
+    {
+      "name": "尺八",
+      "program": 77,
+      "role": "main",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "三味線",
+      "program": 106,
+      "role": "main",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "金管",
+      "program": 61,
+      "role": "sub",
+      "drum": false,
+      "uses": [
+        {
+          "source": "motif:karakuri.zenmai（2倍の長さ）",
+          "at": 40.0,
+          "length": 8.0
+        },
+        {
+          "source": "motif:karakuri.zenmai（2倍の長さ）",
+          "at": 56.0,
+          "length": 8.0
+        }
+      ]
+    },
+    {
+      "name": "弦",
+      "program": 48,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "大太鼓",
+      "program": 116,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "締太鼓",
+      "program": 117,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "低弦",
+      "program": 43,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    }
+  ]
+}

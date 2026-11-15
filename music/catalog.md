@@ -39,4 +39,18 @@
 
 | ID | 名前 | ループ | 主旋律（main） | 副旋律（sub） |
 | --- | --- | --- | --- | --- |
+| bgm_battle | 戦闘 | あり | 新しく書いた旋律だけ | 新しく書いた旋律だけ |
+| bgm_boss | ボス戦 | あり | 新しく書いた旋律だけ | motif:karakuri.zenmai |
+| bgm_dungeon | 洞窟・廃墟 | あり | 新しく書いた旋律だけ | 新しく書いた旋律だけ |
+| bgm_edojo | 江戸城 | あり | 新しく書いた旋律だけ | motif:karakuri.haguruma, motif:karakuri.tomaru |
+| bgm_ending | ふたたび街道へ | あり | theme:heroine, theme:main | motif:heroine.kiai, motif:heroine.omoi |
+| bgm_home | 清水湊 | あり | motif:ikka.ashidori, motif:ikka.irori, theme:ikka | motif:heroine.kiai |
+| bgm_inn | 一泊 | なし | motif:komoriuta.nemure, theme:komoriuta | 新しく書いた旋律だけ |
+| bgm_karakuri | からくり屋敷 | あり | motif:karakuri.haguruma, theme:karakuri | motif:karakuri.zenmai |
+| bgm_last_boss | からくり大権現 | あり | motif:karakuri.zenmai, motif:komoriuta.yurikago, motif:main.call, motif:main.sigh, theme:karakuri | motif:karakuri.haguruma, motif:komoriuta.nemure, motif:main.wide |
+| bgm_road | 街道 | あり | theme:main | 新しく書いた旋律だけ |
+| bgm_sad | 別れ | あり | motif:heroine.shitau | motif:komoriuta.nemure |
+| bgm_tension | 陰謀 | あり | motif:yashamaru.kage | motif:karakuri.zenmai |
 | bgm_title | タイトル | あり | theme:main | motif:main.call |
+| bgm_town | 城下町 | あり | 新しく書いた旋律だけ | 新しく書いた旋律だけ |
+| bgm_victory | 勝利 | なし | motif:main.call | 新しく書いた旋律だけ |

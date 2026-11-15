@@ -1,0 +1,43 @@
+{
+  "id": "bgm_inn",
+  "title": "一泊",
+  "about": "短い子守唄。オルゴールのように小さく鳴って、眠りに落ちる",
+  "meter": "3/4",
+  "tempos": [
+    [
+      0.0,
+      66.0
+    ]
+  ],
+  "loop": false,
+  "loop_start_seconds": 0.0,
+  "length_seconds": 10.909090909090908,
+  "length_beats": 12.0,
+  "tracks": [
+    {
+      "name": "オルゴール",
+      "program": 10,
+      "role": "main",
+      "drum": false,
+      "uses": [
+        {
+          "source": "theme:komoriuta 1-2",
+          "at": 0.0,
+          "length": 6.0
+        },
+        {
+          "source": "motif:komoriuta.nemure",
+          "at": 6.0,
+          "length": 6.0
+        }
+      ]
+    },
+    {
+      "name": "琴",
+      "program": 107,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    }
+  ]
+}

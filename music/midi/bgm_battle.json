@@ -1,0 +1,60 @@
+{
+  "id": "bgm_battle",
+  "title": "戦闘",
+  "about": "速い三味線と太鼓。斬り結ぶ勢い",
+  "meter": "4/4",
+  "tempos": [
+    [
+      0.0,
+      152.0
+    ]
+  ],
+  "loop": true,
+  "loop_start_seconds": 3.1578947368421053,
+  "length_seconds": 28.42105263157895,
+  "length_beats": 72.0,
+  "tracks": [
+    {
+      "name": "三味線",
+      "program": 106,
+      "role": "main",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "篠笛",
+      "program": 73,
+      "role": "sub",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "琴",
+      "program": 107,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "太鼓",
+      "program": 116,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "締太鼓",
+      "program": 117,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "低弦",
+      "program": 43,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    }
+  ]
+}

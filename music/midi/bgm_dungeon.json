@@ -1,0 +1,53 @@
+{
+  "id": "bgm_dungeon",
+  "title": "洞窟・廃墟",
+  "about": "太鼓の低音、不気味。闇の奥で尺八が途切れ途切れに鳴る",
+  "meter": "4/4",
+  "tempos": [
+    [
+      0.0,
+      66.0
+    ]
+  ],
+  "loop": true,
+  "loop_start_seconds": 0.0,
+  "length_seconds": 58.18181818181818,
+  "length_beats": 64.0,
+  "tracks": [
+    {
+      "name": "尺八",
+      "program": 77,
+      "role": "main",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "太鼓",
+      "program": 116,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "低い持続",
+      "program": 89,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "低弦",
+      "program": 43,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "鈴",
+      "program": 112,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    }
+  ]
+}

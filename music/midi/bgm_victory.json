@@ -1,0 +1,52 @@
+{
+  "id": "bgm_victory",
+  "title": "勝利",
+  "about": "三味線の短いファンファーレ。勝つたびに旅の主題の呼びかけを思い出させる",
+  "meter": "4/4",
+  "tempos": [
+    [
+      0.0,
+      132.0
+    ]
+  ],
+  "loop": false,
+  "loop_start_seconds": 0.0,
+  "length_seconds": 7.2727272727272725,
+  "length_beats": 16.0,
+  "tracks": [
+    {
+      "name": "三味線",
+      "program": 106,
+      "role": "main",
+      "drum": false,
+      "uses": [
+        {
+          "source": "motif:main.call（1/2倍の長さ）",
+          "at": 0.0,
+          "length": 4.0
+        }
+      ]
+    },
+    {
+      "name": "琴",
+      "program": 107,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "弦",
+      "program": 48,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "太鼓",
+      "program": 116,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    }
+  ]
+}
