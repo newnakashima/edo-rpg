@@ -7,7 +7,7 @@ import { browserStorage, exportFileName, exportText, importText, listSlots, writ
 import { downloadText, pickTextFile } from '../ui/saveFile';
 import { SaveSlotMenu } from '../ui/SaveSlotMenu';
 import { setPendingEvent, setState } from '../state';
-import { playBgm } from '../systems/audio';
+import { playBgm, playSe } from '../systems/audio';
 
 export class TitleScene extends Phaser.Scene {
   private controls!: Controls;
@@ -119,6 +119,7 @@ export class TitleScene extends Phaser.Scene {
         return;
       }
       const ok = downloadText(exportFileName(result.slot), exportText(result.info.data));
+      playSe(ok ? 'se_save' : 'se_buzzer');
       this.notify(ok ? [`記録 ${result.slot + 1} をファイルに書き出しました（ダウンロードした先を確かめてください）。`] : ['ファイルに書き出せませんでした。']);
     });
   }
@@ -126,6 +127,7 @@ export class TitleScene extends Phaser.Scene {
   private onImportFile(text: string): void {
     const data = importText(text);
     if (!data) {
+      playSe('se_buzzer');
       this.notify(['この記録のファイルは読めません（壊れているか、このゲームの記録ではありません）。']);
       return;
     }
@@ -179,6 +181,7 @@ export class TitleScene extends Phaser.Scene {
   private importInto(slot: number, data: SaveData): void {
     const storage = browserStorage();
     const ok = storage !== null && writeSaveData(storage, slot, data);
+    playSe(ok ? 'se_save' : 'se_buzzer');
     this.notify(ok ? [`ファイルの記録を、記録 ${slot + 1} に読み込みました。`] : ['読み込めませんでした（ブラウザの保存領域が一杯か、使えません）。']);
   }
 
@@ -190,9 +193,11 @@ export class TitleScene extends Phaser.Scene {
     this.controls.flush();
     this.active = new SaveSlotMenu(this, storage, 'load', (result) => {
       if (result.kind !== 'loaded') {
+        if (result.kind === 'failed') playSe('se_buzzer');
         this.openMain();
         return;
       }
+      playSe('se_save');
       setState(result.data.state);
       this.scene.start('Field');
     });

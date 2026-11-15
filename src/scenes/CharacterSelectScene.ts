@@ -3,6 +3,7 @@ import { characterName, type Gender } from '../data/characters';
 import { heroSprite, idleFrame, spriteKey } from '../data/sprites';
 import { START_POSITION } from '../data/maps';
 import { newGame } from '../systems/gameState';
+import { playSe } from '../systems/audio';
 import { setState } from '../state';
 import { Controls } from '../ui/input';
 import { COLORS, GAME_WIDTH, setupCamera, textStyle } from '../ui/theme';
@@ -46,11 +47,13 @@ export class CharacterSelectScene extends Phaser.Scene {
   }
 
   private select(gender: Gender): void {
+    if (this.choice !== gender) playSe('se_cursor');
     this.choice = gender;
     this.cursor.setX(gender === 'm' ? GAME_WIDTH / 2 - 80 : GAME_WIDTH / 2 + 80);
   }
 
   private confirm(): void {
+    playSe('se_ok');
     setState(newGame(this.choice, START_POSITION));
     this.scene.start('Field');
   }
@@ -60,6 +63,9 @@ export class CharacterSelectScene extends Phaser.Scene {
     if (dir === 'left') this.select('m');
     if (dir === 'right') this.select('f');
     if (this.controls.okPressed()) this.confirm();
-    else if (this.controls.cancelPressed()) this.scene.start('Title');
+    else if (this.controls.cancelPressed()) {
+      playSe('se_cancel');
+      this.scene.start('Title');
+    }
   }
 }

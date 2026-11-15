@@ -11,7 +11,7 @@ import {
   availableItemCount,
   computeRewards,
   createBattle,
-  dropPages,
+  dropPageInfo,
   isAlive,
   needsTarget,
   partyAfterBattle,
@@ -25,7 +25,8 @@ import {
 } from '../systems/battle';
 import { reviveAfterDefeat } from '../systems/facilities';
 import { gainExp } from '../systems/party';
-import { playBgm, playJingle, type LoopBgmId } from '../systems/audio';
+import { playBgm, playJingle, playSe, type LoopBgmId } from '../systems/audio';
+import { battleSounds, victorySounds, type SeActor } from '../systems/battleSe';
 import { defaultRng } from '../systems/random';
 import { getState, reportBattleOutcome, setState } from '../state';
 import { CANCEL_DISABLED, menuCancelLabel } from '../ui/cancelLabel';
@@ -477,6 +478,11 @@ export class BattleScene extends Phaser.Scene {
 
   private runTurn(): void {
     const { state, events } = resolveTurn(this.battle, this.commands, defaultRng);
+    const party = getState().party;
+    const actors = new Map<string, SeActor>(
+      state.combatants.map((c) => [c.key, { side: c.side, character: c.side === 'party' ? party[Number(c.key.slice(1))]?.id : undefined }]),
+    );
+    const sounds = battleSounds(events, actors);
     // 演出のため、HP・気力・状態異常の表示はイベントごとに更新する
     const before = this.battle;
     this.battle = state;
@@ -504,6 +510,7 @@ export class BattleScene extends Phaser.Scene {
         return;
       }
       this.setLog(this.describe(e));
+      for (const id of sounds[i] ?? []) playSe(id);
       switch (e.type) {
         case 'attack':
         case 'damage':
@@ -605,14 +612,24 @@ export class BattleScene extends Phaser.Scene {
     const exp = Math.max(0, ...amounts);
     this.controls.flush();
     const pages = [victoryText(this.battle, exp, rewards.money)];
-    pages.push(...dropPages(drops, this.battle.items));
+    // ページごとの音: お金を得たら銭、落とし物は道具を得る音、段が上がったら se_levelup
+    const dropInfo = dropPageInfo(drops, this.battle.items);
+    pages.push(...dropInfo.map((p) => p.text));
     for (const up of levelUps) {
       const name = characterName(up.id, state.gender);
       const learned = up.learned.map((id) => `「${SKILLS[id]?.name ?? id}」を覚えた！`).join('\n');
       pages.push(`${name}は Lv${up.to} に上がった！${learned ? `\n${learned}` : ''}`);
     }
+    const sounds = victorySounds(rewards.money, dropInfo.map((p) => p.got), levelUps.length);
     this.log.setText('');
-    this.message.show(pages, () => this.finish());
+    this.message.show(
+      pages,
+      () => this.finish(),
+      (i) => {
+        const se = sounds[i];
+        if (se) playSe(se);
+      },
+    );
   }
 
   private defeat(): void {

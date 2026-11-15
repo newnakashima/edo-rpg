@@ -71,7 +71,8 @@ export type BattleEvent =
   | { type: 'item'; actor: string; item: string }
   /** 技によるダメージ。 */
   | { type: 'damage'; target: string; damage: number; critical: boolean; weak: boolean; resisted: boolean }
-  | { type: 'miss'; target: string }
+  /** 外れた（通常攻撃・技の 1 回の当たり）。actor は攻撃した側。attack は通常攻撃の外れ（技の当たりと見分ける）。 */
+  | { type: 'miss'; actor: string; target: string; attack?: true }
   | { type: 'heal'; target: string; amount: number }
   | { type: 'healMp'; target: string; amount: number }
   | { type: 'revive'; target: string; hp: number }
@@ -362,7 +363,7 @@ class TurnContext {
   attack(actor: Combatant, target: Combatant): void {
     const hit = this.physicalHit(actor, target);
     if (!hit) {
-      this.events.push({ type: 'miss', target: target.key });
+      this.events.push({ type: 'miss', actor: actor.key, target: target.key, attack: true });
       return;
     }
     this.events.push({ type: 'attack', actor: actor.key, target: target.key, damage: hit.damage, critical: hit.critical });
@@ -483,7 +484,7 @@ class TurnContext {
       switch (effect.kind) {
         case 'physical': {
           if (effect.gamble && this.rng() < 0.5) {
-            this.events.push({ type: 'miss', target: target.key });
+            this.events.push({ type: 'miss', actor: actor.key, target: target.key });
             break;
           }
           const hits = effect.hits ?? 1;
@@ -589,7 +590,7 @@ class TurnContext {
       elements,
     });
     if (!hit) {
-      this.events.push({ type: 'miss', target: target.key });
+      this.events.push({ type: 'miss', actor: actor.key, target: target.key });
       return;
     }
     this.events.push({ type: 'damage', target: target.key, ...hit });
@@ -959,15 +960,23 @@ const DROPS_PER_PAGE = 2;
  * 1 種類 99 個の上限で増えなかった品には「持ちきれなかった」と出す（addDrops と同じ順に数える）。
  */
 export function dropPages(drops: Drop[], items: Inventory): string[] {
+  return dropPageInfo(drops, items).map((p) => p.text);
+}
+
+/** 落とし物のページと、そのページで 1 つでも道具を得たか（持ちきれなかっただけのページは false。得る音を鳴らすかに使う）。 */
+export function dropPageInfo(drops: Drop[], items: Inventory): { text: string; got: boolean }[] {
   let inv = items;
   const lines = drops.map((d) => {
     const before = itemCount(inv, d.item);
     inv = addItem(inv, d.item);
     const full = itemCount(inv, d.item) === before;
-    return `${d.enemy}は${d.rare ? 'めずらしい' : ''}「${itemName(d.item)}」を落としていった${full ? 'が、持ちきれなかった。' : '！'}`;
+    return { text: `${d.enemy}は${d.rare ? 'めずらしい' : ''}「${itemName(d.item)}」を落としていった${full ? 'が、持ちきれなかった。' : '！'}`, got: !full };
   });
-  const pages: string[] = [];
-  for (let i = 0; i < lines.length; i += DROPS_PER_PAGE) pages.push(lines.slice(i, i + DROPS_PER_PAGE).join('\n'));
+  const pages: { text: string; got: boolean }[] = [];
+  for (let i = 0; i < lines.length; i += DROPS_PER_PAGE) {
+    const page = lines.slice(i, i + DROPS_PER_PAGE);
+    pages.push({ text: page.map((l) => l.text).join('\n'), got: page.some((l) => l.got) });
+  }
   return pages;
 }
 

@@ -1,6 +1,6 @@
 // 敵のドロップ（docs/balance.md の「敵のドロップ」）。
 import { describe, expect, it } from 'vitest';
-import { addDrops, createBattle, dropPages, rollDrops, type BattleState } from '../systems/battle';
+import { addDrops, createBattle, dropPageInfo, dropPages, rollDrops, type BattleState } from '../systems/battle';
 import { createMember } from '../systems/party';
 import { CHARACTERS, type CharacterId } from './characters';
 import { COMMON_DROP_RATE, ENEMY_DROPS, RARE_DROP_RATE } from './drops';
@@ -173,5 +173,15 @@ describe('ドロップの判定', () => {
     expect(dropPages(drops, { amazake: MAX_ITEM_COUNT - 1 })).toEqual([
       '鬼火は「甘酒」を落としていった！\n鬼火は「甘酒」を落としていったが、持ちきれなかった。',
     ]);
+  });
+
+  it('ページごとに、1 つでも道具を得たかを返す（持ちきれなかっただけのページは false）', () => {
+    const drops = [
+      { enemy: '鬼火', item: 'amazake', rare: false },
+      { enemy: '鬼火', item: 'amazake', rare: false },
+      { enemy: '鬼火', item: 'amazake', rare: false },
+    ];
+    expect(dropPageInfo(drops, { amazake: MAX_ITEM_COUNT - 1 }).map((p) => p.got)).toEqual([true, false]);
+    expect(dropPageInfo(drops, { amazake: MAX_ITEM_COUNT }).map((p) => p.got)).toEqual([false, false]);
   });
 });

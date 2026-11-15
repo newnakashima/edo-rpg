@@ -28,7 +28,7 @@ import { SHOPS } from '../data/shops';
 import type { Facing } from '../systems/gameState';
 import { memberLevel } from '../systems/party';
 import { defaultRng } from '../systems/random';
-import { playBgm, playJingle } from '../systems/audio';
+import { playBgm, playJingle, playSe } from '../systems/audio';
 import { browserStorage } from '../systems/save';
 import { getState, holdEventWhileAway, setState, shouldRunEnterEvent, takePendingEvent } from '../state';
 import { EVENTS } from '../data/events';
@@ -244,6 +244,7 @@ export class FieldScene extends Phaser.Scene {
     // エンディングは、終わったイベントのマップの曲に戻さず、場面の曲のまま暗転する
     if (request.kind !== 'ending') this.syncBgm(runner);
     if (runner.takeJoined()) playJingle('bgm_join');
+    for (const id of runner.takeSounds()) playSe(id);
     switch (request.kind) {
       case 'say':
         this.message.show(request.pages, () => this.advanceEvent());
@@ -266,6 +267,7 @@ export class FieldScene extends Phaser.Scene {
         this.runner = null;
         this.moving = true;
         this.standStill();
+        playSe('se_encounter');
         this.cameras.main.flash(250, 255, 255, 255);
         this.time.delayedCall(260, () =>
           this.scene.start('Battle', {
@@ -282,6 +284,7 @@ export class FieldScene extends Phaser.Scene {
         this.runner = null;
         this.moving = true;
         this.standStill();
+        playSe('se_door');
         this.cameras.main.fadeOut(200, 0, 0, 0);
         this.cameras.main.once('camerafadeoutcomplete', () => this.scene.restart({}));
         return;
@@ -687,7 +690,10 @@ export class FieldScene extends Phaser.Scene {
     if (gate) {
       this.standStill();
       // 関所を開けるイベントがあればそれを行う（大井川の川越し）
-      if (!gate.event || !this.startEvent(gate.event)) this.message.show(gate.lines);
+      if (!gate.event || !this.startEvent(gate.event)) {
+        playSe('se_buzzer');
+        this.message.show(gate.lines);
+      }
       return;
     }
 
@@ -739,6 +745,7 @@ export class FieldScene extends Phaser.Scene {
     if (!group) return;
     this.moving = true;
     this.standStill();
+    playSe('se_encounter');
     this.cameras.main.flash(250, 255, 255, 255);
     this.time.delayedCall(260, () => this.scene.start('Battle', { enemyIds: group, level: table.level }));
   }
@@ -746,6 +753,7 @@ export class FieldScene extends Phaser.Scene {
   /** 別のマップ（または同じマップの別の場所）へ移る。 */
   private moveTo(mapId: string, x: number, y: number): void {
     setState({ ...getState(), mapId, x, y });
+    playSe('se_door');
     this.cameras.main.fadeOut(200, 0, 0, 0);
     this.cameras.main.once('camerafadeoutcomplete', () => this.scene.restart({}));
     this.moving = true;
@@ -858,6 +866,7 @@ export class FieldScene extends Phaser.Scene {
         if (pick.value === 'stay') {
           const result = stayAtOyabun(getState(), this.map.areaLevel);
           if (!result.ok) {
+            playSe('se_buzzer');
             this.message.show(
               result.reason === 'full'
                 ? ['若い衆「みなさん、まだまだお元気そうでござんすね。草鞋を脱ぐのは、疲れなすったときにしなせえ」']
@@ -915,9 +924,11 @@ export class FieldScene extends Phaser.Scene {
         if (i === 0) {
           const result = stayAtMoguriInn(getState(), level);
           if (!result.ok) {
+            playSe('se_buzzer');
             this.message.show([`${host}「お代が足りねえようで……」`]);
             return;
           }
+          playSe('se_coin');
           setState(result.state);
           this.sleepThen(['ぐっすり眠った。体力と気力が回復した。', `${host}「記録もつけていきなさるかい？」`]);
         } else if (i === 1) {
@@ -941,8 +952,14 @@ export class FieldScene extends Phaser.Scene {
       'save',
       (result) => {
         this.closeOverlay(slots);
-        if (result.kind === 'saved') this.message.show(['記録しました。']);
-        if (result.kind === 'failed') this.message.show(['記録できませんでした（ブラウザの保存領域が一杯か、使えません）。']);
+        if (result.kind === 'saved') {
+          playSe('se_save');
+          this.message.show(['記録しました。']);
+        }
+        if (result.kind === 'failed') {
+          playSe('se_buzzer');
+          this.message.show(['記録できませんでした（ブラウザの保存領域が一杯か、使えません）。']);
+        }
       },
       getState(),
     );
@@ -982,9 +999,12 @@ export class FieldScene extends Phaser.Scene {
         if (i !== 0) return;
         const result = prayAtTemple(getState(), this.map.areaLevel);
         if (!result.ok) {
+          playSe('se_buzzer');
           this.message.show(['住職「お布施が足りぬようじゃな……」']);
           return;
         }
+        playSe('se_coin');
+        playSe('se_revive');
         setState(result.state);
         const rest = fallen - result.revived;
         this.message.show([
@@ -1042,9 +1062,11 @@ export class FieldScene extends Phaser.Scene {
         if (pick.kind !== 'main') return;
         const result = run(getState());
         if (!result.ok) {
+          playSe('se_buzzer');
           this.message.show(noMoney);
           return;
         }
+        playSe('se_coin');
         setState(result.state);
         this.message.show(done);
       },
@@ -1060,6 +1082,7 @@ export class FieldScene extends Phaser.Scene {
   private openTobaku(request: MenuRequest | null): void {
     const bets = CHOHAN_BETS.filter((b) => b <= getState().money);
     if (bets.length === 0 && !request) {
+      playSe('se_buzzer');
       this.message.show([`中盆「${CHOHAN_BETS[0]} 文も持たねえで、賭場に来なさんな」`]);
       return;
     }
@@ -1098,9 +1121,11 @@ export class FieldScene extends Phaser.Scene {
         if (!call) return;
         const result = playChohan(getState(), bet, call, defaultRng);
         if (!result.ok) {
+          playSe('se_buzzer');
           this.message.show(['中盆「張るだけの銭がねえようだな」']);
           return;
         }
+        playSe(result.win ? 'se_coin' : 'se_buzzer');
         setState(result.state);
         this.message.show([
           `${call === 'cho' ? '丁' : '半'}に ${bet} 文を張った。`,
@@ -1134,9 +1159,11 @@ export class FieldScene extends Phaser.Scene {
         if (choice !== 'eat') return;
         const result = eatDango(getState(), this.map.areaLevel);
         if (!result.ok) {
+          playSe('se_buzzer');
           this.message.show(['茶屋の娘「あら、お代が……」']);
           return;
         }
+        playSe('se_coin');
         setState(result.state);
         this.message.show(['甘い団子で、少し元気が出た。']);
       },

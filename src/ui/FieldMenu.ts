@@ -9,6 +9,7 @@ import { EQUIP_SLOTS, EQUIPMENT, SLOT_NAMES, canEquip, type EquipSlot } from '..
 import { ITEMS, itemCount, itemName, ownedEquipment, ownedItems } from '../data/items';
 import { SKILLS } from '../data/skills';
 import { changeEquipment, escapeInField, skillDescription, fieldSkills, isSmoke, itemUsableOn, smokeBlocked, statsWithEquipment, swapMembers, useItemInField, useSkillInField, wardInField, type EscapeResult, type FieldResult, type WardResult } from '../systems/fieldMenu';
+import { playSe, type SeId } from '../systems/audio';
 import { jingiLabel } from '../systems/jingi';
 import { memberStats } from '../systems/party';
 import type { Stats } from '../systems/stats';
@@ -168,6 +169,7 @@ export class FieldMenu {
   private openReorder(cursor = 0): void {
     const state = getState();
     if (state.party.length < 2) {
+      playSe('se_buzzer');
       this.setInfo('並び替える仲間がいない。');
       return;
     }
@@ -207,10 +209,12 @@ export class FieldMenu {
     );
   }
 
-  private openItems(): void {
+  /** 道具の一覧を開く。reopen は使ったあとに開き直すとき（使い切って空になっても、使った音に se_buzzer を重ねない）。 */
+  private openItems(reopen = false): void {
     const state = getState();
     const ids = ownedItems(state.items);
     if (ids.length === 0) {
+      if (!reopen) playSe('se_buzzer');
       this.setInfo('道具を持っていない。');
       return;
     }
@@ -230,22 +234,26 @@ export class FieldMenu {
           const message = this.ward(wardInField(getState(), { item: id }), `${ITEMS[id]?.name ?? ''}を焚いた。`);
           // 個数が変わるので、道具の一覧から開き直す
           this.popToMain();
-          this.openItems();
+          this.openItems(true);
           this.setInfo(message);
           return;
         }
         const smoke = isSmoke(id);
         // 煙草の葉: 火のそばでないか、キセルを付けた人がいなければ、誰に使うかを聞く前に断る
         const blocked = smoke ? smokeBlocked(getState(), getState().party) : null;
-        if (blocked) return this.setInfo(FAIL_MESSAGES[blocked]);
+        if (blocked) {
+          playSe('se_buzzer');
+          return this.setInfo(FAIL_MESSAGES[blocked]);
+        }
         this.chooseMember(
           `${ITEMS[id]?.name ?? ''}を誰に使う？`,
           (target) => {
             const result = useItemInField(getState(), id, target);
             // 個数が変わるので、道具の一覧から開き直す（結果の表示は、開き直したときの説明より後に出す）
-            const message = this.apply(result, smoke ? 'キセルで一服した。' : `${ITEMS[id]?.name ?? ''}を使った。`);
+            const se = ITEMS[id]?.effect.kind === 'revive' ? 'se_revive' : 'se_heal';
+            const message = this.apply(result, smoke ? 'キセルで一服した。' : `${ITEMS[id]?.name ?? ''}を使った。`, se);
             this.popToMain();
-            this.openItems();
+            this.openItems(true);
             this.setInfo(message);
           },
           (target) => {
@@ -267,6 +275,7 @@ export class FieldMenu {
     if (!member) return;
     const ids = fieldSkills(member);
     if (ids.length === 0) {
+      playSe('se_buzzer');
       this.setInfo('ここで使える技を覚えていない。');
       return;
     }
@@ -314,7 +323,10 @@ export class FieldMenu {
 
   /** 魔除けの香・結界の真言の結果。使えたら状態を進め、説明の窓に出す文を返す。 */
   private ward(result: WardResult, used: string): string {
-    if (!result.ok) return FAIL_MESSAGES[result.reason];
+    if (!result.ok) {
+      playSe('se_buzzer');
+      return FAIL_MESSAGES[result.reason];
+    }
     setState(result.state);
     return `${used}${result.steps} 歩のあいだ、敵が寄ってこない。`;
   }
@@ -322,6 +334,7 @@ export class FieldMenu {
   /** 道しるべの札・抜け道の結果。使えたらメニューを閉じて入口の外へ移り、使えなければ説明の窓に理由を出す。 */
   private escape(result: EscapeResult, message: string): void {
     if (!result.ok) {
+      playSe('se_buzzer');
       this.setInfo(ESCAPE_FAIL_MESSAGES[result.reason]);
       return;
     }
@@ -336,6 +349,7 @@ export class FieldMenu {
     if (!member) return;
     // ゲストは装備の枠を開かずに断る。画面にはテストがないが、開いても changeEquipment が 'guest' で断る（fieldMenu.test.ts で確かめる）
     if (isGuest(member.id)) {
+      playSe('se_buzzer');
       this.setInfo(FAIL_MESSAGES.guest);
       return;
     }
@@ -375,6 +389,7 @@ export class FieldMenu {
         if (id === undefined) return;
         const r = changeEquipment(getState(), index, slot, id);
         if (!r.ok) {
+          playSe('se_buzzer');
           this.setInfo(FAIL_MESSAGES[r.reason]);
           return;
         }
@@ -415,8 +430,12 @@ export class FieldMenu {
   }
 
   /** 結果を反映し、表示するメッセージを返す。 */
-  private apply(r: FieldResult, success: string): string {
-    if (!r.ok) return FAIL_MESSAGES[r.reason];
+  private apply(r: FieldResult, success: string, se: SeId = 'se_heal'): string {
+    if (!r.ok) {
+      playSe('se_buzzer');
+      return FAIL_MESSAGES[r.reason];
+    }
+    playSe(se);
     setState(r.state);
     const state = getState();
     const lines = r.changes

@@ -1,7 +1,7 @@
 // イベントスクリプトの実行。画面に依存せず、手順を 1 つずつ進めて、画面に頼むこと（台詞・選択肢・戦闘・移動）を返す。
 import { CHARACTERS, characterName, isGuest } from '../data/characters';
 import type { EventStep } from '../data/eventTypes';
-import type { LoopBgmId } from './audio';
+import type { LoopBgmId, SeId } from './audio';
 import { addItem, isKnownItem, itemCount, MAX_ITEM_COUNT } from '../data/items';
 import type { CharacterSpriteId } from '../data/sprites';
 import type { Facing, GameState } from './gameState';
@@ -171,6 +171,8 @@ export class EventRunner {
   private sceneBgm: LoopBgmId | null | undefined;
   /** 仲間が加わった・戻ったが、まだ知らせのジングル（bgm_join）を鳴らしていない。 */
   private joined = false;
+  /** 前に takeSounds を呼んでから、手順が鳴らすことにした効果音（道具・お金・回復など）。 */
+  private sounds: SeId[] = [];
 
   constructor(steps: readonly EventStep[]) {
     this.stack = [{ steps, index: 0 }];
@@ -190,6 +192,13 @@ export class EventRunner {
     const j = this.joined;
     this.joined = false;
     return j;
+  }
+
+  /** 前に呼んでから手順が鳴らすことにした効果音（同じ音は 1 つにまとめる。呼ぶと忘れる）。 */
+  takeSounds(): SeId[] {
+    const sounds = [...new Set(this.sounds)];
+    this.sounds = [];
+    return sounds;
   }
 
   /**
@@ -241,12 +250,15 @@ export class EventRunner {
             break;
           }
           s = { ...s, items: addItem(s.items, step.item, n) };
+          this.sounds.push('se_item');
           break;
         }
         case 'giveMoney':
+          if (step.amount !== 0) this.sounds.push('se_coin');
           s = { ...s, money: Math.max(0, s.money + step.amount) };
           break;
         case 'addJingi':
+          if (step.amount > 0) this.sounds.push('se_jingi');
           s = addJingi(s, step.amount);
           break;
         case 'join': {
@@ -265,6 +277,7 @@ export class EventRunner {
           break;
         }
         case 'heal':
+          this.sounds.push('se_heal');
           s = { ...s, party: restoreAll(s.party) };
           break;
         case 'battle':
