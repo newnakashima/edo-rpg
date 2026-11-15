@@ -50,7 +50,7 @@ export class WebBgmPlayer {
   private warned = false;
 
   /** ctx・target・doc はテストで差し替える。AudioContext を作れない環境では例外を投げる（呼ぶ側で無音にする）。 */
-  constructor(ctx: PlayerContext = createContext(), target: EventTarget = window, doc: Pick<Document, 'hidden' | 'addEventListener'> = document) {
+  constructor(ctx: PlayerContext = createAudioContext(), target: EventTarget = window, doc: Pick<Document, 'hidden' | 'addEventListener'> = document) {
     this.ctx = ctx;
     this.master = this.ctx.createGain();
     this.master.gain.value = MASTER_VOLUME;
@@ -224,8 +224,8 @@ export class WebBgmPlayer {
   }
 }
 
-/** 曲は 48 kHz で書き出してあるので、できれば同じ周波数で動かして伸ばし直しの手間を省く。 */
-function createContext(): AudioContext {
+/** 曲と効果音は 48 kHz で書き出してあるので、できれば同じ周波数で動かして伸ばし直しの手間を省く。曲と効果音で 1 つを共に使う。 */
+export function createAudioContext(): AudioContext {
   try {
     return new AudioContext({ sampleRate: 48000 });
   } catch {

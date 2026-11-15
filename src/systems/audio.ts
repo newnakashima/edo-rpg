@@ -1,4 +1,5 @@
 // 音楽・効果音の呼び出し口。どの曲を鳴らすことになっているかを持ち、曲が替わったときだけ再生処理（src/ui/bgmPlayer.ts）を呼ぶ。
+// 効果音は、書き出してあるもの（またはその代わり）だけを再生処理（src/ui/sePlayer.ts）に渡す。
 // 曲と効果音の一覧、場面への当てはめは docs/audio.md を参照。
 
 /** 曲の ID（docs/audio.md の「曲（BGM）」の一覧と同じ順）。 */
@@ -160,8 +161,101 @@ export function playingBgm(): BgmId | null {
   return playing;
 }
 
-export type SeId = 'se_cursor' | 'se_ok' | 'se_cancel' | 'se_encounter' | 'se_slash' | 'se_damage' | 'se_levelup' | 'se_save';
+/** 効果音の ID（docs/audio.md の「効果音（SE）」の一覧と同じ順）。 */
+export const SE_IDS = [
+  // システム・メニュー
+  'se_cursor',
+  'se_ok',
+  'se_cancel',
+  'se_buzzer',
+  'se_message',
+  'se_save',
+  'se_coin',
+  'se_item',
+  'se_equip',
+  // フィールド
+  'se_door',
+  'se_stairs',
+  'se_chest',
+  'se_encounter',
+  'se_warp',
+  'se_ward',
+  'se_dice',
+  'se_jingi',
+  // 戦闘
+  'se_slash',
+  'se_hit',
+  'se_shuriken',
+  'se_gun',
+  'se_cannon',
+  'se_fire',
+  'se_magic',
+  'se_thunder',
+  'se_critical',
+  'se_damage',
+  'se_miss',
+  'se_guard',
+  'se_buff',
+  'se_debuff',
+  'se_ailment',
+  'se_heal',
+  'se_revive',
+  'se_enemy_down',
+  'se_ko',
+  'se_escape',
+  'se_explode',
+  'se_summon',
+  'se_charge',
+  'se_levelup',
+  // 場面（イベントの手順で鳴らす）
+  'se_karakuri',
+  'se_crash',
+  'se_smoke',
+  'se_bell',
+  'se_hansho',
+  'se_quake',
+  'se_fall',
+  'se_sheathe',
+  'se_gate',
+  'se_splash',
+  'se_hyoshigi',
+] as const;
 
+export type SeId = (typeof SE_IDS)[number];
+
+/** まだ書き出していない効果音を鳴らそうとしたときの代わり（docs/audio.md の「なければ」）。書いていない効果音は代わりがない（無音）。 */
+export const SE_FALLBACK: Partial<Record<SeId, SeId>> = {
+  se_cannon: 'se_gun',
+  se_thunder: 'se_magic',
+};
+
+/** 実際に鳴らす効果音。id が書き出してなければ代わりをたどり、どれもなければ null（無音）。 */
+export function resolveSe(id: SeId, available: ReadonlySet<SeId>): SeId | null {
+  const seen: SeId[] = [];
+  for (let cur: SeId | undefined = id; cur && !seen.includes(cur); cur = SE_FALLBACK[cur]) {
+    if (available.has(cur)) return cur;
+    seen.push(cur);
+  }
+  return null;
+}
+
+/** 書き出してある効果音（public に Ogg Opus のある効果音）。起動時に src/data/seTracks.ts の一覧で埋める。 */
+let availableSe: ReadonlySet<SeId> = new Set();
+
+export function setAvailableSe(ids: Iterable<SeId>): void {
+  availableSe = new Set(ids);
+}
+
+/** 効果音を 1 度鳴らす処理。起動時に再生処理（src/ui/sePlayer.ts）を入れる（テストでは何もしない）。 */
+let startSe: (id: SeId) => void = () => {};
+
+/** 効果音を鳴らす処理を差し替える（起動時・テスト）。 */
+export function setSePlayer(player: (id: SeId) => void): void {
+  startSe = player;
+}
+
+/** 効果音を 1 度鳴らす。まだ書き出していなければ代わりを鳴らし、代わりもなければ鳴らさない。 */
 export function playSe(id: SeId): void {
-  void id;
+  const se = resolveSe(id, availableSe);
+  if (se) startSe(se);
 }
