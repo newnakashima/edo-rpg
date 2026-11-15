@@ -1,6 +1,6 @@
 // フィールドのマップ。序章〜終章の町・ダンジョンと、ワールドマップを用意する。
 // タイルの文字の意味は TILES を参照。
-import type { BgmId } from '../systems/audio';
+import type { LoopBgmId } from '../systems/audio';
 import type { Facing } from '../systems/gameState';
 import { OBJECT_DEFS, type CharacterSpriteId, type ObjectSpriteId } from './sprites';
 import { MOGURI_YADO, moguriYadoNpc } from './moguriYado';
@@ -236,9 +236,9 @@ export interface MapDef {
    * マップに入ったときに鳴らす曲（docs/audio.md の「場面への当てはめ」）。建物・民家の屋内は、作るときに町の曲を入れる
    * （親分の屋敷・寺社・賭場は別の曲。src/data/buildings.ts の buildingBgm）。
    */
-  bgm: BgmId;
+  bgm: LoopBgmId;
   /** bgm も代わりの曲（src/systems/audio.ts の BGM_FALLBACK）もまだないときに鳴らす曲（親分の屋敷・寺社・賭場の、町の曲）。 */
-  bgmFallback?: BgmId;
+  bgmFallback?: LoopBgmId;
   /** エンカウントの出現表の ID。町など戦闘のない場所は省略する。 */
   encounter?: string;
   /** 地域の敵レベル。宿代・茶屋の値段にも使う（docs/balance.md の「経済」）。 */

@@ -1,10 +1,44 @@
 import { describe, expect, it } from 'vitest';
 import type { EventStep } from '../data/eventTypes';
-import { BGM_FALLBACK, BGM_IDS, currentBgm, playBgm, resolveBgm, setAvailableBgm, type BgmId } from './audio';
-import { EventRunner } from './eventScript';
+import { BGM_FALLBACK, BGM_IDS, currentBgm, JINGLES, playBgm, playingBgm, resolveBgm, setAvailableBgm, type BgmId } from './audio';
+import { EventRunner, MAX_PARTY } from './eventScript';
 import { newGame } from './gameState';
+import { createMember } from './party';
 
 describe('曲の代わり', () => {
+  it('曲は docs/audio.md の一覧の 38 曲で、ジングルは 5 曲', () => {
+    expect(BGM_IDS).toHaveLength(38);
+    expect(new Set(BGM_IDS).size).toBe(38);
+    expect([...JINGLES]).toEqual(['bgm_victory', 'bgm_defeat', 'bgm_inn', 'bgm_join', 'bgm_shugeki']);
+  });
+
+  it('代わりの表は docs/audio.md の「代わり」の列のとおり（町の曲・無音は表に入れない）', () => {
+    expect(BGM_FALLBACK).toEqual({
+      bgm_sea: 'bgm_road',
+      bgm_home: 'bgm_town',
+      bgm_town_kyo: 'bgm_town',
+      bgm_town_osaka: 'bgm_town',
+      bgm_town_nanban: 'bgm_town',
+      bgm_town_snow: 'bgm_town',
+      bgm_town_edo: 'bgm_town',
+      bgm_town_night: 'bgm_town',
+      bgm_sneak: 'bgm_tension',
+      bgm_yama: 'bgm_dungeon',
+      bgm_ninja: 'bgm_dungeon',
+      bgm_karakuri: 'bgm_dungeon',
+      bgm_castle: 'bgm_dungeon',
+      bgm_taika: 'bgm_dungeon',
+      bgm_edojo: 'bgm_castle',
+      bgm_boss: 'bgm_battle',
+      bgm_duel: 'bgm_boss',
+      bgm_washio: 'bgm_last_boss',
+      bgm_last_boss: 'bgm_boss',
+      bgm_rally: 'bgm_tension',
+      bgm_matsuri: 'bgm_town',
+      bgm_epilogue: 'bgm_ending',
+    });
+  });
+
   it('代わりの表は一覧にある曲だけを指し、たどると必ず終わる', () => {
     for (const [id, to] of Object.entries(BGM_FALLBACK)) {
       expect(BGM_IDS).toContain(id);
@@ -36,6 +70,28 @@ describe('曲の代わり', () => {
     expect(currentBgm()).toBe('bgm_home');
     playBgm(null);
     expect(currentBgm()).toBeNull();
+    setAvailableBgm([]);
+  });
+
+  it('いま鳴らしている曲と同じ曲（代わりをたどって同じになる曲も）なら続け、違えば替え、止めたあとは鳴らし直す', () => {
+    setAvailableBgm(['bgm_town', 'bgm_road']);
+    playBgm('bgm_town');
+    expect(playingBgm()).toBe('bgm_town');
+    // 京・大坂の曲がまだなければ、どちらも町の曲に解決されるので続く
+    playBgm('bgm_town_kyo');
+    playBgm('bgm_town_osaka');
+    expect(playingBgm()).toBe('bgm_town');
+    expect(currentBgm()).toBe('bgm_town_osaka');
+    playBgm('bgm_road');
+    expect(playingBgm()).toBe('bgm_road');
+    playBgm(null);
+    expect(playingBgm()).toBeNull();
+    playBgm('bgm_road');
+    expect(playingBgm()).toBe('bgm_road');
+    // 親分の屋敷の曲がまだなければ、fallback の町の曲
+    playBgm('bgm_oyabun', 'bgm_town');
+    expect(playingBgm()).toBe('bgm_town');
+    playBgm(null);
     setAvailableBgm([]);
   });
 });
@@ -90,5 +146,23 @@ describe('イベントの曲', () => {
     // もう加わっている仲間の join では立たない
     runner.next(r.state);
     expect(runner.takeJoined()).toBe(false);
+  });
+
+  it('一時離脱から戻る rejoin でも立ち、満員の join・いない仲間の rejoin では立たない', () => {
+    const away = { ...state(), away: [createMember('kasumi', 5)] };
+    const back = new EventRunner([{ type: 'rejoin', member: 'kasumi' }, { type: 'say', lines: ['a'] }]);
+    back.next(away);
+    expect(back.takeJoined()).toBe(true);
+
+    const nobody = new EventRunner([{ type: 'rejoin', member: 'kasumi' }, { type: 'say', lines: ['a'] }]);
+    nobody.next(state());
+    expect(nobody.takeJoined()).toBe(false);
+
+    const base = state();
+    const full = { ...base, party: [...base.party, ...(['kasumi', 'gendo', 'orin'] as const).map((id) => createMember(id, 5))] };
+    expect(full.party).toHaveLength(MAX_PARTY);
+    const crowded = new EventRunner([{ type: 'join', member: 'hyogo' }, { type: 'say', lines: ['a'] }]);
+    crowded.next(full);
+    expect(crowded.takeJoined()).toBe(false);
   });
 });

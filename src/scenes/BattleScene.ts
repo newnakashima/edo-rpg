@@ -25,7 +25,7 @@ import {
 } from '../systems/battle';
 import { reviveAfterDefeat } from '../systems/facilities';
 import { gainExp } from '../systems/party';
-import { playBgm, playJingle, type BgmId } from '../systems/audio';
+import { playBgm, playJingle, type LoopBgmId } from '../systems/audio';
 import { defaultRng } from '../systems/random';
 import { getState, reportBattleOutcome, setState } from '../state';
 import { CANCEL_DISABLED, menuCancelLabel } from '../ui/cancelLabel';
@@ -41,7 +41,7 @@ export interface BattleData {
   /** 負けても全滅扱いにしない（イベントの負けてもよい戦闘）。HP 1 で起き上がり、フィールドに戻る。 */
   loseOk?: boolean;
   /** 戦闘の曲（省くと bgm_battle。イベントの戦闘の bgm）。 */
-  bgm?: BgmId;
+  bgm?: LoopBgmId;
 }
 
 const EVENT_MS = 650;

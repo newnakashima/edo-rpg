@@ -51,8 +51,13 @@ export const BGM_IDS = [
 
 export type BgmId = (typeof BGM_IDS)[number];
 
-/** ループしない曲（ジングル）。鳴り終えたら、その前の曲に戻る。 */
-export const JINGLES: ReadonlySet<BgmId> = new Set<BgmId>(['bgm_victory', 'bgm_defeat', 'bgm_inn', 'bgm_join', 'bgm_shugeki']);
+/** ループしない曲（ジングル）。playJingle で鳴らし、鳴り終えたら、その前の曲に戻る。 */
+export const JINGLES = ['bgm_victory', 'bgm_defeat', 'bgm_inn', 'bgm_join', 'bgm_shugeki'] as const satisfies readonly BgmId[];
+
+export type JingleId = (typeof JINGLES)[number];
+
+/** ループする曲（playBgm で鳴らす曲）。 */
+export type LoopBgmId = Exclude<BgmId, JingleId>;
 
 /**
  * まだ書き出していない曲を鳴らそうとしたときの代わりの曲（docs/audio.md の「代わり」）。代わりもなければ、その代わりをたどる。
@@ -115,7 +120,7 @@ let playing: BgmId | null = null;
  * fallback は、その曲も代わりもまだないときに鳴らす曲（親分の屋敷・寺社・賭場の町の曲）。
  * null を渡すと止める。
  */
-export function playBgm(id: BgmId | null, fallback?: BgmId): void {
+export function playBgm(id: LoopBgmId | null, fallback?: LoopBgmId): void {
   const next = id === null ? null : resolveBgm(id, available, fallback);
   requested = id;
   if (next === playing) return;
@@ -124,7 +129,7 @@ export function playBgm(id: BgmId | null, fallback?: BgmId): void {
 }
 
 /** ジングル（勝利・全滅・一泊・仲間の加入）を 1 度鳴らす。鳴り終えたら、いま鳴らすことになっている曲に戻る。 */
-export function playJingle(id: BgmId): void {
+export function playJingle(id: JingleId): void {
   void id;
   // ここで resolveBgm(id, available) を 1 度鳴らし、終わったら playing に戻す（再生処理は後のフェーズ）
 }
@@ -132,6 +137,11 @@ export function playJingle(id: BgmId): void {
 /** 鳴らすことになっている曲の ID（止めていれば null）。 */
 export function currentBgm(): BgmId | null {
   return requested;
+}
+
+/** 実際に鳴らしている曲（代わりをたどった先。無音なら null）。 */
+export function playingBgm(): BgmId | null {
+  return playing;
 }
 
 export type SeId = 'se_cursor' | 'se_ok' | 'se_cancel' | 'se_encounter' | 'se_slash' | 'se_damage' | 'se_levelup' | 'se_save';

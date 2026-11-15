@@ -179,7 +179,7 @@
 
 - `src/systems/audio.ts` の `BGM_IDS` に上の ID をすべて並べ、`BGM_FALLBACK` に代わりの曲の表を置く。`resolveBgm` が、まだ書き出していない曲の代わりをたどる（書き出した曲は `setAvailableBgm` で教える。どれもなければ無音）。
 - `playBgm(id, fallback)` はループする曲を鳴らす。いま鳴らしている曲と同じなら、頭から鳴らし直さずに続ける。`null` で止める。`playJingle(id)` はループしない曲（勝利・全滅・一泊・加入・終劇）を 1 度鳴らし、終われば前の曲に戻す。
-- マップの曲はマップの `bgm` に書く（`src/data/maps.ts`）。建物・民家の屋内は、作るときに町の `bgm` を入れる。親分の屋敷・寺社・賭場は、屋内の施設の人（`action` が `oyabun`・`temple`・`tobaku`）で決め、`bgmFallback` に町の曲を入れる（`src/data/buildings.ts` の `buildingBgm`）。お祓いをしない寺（金沢の禅寺・仕掛け寺）は、建物の定義に `bgm` を書く。
+- マップの曲はマップの `bgm` に書く（`src/data/maps.ts`）。建物・民家の屋内は、作るときに町の `bgm` を入れる。親分の屋敷・寺社・賭場は、屋内の施設の人（`action` が `oyabun`・`temple`・`tobaku`）で決め、`bgmFallback` に町の曲を入れる（`src/data/buildings.ts` の `buildingBgm`）。お祓いをしない寺（京の五重塔の寺、金沢の寺町の寺・禅寺・仕掛け寺）は、建物の定義に `bgm` を書く。
 - イベントの手順 `bgm` で場面の曲に替える（`src/data/events.ts` の `bgm()`）。`FieldScene` は、イベントの途中ならその曲を、終わったか替えていなければマップの曲を鳴らす（`syncBgm`）。戦闘や `warp` をはさんでも、場面の曲は `EventRunner` が持っているので続く。終章は `ending` の手順で終わるので、浜松の bgm_ending のまま「終劇」へ移る（案にあった `keep` は要らなかった）。
 - イベントの `battle` の `bgm` を `BattleScene` に渡し、書いていなければ bgm_battle にする。勝てば曲を止めて bgm_victory、全滅すれば bgm_defeat（`ifLose` のある戦闘では鳴らさない）。
 - `join`・`rejoin` で仲間が実際に加わったら bgm_join、親分の屋敷・もぐりの宿で泊まったら bgm_inn を鳴らす。`EndingScene` は曲を止めて bgm_shugeki を鳴らす。

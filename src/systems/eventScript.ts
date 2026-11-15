@@ -1,7 +1,7 @@
 // イベントスクリプトの実行。画面に依存せず、手順を 1 つずつ進めて、画面に頼むこと（台詞・選択肢・戦闘・移動）を返す。
 import { CHARACTERS, characterName, isGuest } from '../data/characters';
 import type { EventStep } from '../data/eventTypes';
-import type { BgmId } from './audio';
+import type { LoopBgmId } from './audio';
 import { addItem, isKnownItem, itemCount, MAX_ITEM_COUNT } from '../data/items';
 import type { CharacterSpriteId } from '../data/sprites';
 import type { Facing, GameState } from './gameState';
@@ -15,7 +15,7 @@ export const MAX_PARTY = 4;
 export type EventRequest =
   | { kind: 'say'; pages: string[] }
   | { kind: 'choice'; prompt?: string; labels: string[] }
-  | { kind: 'battle'; enemies: string[]; level: number; canEscape: boolean; loseOk: boolean; bgm: BgmId }
+  | { kind: 'battle'; enemies: string[]; level: number; canEscape: boolean; loseOk: boolean; bgm: LoopBgmId }
   | { kind: 'warp'; mapId: string; x: number; y: number }
   /** 演出（人を出す・歩かせる・向きを変える・消す・待つ）。画面が行い終えたら next を呼ぶ。 */
   | { kind: 'stage'; step: StageStep }
@@ -168,7 +168,7 @@ export class EventRunner {
   /** 演出で出した・動かした人（ID ごと）。画面が書き込む。warp で別の場所に移ると空にする。 */
   readonly stage = new Map<string, StageActor>();
   /** bgm の手順で替えた場面の曲（null は止めた）。まだ替えていなければ undefined で、マップの曲を鳴らす。 */
-  private sceneBgm: BgmId | null | undefined;
+  private sceneBgm: LoopBgmId | null | undefined;
   /** 仲間が加わった・戻ったが、まだ知らせのジングル（bgm_join）を鳴らしていない。 */
   private joined = false;
 
@@ -181,7 +181,7 @@ export class EventRunner {
   }
 
   /** 鳴らす場面の曲。イベントが終わったか、まだ替えていなければ undefined（マップの曲を鳴らす）。null は止める。 */
-  get bgm(): BgmId | null | undefined {
+  get bgm(): LoopBgmId | null | undefined {
     return this.finished ? undefined : this.sceneBgm;
   }
 

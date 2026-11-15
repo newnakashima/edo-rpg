@@ -1,5 +1,5 @@
 // イベントのデータ。シナリオ（フェーズ 4）はここに足していく。形は eventTypes.ts を参照。
-import type { BgmId } from '../systems/audio';
+import type { LoopBgmId } from '../systems/audio';
 import type { Facing } from '../systems/gameState';
 import type { EventDef, EventStep } from './eventTypes';
 import type { CharacterSpriteId } from './sprites';
@@ -34,7 +34,7 @@ function wait(ms: number): EventStep {
   return { type: 'wait', ms };
 }
 /** 場面の曲に替える（イベントが終わるとマップの曲に戻る。docs/audio.md の「イベントの場面」）。 */
-function bgm(id: BgmId | null): EventStep {
+function bgm(id: LoopBgmId | null): EventStep {
   return { type: 'bgm', id };
 }
 /** フィールドで姿を見せる一行の仲間（兵庫は第 5 章のゲスト）。 */
