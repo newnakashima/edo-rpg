@@ -61,6 +61,18 @@ export function attackSe(character: CharacterId | undefined): SeId | null {
   return 'se_slash';
 }
 
+/**
+ * 勝利の後のページごとの音。最初のページ（勝利の文）はお金を得たら se_coin、落とし物のページは道具を 1 つでも得たら se_item、
+ * 段が上がるページは se_levelup。drops は落とし物のページごとに道具を得たか、levelUps は段が上がるページの数。
+ */
+export function victorySounds(money: number, drops: readonly boolean[], levelUps: number): (SeId | null)[] {
+  return [
+    money > 0 ? 'se_coin' : null,
+    ...drops.map((got): SeId | null => (got ? 'se_item' : null)),
+    ...Array.from({ length: levelUps }, (): SeId => 'se_levelup'),
+  ];
+}
+
 /** 戦闘に出ている人。key（p0・e0 など）ごとに、味方か敵か、味方なら誰か。 */
 export interface SeActor {
   side: Side;
@@ -117,8 +129,8 @@ export function battleSounds(events: readonly BattleEvent[], actors: ReadonlyMap
         return out;
       }
       case 'miss': {
-        // 別の人の通常攻撃が外れた（攻撃の出来事が出ない）なら、行動が替わった
-        if (action?.actor !== e.actor) action = { actor: e.actor };
+        // 通常攻撃が外れた（攻撃の出来事が出ない）なら、行動が替わった（同じ人が続けて動いたときも、前の技の当たりに数えない）
+        if (e.attack || action?.actor !== e.actor) action = { actor: e.actor };
         return [...hitSe(e.actor), 'se_miss'];
       }
       case 'poison':
@@ -149,10 +161,14 @@ export function battleSounds(events: readonly BattleEvent[], actors: ReadonlyMap
         return effect('se_summon');
       case 'charge':
         return effect('se_charge');
-      case 'again':
-        // 2 度目は新しい 1 回として数え直す
-        if (action?.skill) action.skill.hits = 0;
-        return ['se_magic'];
+      case 'again': {
+        // 木霊の数珠（術がもう一度）: 2 度目も技の音を鳴らし、新しい 1 回として数え直す。
+        // 影分身の秘伝書（もう一度斬る）: 続く通常攻撃の出来事が武器の音を鳴らすので、ここでは鳴らさない
+        const skill = action?.skill;
+        if (!skill) return [];
+        skill.hits = 0;
+        return skill.se ? [skill.se] : [];
+      }
       case 'fled':
         return ['se_escape'];
       case 'exploded':

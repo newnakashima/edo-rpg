@@ -36,13 +36,13 @@ describe('効果音の呼び出し口', () => {
     expect(played).toEqual(['se_cursor', 'se_gun', 'se_cursor']);
   });
 
-  it('withDefaultSe は、中で効果音を頼まなかったときだけ既定の音を鳴らす（書き出していない音を頼んでも譲る）', () => {
+  it('withDefaultSe は、中で効果音を鳴らさなかったときだけ既定の音を鳴らす（書き出していない音しか頼まなければ既定の音）', () => {
     const played: SeId[] = [];
     setAvailableSe(['se_ok', 'se_coin']);
     setSePlayer((id) => played.push(id));
     withDefaultSe('se_ok', () => {});
     withDefaultSe('se_ok', () => playSe('se_coin'));
     withDefaultSe('se_ok', () => playSe('se_buzzer'));
-    expect(played).toEqual(['se_ok', 'se_coin']);
+    expect(played).toEqual(['se_ok', 'se_coin', 'se_ok']);
   });
 });

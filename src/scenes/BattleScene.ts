@@ -11,7 +11,7 @@ import {
   availableItemCount,
   computeRewards,
   createBattle,
-  dropPages,
+  dropPageInfo,
   isAlive,
   needsTarget,
   partyAfterBattle,
@@ -25,8 +25,8 @@ import {
 } from '../systems/battle';
 import { reviveAfterDefeat } from '../systems/facilities';
 import { gainExp } from '../systems/party';
-import { playBgm, playJingle, playSe, type LoopBgmId, type SeId } from '../systems/audio';
-import { battleSounds, type SeActor } from '../systems/battleSe';
+import { playBgm, playJingle, playSe, type LoopBgmId } from '../systems/audio';
+import { battleSounds, victorySounds, type SeActor } from '../systems/battleSe';
 import { defaultRng } from '../systems/random';
 import { getState, reportBattleOutcome, setState } from '../state';
 import { CANCEL_DISABLED, menuCancelLabel } from '../ui/cancelLabel';
@@ -613,17 +613,14 @@ export class BattleScene extends Phaser.Scene {
     this.controls.flush();
     const pages = [victoryText(this.battle, exp, rewards.money)];
     // ページごとの音: お金を得たら銭、落とし物は道具を得る音、段が上がったら se_levelup
-    const sounds: (SeId | null)[] = [rewards.money > 0 ? 'se_coin' : null];
-    for (const page of dropPages(drops, this.battle.items)) {
-      pages.push(page);
-      sounds.push('se_item');
-    }
+    const dropInfo = dropPageInfo(drops, this.battle.items);
+    pages.push(...dropInfo.map((p) => p.text));
     for (const up of levelUps) {
       const name = characterName(up.id, state.gender);
       const learned = up.learned.map((id) => `「${SKILLS[id]?.name ?? id}」を覚えた！`).join('\n');
       pages.push(`${name}は Lv${up.to} に上がった！${learned ? `\n${learned}` : ''}`);
-      sounds.push('se_levelup');
     }
+    const sounds = victorySounds(rewards.money, dropInfo.map((p) => p.got), levelUps.length);
     this.log.setText('');
     this.message.show(
       pages,

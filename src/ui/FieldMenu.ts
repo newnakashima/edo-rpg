@@ -209,11 +209,12 @@ export class FieldMenu {
     );
   }
 
-  private openItems(): void {
+  /** 道具の一覧を開く。reopen は使ったあとに開き直すとき（使い切って空になっても、使った音に se_buzzer を重ねない）。 */
+  private openItems(reopen = false): void {
     const state = getState();
     const ids = ownedItems(state.items);
     if (ids.length === 0) {
-      playSe('se_buzzer');
+      if (!reopen) playSe('se_buzzer');
       this.setInfo('道具を持っていない。');
       return;
     }
@@ -233,7 +234,7 @@ export class FieldMenu {
           const message = this.ward(wardInField(getState(), { item: id }), `${ITEMS[id]?.name ?? ''}を焚いた。`);
           // 個数が変わるので、道具の一覧から開き直す
           this.popToMain();
-          this.openItems();
+          this.openItems(true);
           this.setInfo(message);
           return;
         }
@@ -252,7 +253,7 @@ export class FieldMenu {
             const se = ITEMS[id]?.effect.kind === 'revive' ? 'se_revive' : 'se_heal';
             const message = this.apply(result, smoke ? 'キセルで一服した。' : `${ITEMS[id]?.name ?? ''}を使った。`, se);
             this.popToMain();
-            this.openItems();
+            this.openItems(true);
             this.setInfo(message);
           },
           (target) => {

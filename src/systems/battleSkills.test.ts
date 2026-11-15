@@ -162,7 +162,7 @@ describe('状態異常', () => {
     get(b, 'e0').status.accDown = 3;
     // 行動順、敵の行動（攻撃）、狙い、命中の判定
     const miss = resolveTurn(b, { p0: { kind: 'guard' } }, seqRng(0.5, 0.5, 0.1, 0, 0.34, 0.5));
-    expect(miss.events).toContainEqual({ type: 'miss', actor: 'e0', target: 'p0' });
+    expect(miss.events).toContainEqual({ type: 'miss', actor: 'e0', target: 'p0', attack: true });
     const hit = resolveTurn(b, { p0: { kind: 'guard' } }, seqRng(0.5, 0.5, 0.1, 0, 0.36, 0.5));
     expect(hit.events.some((e) => e.type === 'attack' && e.actor === 'e0')).toBe(true);
   });
@@ -171,7 +171,7 @@ describe('状態異常', () => {
     const b = createBattle([createMember('hero', 1)], 'm', ['yamainu'], 1);
     get(b, 'p0').status.evade = 3;
     const { events } = resolveTurn(b, { p0: { kind: 'guard' } }, seqRng(0.5, 0.5, 0.1, 0, 0.34, 0.5));
-    expect(events).toContainEqual({ type: 'miss', actor: 'e0', target: 'p0' });
+    expect(events).toContainEqual({ type: 'miss', actor: 'e0', target: 'p0', attack: true });
   });
 
   it('攻撃↑ でダメージが増え、攻撃↓ で減る', () => {

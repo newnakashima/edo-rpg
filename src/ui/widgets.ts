@@ -409,8 +409,9 @@ export class Menu {
     if (!this.active) return;
     const dir = controls.pressedDirection();
     // 鳴らすのは上下の操作だけ（moveTo は開いたときや指で選んだときにも呼ばれる）
-    if (dir === 'up' || dir === 'down') {
-      playSe('se_cursor');
+    if ((dir === 'up' || dir === 'down') && this.items.length > 0) {
+      // 項目が 1 つでカーソルが動かないときは鳴らさない
+      if (this.items.length > 1) playSe('se_cursor');
       this.moveTo(this.cursorIndex + (dir === 'up' ? -1 : 1));
     }
     if (controls.okPressed()) this.confirm();

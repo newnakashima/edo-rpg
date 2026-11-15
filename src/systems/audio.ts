@@ -254,18 +254,19 @@ export function setSePlayer(player: (id: SeId) => void): void {
   startSe = player;
 }
 
-/** playSe が呼ばれた回数（書き出していない効果音を頼んだときも数える）。 */
+/** playSe で実際に鳴らした回数（書き出していない効果音で、代わりもなく鳴らなかったものは数えない）。 */
 let seRequests = 0;
 
 /** 効果音を 1 度鳴らす。まだ書き出していなければ代わりを鳴らし、代わりもなければ鳴らさない。 */
 export function playSe(id: SeId): void {
-  seRequests++;
   const se = resolveSe(id, availableSe);
-  if (se) startSe(se);
+  if (!se) return;
+  seRequests++;
+  startSe(se);
 }
 
 /**
- * action を実行し、その中で効果音を 1 つも頼まなかったときだけ id を鳴らす。
+ * action を実行し、その中で効果音を 1 つも鳴らさなかったときだけ id を鳴らす（まだ書き出していない音しか頼まなかったときも鳴らす）。
  * メニューの決定（se_ok）を、選んだ先の音（支払いの se_coin、できないときの se_buzzer など）があればそちらに譲るのに使う。
  */
 export function withDefaultSe(id: SeId, action: () => void): void {

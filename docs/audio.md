@@ -245,7 +245,7 @@
 | se_gun | 鉄砲（お凛の通常攻撃、撃つ技、敵の撃つ技） | 乾いた破裂「ダーン」と短い残響 | 0.5 秒 | A | 狙い撃ち・散弾・火薬弾・早合・父の形見、敵の鉄砲・ぶどう弾。イベントの銃声にも使う |
 | se_cannon | 大筒 | se_gun より低く大きい「ドーン」と長い地鳴り | 0.6 秒 | C | 大筒・権現砲（なければ se_gun） |
 | se_fire | 火の術・火の攻撃 | 燃え上がる「ゴウッ」 | 0.5 秒 | B | 火遁・不動・狐火・青い火・外法の炎など属性 `fire` の技。イベントの火事にも使う |
-| se_magic | 術・妖術・祓い（火・雷以外の術） | 鈴と、うねる響き | 0.5 秒 | B | 喝・邪法・怨み・吹雪・蒸気、装備で 2 度目が出たとき（`again`） |
+| se_magic | 術・妖術・祓い（火・雷以外の術） | 鈴と、うねる響き | 0.5 秒 | B | 喝・邪法・怨み・吹雪・蒸気 |
 | se_thunder | 雷の術 | はじける高い放電音 | 0.4 秒 | C | 雷管弾など属性 `thunder` の技（なければ se_magic） |
 | se_critical | 会心の一撃 | 攻撃の音に重ねる、鋭く高い一閃 | 0.3 秒 | A | 攻撃・ダメージの `critical` |
 | se_damage | 味方が傷を受ける（画面が揺れるところ）・毒で減る | 低く詰まった衝撃 | 0.3 秒 | A | 味方への `damage`・`poison` |
@@ -291,8 +291,8 @@
 
 - `src/systems/audio.ts` の `SE_IDS`・`SeId` は上の表と同じ順の 52 個（`src/data/seTracks.test.ts` が表と突き合わせる）。`playSe(id)` は書き出した効果音（`public/assets/audio/se/` にある `.ogg`）だけを鳴らし、まだないものは代わり（se_cannon → se_gun、se_thunder → se_magic）を、代わりもなければ無音にする。
 - 再生は `src/ui/sePlayer.ts`（Web Audio）。曲と 1 つの AudioContext を共に使い、起動時に書き出したすべての効果音を読み込んでおく。同じ音・別の音を重ねて鳴らせる（同じ音を 30 ms 以内に続けて頼まれたら 1 つにまとめ、一度に 8 つまで）。最初の操作の前と、画面が隠れている間は鳴らさない。読み込めなかった効果音は、ファイルを取れなかったものは 5 秒おいて読み直し、音に伸ばせなかったもの（Ogg Opus を読めないブラウザ）は読み直さない。始める処理は `src/ui/audioSetup.ts`。
-- メニューの音は `src/ui/widgets.ts` の `Menu`（移動・決定・取消・選べない）と `MessageWindow.advance` でまとめて鳴らす。決定は `withDefaultSe('se_ok', …)` で選んだ先を実行し、そこで別の音（支払いの se_coin、できないときの se_buzzer、セーブの se_save、出入りの se_door など）を頼んだら、決定の音は鳴らさずにそちらに譲る。
-- 戦闘の音は `BattleScene` で 1 つの出来事を進めるところ（`describe(e)` の隣）で鳴らす。音は `src/systems/battleSe.ts` の `battleSounds` が 1 ターンの出来事から選ぶ（`miss` には攻撃した側の `actor` があり、何度も当たる技の当たり外れと、別の人の通常攻撃の外れを見分ける）。回復・状態の出来事は、同じ音の技に続くときは鳴らさない（技の音で済んでいる）。戦闘の後のページは、お金の行に se_coin、落とし物に se_item、段が上がるページに se_levelup を、ページを出すときに鳴らす（`MessageWindow.show` の `onPage`）。
+- メニューの音は `src/ui/widgets.ts` の `Menu`（移動・決定・取消・選べない）と `MessageWindow.advance`（se_message。まだ）でまとめて鳴らす。性別の選択（`CharacterSelectScene`）は `Menu` を使わないので、その画面で移動・決定・取消の音を鳴らす。決定は `withDefaultSe('se_ok', …)` で選んだ先を実行し、そこで別の音（支払いの se_coin、できないときの se_buzzer、セーブの se_save、出入りの se_door など）を頼んだら、決定の音は鳴らさずにそちらに譲る。
+- 戦闘の音は `BattleScene` で 1 つの出来事を進めるところ（`describe(e)` の隣）で鳴らす。音は `src/systems/battleSe.ts` の `battleSounds` が 1 ターンの出来事から選ぶ（`miss` には攻撃した側の `actor` があり、何度も当たる技の当たり外れと、別の人の通常攻撃の外れを見分ける）。回復・状態の出来事は、同じ音の技に続くときは鳴らさない（技の音で済んでいる）。装備で 2 度目が出たとき（`again`）は、術がもう一度なら 2 度目も技の音を鳴らし、もう一度斬るなら続く通常攻撃の音だけにする。戦闘の後のページは、お金の行に se_coin、落とし物に se_item（持ちきれなかっただけのページは鳴らさない）、段が上がるページに se_levelup を、ページを出すときに鳴らす（`MessageWindow.show` の `onPage`）。
   - 通常攻撃は、攻撃した仲間の武器で選ぶ（刀・槍は se_slash、玄道の杖は se_hit、お凛の鉄砲は se_gun）。敵の通常攻撃（`attack`）は、味方が受けたときの se_damage だけにする。表の「敵の斬る技」「敵の撃つ技」は、敵の技（`skill`）のこと。
   - 技は、`src/data/skills.ts` の定義に `se` を足して書く。書いていなければ、`physical` は se_slash、属性 `fire` は se_fire、`thunder` は se_thunder、そのほかの `magic` は se_magic、`heal` は se_heal、`status` は効く状態で、強くなる状態（`atkUp`・`defUp`・`evade`・`critUp`）は se_buff、弱くなる状態（`atkDown`・`accDown`）と酒の酔い（`drunk`）は se_debuff、状態異常（`Ailment` の 5 つ）は se_ailment にする。
   - 既定で合わない技には `se` を書く。お凛の鉄砲の技（`magic`）は、雷管弾（属性 `thunder`、既定の se_thunder のまま）を除いて se_gun（属性 `fire` の火薬弾も se_gun）、`physical` のうち殴る・投げる・噛む技は se_hit、手裏剣の技は se_shuriken、敵の鉄砲の技（鉄砲・ぶどう弾）は se_gun、大筒・権現砲は se_cannon。
