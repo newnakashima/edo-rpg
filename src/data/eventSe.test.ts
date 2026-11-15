@@ -34,7 +34,8 @@ describe('イベントの効果音', () => {
           if (step.type !== 'se') return;
           count++;
           expect(SE_IDS, id).toContain(step.id);
-          const next = list[i + 1];
+          // 続けて鳴らす se（からくりと火など）は飛ばして、その次の手順を見る
+          const next = list.slice(i + 1).find((s) => s.type !== 'se');
           expect(next?.type === 'say' || (step.id === 'se_chest' && next?.type === 'giveItem'), `${id} の ${step.id}`).toBe(true);
         });
       }

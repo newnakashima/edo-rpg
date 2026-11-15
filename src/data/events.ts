@@ -2367,7 +2367,9 @@ export const EVENTS: Record<string, EventDef> = {
           { type: 'battle', enemies: ['akaoni', 'akaoni'], level: 10 },
           // 玄道が数珠を鳴らして経を唱えると、鬼の角が落ち、痩せた河原の男たちの姿に戻る
           faceTo('gendo', 'rashomonOniA'),
-          { type: 'say', lines: ['玄道「オン・アビラウンケン……。迷うな。人に戻れ」', 'シャラン……'] },
+          { type: 'say', lines: ['玄道「オン・アビラウンケン……。迷うな。人に戻れ」'] },
+          se('se_revive'),
+          { type: 'say', lines: ['シャラン……'] },
           vanish('rashomonOniA'),
           vanish('rashomonOniB'),
           actor('rashomonOtokoA', 'npc_ninsoku', 17, 9, 'down'),
@@ -2481,14 +2483,11 @@ export const EVENTS: Record<string, EventDef> = {
       actor('oninosuToraware2', 'npc_musume', 23, 4, 'down'),
       actor('oninosuToraware3', 'npc_rojin', 25, 5, 'down'),
       { type: 'say', lines: ['霞「……待って、本堂の奥の牢に、人が囚われてる！」'] },
+      { type: 'say', lines: ['玄道「じっとしておれ。今、祓ってやる。……オン・アビラウンケン」'] },
+      se('se_revive'),
       {
         type: 'say',
-        lines: [
-          '玄道「じっとしておれ。今、祓ってやる。……オン・アビラウンケン」',
-          'シャラン……',
-          '娘「角が……消えた。人の手に戻っとる……！」',
-          '老人「お坊さま、皆さま……ありがとうございます……」',
-        ],
+        lines: ['シャラン……', '娘「角が……消えた。人の手に戻っとる……！」', '老人「お坊さま、皆さま……ありがとうございます……」'],
       },
       faceTo('gendo', 'hero'),
       {
@@ -3979,7 +3978,7 @@ export const EVENTS: Record<string, EventDef> = {
       {
         type: 'if',
         flag: 'kashaMet',
-        then: [se('se_karakuri'), { type: 'say', lines: ['ギリ、ギリギリ……ゴウッ！'] }],
+        then: [se('se_karakuri'), se('se_fire'), { type: 'say', lines: ['ギリ、ギリギリ……ゴウッ！'] }],
         else: [
           partyOut('kasumi'),
           {
@@ -4301,6 +4300,7 @@ export const EVENTS: Record<string, EventDef> = {
       ...partyIn('kasumi'),
       // 後ろの手下の陰から、兵庫が斬り込む
       bgm('bgm_rally'),
+      se('se_slash'),
       { type: 'say', lines: ['ザンッ！ザンッ！'] },
       vanish('matsuOniwabanA'),
       vanish('matsuOniwabanB'),
@@ -4330,6 +4330,7 @@ export const EVENTS: Record<string, EventDef> = {
       // 兵庫は（24, 12）の側を西へ進み、北の口から下りてきた手下（17, 12）（18, 11）の両方の隣（18, 12）で斬り払う
       walk('hyogo', 'llllllll'),
       face('hyogo', 'left'),
+      se('se_slash'),
       { type: 'say', lines: ['ザンッ！'] },
       vanish('matsuKinjuA'),
       vanish('matsuKinjuB'),

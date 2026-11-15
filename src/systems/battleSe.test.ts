@@ -128,6 +128,14 @@ describe('1 ターンの出来事の音', () => {
     expect(battleSounds(events, actors)).toEqual([['se_smoke'], [], [], ['se_buff'], []]);
   });
 
+  it('からくりを呼ぶ技は se_karakuri だけで、続く呼び出しの出来事は鳴らさない', () => {
+    const events: BattleEvent[] = [
+      { type: 'skill', actor: 'e0', skill: 'karakuriYobi' },
+      { type: 'summon', actor: 'e0', target: 'e1' },
+    ];
+    expect(battleSounds(events, actors)).toEqual([['se_karakuri'], []]);
+  });
+
   it('動けない・何もしない・状態が切れるのは無音、毒は味方だけ se_damage', () => {
     const events: BattleEvent[] = [
       { type: 'cannotAct', actor: 'p0', reason: 'sleep' },
