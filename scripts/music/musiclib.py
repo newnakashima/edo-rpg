@@ -146,7 +146,7 @@ class Phrase:
         if len(items) != len(p.notes):
             raise ValueError(f"音の数が合いません（フレーズ {len(p.notes)} 音、指定 {len(items)} 音）")
         for n, x in zip(p.notes, items):
-            n.pitches = tuple(x) if isinstance(x, (tuple, list)) else (x,)
+            n.pitches = tuple(pitch_of(y) if isinstance(y, str) else y for y in x) if isinstance(x, (tuple, list)) else (x,)
         return p
 
     def map(self, fn) -> "Phrase":
@@ -206,7 +206,7 @@ def _label(name: str, src_from: Fraction, src_len: Fraction) -> str:
     return name
 
 
-def parse(text: str, meter: str = "4/4", strict_bars: bool = False) -> Phrase:
+def parse(text: str, meter: str = "4/4", strict_bars: bool = False, where: str = "") -> Phrase:
     """記法を Phrase にする。
 
     - 音: `C5:1`（音名とオクターブ:長さ）。長さは 4 分音符 = 1。`1/2`、`2/3`、`1.5` も書ける
@@ -247,7 +247,7 @@ def parse(text: str, meter: str = "4/4", strict_bars: bool = False) -> Phrase:
             pos += dur
         got = pos - bar_start
         if got != bar_len and not (i in (0, len(bars) - 1) and got < bar_len):
-            msg = f"{i + 1} 小節目の長さが {got} 拍です（{meter} の 1 小節は {bar_len} 拍）"
+            msg = f"{where}{i + 1} 小節目の長さが {got} 拍です（{meter} の 1 小節は {bar_len} 拍）"
             if strict_bars:
                 raise ValueError(msg)
             warn(msg)
@@ -298,9 +298,9 @@ def _read_theme(path: Path) -> Theme:
             raise ValueError(f"{path.name}: 読めない行です: {raw!r}")
     tid = meta.get("id", path.stem)
     meter = meta.get("meter", "4/4")
-    melody = parse(" ".join(melody_lines), meter)
+    melody = parse(" ".join(melody_lines), meter, where=f"{path.name} の melody の ")
     melody.sources = [[f"theme:{tid}", Fraction(0), melody.length, Fraction(0), Fraction(1)]]
-    harmony = parse(" ".join(harmony_lines), meter) if harmony_lines else None
+    harmony = parse(" ".join(harmony_lines), meter, where=f"{path.name} の harmony の ") if harmony_lines else None
     motifs: dict[str, dict] = {}
     for ml in motif_lines:
         # 例: a bars=1-2 上へ伸びる呼びかけ
@@ -311,13 +311,17 @@ def _read_theme(path: Path) -> Theme:
         m = re.match(r"^bars=(\d+)(?:-(\d+))?\s*(.*)$", rest)
         if m:
             a, b, desc = m.groups()
-            entry["bars"] = (int(a), int(b or a))
+            first, last = int(a), int(b or a)
+            if not 1 <= first <= last <= len(melody.bar_starts):
+                raise ValueError(f"{path.name}: @motif {mid} の bars={first}-{last} が、"
+                                 f"melody の小節（1-{len(melody.bar_starts)}）の外です")
+            entry["bars"] = (first, last)
             entry["about"] = desc
         elif rest.startswith("notes="):
             body = rest[len("notes="):]
             # 記法の後ろに // で説明を書ける
             body, _, desc = body.partition("//")
-            entry["notes"] = parse(body, meter)
+            entry["notes"] = parse(body, meter, where=f"{path.name} の @motif {mid} の ")
             entry["about"] = desc.strip()
         else:
             raise ValueError(f"{path.name}: @motif は bars=1-2 か notes=| ... | で書きます: {ml!r}")
@@ -326,10 +330,21 @@ def _read_theme(path: Path) -> Theme:
                  about, melody, harmony, motifs, path)
 
 
+_THEME_CACHE: dict[Path, tuple[int, Theme]] = {}
+
+
 def load_themes() -> dict[str, Theme]:
-    themes = {}
+    """music/themes/ の core-theme を読む。ファイルが変わっていなければ前に読んだものを使う（注意も 1 回だけ出る）。"""
+    themes: dict[str, Theme] = {}
     for path in sorted(THEME_DIR.glob("*.txt")):
-        t = _read_theme(path)
+        mtime = path.stat().st_mtime_ns
+        cached = _THEME_CACHE.get(path)
+        if cached is None or cached[0] != mtime:
+            cached = (mtime, _read_theme(path))
+            _THEME_CACHE[path] = cached
+        t = cached[1]
+        if t.id in themes:
+            raise ValueError(f"core-theme の ID {t.id!r} が {themes[t.id].path.name} と {path.name} で重なっています")
         themes[t.id] = t
     return themes
 
@@ -339,12 +354,16 @@ def theme(theme_id: str) -> Phrase:
     themes = load_themes()
     if theme_id not in themes:
         raise KeyError(f"core-theme {theme_id!r} がありません（music/themes/ を見る）")
-    return themes[theme_id].melody.copy()
+    return themes[theme_id].melody.copy()  # キャッシュを書き換えられないよう複製を返す
 
 
 def theme_harmony(theme_id: str) -> Phrase | None:
-    """core-theme に書いた参考の和音。曲では使わなくても、変えてもよい。"""
-    return load_themes()[theme_id].harmony
+    """core-theme に書いた参考の和音（書いていなければ None）。曲では使わなくても、変えてもよい。"""
+    themes = load_themes()
+    if theme_id not in themes:
+        raise KeyError(f"core-theme {theme_id!r} がありません（music/themes/ を見る）")
+    h = themes[theme_id].harmony
+    return h.copy() if h is not None else None
 
 
 def motif(motif_id: str) -> Phrase:
@@ -356,7 +375,7 @@ def motif(motif_id: str) -> Phrase:
     t = themes[tid]
     entry = t.motifs[motif_id]
     if entry["bars"]:
-        p = t.melody.bars(*entry["bars"])
+        p = t.melody.bars(*entry["bars"])  # bars() は新しい Phrase を返す
     else:
         p = entry["notes"].copy()
     p.sources = [[f"motif:{motif_id}", Fraction(0), p.length, Fraction(0), Fraction(1)]]
@@ -408,7 +427,8 @@ class Track:
         return self.cursor
 
     def message(self, at, msg: mido.Message) -> None:
-        """任意の MIDI メッセージ（ピッチベンド、コントロールチェンジなど）を拍 at に置く。channel は書き出し時に入る。"""
+        """任意の MIDI メッセージ（ピッチベンド、コントロールチェンジ、マーカーなど）を拍 at に置く。
+        チャンネルのあるメッセージには、書き出し時にこのトラックのチャンネルが入る。"""
         self.raw.append((Fraction(at), msg))
 
 
@@ -473,11 +493,20 @@ class Song:
                         warn(f"トラック「{t.name}」は role=other ですが {u['source']} を使っています。"
                              " core-theme と motiv は主旋律（main）か副旋律（sub）で使います")
         end = self.length()
+        if self.loop and not 0 <= self.loop_start < end:
+            raise ValueError(f"ループの頭（{self.loop_start} 拍）が曲の範囲（0〜{end} 拍未満）の外です。"
+                             " song.loop_from と song.end を見直す（音のない曲もループできない）")
         for t in self.tracks:
             for at, n in t.events:
                 if self.loop and at + n.dur > end:
-                    warn(f"トラック「{t.name}」の音が曲の終わり（{end} 拍）をはみ出しています。ループの継ぎ目で切れます")
+                    warn(f"トラック「{t.name}」の音が曲の終わり（{end} 拍）をはみ出しています。"
+                         "継ぎ目より後は書き出さない（またぐ音は継ぎ目で切り、後で始まる音は消す）")
                     break
+        drums = [t for t in self.tracks if t.drum]
+        for t in drums[1:]:
+            if (t.pan, t.reverb, t.chorus) != (drums[0].pan, drums[0].reverb, drums[0].chorus):
+                warn(f"打楽器のトラック「{t.name}」の pan・reverb・chorus は効きません。打楽器はすべてチャンネル 10 を"
+                     f"共有するので、最初の打楽器のトラック「{drums[0].name}」の値を使います")
 
     def write(self, path: Path | None = None) -> Path:
         """MIDI と、素材の使い方などを記録した JSON を書き出す。"""
@@ -497,6 +526,8 @@ class Song:
         mid.tracks.append(conductor)
 
         channels = [c for c in range(16) if c != 9]
+        end_tick = tick(self.length())
+        first_drum = next((t for t in self.tracks if t.drum), None)
         for t in self.tracks:
             if t.drum:
                 ch = 9
@@ -509,16 +540,31 @@ class Song:
             ev: list[tuple[int, int, mido.Message]] = []  # (tick, 並び順, メッセージ)
             if not t.drum:
                 ev.append((0, 0, mido.Message("program_change", channel=ch, program=t.program)))
-            for cc, val in ((7, t.volume), (10, t.pan), (91, t.reverb), (93, t.chorus)):
+                ccs = ((7, t.volume), (10, t.pan), (91, t.reverb), (93, t.chorus))
+            elif t is first_drum:
+                # 打楽器はチャンネルを共有するので、音量はトラックごとに強さへ掛け、CC7 は 100 に固定する
+                ccs = ((7, 100), (10, t.pan), (91, t.reverb), (93, t.chorus))
+            else:
+                ccs = ()
+            for cc, val in ccs:
                 ev.append((0, 0, mido.Message("control_change", channel=ch, control=cc, value=val)))
             for at, n in t.events:
+                on, off = tick(at), tick(at + n.dur)
+                if self.loop:
+                    if on >= end_tick:
+                        continue  # 継ぎ目より後で始まる音は書かない（_check で注意済み）
+                    off = min(off, end_tick)
+                off = max(off, on + 1)  # 1 tick 未満の音も、止める信号が鳴らす信号より後に来るようにする
+                vel = n.vel
+                if t.drum:
+                    vel = max(1, min(127, int(round(vel * t.volume / 100))))
                 for p in n.pitches:
                     if not 0 <= p <= 127:
                         raise ValueError(f"トラック「{t.name}」に MIDI の範囲外の音があります: {p}")
-                    ev.append((tick(at), 2, mido.Message("note_on", channel=ch, note=p, velocity=n.vel)))
-                    ev.append((tick(at + n.dur), 1, mido.Message("note_off", channel=ch, note=p, velocity=0)))
+                    ev.append((on, 2, mido.Message("note_on", channel=ch, note=p, velocity=vel)))
+                    ev.append((off, 1, mido.Message("note_off", channel=ch, note=p, velocity=0)))
             for at, msg in t.raw:
-                ev.append((tick(at), 0, msg.copy(channel=ch)))
+                ev.append((tick(at), 0, msg.copy() if msg.is_meta else msg.copy(channel=ch)))
             ev.sort(key=lambda x: (x[0], x[1]))
             _flush(tr, [(a, m) for a, _, m in ev])
             mid.tracks.append(tr)

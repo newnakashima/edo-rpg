@@ -30,7 +30,8 @@ description: ゲームの BGM を MIDI で作曲し、Ogg Opus に書き出す�
 ```bash
 command -v fluidsynth || (apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq fluidsynth fluid-soundfont-gm)
 python3 -c "import mido" 2>/dev/null || pip install -q mido
-python3 -c "import numpy, PIL" && ffmpeg -hide_banner -encoders | grep -q libopus && echo ok
+python3 -c "import numpy, PIL" 2>/dev/null || pip install -q numpy pillow
+ffmpeg -hide_banner -encoders | grep -q libopus && echo ok
 ```
 
 音色は General MIDI の FluidR3_GM を使う。音色の番号は [instruments.md](instruments.md) にある。
@@ -114,7 +115,7 @@ song.end(song.bar(9))                                    # ループの継ぎ目
 | `.with_pitches([...])` | リズムを残して音の高さを置き換える |
 | `.map(fn)` | 音ごとに自由に加工する（`Note` の `start`・`dur`・`pitches`・`vel` を変える、`None` で消す） |
 | `a + b` / `a \| b` / `.repeat(n)` / `.rest_after(拍)` | つなげる・重ねる・繰り返す・後ろに休みを足す |
-| `song.track(名前, program, role, drum=False, volume, pan, reverb, chorus)` | トラックを作る。打楽器は `drum=True`（音の番号で楽器を選ぶ） |
+| `song.track(名前, program, role, drum=False, volume, pan, reverb, chorus)` | トラックを作る。打楽器は `drum=True`（音の番号で楽器を選ぶ）。打楽器のトラックはすべて 1 つのチャンネルを共有するので、`volume` は音の強さに掛けて効かせ、`pan`・`reverb`・`chorus` は最初の打楽器のトラックの値だけが効く |
 | `track.add(p)` / `track.put(拍, p)` / `track.rest(拍)` | 置く |
 | `track.message(拍, mido.Message(...))` | ピッチベンドなど、任意の MIDI メッセージを置く |
 | `song.bar(n)` / `song.tempo_at(拍, bpm)` / `song.end(拍)` / `song.loop_from(拍)` | 位置・速さの変化・曲の終わり・前奏の後からのループ |
@@ -155,7 +156,7 @@ core-theme ごとに、聞けばその core-theme を思い出せる断片を `@
 `music/songs/<曲の ID>.py` に、手順 1 の要件に沿って曲を組み立てる。
 素材は主旋律（`role="main"`）か副旋律（`role="sub"`）のトラックに置く。`role="other"` のトラックに素材を置くと注意が出る。
 
-ループする曲は、継ぎ目（`song.end`）で最初に戻って自然につながるように書く。継ぎ目をまたいで伸びる音は切れる（注意が出る）。残響は道具がループの頭に重ねるので、気にしなくてよい。
+ループする曲は、継ぎ目（`song.end`）で最初に戻って自然につながるように書く。継ぎ目をまたいで伸びる音は継ぎ目で切れ、継ぎ目より後で始まる音は書き出されない（どちらも注意が出る）。残響は道具がループの頭に重ねるので、気にしなくてよい。
 
 ### 5. 書き出す
 
@@ -163,7 +164,8 @@ core-theme ごとに、聞けばその core-theme を思い出せる断片を `@
 python3 scripts/music/build.py bgm_title
 ```
 
-MIDI・Ogg Opus・ピアノロールができ、`music/catalog.md` が作り直される。出力には、長さ、書き出し時の音量、ループの継ぎ目の様子、トラックごとの素材が出る。
+MIDI・Ogg Opus・ピアノロールができ、`music/catalog.md` が作り直される。出力には、長さ、音量、ループの継ぎ目の様子、トラックごとの素材が出る。
+曲の間で聞こえる音量がそろうよう、音量はラウドネス -16 LUFS にそろえる（ピークは -1 dBFS を超えないようにする）。静かな曲を静かに聞かせたいときは、そろえた後で再生側の音量で下げる。
 
 ### 6. 確かめる
 
@@ -173,7 +175,7 @@ MIDI・Ogg Opus・ピアノロールができ、`music/catalog.md` が作り直�
 1. 書き出しが [注意] なしで終わった（[注意] が出たら、意図したものか確かめ、意図していなければ直す）
 2. 長さとループの有無が、手順 1 の要件どおり
 3. ループする曲で、継ぎ目の段差の注意が出ていない
-4. 書き出し時のピークが 0 dBFS 近くで、音割れの注意が出ていない
+4. 無音・音割れ・「目標より小さくした」の注意が出ていない
 5. 手順 1 で決めた素材が、決めたトラック（主旋律・副旋律）に、決めた場所に置かれている
 6. core-theme を、加工も組み合わせもせず、それだけで 1 曲にしていない
 7. ピアノロールを見て、書いたつもりのもの（音の並び、トラックの重なり方、曲の流れ）と食い違いがない

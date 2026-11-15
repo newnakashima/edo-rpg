@@ -40,7 +40,8 @@ SOUNDFONT_CANDIDATES = [
 ]
 RATE = 48000
 TAIL_SECONDS = 4.0  # 残響が消えるまで書き出す長さ
-PEAK_DBFS = -1.0
+TARGET_LUFS = -16.0  # 曲の間で聞こえる音量をそろえる目標（ラウドネス）
+PEAK_DBFS = -1.0  # ラウドネスをそろえても、ピークはこれを超えないようにする
 OPUS_BITRATE = "128k"
 
 
@@ -85,11 +86,15 @@ def render_wav(midi_path: Path, wav_path: Path, gain: float = 0.6) -> np.ndarray
     mid.save(padded)
     wav_path.parent.mkdir(parents=True, exist_ok=True)
     subprocess.run(
-        ["fluidsynth", "-ni", "-q", "-g", str(gain), "-r", str(RATE), "-F", str(wav_path), str(soundfont()), str(padded)],
+        ["fluidsynth", "-ni", "-q", "-g", str(gain), "-r", str(RATE), "-O", "s16", "-T", "wav",
+         "-F", str(wav_path), str(soundfont()), str(padded)],
         check=True, stdout=subprocess.DEVNULL,
     )
     padded.unlink()
     with wave.open(str(wav_path)) as w:
+        if w.getsampwidth() != 2 or w.getframerate() != RATE:
+            sys.exit(f"fluidsynth の書き出しが 16 bit・{RATE} Hz ではありません"
+                     f"（{w.getsampwidth() * 8} bit・{w.getframerate()} Hz）")
         ch = w.getnchannels()
         data = np.frombuffer(w.readframes(w.getnframes()), dtype=np.int16).astype(np.float64) / 32768
     return data.reshape(-1, ch)
@@ -126,10 +131,36 @@ def shape_audio(audio: np.ndarray, meta: dict) -> np.ndarray:
     return out
 
 
-def normalize(audio: np.ndarray) -> tuple[np.ndarray, float]:
-    peak = float(np.abs(audio).max()) or 1.0
-    target = 10 ** (PEAK_DBFS / 20)
-    return audio * (target / peak), 20 * np.log10(peak)
+def loudness(audio: np.ndarray) -> float | None:
+    """ffmpeg の ebur128 で、曲全体のラウドネス（LUFS）を測る。測れない（短すぎる・無音）ときは None。"""
+    need("ffmpeg")
+    tmp = PREVIEW_DIR / "_loudness.wav"
+    write_wav(tmp, audio)
+    res = subprocess.run(["ffmpeg", "-hide_banner", "-nostats", "-i", str(tmp), "-af", "ebur128", "-f", "null", "-"],
+                         capture_output=True, text=True, check=True)
+    tmp.unlink()
+    found = re.findall(r"I:\s+(-?[\d.]+|-inf) LUFS", res.stderr)
+    if not found or found[-1] == "-inf" or float(found[-1]) < -70:
+        return None
+    return float(found[-1])
+
+
+def normalize(audio: np.ndarray) -> tuple[np.ndarray, dict]:
+    """曲の間で聞こえる音量がそろうよう、ラウドネスを TARGET_LUFS にそろえる。ピークが PEAK_DBFS を超えるなら、そこまで下げる。"""
+    peak = float(np.abs(audio).max())
+    # -60 dBFS より小さいものは無音として扱い、持ち上げない（雑音を目標の音量まで上げないため）
+    audible = peak > 10 ** (-60 / 20)
+    info = {"raw_peak_db": 20 * np.log10(peak) if audible else None, "lufs": None, "limited_by_peak": False}
+    if not audible:
+        return audio, info
+    lufs = loudness(audio)
+    gain_db = (TARGET_LUFS - lufs) if lufs is not None else (PEAK_DBFS - info["raw_peak_db"])
+    if info["raw_peak_db"] + gain_db > PEAK_DBFS:
+        gain_db = PEAK_DBFS - info["raw_peak_db"]
+        info["limited_by_peak"] = True
+    out = audio * 10 ** (gain_db / 20)
+    info["lufs"] = (lufs + gain_db) if lufs is not None else None
+    return out, info
 
 
 def write_wav(path: Path, audio: np.ndarray) -> None:
@@ -155,12 +186,20 @@ def encode_opus(wav: Path, out: Path, meta: dict) -> None:
     )
 
 
-def report(audio: np.ndarray, meta: dict, raw_peak_db: float) -> None:
+def report(audio: np.ndarray, meta: dict, info: dict) -> None:
     secs = len(audio) / RATE
     rms = 20 * np.log10(float(np.sqrt((audio ** 2).mean())) or 1e-9)
     print(f"  長さ: {secs:.2f} 秒（{meta['length_beats']:g} 拍）  ループ: {'あり' if meta['loop'] else 'なし'}")
-    print(f"  書き出し時のピーク: {raw_peak_db:.1f} dBFS → {PEAK_DBFS} dBFS にそろえた  平均音量（RMS）: {rms:.1f} dBFS")
-    if raw_peak_db > -0.1:
+    if info["raw_peak_db"] is None:
+        print("  [注意] 無音です。音を置いたトラック、打楽器の音の番号、強さを見直す")
+        return
+    peak_now = 20 * np.log10(float(np.abs(audio).max()))
+    lufs = f"{info['lufs']:.1f} LUFS" if info["lufs"] is not None else "測れない（短すぎる）"
+    print(f"  ラウドネス: {lufs}（目標 {TARGET_LUFS} LUFS）  ピーク: {peak_now:.1f} dBFS  平均音量（RMS）: {rms:.1f} dBFS")
+    if info["limited_by_peak"]:
+        print(f"  [注意] ピークが {PEAK_DBFS} dBFS を超えないよう、目標より小さくした。ほかの曲より小さく聞こえる"
+              "おそれがある（一瞬だけ大きい音があれば、その強さを下げる）")
+    if info["raw_peak_db"] > -0.1:
         print("  [注意] 書き出し時に音が割れている可能性があります。トラックの volume か強さを下げる")
     if meta["loop"]:
         start = int(round(meta["loop_start_seconds"] * RATE))
@@ -191,15 +230,20 @@ def build(song_id: str, midi_only: bool) -> None:
     print(f"  ピアノロール: {png.relative_to(ROOT)}")
     if midi_only:
         return
-    wav = PREVIEW_DIR / f"{song_id}.wav"
-    audio = render_wav(midi, wav)
-    audio = shape_audio(audio, meta)
-    audio, raw_peak = normalize(audio)
-    write_wav(wav, audio)
     out = OUT_DIR / f"{song_id}.ogg"
-    encode_opus(wav, out, meta)
+    audio, info = render_song(midi, meta, out)
     print(f"  音: {out.relative_to(ROOT)}（{out.stat().st_size // 1024} KB）")
-    report(audio, meta, raw_peak)
+    report(audio, meta, info)
+
+
+def render_song(midi: Path, meta: dict, out: Path) -> tuple[np.ndarray, dict]:
+    """MIDI → WAV → ループの処理 → 音量をそろえる → Ogg Opus。曲と core-theme の試聴で同じ流れを使う。"""
+    wav = PREVIEW_DIR / f"{midi.stem}.wav"
+    audio = shape_audio(render_wav(midi, wav), meta)
+    audio, info = normalize(audio)
+    write_wav(wav, audio)
+    encode_opus(wav, out, meta)
+    return audio, info
 
 
 def preview_theme(theme_id: str) -> None:
@@ -216,11 +260,8 @@ def preview_theme(theme_id: str) -> None:
     midi = song.write(PREVIEW_DIR / f"theme_{theme_id}.mid")
     meta = json.loads(midi.with_suffix(".json").read_text(encoding="utf-8"))
     pianoroll.draw(midi, PREVIEW_DIR / f"theme_{theme_id}.png", meta, motifs=t.motifs, theme=t)
-    wav = PREVIEW_DIR / f"theme_{theme_id}.wav"
-    audio, _ = normalize(shape_audio(render_wav(midi, wav), meta))
-    write_wav(wav, audio)
     ogg = PREVIEW_DIR / f"theme_{theme_id}.ogg"
-    encode_opus(wav, ogg, meta)
+    render_song(midi, meta, ogg)
     print(f"■ core-theme {theme_id}（{t.title}）: {len(t.melody.bar_starts)} 小節")
     for mid_, e in t.motifs.items():
         where = f"{e['bars'][0]}-{e['bars'][1]} 小節" if e["bars"] else "書き直した断片"
@@ -242,6 +283,10 @@ def catalog() -> None:
             lines.append(f"| {mid_} | {t.id} | {where} | {e['about']} |")
     lines += ["", "## 曲", "", "| ID | 名前 | ループ | 主旋律（main） | 副旋律（sub） |", "| --- | --- | --- | --- | --- |"]
     for meta_path in sorted(ml.MIDI_DIR.glob("*.json")):
+        if not (SONG_DIR / f"{meta_path.stem}.py").exists():
+            print(f"[注意] {meta_path.relative_to(ROOT)} の曲のスクリプト（music/songs/{meta_path.stem}.py）がありません。"
+                  "カタログに載せない。曲を消したのなら、MIDI・JSON・ogg も消す")
+            continue
         m = json.loads(meta_path.read_text(encoding="utf-8"))
         by_role = {"main": set(), "sub": set()}
         for t in m["tracks"]:
