@@ -21,10 +21,12 @@ interface FakeSource {
   loopEnd: number;
   offset?: number;
   stopped: boolean;
+  /** stop に渡した時刻（すぐ止めたなら undefined）。 */
+  stopAt?: number;
   onended: (() => void) | null;
   connect: (n: unknown) => unknown;
   start: (when: number, offset: number) => void;
-  stop: () => void;
+  stop: (when?: number) => void;
 }
 
 function fakeGain() {
@@ -54,8 +56,12 @@ function fakeContext() {
           this.offset = offset;
           this.url = this.buffer?.url;
         },
-        stop() {
+        // 本物と同じく、止めると（そのとき付いている）onended が後で呼ばれる
+        stop(when) {
           this.stopped = true;
+          this.stopAt = when;
+          const ended = this.onended;
+          void Promise.resolve().then(() => ended?.());
         },
       };
       sources.push(s);
@@ -102,8 +108,7 @@ async function load(id: keyof typeof BGM_TRACKS): Promise<void> {
 
 /** ジングルが鳴り終わる（偽の音源は自分では終わらないので、手で終える）。 */
 function finish(source: FakeSource): void {
-  source.stopped = true;
-  source.onended?.();
+  source.stop();
 }
 
 /** いま鳴っている（止めていない）音源の URL。 */
@@ -134,6 +139,24 @@ describe('WebBgmPlayer', () => {
     expect(sources[2]!.offset).toBe(12);
   });
 
+  it('ジングルの間に次のジングルを鳴らすと、切ったジングルでは曲に戻らず、次のジングルの後に戻る', async () => {
+    const { ctx, player, sources } = fakeContext();
+    player.play('bgm_town');
+    await load('bgm_town');
+    ctx.currentTime = 7;
+    player.playJingle('bgm_inn');
+    await load('bgm_inn');
+    player.playJingle('bgm_victory');
+    for (let i = 0; i < 10; i++) await Promise.resolve();
+    expect(sounding(sources)).toEqual([]);
+    await load('bgm_victory');
+    expect(sounding(sources)).toEqual([url('bgm_victory')]);
+    finish(sources[2]!);
+    await load('bgm_town');
+    expect(sounding(sources)).toEqual([url('bgm_town')]);
+    expect(sources[3]!.offset).toBe(7);
+  });
+
   it('ジングルの間に別の曲を頼むと、ジングルを切ってその曲にし、元の曲には戻らない', async () => {
     const { player, sources } = fakeContext();
     player.play(null);
@@ -142,8 +165,9 @@ describe('WebBgmPlayer', () => {
     player.play('bgm_road');
     await load('bgm_road');
     expect(sounding(sources)).toEqual([url('bgm_road')]);
-    sources[0]!.onended?.();
-    await Promise.resolve();
+    // 切ったジングルの onended（本物では止めた後に呼ばれる）で、ほかの曲を鳴らし直さない
+    for (let i = 0; i < 10; i++) await Promise.resolve();
+    expect(sources).toHaveLength(2);
     expect(sounding(sources)).toEqual([url('bgm_road')]);
   });
 
@@ -166,9 +190,10 @@ describe('WebBgmPlayer', () => {
     await load('bgm_victory');
     player.play(null);
     expect(sounding(sources)).toEqual([url('bgm_victory')]);
-    sources[1]!.onended?.();
-    await Promise.resolve();
-    expect(sounding(sources)).toEqual([url('bgm_victory')]);
+    finish(sources[1]!);
+    for (let i = 0; i < 10; i++) await Promise.resolve();
+    expect(sources).toHaveLength(2);
+    expect(sounding(sources)).toEqual([]);
   });
 
   it('読み込み待ちの間に頼みが替わったら、最後に頼んだ曲だけを鳴らす', async () => {
@@ -200,5 +225,15 @@ describe('WebBgmPlayer', () => {
     await load('bgm_title');
     player.play('bgm_town');
     expect(sources[0]!.stopped).toBe(true);
+    expect(sources[0]!.stopAt).toBeUndefined();
+  });
+
+  it('音を出しているときは、前の曲をフェードして止める', async () => {
+    const { ctx, player, sources } = fakeContext();
+    player.play('bgm_title');
+    await load('bgm_title');
+    ctx.currentTime = 5;
+    player.play('bgm_town');
+    expect(sources[0]!.stopAt).toBeCloseTo(5.3);
   });
 });
