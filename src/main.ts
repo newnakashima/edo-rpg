@@ -23,10 +23,19 @@ const padRoot = document.getElementById('pad');
 if (padRoot) bindVirtualPad(padRoot);
 
 // 曲の再生（docs/audio.md）。書き出した曲を教え、まだない曲は代わりの曲を鳴らす
-const bgmPlayer = new WebBgmPlayer();
-setAvailableBgm(availableBgmIds());
-setBgmPlayer((id) => bgmPlayer.play(id));
-setJinglePlayer((id) => bgmPlayer.playJingle(id));
+// Web Audio を使えない環境では、音を鳴らさずにゲームを進める
+let bgmPlayer: WebBgmPlayer | null = null;
+try {
+  bgmPlayer = new WebBgmPlayer();
+} catch (error) {
+  console.warn('音を鳴らせない', error);
+}
+if (bgmPlayer) {
+  const player = bgmPlayer;
+  setAvailableBgm(availableBgmIds());
+  setBgmPlayer((id) => player.play(id));
+  setJinglePlayer((id) => player.playJingle(id));
+}
 
 const game = new Phaser.Game({
   type: Phaser.AUTO,

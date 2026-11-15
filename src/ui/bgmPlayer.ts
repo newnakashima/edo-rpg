@@ -3,7 +3,8 @@ import type { BgmId } from '../systems/audio';
 
 // 曲の再生処理（Web Audio）。src/systems/audio.ts の playBgm・playJingle から、曲が替わったときだけ呼ばれる。
 // - ループする曲は、前奏の後（loopStart）から曲の終わり（loopEnd）までを継ぎ目なく繰り返す。
-// - ジングルは、鳴らしている曲を止めて 1 度鳴らし、鳴り終えたら止めた位置から曲に戻す。ジングルの間に別の曲を頼まれたら、ジングルを切ってその曲にする。
+// - ジングルは、鳴らしている曲を止めて 1 度鳴らし、鳴り終えたら止めた位置から曲に戻す。ジングルの間（読み込み中も）に別の曲を頼まれたら、ジングルを切ってその曲にする。
+//   曲を止める頼み（null）ではジングルを切らない（勝利・全滅・終劇は、曲を止めてからジングルを鳴らすため）。
 // - ブラウザは操作があるまで音を出させないので、最初の操作で AudioContext を動かす。画面が隠れている間は止める。
 
 const MASTER_VOLUME = 0.6;
@@ -28,8 +29,11 @@ interface Voice {
   offset: number;
 }
 
+/** 再生に使う AudioContext の部分（テストでは偽物を渡す）。 */
+export type PlayerContext = BaseAudioContext & Pick<AudioContext, 'resume' | 'suspend'>;
+
 export class WebBgmPlayer {
-  private readonly ctx: AudioContext;
+  private readonly ctx: PlayerContext;
   private readonly master: GainNode;
   /** 読み込んだファイル（圧縮したまま。すべて置いておく）と、音に伸ばしたもの（近ごろの数曲だけ）。 */
   private readonly files = new Map<BgmId, Promise<ArrayBuffer | null>>();
@@ -43,16 +47,18 @@ export class WebBgmPlayer {
   /** 読み込みを待っている間に頼みが替わったら、古い頼みを捨てるための番号。 */
   private bgmToken = 0;
   private jingleToken = 0;
+  private warned = false;
 
-  constructor(target: EventTarget = window, doc: Document = document) {
-    this.ctx = createContext();
+  /** ctx・target・doc はテストで差し替える。AudioContext を作れない環境では例外を投げる（呼ぶ側で無音にする）。 */
+  constructor(ctx: PlayerContext = createContext(), target: EventTarget = window, doc: Pick<Document, 'hidden' | 'addEventListener'> = document) {
+    this.ctx = ctx;
     this.master = this.ctx.createGain();
     this.master.gain.value = MASTER_VOLUME;
     this.master.connect(this.ctx.destination);
     this.unlockOnGesture(target);
     doc.addEventListener('visibilitychange', () => {
-      if (doc.hidden) void this.ctx.suspend();
-      else void this.ctx.resume();
+      if (doc.hidden) this.ctx.suspend().catch(() => {});
+      else this.ctx.resume().catch(() => {});
     });
   }
 
@@ -64,7 +70,8 @@ export class WebBgmPlayer {
     this.fadeOut(this.bgm);
     this.bgm = null;
     if (id === null) return;
-    // ジングルの間に次の曲を頼まれたら、ジングルを切る（勝利のジングルの途中でフィールドに戻ったときなど）
+    // ジングルの間（読み込み中も）に次の曲を頼まれたら、ジングルを切る（勝利のジングルの途中でフィールドに戻ったときなど）
+    this.jingleToken++;
     this.stopJingle();
     void this.startBgm(id, 0, false, () => token === this.bgmToken);
   }
@@ -152,6 +159,11 @@ export class WebBgmPlayer {
   private fadeOut(voice: Voice | null): void {
     if (!voice) return;
     const now = this.ctx.currentTime;
+    // 音を出し始める前（操作の前・画面が隠れている間）は時刻が進まず、フェードの予約が後で鳴るので、すぐ止める
+    if (this.ctx.state !== 'running') {
+      voice.source.stop();
+      return;
+    }
     voice.gain.gain.cancelScheduledValues(now);
     voice.gain.gain.setValueAtTime(voice.gain.gain.value, now);
     voice.gain.gain.linearRampToValueAtTime(0, now + FADE);
@@ -166,10 +178,19 @@ export class WebBgmPlayer {
       this.decoded.set(id, cached);
       return cached;
     }
-    const decoding = this.fetchFile(id).then((file) => (file ? this.ctx.decodeAudioData(file.slice(0)) : null)).catch((error: unknown) => {
-      if (import.meta.env.DEV) console.warn(`曲 ${id} を鳴らせない`, error);
-      return null;
-    });
+    const decoding = this.fetchFile(id)
+      .then((file) => (file ? this.ctx.decodeAudioData(file.slice(0)) : null))
+      .catch((error: unknown) => {
+        // Ogg Opus を読めないブラウザなどで、黙って無音にならないよう 1 度だけ知らせる
+        if (!this.warned) console.warn(`曲 ${id} を鳴らせない`, error);
+        this.warned = true;
+        return null;
+      })
+      .then((buffer) => {
+        // 失敗したら覚えておかず、次に頼まれたときに読み直す
+        if (!buffer && this.decoded.get(id) === decoding) this.decoded.delete(id);
+        return buffer;
+      });
     this.decoded.set(id, decoding);
     while (this.decoded.size > DECODED_CACHE) {
       const oldest = this.decoded.keys().next().value as BgmId;
@@ -188,22 +209,18 @@ export class WebBgmPlayer {
             return res.arrayBuffer();
           })
         : Promise.resolve(null);
-      // 失敗したら次に頼まれたときに読み直す
       file.catch(() => this.files.delete(id));
       this.files.set(id, file);
     }
     return file;
   }
 
+  /** 操作のたびに、止まっていれば動かす（最初の操作のほか、iOS で通話などのあとに止められたときも戻すため、外さない）。 */
   private unlockOnGesture(target: EventTarget): void {
-    const events = ['pointerdown', 'keydown', 'touchend'];
     const unlock = (): void => {
-      void this.ctx.resume().then(() => {
-        if (this.ctx.state !== 'running') return;
-        for (const e of events) target.removeEventListener(e, unlock, true);
-      });
+      if (this.ctx.state !== 'running') this.ctx.resume().catch(() => {});
     };
-    for (const e of events) target.addEventListener(e, unlock, true);
+    for (const e of ['pointerdown', 'keydown', 'touchend']) target.addEventListener(e, unlock, true);
   }
 }
 
