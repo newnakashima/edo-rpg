@@ -1,0 +1,84 @@
+{
+  "id": "bgm_matsuri",
+  "title": "凧揚げ合戦",
+  "about": "祭り囃子。にぎやかで晴れやか。空に揚がる凧",
+  "meter": "4/4",
+  "tempos": [
+    [
+      0.0,
+      132.0
+    ]
+  ],
+  "loop": true,
+  "loop_start_seconds": 0.0,
+  "length_seconds": 43.63636363636363,
+  "length_beats": 96.0,
+  "tracks": [
+    {
+      "name": "篠笛",
+      "program": 73,
+      "role": "main",
+      "drum": false,
+      "uses": [
+        {
+          "source": "motif:main.wide",
+          "at": 32.0,
+          "length": 8.0
+        },
+        {
+          "source": "motif:main.wide",
+          "at": 48.0,
+          "length": 8.0
+        }
+      ]
+    },
+    {
+      "name": "篠笛（二番）",
+      "program": 72,
+      "role": "sub",
+      "drum": false,
+      "uses": [
+        {
+          "source": "motif:main.wide",
+          "at": 48.0,
+          "length": 8.0
+        }
+      ]
+    },
+    {
+      "name": "三味線",
+      "program": 106,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "低弦",
+      "program": 43,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "締太鼓",
+      "program": 117,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "大太鼓",
+      "program": 116,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "鉦",
+      "program": 113,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    }
+  ]
+}
