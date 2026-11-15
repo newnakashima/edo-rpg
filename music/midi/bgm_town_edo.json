@@ -1,0 +1,67 @@
+{
+  "id": "bgm_town_edo",
+  "title": "江戸",
+  "about": "大江戸のにぎわいの下に、手配されて身を潜める落ち着かなさ",
+  "meter": "4/4",
+  "tempos": [
+    [
+      0.0,
+      112.0
+    ]
+  ],
+  "loop": true,
+  "loop_start_seconds": 0.0,
+  "length_seconds": 34.285714285714285,
+  "length_beats": 64.0,
+  "tracks": [
+    {
+      "name": "篠笛",
+      "program": 73,
+      "role": "main",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "三味線",
+      "program": 106,
+      "role": "main",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "低弦",
+      "program": 42,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "最低弦",
+      "program": 43,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "拍子木",
+      "program": 115,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "締太鼓",
+      "program": 117,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "鉦",
+      "program": 113,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    }
+  ]
+}

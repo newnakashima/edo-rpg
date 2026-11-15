@@ -1,0 +1,92 @@
+{
+  "id": "bgm_duel",
+  "title": "決闘",
+  "about": "尺八の鋭い叫びと太鼓。一対一の張り詰め",
+  "meter": "4/4",
+  "tempos": [
+    [
+      0.0,
+      126.0
+    ]
+  ],
+  "loop": true,
+  "loop_start_seconds": 3.8095238095238093,
+  "length_seconds": 64.76190476190476,
+  "length_beats": 136.0,
+  "tracks": [
+    {
+      "name": "尺八",
+      "program": 77,
+      "role": "main",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "三味線",
+      "program": 106,
+      "role": "main",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "金管",
+      "program": 61,
+      "role": "sub",
+      "drum": false,
+      "uses": [
+        {
+          "source": "motif:main.call",
+          "at": 72.0,
+          "length": 8.0
+        },
+        {
+          "source": "motif:main.call",
+          "at": 88.0,
+          "length": 8.0
+        }
+      ]
+    },
+    {
+      "name": "声",
+      "program": 52,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "弦",
+      "program": 48,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "低弦",
+      "program": 43,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "大太鼓",
+      "program": 116,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "締太鼓",
+      "program": 117,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "シンバル",
+      "program": 0,
+      "role": "other",
+      "drum": true,
+      "uses": []
+    }
+  ]
+}

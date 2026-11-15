@@ -1,0 +1,136 @@
+{
+  "id": "bgm_washio",
+  "title": "鷲尾",
+  "about": "黒幕の威圧。からくりの主題が重く鳴る",
+  "meter": "4/4",
+  "tempos": [
+    [
+      0.0,
+      108.0
+    ]
+  ],
+  "loop": true,
+  "loop_start_seconds": 4.444444444444445,
+  "length_seconds": 75.55555555555556,
+  "length_beats": 136.0,
+  "tracks": [
+    {
+      "name": "金管",
+      "program": 61,
+      "role": "main",
+      "drum": false,
+      "uses": [
+        {
+          "source": "theme:karakuri",
+          "at": 8.0,
+          "length": 32.0
+        },
+        {
+          "source": "motif:karakuri.zenmai（2倍の長さ）",
+          "at": 72.0,
+          "length": 8.0
+        },
+        {
+          "source": "theme:karakuri",
+          "at": 104.0,
+          "length": 32.0
+        }
+      ]
+    },
+    {
+      "name": "尺八",
+      "program": 77,
+      "role": "main",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "篠笛",
+      "program": 73,
+      "role": "sub",
+      "drum": false,
+      "uses": [
+        {
+          "source": "motif:main.wide",
+          "at": 88.0,
+          "length": 8.0
+        }
+      ]
+    },
+    {
+      "name": "琴",
+      "program": 107,
+      "role": "sub",
+      "drum": false,
+      "uses": [
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 40.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 48.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 56.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 68.0,
+          "length": 4.0
+        },
+        {
+          "source": "theme:karakuri",
+          "at": 104.0,
+          "length": 32.0
+        }
+      ]
+    },
+    {
+      "name": "声",
+      "program": 52,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "弦",
+      "program": 48,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "最低弦",
+      "program": 43,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "ティンパニ",
+      "program": 47,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "大太鼓",
+      "program": 116,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "拍子木",
+      "program": 115,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "id": "bgm_town_kyo",
+  "title": "京",
+  "about": "雅な琴と篠笛。都の華やかさの陰に、鬼の噂の翳り",
+  "meter": "4/4",
+  "tempos": [
+    [
+      0.0,
+      88.0
+    ]
+  ],
+  "loop": true,
+  "loop_start_seconds": 0.0,
+  "length_seconds": 43.63636363636363,
+  "length_beats": 64.0,
+  "tracks": [
+    {
+      "name": "篠笛",
+      "program": 73,
+      "role": "main",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "琴",
+      "program": 107,
+      "role": "main",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "つま弾き",
+      "program": 46,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "低弦",
+      "program": 43,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "鈴",
+      "program": 112,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "鼓",
+      "program": 117,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    }
+  ]
+}

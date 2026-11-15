@@ -1,0 +1,67 @@
+{
+  "id": "bgm_castle",
+  "title": "城",
+  "about": "雅楽風、重厚。張り詰めた城内の格式",
+  "meter": "4/4",
+  "tempos": [
+    [
+      0.0,
+      60.0
+    ]
+  ],
+  "loop": true,
+  "loop_start_seconds": 0.0,
+  "length_seconds": 64.0,
+  "length_beats": 64.0,
+  "tracks": [
+    {
+      "name": "篳篥",
+      "program": 111,
+      "role": "main",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "龍笛",
+      "program": 73,
+      "role": "sub",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "笙",
+      "program": 109,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "弦",
+      "program": 49,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "低弦",
+      "program": 43,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "大太鼓",
+      "program": 116,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "鞨鼓",
+      "program": 117,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    }
+  ]
+}
