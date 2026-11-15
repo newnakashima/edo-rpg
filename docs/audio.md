@@ -204,7 +204,7 @@
 シーン（`src/scenes/`）・メニュー（`src/ui/`）・戦闘（`src/systems/battle.ts` の `BattleEvent`、`src/data/skills.ts`）・イベント（`src/data/events.ts` の擬音の台詞）を突き合わせて洗い出した一覧です（2026-11-15）。
 「優先」は作る順の目安です。A は最初にそろえる音（操作と戦闘の基本）、B は場面の手ごたえを足す音、C は台詞の擬音で足りていて、なくても困らない音です。
 「長さ」は目安です。戦闘は 1 つの出来事を 650 ms ごとに進めるので、戦闘の音は 0.6 秒以内に収めます（戦闘の後のページで鳴らす se_levelup は除く）。
-効果音は Python（numpy・scipy）で波形を合成し、Ogg Opus（48 kHz）で `public/assets/audio/se/<ID>.ogg` に書き出します（作り方のスキルは別に作る）。
+効果音は Python（numpy・scipy）で波形を合成し、Ogg Opus（48 kHz）で `public/assets/audio/se/<ID>.ogg` に書き出します。作り方は `.claude/skills/sfx-synthesis/SKILL.md`、合成のスクリプトは `sfx/sounds/<ID>.py` にあります。
 
 ### システム・メニュー
 
