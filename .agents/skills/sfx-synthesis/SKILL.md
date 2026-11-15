@@ -164,5 +164,5 @@ python3 scripts/sfx/build.py --sheet se_cursor se_ok se_cancel
 
 ## ゲームで鳴らすとき
 
-- 効果音は `public/assets/audio/se/<ID>.ogg` に置く。シーンは `src/systems/audio.ts` の `playSe(id)` を呼ぶ（2026-11-15 時点では `playSe` はまだ何も鳴らさない。Web Audio の再生処理を入れたら、この行を書き直す）。
+- 効果音は `public/assets/audio/se/<ID>.ogg` に置く。シーンは `src/systems/audio.ts` の `playSe(id)` を呼ぶ。書き出した効果音は、起動時に `src/data/seTracks.ts` がファイル名から拾い、`src/ui/sePlayer.ts`（Web Audio）が鳴らす（`.ogg` を置いたら、ページを開き直す・ビルドし直すと鳴る）。
 - どの場面でどの音を鳴らすかは、`docs/audio.md` の「効果音（SE）」の表と「コードでの鳴らし方（効果音）」に書いてある。

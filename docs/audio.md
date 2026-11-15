@@ -1,7 +1,7 @@
 # 音楽・効果音の一覧
 
 必要な曲と効果音、どの場面でどの曲を鳴らすかをまとめます。
-シーンは、ここに挙げたキー（ID）で `src/systems/audio.ts` の呼び出し口（`playBgm`・`playJingle`・`playSe`）を呼びます。曲は書き出したものから鳴ります。まだない曲は代わりの曲を鳴らします。効果音はまだ鳴らしません（一覧は下の「効果音（SE）」）。
+シーンは、ここに挙げたキー（ID）で `src/systems/audio.ts` の呼び出し口（`playBgm`・`playJingle`・`playSe`）を呼びます。曲と効果音は書き出したものから鳴ります。まだないものは代わりを鳴らします（代わりもなければ無音）。効果音の一覧は下の「効果音（SE）」にあります。
 
 曲は MIDI で作曲し、Ogg Opus に書き出します。作り方は `.claude/skills/music-composition/SKILL.md`、曲の素材（core-theme・motiv）とその使い方の一覧は `music/catalog.md` にあります。
 
@@ -289,7 +289,8 @@
 
 ### コードでの鳴らし方（効果音）
 
-- `src/systems/audio.ts` の `SeId` を上の ID に合わせる（いまは 8 個）。書き出した効果音だけを鳴らし、まだないものは無音にする。
+- `src/systems/audio.ts` の `SE_IDS`・`SeId` は上の表と同じ順の 52 個（`src/data/seTracks.test.ts` が表と突き合わせる）。`playSe(id)` は書き出した効果音（`public/assets/audio/se/` にある `.ogg`）だけを鳴らし、まだないものは代わり（se_cannon → se_gun、se_thunder → se_magic）を、代わりもなければ無音にする。
+- 再生は `src/ui/sePlayer.ts`（Web Audio）。曲と 1 つの AudioContext を共に使い、起動時に書き出したすべての効果音を読み込んでおく。同じ音・別の音を重ねて鳴らせる（同じ音を 30 ms 以内に続けて頼まれたら 1 つにまとめ、一度に 8 つまで）。最初の操作の前と、画面が隠れている間は鳴らさない。読み込めなかった効果音は、ファイルを取れなかったものは 5 秒おいて読み直し、音に伸ばせなかったもの（Ogg Opus を読めないブラウザ）は読み直さない。始める処理は `src/ui/audioSetup.ts`。
 - メニューの音は `src/ui/widgets.ts` の `Menu`（移動・決定・取消・選べない）と `MessageWindow.advance` でまとめて鳴らす。
 - 戦闘の音は `BattleScene` で 1 つの出来事を進めるところ（`describe(e)` の隣）で、出来事から音を選ぶ。
   - 通常攻撃は、攻撃した仲間の武器で選ぶ（刀・槍は se_slash、玄道の杖は se_hit、お凛の鉄砲は se_gun）。敵の通常攻撃（`attack`）は、味方が受けたときの se_damage だけにする。表の「敵の斬る技」「敵の撃つ技」は、敵の技（`skill`）のこと。
