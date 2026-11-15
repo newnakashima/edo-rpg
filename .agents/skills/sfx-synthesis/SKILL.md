@@ -44,6 +44,7 @@ ffmpeg -hide_banner -encoders | grep -q libopus && echo ok
 | `build.py` | スクリプトを実行し、大きさをそろえて Ogg Opus に書き出し、画像を作る。`--sheet` で試聴用に並べた音も作る |
 | `check.py` | 書き出した音を読み戻して調べ、まだ作っていない音を優先ごとに数える |
 | `sfxcheck.py` | `build.py`・`check.py` が使う測定と画像（スクリプトからは使わない） |
+| `game_check.mjs` | ゲームを動かし、効果音が読み込めて、場面で実際に音を出しているかを確かめる |
 
 ## スクリプトの書き方
 
@@ -166,3 +167,4 @@ python3 scripts/sfx/build.py --sheet se_cursor se_ok se_cancel
 
 - 効果音は `public/assets/audio/se/<ID>.ogg` に置く。シーンは `src/systems/audio.ts` の `playSe(id)` を呼ぶ。書き出した効果音は、起動時に `src/data/seTracks.ts` がファイル名から拾い、`src/ui/sePlayer.ts`（Web Audio）が鳴らす（`.ogg` を置いたら、ページを開き直す・ビルドし直すと鳴る）。
 - どの場面でどの音を鳴らすかは、`docs/audio.md` の「効果音（SE）」の表と「コードでの鳴らし方（効果音）」に書いてある。
+- 効果音を足したり、鳴らす所を変えたりしたら、ゲームの中で鳴るかを `node scripts/sfx/game_check.mjs` で確かめる（先に `npm run dev` を起動しておく）。書き出した効果音がすべて読み込めて 1 つずつ音を出すこと、最初の操作の前は鳴らないこと、タイトル・フィールドのメニュー・出入り・出会いの戦闘・イベント（野狐）で鳴るはずの音が鳴ることを調べる。音が出ているかは効果音の出口の大きさで測る（-60 dBFS より大きいか）。問題があれば終了コード 1。
