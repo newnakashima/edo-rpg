@@ -5,7 +5,7 @@ import { allPartsImages, dualMask, edgeMask, mapTileImages, partsTextureKey, TIL
 const T = 16;
 
 function map(rows: string[], tileset: TilesetId = 'shoka'): MapDef {
-  return { id: 'test', name: 'test', rows, npcs: [], exits: [], tileset, areaLevel: 1 };
+  return { id: 'test', name: 'test', bgm: 'bgm_town', rows, npcs: [], exits: [], tileset, areaLevel: 1 };
 }
 
 describe('部品で描くタイル', () => {

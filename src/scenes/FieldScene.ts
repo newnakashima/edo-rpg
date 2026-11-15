@@ -28,7 +28,7 @@ import { SHOPS } from '../data/shops';
 import type { Facing } from '../systems/gameState';
 import { memberLevel } from '../systems/party';
 import { defaultRng } from '../systems/random';
-import { playBgm } from '../systems/audio';
+import { playBgm, playJingle } from '../systems/audio';
 import { browserStorage } from '../systems/save';
 import { getState, holdEventWhileAway, setState, shouldRunEnterEvent, takePendingEvent } from '../state';
 import { EVENTS } from '../data/events';
@@ -135,7 +135,6 @@ export class FieldScene extends Phaser.Scene {
       this.scene.restart({});
       return;
     }
-    playBgm(map.encounter || map.encounterZones ? 'bgm_road' : 'bgm_town');
 
     // 地形（部品の組み合わせ方は src/data/mapParts.ts）
     for (const img of mapTileImages(map, TILE)) this.add.image(img.x, img.y, img.key, img.frame).setOrigin(0);
@@ -200,8 +199,19 @@ export class FieldScene extends Phaser.Scene {
       if (pending.fromMapId === map.id) for (const [id, actor] of pending.runner.stage) this.placeStageActor(id, actor);
       this.advanceEvent(pending.resume);
     } else {
+      this.syncBgm(null);
       this.runEnterEvent();
     }
+  }
+
+  /**
+   * 曲をそろえる。イベントの途中で場面の曲に替えていればその曲、なければマップの曲（docs/audio.md の「場面への当てはめ」）。
+   * 同じ曲なら鳴らし直さずに続ける（src/systems/audio.ts の playBgm）。
+   */
+  private syncBgm(runner: EventRunner | null): void {
+    const scene = runner?.bgm;
+    if (scene !== undefined) playBgm(scene);
+    else playBgm(this.map.bgm, this.map.bgmFallback);
   }
 
   /** マップに入ったときのイベントを、まだ行っていなければ行う。 */
@@ -231,6 +241,9 @@ export class FieldScene extends Phaser.Scene {
     const fromMapId = getState().mapId;
     const { state, request } = runner.next(getState(), input);
     setState(state);
+    // エンディングは、終わったイベントのマップの曲に戻さず、場面の曲のまま暗転する
+    if (request.kind !== 'ending') this.syncBgm(runner);
+    if (runner.takeJoined()) playJingle('bgm_join');
     switch (request.kind) {
       case 'say':
         this.message.show(request.pages, () => this.advanceEvent());
@@ -255,7 +268,13 @@ export class FieldScene extends Phaser.Scene {
         this.standStill();
         this.cameras.main.flash(250, 255, 255, 255);
         this.time.delayedCall(260, () =>
-          this.scene.start('Battle', { enemyIds: request.enemies, level: request.level, canEscape: request.canEscape, loseOk: request.loseOk }),
+          this.scene.start('Battle', {
+            enemyIds: request.enemies,
+            level: request.level,
+            canEscape: request.canEscape,
+            loseOk: request.loseOk,
+            bgm: request.bgm,
+          }),
         );
         return;
       case 'warp':
@@ -875,6 +894,8 @@ export class FieldScene extends Phaser.Scene {
       // 暗転中に押された決定でメッセージを読み飛ばさないようにする
       this.controls.flush();
       this.cameras.main.fadeIn(400, 0, 0, 0);
+      // 一泊の短い曲。鳴り終えたら、泊まった場所の曲に戻る
+      playJingle('bgm_inn');
       this.message.show(lines, () => this.openSave());
     });
   }

@@ -65,7 +65,7 @@ describe('親分の頼み', () => {
     const id = oyabunRequestId('kyo');
     const s = { ...newGame('m', start), jingi: 10 };
     const { state, battles, pages } = run(id, s, 0, 'victory');
-    expect(battles).toEqual([{ kind: 'battle', enemies: OYABUN_REQUESTS.kyo!.enemies, level: 12, canEscape: false, loseOk: true }]);
+    expect(battles).toEqual([{ kind: 'battle', enemies: OYABUN_REQUESTS.kyo!.enemies, level: 12, canEscape: false, loseOk: true, bgm: 'bgm_battle' }]);
     expect(state.jingi).toBe(16);
     expect(pages).toContain('渡世人としての名が上がった。（仁義 16）');
     expect(state.flags[id]).toBe(true);

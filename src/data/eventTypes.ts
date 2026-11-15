@@ -1,4 +1,5 @@
 // イベントスクリプトの形。シナリオはこの形のデータ（events.ts）として書き、systems/eventScript.ts が実行する。
+import type { BgmId } from '../systems/audio';
 import type { Facing } from '../systems/gameState';
 import type { CharacterId } from './characters';
 import type { CharacterSpriteId } from './sprites';
@@ -40,9 +41,14 @@ export type EventStep =
   /**
    * 戦闘。勝つか逃げたら次の手順へ進む。
    * ifLose があれば、負けても全滅扱いにせず（倒れた仲間は HP 1 で起き上がる）ifLose を行う。なければ通常の全滅で、イベントはそこで終わる。
-   * canEscape を省くと逃げられない。
+   * canEscape を省くと逃げられない。bgm は戦闘の曲（省くと bgm_battle。章のボスは bgm_boss など。docs/audio.md の「戦闘」）。
    */
-  | { type: 'battle'; enemies: string[]; level: number; canEscape?: boolean; ifLose?: EventStep[] }
+  | { type: 'battle'; enemies: string[]; level: number; canEscape?: boolean; ifLose?: EventStep[]; bgm?: BgmId }
+  /**
+   * 曲を替える（場面の曲。docs/audio.md の「イベントの場面」）。null で止める。
+   * イベントが終わるまで、戦闘から戻っても、warp で別のマップへ移っても、この曲を続ける。イベントが終わればマップの曲に戻す。
+   */
+  | { type: 'bgm'; id: BgmId | null }
   | { type: 'warp'; mapId: string; x: number; y: number }
   /** イベントをここで終える。 */
   | { type: 'end' }
