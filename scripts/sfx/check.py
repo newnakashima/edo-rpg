@@ -33,7 +33,10 @@ def level_of(se_id: str) -> float:
     p = bd.SOUND_DIR / f"{se_id}.py"
     if not p.exists():
         return 0.0
-    tree = ast.parse(p.read_text(encoding="utf-8"))
+    try:
+        tree = ast.parse(p.read_text(encoding="utf-8"))
+    except SyntaxError:
+        return 0.0  # 書きかけのスクリプト。build.py で書き出すときに [失敗] として知らせる
     for node in ast.walk(tree):
         if isinstance(node, ast.Call) and getattr(node.func, "id", None) == "Sound":
             for kw in node.keywords:

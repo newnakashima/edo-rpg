@@ -124,6 +124,8 @@ def fm(carrier, ratio: float, index, seconds: float | None = None) -> np.ndarray
 def partials(freq, ratios: list[float], amps: list[float] | None = None, seconds: float | None = None) -> np.ndarray:
     """倍音を足した音。ratios は基音に対する倍率（整数でなくてよい。鐘や金物は非整数）。"""
     f = _freq_array(freq, seconds)
+    if not len(f):
+        return np.zeros(0)
     amps = [1.0 / (i + 1) for i in range(len(ratios))] if amps is None else list(amps)
     _same_length(ratios=ratios, amps=amps)
     out = np.zeros(len(f))
@@ -211,9 +213,10 @@ def resonator(x: np.ndarray, freq: float, decay: float = 0.05) -> np.ndarray:
 def pluck(freq: float, seconds: float, brightness: float = 0.5, decay: float = 0.996) -> np.ndarray:
     """はじいた弦（Karplus-Strong）。brightness は 0〜1（大きいほど硬い）、decay は 1 周ごとの減衰（1 に近いほど長く鳴る）。
 
-    1 周の長さを整数のサンプル数に丸めるので、高い音ほど音程が少しずれる（3500 Hz で約 -35 セント）。高い音には modal を使う。
+    2 点の平均で入る 0.5 サンプルの遅れは差し引くが、1 周の長さを整数のサンプル数に丸めるので、高い音ほど音程が
+    ずれる（最大で 1000 Hz で約 ±18 セント、3500 Hz で約 ±63 セント）。高い音には modal を使う。
     """
-    period = max(2, int(round(RATE / freq)))
+    period = max(2, int(round(RATE / freq - (0.5 if brightness < 1 else 0))))
     buf = rng.uniform(-1, 1, period)
     buf = lowpass(buf, 500 + brightness * 12000) if period > 12 else buf
     n = n_of(seconds)
@@ -250,7 +253,11 @@ def env_adsr(seconds: float, attack: float = 0.005, decay: float = 0.05, sustain
     if total > seconds:
         k = seconds / total
         attack, decay, release = attack * k, decay * k, release * k
-    pts = [(0, 0), (attack, 1), (attack + decay, sustain), (seconds - release, sustain), (seconds, 0)]
+    # 浮動小数点の誤差で点の順が入れ替わらないよう、前の点より前に戻さない
+    t1 = min(attack, seconds)
+    t2 = min(max(attack + decay, t1), seconds)
+    t3 = min(max(seconds - release, t2), seconds)
+    pts = [(0, 0), (t1, 1), (t2, sustain), (t3, sustain), (seconds, 0)]
     return env_points(pts, seconds)
 
 

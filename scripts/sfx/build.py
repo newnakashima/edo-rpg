@@ -217,7 +217,7 @@ def main() -> None:
         try:
             if not build(se_id, specs):
                 bad.append(se_id)
-        except BuildError as e:
+        except (BuildError, subprocess.CalledProcessError, OSError) as e:
             print(f"  [失敗] {e}")
             failed.append(se_id)
     if args.sheet:

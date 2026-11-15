@@ -81,7 +81,8 @@ def loudness(audio: np.ndarray) -> float | None:
     短い音も長い音も「いちばん大きく聞こえる瞬間」でそろえるための値。100 ms より短い音は、窓の残りを無音として測るので、
     短いほど小さく出る（耳でも短い音は小さく聞こえる）。
     """
-    x = audio if audio.ndim == 2 else audio[:, None]
+    # モノラルは再生のときに左右へ同じ音で鳴るので、左右に複製して測る（ステレオの音と同じ尺度にする）
+    x = audio if audio.ndim == 2 else np.stack([audio, audio], axis=1)
     win = int(WINDOW * RATE)
     k = _k_weight(np.vstack([x, np.zeros((win, x.shape[1]))]))
     power = (k ** 2).sum(axis=1)
