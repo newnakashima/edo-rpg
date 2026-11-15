@@ -9,4 +9,4 @@ breath = bandpass(noise(call_len), 1500, 5000) * 0.15
 call = mix(call, breath) * env_points([(0, 0.0), (0.03, 1.0), (0.3, 0.8), (call_len, 0.0)], call_len)
 
 # 遠くまで届くような、やまびこ
-sound = Sound("se_summon", fade(trim(echo(call, delay=0.09, feedback=0.3, repeats=2), 0.55), fade_out=0.08), title="仲間を呼ぶ", level=-2)
+sound = Sound("se_summon", fade(trim(echo(call, delay=0.09, feedback=0.3, repeats=2), 0.5), fade_out=0.08), title="仲間を呼ぶ", level=-2)
