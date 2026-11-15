@@ -15,10 +15,15 @@ const SAME_SE_GAP = 0.03;
 const MAX_VOICES = 8;
 /** 読み込みの途中で頼まれた音は、これより遅れたら鳴らさない（場面とずれた音を鳴らさないため。ミリ秒）。 */
 const LATE_LIMIT_MS = 150;
+/** ファイルを取れなかった効果音は、この間（ミリ秒）は取り直さない（カーソルの音などは何度も頼まれるので、そのたびに取りに行かない）。 */
+const RETRY_MS = 5000;
+/** 鳴っている音を上限のために止めるときに絞る長さ（秒。いきなり切ってプツッと鳴らないように）。 */
+const STOP_FADE = 0.005;
 
 interface SeVoice {
   id: SeId;
   source: AudioBufferSourceNode;
+  gain: GainNode;
   startedAt: number;
 }
 
@@ -29,6 +34,8 @@ export class WebSePlayer {
   /** 読み込みを終えた音（すぐ鳴らせる音）。 */
   private readonly ready = new Map<SeId, AudioBuffer>();
   private voices: SeVoice[] = [];
+  /** 読み込めなかった効果音と、次に読み直してよい時刻（now の尺度。音に伸ばせなかったものは Infinity で、読み直さない）。 */
+  private readonly failedUntil = new Map<SeId, number>();
   private warned = false;
   private readonly now: () => number;
 
@@ -71,12 +78,15 @@ export class WebSePlayer {
     while (this.voices.length >= MAX_VOICES) {
       const oldest = this.voices.shift()!;
       oldest.source.onended = null;
-      oldest.source.stop();
+      oldest.gain.gain.setValueAtTime(oldest.gain.gain.value, now);
+      oldest.gain.gain.linearRampToValueAtTime(0, now + STOP_FADE);
+      oldest.source.stop(now + STOP_FADE);
     }
     const source = this.ctx.createBufferSource();
     source.buffer = buffer;
-    source.connect(this.out);
-    const voice: SeVoice = { id, source, startedAt: now };
+    const gain = this.ctx.createGain();
+    source.connect(gain).connect(this.out);
+    const voice: SeVoice = { id, source, gain, startedAt: now };
     source.onended = () => {
       this.voices = this.voices.filter((v) => v !== voice);
     };
@@ -87,22 +97,30 @@ export class WebSePlayer {
   private load(id: SeId): Promise<AudioBuffer | null> {
     let buffer = this.buffers.get(id);
     if (!buffer) {
+      if (this.now() < (this.failedUntil.get(id) ?? -Infinity)) return Promise.resolve(null);
       const url = seUrl(id);
+      // 音に伸ばせない（Ogg Opus を読めないブラウザなど）ものは読み直しても同じなので、もう読まない。ファイルを取れなかったものは、しばらくしてから読み直す
+      let fetched = false;
       buffer = fetch(url)
         .then((res) => {
           if (!res.ok) throw new Error(`${res.status} ${url}`);
           return res.arrayBuffer();
         })
-        .then((file) => this.ctx.decodeAudioData(file))
+        .then((file) => {
+          fetched = true;
+          return this.ctx.decodeAudioData(file);
+        })
         .then((decoded) => {
           this.ready.set(id, decoded);
+          this.failedUntil.delete(id);
           return decoded;
         })
         .catch((error: unknown) => {
-          // Ogg Opus を読めないブラウザなどで、黙って無音にならないよう 1 度だけ知らせる。失敗したら覚えておかず、次に頼まれたときに読み直す
+          // 黙って無音にならないよう 1 度だけ知らせる
           if (!this.warned) console.warn(`効果音 ${id} を鳴らせない`, error);
           this.warned = true;
           this.buffers.delete(id);
+          this.failedUntil.set(id, fetched ? Infinity : this.now() + RETRY_MS);
           return null;
         });
       this.buffers.set(id, buffer);

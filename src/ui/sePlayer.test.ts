@@ -7,21 +7,37 @@ interface FakeSource {
   buffer: { url: string } | null;
   startedAt?: number;
   stopped: boolean;
+  stopAt?: number;
   onended: (() => void) | null;
   connect: (n: unknown) => unknown;
   start: (when: number) => void;
-  stop: () => void;
+  stop: (when?: number) => void;
+}
+
+interface FakeGain {
+  gain: { value: number; ramps: number[]; setValueAtTime: () => void; linearRampToValueAtTime: (v: number, t: number) => void };
+  connect: (n: unknown) => unknown;
 }
 
 function fakeContext() {
   const sources: FakeSource[] = [];
-  const gains: { gain: { value: number } }[] = [];
+  const gains: FakeGain[] = [];
   const ctx = {
     currentTime: 0,
     state: 'running' as AudioContextState,
     destination: {},
     createGain: () => {
-      const g = { gain: { value: 1 }, connect: (n: unknown) => n };
+      const g: FakeGain = {
+        gain: {
+          value: 1,
+          ramps: [],
+          setValueAtTime: () => {},
+          linearRampToValueAtTime(_v, t) {
+            this.ramps.push(t);
+          },
+        },
+        connect: (n: unknown) => n,
+      };
       gains.push(g);
       return g;
     },
@@ -34,8 +50,9 @@ function fakeContext() {
         start(when) {
           this.startedAt = when;
         },
-        stop() {
+        stop(when) {
           this.stopped = true;
+          this.stopAt = when;
         },
       };
       sources.push(s);
@@ -91,6 +108,7 @@ describe('WebSePlayer', () => {
     player.preload(['se_ok', 'se_cursor']);
     expect(fetched.sort()).toEqual([seUrl('se_cursor'), seUrl('se_ok')]);
     await loadAll();
+    expect(player.status().loaded.sort()).toEqual(['se_cursor', 'se_ok']);
     ctx.currentTime = 1;
     player.play('se_ok');
     ctx.currentTime = 1.2;
@@ -110,25 +128,32 @@ describe('WebSePlayer', () => {
     expect(player.status().playing).toEqual([]);
   });
 
-  it('同じ効果音をごく短い間に続けて頼まれたら、2 つ目は鳴らさない', async () => {
+  it('同じ効果音を 30 ms より短い間に続けて頼まれたら、2 つ目は鳴らさない', async () => {
     const { ctx, player, sources } = fakeContext();
     player.preload(['se_damage']);
     await loadAll();
+    ctx.currentTime = 1;
     player.play('se_damage');
-    ctx.currentTime = 0.01;
+    ctx.currentTime = 1.029;
     player.play('se_damage');
     expect(sources).toHaveLength(1);
+    ctx.currentTime = 1.031;
+    player.play('se_damage');
+    expect(sources).toHaveLength(2);
   });
 
   it('一度に鳴らす数が上限を超えたら、いちばん古い音を止める', async () => {
-    const { ctx, player, sources } = fakeContext();
+    const { ctx, player, sources, gains } = fakeContext();
     player.preload(['se_ok']);
     await loadAll();
     for (let i = 0; i < 9; i++) {
       ctx.currentTime = i;
       player.play('se_ok');
     }
+    // いちばん古い音は、いきなり切らずに 5 ms で絞ってから止める
     expect(sources[0]!.stopped).toBe(true);
+    expect(sources[0]!.stopAt).toBeCloseTo(8.005);
+    expect(gains[1]!.gain.ramps).toEqual([8.005]);
     expect(sources.slice(1).every((s) => !s.stopped)).toBe(true);
     expect(player.status().playing).toHaveLength(8);
   });
@@ -142,15 +167,15 @@ describe('WebSePlayer', () => {
     expect(sources).toHaveLength(0);
   });
 
-  it('読み込みの途中で頼まれた音は、読み込めたときに遅れが小さければ鳴らし、大きければ鳴らさない', async () => {
+  it('読み込みの途中で頼まれた音は、読み込めたときに遅れが 150 ms 以内なら鳴らし、超えたら鳴らさない', async () => {
     const { player, sources, tick } = fakeContext();
     player.play('se_ok');
-    tick(50);
+    tick(150);
     await loadAll();
     expect(sounding(sources)).toEqual([seUrl('se_ok')]);
 
     player.play('se_cancel');
-    tick(500);
+    tick(151);
     await loadAll();
     expect(sources).toHaveLength(1);
     // 読み込めたので、次からはすぐ鳴る
@@ -158,16 +183,47 @@ describe('WebSePlayer', () => {
     expect(sounding(sources)).toEqual([seUrl('se_ok'), seUrl('se_cancel')]);
   });
 
-  it('読み込めなかった効果音は 1 度だけ知らせて鳴らさず、次に頼まれたときに読み直す', async () => {
-    const { player, sources } = fakeContext();
+  it('読み込みを待つ間に AudioContext が止まったら、読み込めても鳴らさない', async () => {
+    const { ctx, player, sources } = fakeContext();
+    player.play('se_ok');
+    ctx.state = 'suspended';
+    await loadAll();
+    expect(sources).toHaveLength(0);
+  });
+
+  it('ファイルを取れなかった効果音は 1 度だけ知らせて鳴らさず、5 秒たつまでは取り直さない', async () => {
+    const { player, sources, tick } = fakeContext();
+    const count = () => fetched.filter((u) => u === seUrl('se_ok')).length;
     failing.add(seUrl('se_ok'));
     player.preload(['se_ok']);
     await loadAll();
     player.play('se_ok');
     await loadAll();
+    expect(count()).toBe(1);
+    tick(5000);
+    player.play('se_ok');
+    await loadAll();
+    expect(count()).toBe(2);
     expect(sources).toHaveLength(0);
     expect(console.warn).toHaveBeenCalledTimes(1);
-    expect(fetched.filter((u) => u === seUrl('se_ok'))).toHaveLength(2);
+    // 取れるようになれば鳴る
+    failing.clear();
+    tick(5000);
+    player.play('se_ok');
+    await loadAll();
+    expect(sounding(sources)).toEqual([seUrl('se_ok')]);
+  });
+
+  it('音に伸ばせなかった効果音（Ogg Opus を読めないブラウザなど）は、もう読み直さない', async () => {
+    const { ctx, player, sources, tick } = fakeContext();
+    ctx.decodeAudioData = () => Promise.reject(new Error('unsupported'));
+    player.preload(['se_ok']);
+    await loadAll();
+    tick(60000);
+    player.play('se_ok');
+    await loadAll();
+    expect(fetched).toHaveLength(1);
+    expect(sources).toHaveLength(0);
   });
 
   it('効果音の大きさは曲と同じ尺度の 0.6', () => {
