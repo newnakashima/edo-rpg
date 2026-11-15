@@ -1,0 +1,51 @@
+{
+  "id": "bgm_sad",
+  "title": "別れ",
+  "about": "胡弓の独奏に、琴がそっと寄り添う。失ったものへの静かな弔い",
+  "meter": "4/4",
+  "tempos": [
+    [
+      0.0,
+      60.0
+    ]
+  ],
+  "loop": true,
+  "loop_start_seconds": 0.0,
+  "length_seconds": 48.0,
+  "length_beats": 48.0,
+  "tracks": [
+    {
+      "name": "胡弓",
+      "program": 110,
+      "role": "main",
+      "drum": false,
+      "uses": [
+        {
+          "source": "motif:heroine.shitau",
+          "at": 16.0,
+          "length": 8.0
+        }
+      ]
+    },
+    {
+      "name": "琴",
+      "program": 107,
+      "role": "sub",
+      "drum": false,
+      "uses": [
+        {
+          "source": "motif:komoriuta.nemure（4/3倍の長さ）",
+          "at": 32.0,
+          "length": 8.0
+        }
+      ]
+    },
+    {
+      "name": "弦",
+      "program": 49,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    }
+  ]
+}

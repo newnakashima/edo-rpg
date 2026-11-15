@@ -1,0 +1,122 @@
+{
+  "id": "bgm_karakuri",
+  "title": "からくり屋敷",
+  "about": "和楽器と機械的なリズムの混在。冷たく規則正しい歯車の刻みに、人の息が混じる",
+  "meter": "4/4",
+  "tempos": [
+    [
+      0.0,
+      120.0
+    ]
+  ],
+  "loop": true,
+  "loop_start_seconds": 0.0,
+  "length_seconds": 48.0,
+  "length_beats": 96.0,
+  "tracks": [
+    {
+      "name": "琴",
+      "program": 107,
+      "role": "main",
+      "drum": false,
+      "uses": [
+        {
+          "source": "theme:karakuri",
+          "at": 0.0,
+          "length": 32.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 32.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 36.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 40.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 44.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 48.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 52.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 56.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 60.0,
+          "length": 4.0
+        },
+        {
+          "source": "theme:karakuri 1-7",
+          "at": 64.0,
+          "length": 28.0
+        }
+      ]
+    },
+    {
+      "name": "尺八",
+      "program": 77,
+      "role": "main",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "オルゴール",
+      "program": 10,
+      "role": "sub",
+      "drum": false,
+      "uses": [
+        {
+          "source": "motif:karakuri.zenmai",
+          "at": 64.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.zenmai",
+          "at": 80.0,
+          "length": 4.0
+        }
+      ]
+    },
+    {
+      "name": "拍子木",
+      "program": 115,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "締太鼓",
+      "program": 117,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "低弦",
+      "program": 43,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    }
+  ]
+}

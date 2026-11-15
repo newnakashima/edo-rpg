@@ -1,0 +1,92 @@
+{
+  "id": "bgm_boss",
+  "title": "ボス戦",
+  "about": "激しい和太鼓、緊張感。追い詰められ、溜めて、全員でぶつかる",
+  "meter": "4/4",
+  "tempos": [
+    [
+      0.0,
+      138.0
+    ]
+  ],
+  "loop": true,
+  "loop_start_seconds": 6.956521739130435,
+  "length_seconds": 62.608695652173914,
+  "length_beats": 144.0,
+  "tracks": [
+    {
+      "name": "尺八",
+      "program": 77,
+      "role": "main",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "三味線",
+      "program": 106,
+      "role": "main",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "金管",
+      "program": 61,
+      "role": "sub",
+      "drum": false,
+      "uses": [
+        {
+          "source": "motif:karakuri.zenmai（2倍の長さ）",
+          "at": 48.0,
+          "length": 8.0
+        },
+        {
+          "source": "motif:karakuri.zenmai（2倍の長さ）",
+          "at": 64.0,
+          "length": 8.0
+        }
+      ]
+    },
+    {
+      "name": "声",
+      "program": 52,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "弦",
+      "program": 48,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "大太鼓",
+      "program": 116,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "締太鼓",
+      "program": 117,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "低弦",
+      "program": 43,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "シンバル",
+      "program": 0,
+      "role": "other",
+      "drum": true,
+      "uses": []
+    }
+  ]
+}

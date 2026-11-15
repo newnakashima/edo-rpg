@@ -1,0 +1,74 @@
+{
+  "id": "bgm_battle",
+  "title": "戦闘",
+  "about": "速い三味線と太鼓。斬り結ぶ勢いから、溜めて、全員でぶつかる山場へ",
+  "meter": "4/4",
+  "tempos": [
+    [
+      0.0,
+      152.0
+    ]
+  ],
+  "loop": true,
+  "loop_start_seconds": 3.1578947368421053,
+  "length_seconds": 66.3157894736842,
+  "length_beats": 168.0,
+  "tracks": [
+    {
+      "name": "三味線",
+      "program": 106,
+      "role": "main",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "篠笛",
+      "program": 73,
+      "role": "main",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "琴",
+      "program": 107,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "弦",
+      "program": 48,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "太鼓",
+      "program": 116,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "締太鼓",
+      "program": 117,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "低弦",
+      "program": 43,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "シンバル",
+      "program": 0,
+      "role": "other",
+      "drum": true,
+      "uses": []
+    }
+  ]
+}

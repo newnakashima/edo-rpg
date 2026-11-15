@@ -1,0 +1,75 @@
+{
+  "id": "bgm_tension",
+  "title": "陰謀",
+  "about": "低い弦と拍子木。息を潜める緊迫と、背後でうごめく企み",
+  "meter": "4/4",
+  "tempos": [
+    [
+      0.0,
+      80.0
+    ]
+  ],
+  "loop": true,
+  "loop_start_seconds": 0.0,
+  "length_seconds": 48.0,
+  "length_beats": 64.0,
+  "tracks": [
+    {
+      "name": "尺八",
+      "program": 77,
+      "role": "main",
+      "drum": false,
+      "uses": [
+        {
+          "source": "motif:yashamaru.kage",
+          "at": 8.0,
+          "length": 8.0
+        },
+        {
+          "source": "motif:yashamaru.kage",
+          "at": 24.0,
+          "length": 8.0
+        }
+      ]
+    },
+    {
+      "name": "はじく弦",
+      "program": 45,
+      "role": "sub",
+      "drum": false,
+      "uses": [
+        {
+          "source": "motif:karakuri.zenmai",
+          "at": 32.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.zenmai",
+          "at": 40.0,
+          "length": 4.0
+        }
+      ]
+    },
+    {
+      "name": "低弦",
+      "program": 42,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "最低弦",
+      "program": 43,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "拍子木",
+      "program": 115,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    }
+  ]
+}

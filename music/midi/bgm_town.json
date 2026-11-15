@@ -1,0 +1,53 @@
+{
+  "id": "bgm_town",
+  "title": "城下町",
+  "about": "祭り囃子を抑えた、にぎやかで穏やかな町。篠笛・三味線・鉦",
+  "meter": "4/4",
+  "tempos": [
+    [
+      0.0,
+      104.0
+    ]
+  ],
+  "loop": true,
+  "loop_start_seconds": 0.0,
+  "length_seconds": 36.92307692307692,
+  "length_beats": 64.0,
+  "tracks": [
+    {
+      "name": "篠笛",
+      "program": 73,
+      "role": "main",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "三味線",
+      "program": 106,
+      "role": "sub",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "琴",
+      "program": 107,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "鉦",
+      "program": 113,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "締太鼓",
+      "program": 117,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    }
+  ]
+}

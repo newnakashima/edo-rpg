@@ -28,14 +28,14 @@ flute.put(song.bar(11), theme("main").bars(9, 16).velocity(scale=1.1))
 strings.put(song.bar(11), theme_harmony("main").bars(9, 16).octave(1).velocity(value=60))
 bass.put(song.bar(11), theme_harmony("main").bars(9, 16).map(
     lambda n: Note(n.start, n.dur, [min(n.pitches)], 75)).octave(-1))
-roots = ["Bb3", "F4", "Bb3", "A3", "Bb3", "G3", "A3", "D4"]
-fifths = ["F4", "C5", "F4", "E4", "F4", "D4", "E4", "A4"]
+roots = ["F3", "C4", "Bb3", "A3", "D4", "G3", "A3", "D4"]
+fifths = ["C4", "G4", "D4", "E4", "A4", "D4", "E4", "A4"]
 shami.put(song.bar(11), parse("".join(
     f"| {r}:1/2 r:1/2 {f}:1/2 {r}:1/2 r:1 {f}:1 " for r, f in zip(roots, fifths)) + "|"))
 taiko.put(song.bar(11), parse("| D2:1@80 r:1 D2:1/2@60 D2:1/2@60 r:1 |").repeat(8))
 
 # 結び（19〜20 小節）: 琴が呼びかけの断片を返し、ループの頭の静けさへ戻る
 koto.put(song.bar(19), motif("main.call").octave(-1).velocity(scale=0.9))
-strings.put(song.bar(19), parse("| Bb2+F3:4@55 | A2+E3:2@50 A2+E3:2@40 |"))
-bass.put(song.bar(19), parse("| Bb1:4@65 | A1:4@55 |"))
+strings.put(song.bar(19), parse("| D3+A3:4@55 | A2+E3:2@50 A2+E3:2@40 |"))
+bass.put(song.bar(19), parse("| D2:4@65 | A1:4@55 |"))
 song.end(song.bar(21))

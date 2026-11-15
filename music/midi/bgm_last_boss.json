@@ -1,0 +1,331 @@
+{
+  "id": "bgm_last_boss",
+  "title": "からくり大権現",
+  "about": "和楽器とオーケストラ、からくりの音。企みと旅の主題がぶつかり、仲間がそろい、静まり、魂の解放で最高潮に達する",
+  "meter": "4/4",
+  "tempos": [
+    [
+      0.0,
+      144.0
+    ]
+  ],
+  "loop": true,
+  "loop_start_seconds": 6.666666666666667,
+  "length_seconds": 93.33333333333333,
+  "length_beats": 224.0,
+  "tracks": [
+    {
+      "name": "金管",
+      "program": 61,
+      "role": "main",
+      "drum": false,
+      "uses": [
+        {
+          "source": "theme:karakuri",
+          "at": 16.0,
+          "length": 32.0
+        },
+        {
+          "source": "motif:karakuri.zenmai（2倍の長さ）",
+          "at": 56.0,
+          "length": 8.0
+        },
+        {
+          "source": "motif:karakuri.zenmai（2倍の長さ）",
+          "at": 72.0,
+          "length": 8.0
+        },
+        {
+          "source": "motif:main.wide",
+          "at": 184.0,
+          "length": 8.0
+        },
+        {
+          "source": "theme:komoriuta 5-8（4/3倍の長さ）",
+          "at": 192.0,
+          "length": 16.0
+        },
+        {
+          "source": "motif:karakuri.zenmai",
+          "at": 208.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.zenmai",
+          "at": 212.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.tomaru",
+          "at": 216.0,
+          "length": 4.0
+        }
+      ]
+    },
+    {
+      "name": "尺八",
+      "program": 77,
+      "role": "main",
+      "drum": false,
+      "uses": [
+        {
+          "source": "theme:main 1-8",
+          "at": 80.0,
+          "length": 32.0
+        }
+      ]
+    },
+    {
+      "name": "篠笛",
+      "program": 73,
+      "role": "main",
+      "drum": false,
+      "uses": [
+        {
+          "source": "theme:heroine 1-8",
+          "at": 112.0,
+          "length": 32.0
+        }
+      ]
+    },
+    {
+      "name": "声",
+      "program": 52,
+      "role": "main",
+      "drum": false,
+      "uses": [
+        {
+          "source": "theme:komoriuta（4/3倍の長さ）",
+          "at": 176.0,
+          "length": 32.0
+        }
+      ]
+    },
+    {
+      "name": "弦",
+      "program": 48,
+      "role": "main",
+      "drum": false,
+      "uses": [
+        {
+          "source": "theme:karakuri",
+          "at": 48.0,
+          "length": 32.0
+        },
+        {
+          "source": "theme:main 1-8",
+          "at": 80.0,
+          "length": 32.0
+        },
+        {
+          "source": "theme:heroine 1-8",
+          "at": 112.0,
+          "length": 32.0
+        },
+        {
+          "source": "motif:main.call",
+          "at": 176.0,
+          "length": 8.0
+        },
+        {
+          "source": "theme:komoriuta 5-8（4/3倍の長さ）",
+          "at": 192.0,
+          "length": 16.0
+        }
+      ]
+    },
+    {
+      "name": "胡弓",
+      "program": 110,
+      "role": "main",
+      "drum": false,
+      "uses": [
+        {
+          "source": "motif:yashamaru.kage",
+          "at": 148.0,
+          "length": 8.0
+        }
+      ]
+    },
+    {
+      "name": "オルゴール",
+      "program": 10,
+      "role": "sub",
+      "drum": false,
+      "uses": [
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 0.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 4.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 144.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 152.0,
+          "length": 4.0
+        },
+        {
+          "source": "theme:komoriuta 5-8（4/3倍の長さ）",
+          "at": 192.0,
+          "length": 16.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 208.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 212.0,
+          "length": 4.0
+        }
+      ]
+    },
+    {
+      "name": "琴",
+      "program": 107,
+      "role": "sub",
+      "drum": false,
+      "uses": [
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 16.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 20.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 24.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 28.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 32.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 36.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 40.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 44.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 48.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 52.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 56.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 60.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 64.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 68.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 72.0,
+          "length": 4.0
+        },
+        {
+          "source": "motif:karakuri.haguruma",
+          "at": 76.0,
+          "length": 4.0
+        }
+      ]
+    },
+    {
+      "name": "ホルン",
+      "program": 60,
+      "role": "sub",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "和音の弦",
+      "program": 49,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "ティンパニ",
+      "program": 47,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "大太鼓",
+      "program": 116,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "拍子木",
+      "program": 115,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "低弦",
+      "program": 43,
+      "role": "other",
+      "drum": false,
+      "uses": []
+    },
+    {
+      "name": "シンバル",
+      "program": 0,
+      "role": "other",
+      "drum": true,
+      "uses": []
+    }
+  ]
+}
